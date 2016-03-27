@@ -332,7 +332,7 @@ controller.hears(['help'],['direct_mention', 'direct_message'],function(bot,mess
 
 function askAboutHelp(convo, more){
     convo.ask("How " + (more ? "else" : "") + " may I help you? \n" +
-        "\tI'm new here... [ welcome ] \n" +
+        "\tI'm new here... [ starter guide ] \n" +
         "\tI want to see [ pairings ] or [ standings ]. \n" +
         "\tWho are the [ mods ]? \n" +
         "\tWhat [ teams ] are competing? \n" +
@@ -343,9 +343,9 @@ function askAboutHelp(convo, more){
         "Note: all options work as 'standalone' commands. Try: [@chesster <command>] from outside the help dialog.", 
         function(response, convo) {
             responses[response.text] ? responses[response.text](convo) : responses["default"](convo);
-            convo.next();
         }
     );
+    convo.next();
 }
 
 function howMayIHelpYou(response, convo) {
@@ -604,7 +604,11 @@ function prepareTeamsMessage(self){
 }
 
 function prepareTeamCaptainMessage(team){
-    return "Captain of " + team.name + " is " + team.captain
+    if(team && team.captain){
+    	return "Captain of " + team.name + " is " + team.captain;
+    }else{
+        return team.name + " has not chosen a team captain. ";
+    }
 }
 
 controller.hears([
