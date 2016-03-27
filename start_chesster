@@ -1,3 +1,3 @@
 #!/bin/bash
-export token=xoxb-29431979265-oeIFZWjKvUcii5W1TQBpO88r
+export token=<your-token>
 node chesster.js
