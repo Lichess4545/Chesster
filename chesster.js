@@ -585,11 +585,15 @@ function getTeams(self, callback){
     self.teams = [];
     self.sheet.getCells({
         "min-row": 2,
-        "min-col":TEAM_NAME, 
-        "max-col":TEAM_NAME
+        "min-col": TEAM_NAME, 
+        "max-col": TEAM_NAME,
+        "return-empty": true,
     }, function(err, cells) {
         var num_cells = cells.length;
         for(var ci = 0; ci < num_cells; ++ci){
+            if(cells[ci].value == ""){
+                break;
+            }
             self.teams.push(cells[ci].value);
         }
         callback();
