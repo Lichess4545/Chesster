@@ -3,7 +3,7 @@ var Botkit = require('../node_modules/botkit/lib/Botkit.js');
 var GoogleSpreadsheet = require("google-spreadsheet");
 var fs = require('fs');
 
-var SHEET_URL = "https://lichess4545.slack.com/files/parrotz/F0J839CMB/tournament2-teamrosters";
+var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs";
 var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
 var STARTER_URL = "coming soon... " || "https://lichess4545.slack.com/files/endrawes0/F0UNYSFD2/lichess4545leagueplayerguide";
 var CAPTAINS_URL = "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc";
