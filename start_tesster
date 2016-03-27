@@ -1,0 +1,3 @@
+#!/bin/bash
+export token=<your-token>
+node debug chesster.js
