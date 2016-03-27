@@ -104,25 +104,24 @@ controller.hears([
 	'direct_message'
 ],function(bot,message) {
     exception_handler(bot, message, function(){
-        bot.reply(message, "This feature is currently disabled. " + 
-							"Check back after teams are anounced for Season 3. Thanks!");
-        return;
         var self = this;
         loadSheet(self, function(){
-            getCaptains(self, function(callback){
-                bot.reply(message, prepareCaptainsMessage(self.teams));
+            getTeams(self, function(){
+                getCaptains(self, function(){
+                    bot.reply(message, prepareCaptainsMessage(self.teams));
+                });
             });
         });
     });
 });
 
 function getCaptains(self, callback){
-    self.teams = [];
     self.sheet.getCells({
         "min-row": 3,
         "max-row": 30,
-        "min-col":TEAM_NAME, 
-        "max-col":BOARD_6_NAME,
+        "min-col": BOARD_1_NAME, 
+        "max-col": BOARD_6_NAME,
+	"return-empty": true,
     }, function(err, cells) {
         var num_cells = cells.length;
         for(var ci in cells){
@@ -142,12 +141,6 @@ function getCaptains(self, callback){
                     self.teams[team_index]["captain"] = cell.value.replace("*", "");
                 }
                 break;
-                case TEAM_NAME:
-                if(!self.teams[team_index]){
-                    self.teams[team_index] = {};
-                }
-                self.teams[team_index]["name"] = cell.value;
-                break;
             }
         }
         callback();
@@ -157,7 +150,7 @@ function getCaptains(self, callback){
 function prepareCaptainsMessage(teams){
     var message = "Team Captains:\n";
     teams.forEach(function(team, index, array){
-        message += "\t" + team.name + ": " + team.captain + "\n";
+        message += "\t" + team.name + ": " + (team.captain || "Unchosen") + "\n";
     });
     return message;
 }
@@ -381,10 +374,6 @@ var responses = {
         askAboutHelp(convo, true);
     },
     "teams": function(convo){
-        convo.say("This feature is currently disabled. " + 
-			"Check back after teams are anounced for Season 3. Thanks!");
-        askAboutHelp(convo, true);
-        return;
         var self = this;
         loadSheet(self, function(){
             getTeams(self, function(){
@@ -594,7 +583,9 @@ function getTeams(self, callback){
             if(cells[ci].value == ""){
                 break;
             }
-            self.teams.push(cells[ci].value);
+            self.teams.push({
+               name: cells[ci].value
+            });
         }
         callback();
     });
@@ -607,7 +598,7 @@ function sayTeams(self, convo){
 function prepareTeamsMessage(self){
     var message = "There are currently " + self.teams.length + " teams competing. \n";
     self.teams.forEach(function(team, index, array){
-        message += "\t" + team + "\n";
+        message += "\t" + team.name + "\n";
     });
     return message;
 }
@@ -623,20 +614,19 @@ controller.hears([
 	'direct_message'
 ], function(bot, message) {
     exception_handler(bot, message, function(){
-        bot.reply(message, "This feature is currently disabled. " + 
-			"Check back after teams are anounced for Season 3. Thanks!");
-        return;
         var self = this;
         var team_name = message.text.split(" ").slice(2).join(" ");
         loadSheet(self, function(){
-            getCaptains(self, function(){
-                for(var ti in self.teams){
-                    var team = self.teams[ti];
-                    if(team.name == team_name){
-                        bot.reply(message, prepareTeamCaptainMessage(team));
-                        break;
+            getTeams(self, function(){
+                getCaptains(self, function(){
+                    for(var ti in self.teams){
+                        var team = self.teams[ti];
+                        if(team.name == team_name){
+                            bot.reply(message, prepareTeamCaptainMessage(team));
+                            break;
+                        }
                     }
-                }
+                });
             });
         });
     });
@@ -747,29 +737,30 @@ controller.hears([
 	'direct_message'
 ], function(bot, message) {
     exception_handler(bot, message, function(){
-        bot.reply(message, "This feature is currently disabled. " + 
-			"Check back after teams are anounced for Season 3. Thanks!");
-        return;
         var self = this;
         self.team_name = message.text.split(" ").slice(2).join(" ");
-        loadSheet(self, function(){
-            getMembers(self, function(){
-                async.series([
-                    playerRatingAsyncJob(self.members[0]),
-                    playerRatingAsyncJob(self.members[1]),
-                    playerRatingAsyncJob(self.members[2]),
-                    playerRatingAsyncJob(self.members[3]),
-                    playerRatingAsyncJob(self.members[4]),
-                    playerRatingAsyncJob(self.members[5]),
-                ], function(err){
-                    if(!err){
-                        bot.reply(message, prepareMembersResponse(self));
-                    }else{
-                        bot.reply(message, err);
-                    }
+        if(self.team_name && self.team_name != ""){
+	    loadSheet(self, function(){
+	        getMembers(self, function(){
+	            async.series([
+	                playerRatingAsyncJob(self.members[0]),
+                        playerRatingAsyncJob(self.members[1]),
+                        playerRatingAsyncJob(self.members[2]),
+                        playerRatingAsyncJob(self.members[3]),
+                        playerRatingAsyncJob(self.members[4]),
+                        playerRatingAsyncJob(self.members[5]),
+                    ], function(err){
+                       if(!err){
+                           bot.reply(message, prepareMembersResponse(self));
+                       }else{
+                           bot.reply(message, err);
+                       }
+                    });
                 });
             });
-        });
+        }else{
+            bot.reply(message, "Which team did you say? [ team members <team-name>. Please try again.]");
+        }
     });
 });
 
