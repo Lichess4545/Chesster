@@ -3,24 +3,24 @@ var Botkit = require('../node_modules/botkit/lib/Botkit.js');
 var GoogleSpreadsheet = require("google-spreadsheet");
 var fs = require('fs');
 
-var SHEET_URL = "https://lichess4545.slack.com/files/parrotz/F0J839CMB/tournament2-teamrosters";
+var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs";
 var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
 var STARTER_URL = "coming soon... " || "https://lichess4545.slack.com/files/endrawes0/F0UNYSFD2/lichess4545leagueplayerguide";
 var CAPTAINS_URL = "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc";
 
 var TEAM_NAME = 1;
 var BOARD_1_NAME = 2;
-var BOARD_1_RATING = 3;
+var BOARD_1_RATING = 4;
 var BOARD_2_NAME = 5;
-var BOARD_2_RATING= 6;
+var BOARD_2_RATING= 7;
 var BOARD_3_NAME = 8;
-var BOARD_3_RATING = 9;
+var BOARD_3_RATING = 10;
 var BOARD_4_NAME = 11;
-var BOARD_4_RATING = 12;
+var BOARD_4_RATING = 13;
 var BOARD_5_NAME = 14;
-var BOARD_5_RATING = 15;
+var BOARD_5_RATING = 16;
 var BOARD_6_NAME = 17;
-var BOARD_6_RATING = 18;
+var BOARD_6_RATING = 19;
 
 if (!process.env.token) {
   console.log('Error: Specify token in environment');
@@ -28,7 +28,7 @@ if (!process.env.token) {
 }
 
 var controller = Botkit.slackbot({
- debug: false
+    debug: false
 });
 
 var users = {
@@ -212,9 +212,8 @@ function prepareRatingMessage(player, rating, convo){
 
 /* commands */
 function prepareCommandsMessage(){
-    return 
-		"I will respond to the following commands when they are spoken to " + 
-														users.getIdString("chesster") + ": \n```" +
+    return "I will respond to the following commands when they are spoken to " + 
+									  users.getIdString("chesster") + ": \n```" +
         "    [ help ]                       ! display an interactive guide\n" +
         "    [ starter guide ]              ! get the starter guide link; thanks Gnarly\n" +
         "    [ pairings | standings ]       ! get pairings/standings spreadsheet link\n" +
@@ -237,8 +236,8 @@ function prepareCommandsMessage(){
         "    [ captains | \n" +
         "        captain list |             ! list the team captains\n" +
         "        captain <team-name> ]      ! name the captain for <team-name>\n" +
-        "    [ feedback <feedback>]         ! send @chesster some feedback (bug reports, "
-        "                                   ! suggestions, gratitude, etc)\n"
+        "    [ feedback <feedback>]         ! send @chesster some feedback (bug reports, \n" +
+        "                                   ! suggestions, gratitude, etc)\n" +
         "    [ mods (lonewolf)| \n"  +
         "        mod list (lonewolf)|       ! list the mods (without summoning)\n" +
         "        mods summon (lonewolf)]    ! summon the mods"+
@@ -250,7 +249,7 @@ function sayCommands(convo){
 }
 
 controller.hears([
-	'commands', 
+    'commands', 
 	'command list'
 ],[
 	'direct_mention', 
@@ -276,7 +275,7 @@ function prepareSummonLoneWolfModsMessage(){
     return "Summoning LoneWolf mods:" + 
 		users.getIdString("endrawes0") + ", " + 
 		users.getIdString("matuiss2") + ", " +
-		users.getIdString("lakinwecker") + ", " +
+	users.getIdString("lakinwecker") + ", " +
 		users.getIdString("theino");
 }
 
@@ -540,9 +539,9 @@ function sayGoodbye(convo){
 /* sheets */
 
 function loadSheet(self, callback){
-    var doc = new GoogleSpreadsheet('1cTeOgOPXPYk-6n7nhwbN31inZiwms0yVukxnegepsWg');
+    var doc = new GoogleSpreadsheet('1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4');
     doc.getInfo(function(err, info) {
-        self.sheet = info.worksheets[1];                    
+        self.sheet = info.worksheets[3];                    
         callback();
     });
 }
@@ -555,7 +554,7 @@ controller.hears([
 	"ambient"
 ], function(bot, message){
     exception_handler(bot, message, function(){
-        throw ("an error");
+        throw new Error("an error");
     });
 });
 
@@ -585,7 +584,7 @@ function exception_handler(bot, message, todo){
 function getTeams(self, callback){
     self.teams = [];
     self.sheet.getCells({
-        "min-row": 3,
+        "min-row": 2,
         "min-col":TEAM_NAME, 
         "max-col":TEAM_NAME
     }, function(err, cells) {
@@ -647,9 +646,6 @@ controller.hears([
 	'direct_message'
 ], function(bot,message) {
     exception_handler(bot, message, function(){
-        bot.reply(message, "This feature is currently disabled. " + 
-			"Check back after teams are anounced for Season 3. Thanks!");
-        return;
         var self = this;
         loadSheet(self, function(){
             getTeams(self, function(){
@@ -671,7 +667,7 @@ function createOrGetMember(memberList, i){
 function getMembers(self, callback){
     self.members = [];
     self.sheet.getCells({
-        "min-row": 3,
+        "min-row": 2,
         "min-col":TEAM_NAME, 
         "max-col":BOARD_6_NAME,
     }, function(err, cells) {
@@ -853,9 +849,9 @@ controller.hears([
                 console.log("failed to write to the file...")
                 console.log(feedback_log);
                 console.log(err);
-                throw ("Failed to log feedback: " + feedback_log);
-            }            
-        }); 
+                throw new Error("Failed to log feedback: " + feedback_log);
+            }
+        });
     });
 });
 
