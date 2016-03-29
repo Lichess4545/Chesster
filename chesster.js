@@ -5,7 +5,7 @@ var fs = require('fs');
 
 var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs";
 var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
-var STARTER_URL = "coming soon... " || "https://lichess4545.slack.com/files/endrawes0/F0UNYSFD2/lichess4545leagueplayerguide";
+var STARTER_URL = "https://lichess4545.slack.com/files/endrawes0/F0UNYSFD2/lichess4545leagueplayerguide";
 var CAPTAINS_URL = "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc";
 
 var TEAM_NAME = 1;
@@ -800,11 +800,33 @@ function getClassicalRating(opp, callback){
 
 controller.on('user_channel_join', function(bot, message) {
     exception_handler(bot, message, function(){
-        if(message.channel == channels.getId("general")){
-            bot.reply(message, "Hi <@" + message.user + ">, looks like you are new here.\nEveryone, welcome our newest member <@" + message.user + ">!\n");
-            bot.reply(message, "Please read our Starter Guide and Rules documents.");
-            bot.reply(message, STARTER_URL);
-            bot.reply(message, RULES_URL);
+        if(message.channel == channels.getId("unstable_bot")){
+            bot.reply(message, "Everyone, please welcome the newest member of the " 
+                             + "Lichess 45+45 League, <@" + message.user + ">!");
+            
+            bot.startPrivateConversation(message, function(err, convo){
+                convo.say("Hi <@" + message.user + ">, \n" 
+                        + "\tIt seems you are new here. " 
+                        + "We are happy to have you join the Lichess 45+45 League.\n"
+                        + "\tMy name is Chesster. I am a bot. " 
+                        + "I was created to help moderate the league. " 
+                        + "It is my job to welcome you and to share with you " 
+                        + "some resources with which you should familiarize yourself.\n" 
+                        + "\tPlease read our Starter Guide and Rules documents. " 
+                        + "They will give you a better idea how this league works.\n" 
+                        + "\tIf you have not already, I suggest downloading the Slack App: " 
+                        + "https://slack.com/downloads so you can stay " 
+                        + "connected with the league. It is the easiest way for most "
+                        + "of us to communicate and you will find that many of us "
+                        + "are active in this community every day. Make yourself at home.");
+                convo.say(STARTER_URL);
+                convo.say(RULES_URL);
+                convo.say("\tIf there is anything else I can help you with, do not hesitate to ask. " 
+                        + "You can send me a direct message in this private channel. " 
+                        + "Just say `commands` to see a list of ways that I can help you.\n" 
+                        + "\tIf there is ANYTHING else, dont hesitate to reach out to the moderators. " 
+                        + "We love to help out. Say `mods` to get a list.");
+            });
         }
     });
 });
@@ -840,7 +862,7 @@ controller.hears([
 	"direct_mention"
 ], function(bot, message){
     exception_handler(bot, message, function(){
-        bot.reply(message, "As a computer, I am not great at understanding tone. Whether this was postive, negative, constructive or deconstructive feedback, I cannot tell. But regardless, I am quite glad you took the time to leave it for me. \n\nWith love and admiration,\nChesster.");
+        bot.reply(message, "As a computer, I am not great at understanding tone. Whether this was positive, negative, constructive or deconstructive feedback, I cannot tell. But regardless, I am quite glad you took the time to leave it for me. \n\nWith love and admiration,\nChesster.");
         var feedback_log = "Receieved new feedback:" + 
                            "\nMessage: " + JSON.stringify(message) + "\n\n";
        fs.appendFile("./feedback_log", feedback_log, function(err) {
