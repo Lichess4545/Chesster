@@ -5,7 +5,7 @@ var fs = require('fs');
 
 var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs";
 var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
-var STARTER_URL = "https://lichess4545.slack.com/files/endrawes0/F0UNYSFD2/lichess4545leagueplayerguide";
+var STARTER_URL = "https://lichess4545.slack.com/files/endrawes0/F0W382170/lichess4545leagueplayerguide";
 var CAPTAINS_URL = "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc";
 
 var TEAM_NAME = 1;
@@ -95,13 +95,31 @@ controller.hears([
 });
 
 /* captains */
+function prepareCaptainsGuidelines(){
+    return "Here are the captain's guidelines:\n" + CAPTAINS_URL;
+}
+
+function sayCaptainsGuidelnes(convo){
+    convo.say(prepareCaptainsGuidelines());
+}
 
 controller.hears([
-	'captains', 
-	'captain list'
+    'captain guidelines'
+], [
+    'direct_mention',
+    'direct_message'
+], function(bot, message){
+    exception_handler(bot, message, function(){
+        bot.reply(message, prepareCaptainsGuidelines());
+    });
+});
+
+controller.hears([
+    'captains', 
+    'captain list'
 ],[
-	'direct_mention', 
-	'direct_message'
+    'direct_mention', 
+    'direct_message'
 ],function(bot,message) {
     exception_handler(bot, message, function(){
         var self = this;
@@ -161,6 +179,7 @@ function sayCaptains(self, convo, callback){
 }
 
 /* rating */
+
 controller.hears([
 	'rating'
 ],[
@@ -204,11 +223,13 @@ function prepareRatingMessage(player, rating, convo){
 }
 
 /* commands */
+
 function prepareCommandsMessage(){
     return "I will respond to the following commands when they are spoken to " + 
 									  users.getIdString("chesster") + ": \n```" +
         "    [ help ]                       ! display an interactive guide\n" +
-        "    [ starter guide ]              ! get the starter guide link; thanks Gnarly\n" +
+        "    [ starter guide ]              ! get the starter guide link; thanks GnarlyGoat!\n" +
+        "    [ rules | regulations ]        ! get the rules and regulations.\n" + 
         "    [ pairings | standings ]       ! get pairings/standings spreadsheet link\n" +
         "    [ channels | \n" +
         "        channel list |             ! list the important channels\n" +
@@ -228,7 +249,7 @@ function prepareCommandsMessage(){
         "        team captain <team-name> ] ! name the captain of a given <team-name>\n" +
         "    [ captains | \n" +
         "        captain list |             ! list the team captains\n" +
-        "        captain <team-name> ]      ! name the captain for <team-name>\n" +
+        "        captain guidelines ]       ! get the team captain guidelines\n" +
         "    [ feedback <feedback>]         ! send @chesster some feedback (bug reports, \n" +
         "                                   ! suggestions, gratitude, etc)\n" +
         "    [ mods (lonewolf)| \n"  +
@@ -254,6 +275,7 @@ controller.hears([
 });
 
 /* mods */
+
 function prepareSummonModsMessage(){
     return "Summoning mods:" + 
 		users.getIdString("endrawes0") + ", " + 
@@ -289,21 +311,21 @@ function sayLoneWolfMods(convo){
 }
 
 controller.hears([
-	'mods summon lonewolf'
+    'mods summon lonewolf'
 ],[
-	'direct_mention', 
-	'direct_message'
+    'direct_mention', 
+    'direct_message'
 ],function(bot,message) {
-	exception_handler(bot, message, function(){
-		bot.reply(message, prepareSummonLoneWolfModsMessage());
-	});
+    exception_handler(bot, message, function(){
+        bot.reply(message, prepareSummonLoneWolfModsMessage());
+    });
 });
 
 controller.hears([
-	'mods summon'
+    'mods summon'
 ],[
-	'direct_mention', 
-	'direct_message'
+    'direct_mention', 
+    'direct_message'
 ],function(bot,message) {
     exception_handler(bot, message, function(){
         bot.reply(message, prepareSummonModsMessage());
@@ -334,6 +356,7 @@ function askAboutHelp(convo, more){
     convo.ask("How " + (more ? "else" : "") + " may I help you? \n" +
         "\tI'm new here... [ starter guide ] \n" +
         "\tI want to see [ pairings ] or [ standings ]. \n" +
+        "\tI want to see the [ rules ] and [ regulations ]. \n" +
         "\tWho are the [ mods ]? \n" +
         "\tWhat [ teams ] are competing? \n" +
         "\tWhat [ channels ] should I join?\n" +
@@ -484,10 +507,10 @@ function sayPairings(convo){
 }
 
 controller.hears([
-	'pairings'
+    'pairings'
 ],[
-	'direct_mention', 
-	'direct_message'
+    'direct_mention', 
+    'direct_message'
 ],function(bot, message) {
     exception_handler(bot, message, function(){
         bot.reply(message, preparePairingsMessage());
@@ -508,16 +531,37 @@ function sayStandings(convo){
 }
 
 controller.hears([
-	'standings'
+    'standings'
 ],[
-	'direct_mention', 
-	'direct_message'
+    'direct_mention', 
+    'direct_message'
 ],function(bot, message) {
     exception_handler(bot, message, function(){
         bot.reply(message, prepareStandingsMessage());
     });
 });
 
+/* rules */
+
+function prepareRulesMessage(){
+    return "Here are the rules and regulations:\n" + RULES_URL;
+}
+
+function sayRules(convo){
+    convo.say(prepareRulesMessage());
+}
+
+controller.hears([
+    'rules',
+    'regulations'
+], [
+    'direct_message',
+    'direct_mention'
+], function (bot, message){
+    exception_handler(bot, message, function(){
+        bot.reply(message, prepareRulesMessage());
+    });
+});
 /* done */
 
 function sayGoodbye(convo){
@@ -800,7 +844,7 @@ function getClassicalRating(opp, callback){
 
 controller.on('user_channel_join', function(bot, message) {
     exception_handler(bot, message, function(){
-        if(message.channel == channels.getId("unstable_bot")){
+        if(message.channel == channels.getId("general")){
             bot.reply(message, "Everyone, please welcome the newest member of the " 
                              + "Lichess 45+45 League, <@" + message.user + ">!");
             
