@@ -7,6 +7,7 @@ var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lich
 var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
 var STARTER_URL = "https://lichess4545.slack.com/files/endrawes0/F0W382170/lichess4545leagueplayerguide";
 var CAPTAINS_URL = "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc";
+var REGISTRATION_URL = "https://docs.google.com/a/georgetown.edu/forms/d/1u-fjOm1Mouz8J7WAsPhB1CJpB3k10FSp4-fZ-bwvykY/viewform";
 
 var TEAM_NAME = 1;
 var BOARD_1_NAME = 2;
@@ -348,7 +349,7 @@ controller.hears(['mods', 'mod list'],['direct_mention', 'direct_message'],funct
 
 controller.hears(['help'],['direct_mention', 'direct_message'],function(bot,message) {
     exception_handler(bot, message, function(){
-        bot.startConversation(message, howMayIHelpYou);
+        bot.startPrivateConversation(message, howMayIHelpYou);
     });
 });
 
@@ -362,6 +363,7 @@ function askAboutHelp(convo, more){
         "\tWhat [ channels ] should I join?\n" +
         "\tWhat [ commands ] do you respond to?\n" +
         "\tI have a question... [faq]\n" +
+        "\tHow do I [ sign up ] to play?\n" +
         "\tNothing further. I am [ done ].\n" +
         "Note: all options work as 'standalone' commands. Try: [@chesster <command>] from outside the help dialog.", 
         function(response, convo) {
@@ -394,6 +396,10 @@ var responses = {
     },
     "faq": function(convo){
         convo.say("https://docs.google.com/document/d/11c_c711YRsOKw9XrEUgJ8-fBYDAmCpSkLytwcxlmn-A");
+        askAboutHelp(convo, true);
+    },
+    "sign up": function(convo){
+        sayRegistrationMessage(convo);
         askAboutHelp(convo, true);
     },
     "teams": function(convo){
@@ -932,12 +938,35 @@ controller.hears([
     });
 });
 
+/* registration */
+
+function sayRegistrationMessage(convo){
+    convo.say(prepareRegistrationMessage());
+}
+
+function prepareRegistrationMessage(){
+    return "You can sign up for Season 3 here: " + REGISTRATION_URL;
+}
+
+controller.hears([
+    "registration",
+    "register",
+    "sign up"
+], [
+    'direct_message',
+    'direct_mention'
+], function(bot, message){
+    exception_handler(bot, message, function(){
+        bot.reply(message, prepareRegistrationMessage());
+    });
+});
+
 /* challenges */
 
 //http --form POST en.l.org/setup/friend?user=usernameOrId variant=1 clock=false time=60 increment=60 color=random 'Accept:application/vnd.lichess.v1+json'
 
 controller.hears([
-	'thanks'
+	'challenge'
 ], [
 	'direct_mention', 
 	'direct_message'
@@ -980,4 +1009,3 @@ controller.hears([
         bot.reply(message, "It is my pleasure to serve you!");
     });
 });
-
