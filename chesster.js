@@ -255,7 +255,10 @@ function prepareCommandsMessage(){
         "                                   ! suggestions, gratitude, etc)\n" +
         "    [ mods (lonewolf)| \n"  +
         "        mod list (lonewolf)|       ! list the mods (without summoning)\n" +
-        "        mods summon (lonewolf)]    ! summon the mods"+
+        "        mods summon (lonewolf)]    ! summon the mods\n" +
+        "    [ faq ]                        ! a document of frequently asked questions\n" + 
+        "    [ registration | sign up ]     ! registration form to play in our league\n" +
+        "    [ changelog ]                  ! list a log of changes to Chesster \n" +
         "```\n";
 }
 
@@ -1009,3 +1012,23 @@ controller.hears([
         bot.reply(message, "It is my pleasure to serve you!");
     });
 });
+
+/* changelog */
+
+controller.hears([
+    "changelog",
+], [
+    'direct_message',
+    'direct_mention'
+], function(bot, message){
+    exception_handler(bot, message, function(){
+        fs.readFile("./changelog", 'utf8', function(err, data) {
+            if(err) {
+                throw err;
+            }else{
+                bot.reply(message, data);
+            }
+        });
+    });
+});
+
