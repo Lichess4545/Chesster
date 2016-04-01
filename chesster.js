@@ -8,6 +8,7 @@ var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess45
 var STARTER_URL = "https://lichess4545.slack.com/files/endrawes0/F0W382170/lichess4545leagueplayerguide";
 var CAPTAINS_URL = "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc";
 var REGISTRATION_URL = "https://docs.google.com/a/georgetown.edu/forms/d/1u-fjOm1Mouz8J7WAsPhB1CJpB3k10FSp4-fZ-bwvykY/viewform";
+var GITHUB_URL = "https://github.com/endrawes0/Chesster";
 
 var TEAM_NAME = 1;
 var BOARD_1_NAME = 2;
@@ -259,6 +260,7 @@ function prepareCommandsMessage(){
         "    [ faq ]                        ! a document of frequently asked questions\n" + 
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
         "    [ changelog ]                  ! list a log of changes to Chesster \n" +
+        "    [ source ]                     ! github repo for Chesster \n" +
         "```\n";
 }
 
@@ -1029,6 +1031,19 @@ controller.hears([
                 bot.reply(message, data);
             }
         });
+    });
+});
+
+/* source */
+
+controller.hears([
+    "source",
+], [
+    'direct_message',
+    'direct_mention'
+], function(bot, message){
+    exception_handler(bot, message, function(){
+        bot.reply(message, GITHUB_URL);
     });
 });
 
