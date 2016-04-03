@@ -12,7 +12,7 @@ var GITHUB_URL = "https://github.com/endrawes0/Chesster";
 
 var TEAM_NAME = 1;
 var TEAM_START_ROW = 2;
-var TEAM_END_ROW = 25;
+var TEAM_END_ROW = 27;
 var BOARD_1_NAME = 2;
 var BOARD_1_RATING = 4;
 var BOARD_2_NAME = 5;
@@ -256,6 +256,7 @@ function prepareCommandsMessage(){
         "    [ captains | \n" +
         "        captain list |             ! list the team captains\n" +
         "        captain guidelines ]       ! get the team captain guidelines\n" +
+        "    [ board <number> ]             ! get a sorted list of players by board\n" +
         "    [ feedback <feedback>]         ! send @chesster some feedback (bug reports, \n" +
         "                                   ! suggestions, gratitude, etc)\n" +
         "    [ mods (lonewolf)| \n"  +
@@ -589,7 +590,7 @@ function sayGoodbye(convo){
 function loadSheet(self, callback){
     var doc = new GoogleSpreadsheet('1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4');
     doc.getInfo(function(err, info) {
-        self.sheet = info.worksheets[3];                    
+        self.sheet = info.worksheets[4];                    
         callback();
     });
 }
@@ -823,7 +824,7 @@ controller.hears([
                 });
             });
         }else{
-            bot.reply(message, "Which team did you say? [ team members <team-name>. Please try again.]");
+            bot.reply(message, "Which team did you say? [ team members <team-name> ]. Please try again.");
         }
     });
 });
@@ -982,41 +983,6 @@ controller.hears([
 	'direct_message'
 ], function(bot,message) {
     exception_handler(bot, message, function(){
-        var postData = querystring.stringify({
-          'msg' : 'Hello World!'
-        });
-
-        var options = {
-          hostname: 'www.google.com',
-          port: 80,
-          path: '/upload',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': postData.length
-          }
-        };
-
-        var req = http.request(options, (res) => {
-          console.log(`STATUS: ${res.statusCode}`);
-          console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
-          res.setEncoding('utf8');
-          res.on('data', (chunk) => {
-            console.log(`BODY: ${chunk}`);
-          });
-          res.on('end', () => {
-            console.log('No more data in response.')
-          })
-        });
-
-        req.on('error', (e) => {
-          console.log(`problem with request: ${e.message}`);
-        });
-
-        // write data to request body
-        req.write(postData);
-        req.end();
-        bot.reply(message, "It is my pleasure to serve you!");
     });
 });
 
@@ -1052,3 +1018,64 @@ controller.hears([
     });
 });
 
+/* board */
+
+function getBoard(self, callback){
+    self.players = [];
+    var board_name = BOARD_1_NAME + ((self.board_number - 1) * 3);
+    var board_rating = BOARD_1_RATING + ((self.board_number - 1) * 3);
+    self.sheet.getCells({
+        "min-row": TEAM_START_ROW,
+        "max-row": TEAM_END_ROW, 
+        "min-col": TEAM_NAME,
+        "max-col": board_rating,
+    }, function(err, cells) {
+        var num_cells = cells.length;
+        for(var ci = 0; ci < num_cells; ++ci){
+            var cell = cells[ci];
+            var team_number = cell.row - TEAM_START_ROW;
+            var player = createOrGetMember(self.players, team_number);
+            switch(cell.col){
+                case TEAM_NAME:
+                    player.team = cell.value;
+                case board_name: 
+                    player.name = cell.value.replace("*", "");    
+                case board_rating:
+                    player.rating = cell.value;
+            }
+        }
+        callback();
+    });
+}
+
+function prepareBoardResponse(self){
+    var message = "Board " + self.board_number + " consists of... \n";
+    self.players.sort(function(e1, e2){
+        return e1.rating > e2.rating ? -1 : e1.rating < e2.rating ? 1 : 0;
+    });
+    self.players.forEach(function(member, index, array){
+        message += "\t" + member.name + ": (Rating: " + member.rating + "; Team: " + member.team + ")\n";
+    });
+    return message;
+}
+
+controller.hears([
+	'board'
+],[
+	'direct_mention', 
+	'direct_message'
+], function(bot, message) {
+    exception_handler(bot, message, function(){
+        var self = this;
+        self.board_number = parseInt(message.text.split(" ")[1]);
+        if(self.board_number && !isNaN(self.board_number)){
+	    loadSheet(self, function(){
+	        getBoard(self, function(){
+                    bot.reply(message, prepareBoardResponse(self));
+                });
+            });
+        }else{
+            bot.reply(message, "Which board did you say? [ board <number> ]. Please try again.");
+        }
+    });
+});
