@@ -11,6 +11,8 @@ var REGISTRATION_URL = "https://docs.google.com/a/georgetown.edu/forms/d/1u-fjOm
 var GITHUB_URL = "https://github.com/endrawes0/Chesster";
 
 var TEAM_NAME = 1;
+var TEAM_START_ROW = 2;
+var TEAM_END_ROW = 25;
 var BOARD_1_NAME = 2;
 var BOARD_1_RATING = 4;
 var BOARD_2_NAME = 5;
@@ -97,6 +99,7 @@ controller.hears([
 });
 
 /* captains */
+
 function prepareCaptainsGuidelines(){
     return "Here are the captain's guidelines:\n" + CAPTAINS_URL;
 }
@@ -137,8 +140,8 @@ controller.hears([
 
 function getCaptains(self, callback){
     self.sheet.getCells({
-        "min-row": 3,
-        "max-row": 30,
+        "min-row": TEAM_START_ROW,
+        "max-row": TEAM_END_ROW,
         "min-col": BOARD_1_NAME, 
         "max-col": BOARD_6_NAME,
 	"return-empty": true,
@@ -146,7 +149,7 @@ function getCaptains(self, callback){
         var num_cells = cells.length;
         for(var ci in cells){
             var cell = cells[ci];
-            var team_index = cell.row - 3; // number of rows before team name start
+            var team_index = cell.row - TEAM_START_ROW; // number of rows before team name start
             switch(cell.col){
                 case BOARD_1_NAME:
                 case BOARD_2_NAME:
@@ -169,8 +172,9 @@ function getCaptains(self, callback){
 
 function prepareCaptainsMessage(teams){
     var message = "Team Captains:\n";
+    var teamIndex = 1;
     teams.forEach(function(team, index, array){
-        message += "\t" + team.name + ": " + (team.captain || "Unchosen") + "\n";
+        message += "\t" + (teamIndex++) + ". " + team.name + ": " + (team.captain || "Unchosen") + "\n";
     });
     return message;
 }
@@ -628,7 +632,7 @@ function exception_handler(bot, message, todo){
 function getTeams(self, callback){
     self.teams = [];
     self.sheet.getCells({
-        "min-row": 2,
+        "min-row": TEAM_START_ROW,
         "min-col": TEAM_NAME, 
         "max-col": TEAM_NAME,
         "return-empty": true,
@@ -652,8 +656,9 @@ function sayTeams(self, convo){
 
 function prepareTeamsMessage(self){
     var message = "There are currently " + self.teams.length + " teams competing. \n";
+    var teamIndex = 1;
     self.teams.forEach(function(team, index, array){
-        message += "\t" + team.name + "\n";
+        message += "\t" + (teamIndex++) + ". " + team.name + "\n";
     });
     return message;
 }
@@ -720,9 +725,9 @@ function createOrGetMember(memberList, i){
 function getMembers(self, callback){
     self.members = [];
     self.sheet.getCells({
-        "min-row": 2,
-        "min-col":TEAM_NAME, 
-        "max-col":BOARD_6_NAME,
+        "min-row": TEAM_START_ROW,
+        "min-col": TEAM_NAME, 
+        "max-col": BOARD_6_NAME,
     }, function(err, cells) {
         var num_cells = cells.length;
         var team_row = -1;
