@@ -462,16 +462,11 @@ function prepareChannelDetailMessage(channel){
 			"the league. Any general league discussion can be done there. If conversation is not " +
 			"league related, please go to " + channels.getIdString("random") + 
 			" or create a new channel.",
-        "team-results": "Post results here.\n\tFormat: \"@white v @black, <result>\", " + 
-			"where <result> in {1-0, 1/2-1/2, 0-1}",
         "team-scheduling": "Put the time of your scheduled games here." + 
 			"\n\tFormat: \"@white v @black, mm/dd @ HH:MM\" (all times GMT)",
         "team-gamelinks": "Post links to lichess, league games here.",
-        "team-results": "Post LoneWolf results here."
+        "team-results": "Post results here."
 			+ "\n\tFormat: \"@white v @black, <result>\", where <result> in {1-0, 1/2-1/2, 0-1}",
-        "team-scheduling": "Put the time of your scheduled LoneWolf games here." + 
-			"\n\tFormat: \"@white v @black, mm/dd @ HH:MM\" (all times GMT)",
-        "team-gamelinks": "Post links to lichess, LoneWolf games here.",
         "random": "Anything can be discussed here. " + 
 			"And if it is not league related, it belongs in here.",
         "default": "I am sorry. I do not recognize that channel.",
