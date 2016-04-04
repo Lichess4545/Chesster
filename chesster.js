@@ -31,13 +31,15 @@ var LONEWOLF_CHANNEL_NAMES = [
     "lonewolf-general",
     "lonewolf-gamelinks",
     "lonewolf-schedule",
-    "lonewolf-results"
+    "lonewolf-results",
+    "unstable_bot-lonewolf"
 ];
 var TEAM_CHANNEL_NAMES = [
     "general",
     "team-gamelinks",
     "team-schedule",
-    "team-results"
+    "team-results",
+    "unstable_bot"
 ];
 var LONEWOLF_TARGETS = LONEWOLF_CHANNEL_NAMES.concat([
     "lonewolf",
@@ -108,7 +110,8 @@ var get_command_and_targets = function(message, commands, arg_string) {
     var target = "general";
     var channel = channelsByID[message.channel];
     if (channel && channel.name) {
-        target = channel;
+        target = channel.name;
+        console.log("Setting target to: ", channel.name);
     }
     var args = arg_string;
     if (args) {
