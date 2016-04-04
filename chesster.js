@@ -1,5 +1,5 @@
 var async = require("async");
-var Botkit = require('../node_modules/botkit/lib/Botkit.js');
+var Botkit = require('botkit');
 var GoogleSpreadsheet = require("google-spreadsheet");
 var fs = require('fs');
 
