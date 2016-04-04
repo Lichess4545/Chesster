@@ -2,6 +2,7 @@ var async = require("async");
 var Botkit = require('botkit');
 var GoogleSpreadsheet = require("google-spreadsheet");
 var fs = require('fs');
+var levenshtein = require('fast-levenshtein');
 
 var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs";
 var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
@@ -25,6 +26,32 @@ var BOARD_5_NAME = 14;
 var BOARD_5_RATING = 16;
 var BOARD_6_NAME = 17;
 var BOARD_6_RATING = 19;
+
+var LONEWOLF_CHANNEL_NAMES = [
+    "lonewolf-general",
+    "lonewolf-gamelinks",
+    "lonewolf-schedule",
+    "lonewolf-results"
+];
+var TEAM_CHANNEL_NAMES = [
+    "general",
+    "team-gamelinks",
+    "team-schedule",
+    "team-results"
+];
+var LONEWOLF_TARGETS = LONEWOLF_CHANNEL_NAMES.concat([
+    "lonewolf",
+    "lone",
+    "wolf",
+    "lw",
+    "30",
+    "3030",
+]);
+var TEAM_TARGETS = TEAM_CHANNEL_NAMES.concat([
+    "team",
+    "45",
+    "4545",
+]);
 
 if (!process.env.token) {
   console.log('Error: Specify token in environment');
@@ -51,6 +78,94 @@ var channels = {
         return "<#"+this.getId(name)+">";
     }
 };
+var channelsByID = { };
+
+
+var fuzzy_match = function (search_string, targets) {
+    if (!targets) { return null; } // TODO: not sure this is the right choice ...
+    var results = [];
+    targets.forEach(function(item) {
+        var distance = levenshtein.get(search_string, item);
+        results.push([distance, item]);
+    });
+    results.sort(function(a,b) {
+        return a[0] - b[0];
+    });
+    var choices = [];
+    var min_distance = results[0][0];
+    results.forEach(function(item) {
+        var distance = item[0];
+        var match = item[1];
+        if (distance == min_distance) {
+            choices.push(match);
+        }
+    });
+
+    return choices;
+}
+var get_command_and_targets = function(message, commands, arg_string) {
+    var command = commands[0];
+    var target = "general";
+    var channel = channelsByID[message.channel];
+    if (channel && channel.name) {
+        target = channel;
+    }
+    var args = arg_string;
+    if (args) {
+        args = args.split(" ");
+        if (args.length > 2) {
+            console.log("too many arguments to determine target / or command: ", arg_string);
+            return {
+                command: null,
+                target: null
+            };
+        }
+        args.forEach(function(item) {
+            var found = false;
+            commands.forEach(function(c) {
+                if (found) { return; }
+                if (levenshtein.get(c, item) < c.length / 2) {
+                    found = true;
+                    command = item;
+                }
+            });
+            if (!found) {
+                target = item;
+            }
+        });
+    }
+    command = fuzzy_match(command, commands);
+    target = fuzzy_match(target, LONEWOLF_TARGETS.concat(TEAM_TARGETS));
+    if (command.length > 1) {
+        console.log("Ambiguous command: ", command, target);
+        return {
+            command: null,
+            target: null
+        };
+    }
+    command = command[0];
+    var team_votes = 0;
+    var wolf_votes = 0;
+    target.forEach(function(item) {
+        var is_team = TEAM_TARGETS.indexOf(item) > -1;
+        var is_lonewolf = LONEWOLF_TARGETS.indexOf(item) > -1;
+        if (is_team) team_votes++;
+        if (is_lonewolf) wolf_votes++;
+
+    });
+    var retval = {
+        command: command,
+        target: null,
+    };
+    if (team_votes == wolf_votes) {
+        console.log("Ambiguous target!");
+    } else if (team_votes > wolf_votes) {
+        retval.target = "team";
+    } else if (wolf_votes > team_votes) {
+        retval.target = "lonewolf";
+    }
+    return retval;
+}
 
 controller.spawn({
   token: process.env.token
@@ -74,6 +189,7 @@ controller.spawn({
             for (var i = 0; i < total; i++) {
                 var channel = response.channels[i];
                 channels[channel.name] = channel;
+                channelsByID[channel.id] = channel;
             }
         }
         console.log("info: got channels");
@@ -322,36 +438,33 @@ function sayLoneWolfMods(convo){
 }
 
 controller.hears([
-    'mods summon lonewolf'
-],[
+    "^mods$",
+    "^mods (.*)$",
+], [
     'direct_mention', 
     'direct_message'
-],function(bot,message) {
+], function(bot, message) {
     exception_handler(bot, message, function(){
-        bot.reply(message, prepareSummonLoneWolfModsMessage());
-    });
-});
-
-controller.hears([
-    'mods summon'
-],[
-    'direct_mention', 
-    'direct_message'
-],function(bot,message) {
-    exception_handler(bot, message, function(){
-        bot.reply(message, prepareSummonModsMessage());
-    });
-});
-
-controller.hears(['mods lonewolf', 'mod list lonewolf'],['direct_mention', 'direct_message'],function(bot,message) {
-    exception_handler(bot, message, function(){
-        bot.reply(message, prepareLoneWolfModsMessage());
-    });
-});
-
-controller.hears(['mods', 'mod list'],['direct_mention', 'direct_message'],function(bot,message) {
-    exception_handler(bot, message, function(){
-        bot.reply(message, prepareModsMessage());
+        var results = get_command_and_targets(message, ["list", "summon"], message.match[1]);
+        var command = results.command;
+        var target = results.target;
+        if (!target) {
+            console.log("Error determining which tournament to target for mods command");
+        } else if (target == "team") {
+            if (command == "list") {
+                bot.reply(message, prepareModsMessage());
+            } else if (command == "summon") {
+                bot.reply(message, prepareSummonModsMessage());
+            }
+        } else if (target == "lonewolf") {
+            if (command == "list") {
+                bot.reply(message, prepareLoneWolfModsMessage());
+            } else if (command == "summon") {
+                bot.reply(message, prepareSummonLoneWolfModsMessage());
+            }
+        } else {
+            console.log("Unable to determine target");
+        }
     });
 });
 
@@ -610,6 +723,7 @@ function exception_handler(bot, message, todo){
             "\nDatetime: " + new Date() + 
             "\nMessage: " +  JSON.stringify(message) + 
             "\nError: " + JSON.stringify(e) + 
+            "\nStack: " + e.stack +
             "\n\n";
         console.log(error_log);
         fs.appendFile("./errors_log", error_log, function(err) {

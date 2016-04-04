@@ -6,6 +6,6 @@ ln -s /vagrant/ /home/vagrant/modster
 cd ~/modster
 npm install --save botkit
 npm install --save async
-npm install --save levenshtein
+npm install --save fast-levenshtein
 npm install --save google-spreadsheet
 
