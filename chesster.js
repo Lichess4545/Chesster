@@ -440,12 +440,15 @@ function sayLoneWolfMods(convo){
 controller.hears([
     "^mods$",
     "^mods (.*)$",
+    "^(.*) mods (.*)$",
+    "^(.*) mods$"
 ], [
     'direct_mention', 
     'direct_message'
 ], function(bot, message) {
     exception_handler(bot, message, function(){
-        var results = get_command_and_targets(message, ["list", "summon"], message.match[1]);
+        var args = message.match.slice(1).join(" ");
+        var results = get_command_and_targets(message, ["list", "summon"], args);
         var command = results.command;
         var target = results.target;
         if (!target) {
