@@ -114,7 +114,6 @@ function get_command_and_targets(message, commands, arg_string) {
     var channel = channelsByID[message.channel];
     if (channel && channel.name) {
         target = channel.name;
-        console.log("Setting target to: ", channel.name);
     }
     var args = arg_string;
     if (args) {
