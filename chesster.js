@@ -36,6 +36,7 @@ var LONEWOLF_CHANNEL_NAMES = [
 ];
 var TEAM_CHANNEL_NAMES = [
     "general",
+    "team-general",
     "team-gamelinks",
     "team-schedule",
     "team-results",
@@ -83,8 +84,10 @@ var channels = {
 var channelsByID = { };
 
 
-var fuzzy_match = function (search_string, targets) {
-    if (!targets) { return null; } // TODO: not sure this is the right choice ...
+function fuzzy_match(search_string, targets) {
+    if (!targets) { 
+        throw new Error("fuzzy_match: No targets provided");
+    }
     var results = [];
     targets.forEach(function(item) {
         var distance = levenshtein.get(search_string, item);
@@ -105,7 +108,7 @@ var fuzzy_match = function (search_string, targets) {
 
     return choices;
 }
-var get_command_and_targets = function(message, commands, arg_string) {
+function get_command_and_targets(message, commands, arg_string) {
     var command = commands[0];
     var target = "general";
     var channel = channelsByID[message.channel];
@@ -117,11 +120,7 @@ var get_command_and_targets = function(message, commands, arg_string) {
     if (args) {
         args = args.split(" ");
         if (args.length > 2) {
-            console.log("too many arguments to determine target / or command: ", arg_string);
-            return {
-                command: null,
-                target: null
-            };
+            throw new Error("too many arguments to determine target / or command: ", arg_string);
         }
         args.forEach(function(item) {
             var found = false;
