@@ -585,7 +585,11 @@ function sayGoodbye(convo){
 function loadSheet(self, callback){
     var doc = new GoogleSpreadsheet('1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4');
     doc.getInfo(function(err, info) {
-        self.sheet = info.worksheets[4];                    
+        for(var wi in info.worksheets){
+            if(info.worksheets[wi].title == "Rosters"){
+                self.sheet = info.worksheets[wi];
+            }
+        }
         callback();
     });
 }
@@ -722,6 +726,7 @@ function getMembers(self, callback){
     self.members = [];
     self.sheet.getCells({
         "min-row": TEAM_START_ROW,
+        "max-row": TEAM_END_ROW,
         "min-col": TEAM_NAME, 
         "max-col": BOARD_6_NAME,
     }, function(err, cells) {
@@ -730,7 +735,7 @@ function getMembers(self, callback){
         for(var ci = 0; ci < num_cells; ++ci){
             var cell = cells[ci];
             if(cell.col == TEAM_NAME){
-                if(cell.value == self.team_name){
+                if(cell.value.toUpperCase() == self.team_name.toUpperCase()){
                     team_row = cell.row;
                     break;
                 }
@@ -802,20 +807,24 @@ controller.hears([
         if(self.team_name && self.team_name != ""){
 	    loadSheet(self, function(){
 	        getMembers(self, function(){
-	            async.series([
-	                playerRatingAsyncJob(self.members[0]),
-                        playerRatingAsyncJob(self.members[1]),
-                        playerRatingAsyncJob(self.members[2]),
-                        playerRatingAsyncJob(self.members[3]),
-                        playerRatingAsyncJob(self.members[4]),
-                        playerRatingAsyncJob(self.members[5]),
-                    ], function(err){
-                       if(!err){
-                           bot.reply(message, prepareMembersResponse(self));
-                       }else{
-                           bot.reply(message, err);
-                       }
-                    });
+	            if(self.members.length == 6){
+                        async.series([
+                            playerRatingAsyncJob(self.members[0]),
+                            playerRatingAsyncJob(self.members[1]),
+                            playerRatingAsyncJob(self.members[2]),
+                            playerRatingAsyncJob(self.members[3]),
+                            playerRatingAsyncJob(self.members[4]),
+                            playerRatingAsyncJob(self.members[5]),
+                        ], function(err){
+                            if(!err){
+                                bot.reply(message, prepareMembersResponse(self));
+                            }else{
+                                bot.reply(message, err);
+                            }
+                        });
+                    }else{
+                        bot.reply(message, "I could not find that team.");
+                    }
                 });
             });
         }else{
