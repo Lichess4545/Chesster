@@ -36,7 +36,7 @@ Vagrant.configure(2) do |config|
      vb.memory = 2048
   end
 
-  config.vm.hostname = "modster"
+  config.vm.hostname = "chesster"
 
 
   config.vm.provision :shell, :path => "./vagrant-dependencies.sh"
