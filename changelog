@@ -11,3 +11,10 @@ April 3, 2015:
 3. Fixed for 26 teams
 4. Added board commands
 5. Fixed LoneWolf/Team Typo in Channel Details
+
+April 9, 2015:
+1. Fixed Worksheet to be based on name
+2. Added refresh for users and channels
+3. Refactored fuzzy matching
+4. Updated to JSON configuration files
+5. ADded PING for RTM
