@@ -30,9 +30,8 @@ var BOARD_5_RATING = 16;
 var BOARD_6_NAME = 17;
 var BOARD_6_RATING = 19;
 
-var config;
-
 /* exception handling */
+/* later this will move it its own module */
 
 function exception_handler(todo, on_error){
     try{
@@ -71,6 +70,8 @@ function critical_path(todo){
 
 /* static entry point */
 
+var config;
+
 exception_handler(function(){ 
     var config_file = process.argv[2] || "config.json";
 
@@ -101,6 +102,7 @@ var users = {
 };
 var channels = {
     list: [],
+    byId: {},
     getId: function(name){
         return this.list[name].id;
     },
@@ -108,9 +110,8 @@ var channels = {
         return "<#"+this.getId(name)+">";
     }
 };
-var channelsByID = {};
 
-function update_users(bot, do_after){
+function update_users(bot){
     users.list = [];
     // @ https://api.slack.com/methods/users.list
     bot.api.users.list({}, function (err, response) {
@@ -126,12 +127,12 @@ function update_users(bot, do_after){
             }
         }
         console.log("info: got users");
-        do_after && do_after();
     });
 }
 
-function update_channels(bot, do_after){
+function update_channels(bot){
     channels.list = [];
+    channels.byId = [];
     // @ https://api.slack.com/methods/channels.list
     bot.api.channels.list({}, function (err, response) {
         if (err) {
@@ -143,11 +144,10 @@ function update_channels(bot, do_after){
             for (var i = 0; i < total; i++) {
                 var channel = response.channels[i];
                 channels.list[channel.name] = channel;
-                 channelsByID[channel.id] = channel;
+                 channels.byId[channel.id] = channel;
             }
         }
         console.log("info: got channels");
-        do_after && do_after(bot);
     });
 
 }
@@ -436,7 +436,7 @@ controller.hears([
 ], function(bot, message) {
     bot_exception_handler(bot, message, function(){
         var args = message.match.slice(1).join(" ");
-        var results = fuzzy.match(message, ["list", "summon"], channelsByID, args);
+        var results = fuzzy.match(message, ["list", "summon"], channels.byId, args);
         var command = results.command;
         var target = results.target;
         if (!target) {
