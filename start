@@ -1,3 +1,2 @@
 #!/bin/bash
-source ~/key.sh
-node chesster.js
+node chesster.js $1
