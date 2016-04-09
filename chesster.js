@@ -2,8 +2,6 @@ var async = require("async");
 var Botkit = require('botkit');
 var GoogleSpreadsheet = require("google-spreadsheet");
 var fs = require('fs');
-var spawn = require('threads').spawn;
-var sleep = require('sleep');
 var fuzzy = require('./fuzzy_match.js');
 
 console.log(JSON.stringify(fuzzy));
@@ -157,11 +155,9 @@ function update_channels(bot, do_after){
 }
 
 /* 
-   spawns a new thread 
    updates the user list
    updates the channel lists
-   sleeps for 30 seconds
-   then repeats
+   then repeats in new threat
    
    if it encounters an error it will exit the process with exit code 1
 */
