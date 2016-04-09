@@ -4,8 +4,6 @@ var GoogleSpreadsheet = require("google-spreadsheet");
 var fs = require('fs');
 var fuzzy = require('./fuzzy_match.js');
 
-console.log(JSON.stringify(fuzzy));
-
 var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs";
 var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
 var STARTER_URL = "https://lichess4545.slack.com/files/endrawes0/F0W382170/lichess4545leagueplayerguide";
