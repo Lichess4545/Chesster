@@ -17,4 +17,4 @@ April 9, 2015:
 2. Added refresh for users and channels
 3. Refactored fuzzy matching
 4. Updated to JSON configuration files
-5. ADded PING for RTM
+5. Added PING for RTM
