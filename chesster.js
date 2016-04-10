@@ -2,7 +2,7 @@ var async = require("async");
 var Botkit = require('botkit');
 var GoogleSpreadsheet = require("google-spreadsheet");
 var fs = require('fs');
-var levenshtein = require('fast-levenshtein');
+var fuzzy = require('./fuzzy_match.js');
 
 var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs";
 var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
@@ -10,6 +10,9 @@ var STARTER_URL = "https://lichess4545.slack.com/files/endrawes0/F0W382170/liche
 var CAPTAINS_URL = "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc";
 var REGISTRATION_URL = "https://docs.google.com/a/georgetown.edu/forms/d/1u-fjOm1Mouz8J7WAsPhB1CJpB3k10FSp4-fZ-bwvykY/viewform";
 var GITHUB_URL = "https://github.com/endrawes0/Chesster";
+
+var MILISECOND = 1;
+var SECONDS = 1000 * MILISECOND;
 
 var TEAM_NAME = 1;
 var TEAM_START_ROW = 2;
@@ -27,38 +30,61 @@ var BOARD_5_RATING = 16;
 var BOARD_6_NAME = 17;
 var BOARD_6_RATING = 19;
 
-var LONEWOLF_CHANNEL_NAMES = [
-    "lonewolf-general",
-    "lonewolf-gamelinks",
-    "lonewolf-schedule",
-    "lonewolf-results",
-    "unstable_bot-lonewolf"
-];
-var TEAM_CHANNEL_NAMES = [
-    "general",
-    "team-general",
-    "team-gamelinks",
-    "team-schedule",
-    "team-results",
-    "unstable_bot"
-];
-var LONEWOLF_TARGETS = LONEWOLF_CHANNEL_NAMES.concat([
-    "lonewolf",
-    "lone",
-    "wolf",
-    "lw",
-    "30",
-    "3030",
-]);
-var TEAM_TARGETS = TEAM_CHANNEL_NAMES.concat([
-    "team",
-    "45",
-    "4545",
-]);
+/* exception handling */
+/* later this will move it its own module */
 
-if (!process.env.token) {
-  console.log('Error: Specify token in environment');
-  process.exit(1);
+function exception_handler(todo, on_error){
+    try{
+       todo();
+    }catch(e){
+        var error_log = "An error occurred:" +
+            "\nDatetime: " + new Date() +
+            "\nError: " + JSON.stringify(e) +
+            "\nStack: " + e.stack;
+        console.log(error_log);
+        fs.appendFile("./errors_log", error_log, function(err) {
+            if(err) {
+                console.log("failed to write to the file...")
+                console.log(e);
+                return console.log(err);
+            }
+        });
+        on_error && on_error();
+        console.log("\n");
+    }
+}
+
+function bot_exception_handler(bot, message, todo){
+    exception_handler(todo, function(){
+        console.log("Message: " + JSON.stringify(message));
+        bot.reply(message, "Something has gone terribly terribly wrong. Please forgive me.");
+    });
+}
+
+function critical_path(todo){
+    exception_handler(todo, function(){
+        console.log("An exception was caught in a critical code-path. I am going down.");
+        process.exit(1);
+    });
+}
+
+/* static entry point */
+
+var config;
+
+exception_handler(function(){ 
+    var config_file = process.argv[2] || "config.json";
+
+    console.log("Loading configuration from " + config_file);
+    config = JSON.parse(fs.readFileSync(config_file, 'utf-8'));
+}, function(){
+    console.log("Failed to load config file.");
+    process.exit(1);
+});
+
+if (!config.token) { 
+    console.log('Failed to load token from: ' + config_file);
+    process.exit(1);
 }
 
 var controller = Botkit.slackbot({
@@ -66,138 +92,102 @@ var controller = Botkit.slackbot({
 });
 
 var users = {
+    byName: {},
     getId: function(name){
-        return this[name].id;
+        return this.byName[name].id;
     },
     getIdString: function(name){
         return "<@"+this.getId(name)+">";
     }
 };
 var channels = {
+    byName: {},
+    byId: {},
     getId: function(name){
-        return this[name].id;
+        return this.byName[name].id;
     },
     getIdString: function(name){
         return "<#"+this.getId(name)+">";
     }
 };
-var channelsByID = { };
 
-
-function fuzzy_match(search_string, targets) {
-    if (!targets) { 
-        throw new Error("fuzzy_match: No targets provided");
-    }
-    var results = [];
-    targets.forEach(function(item) {
-        var distance = levenshtein.get(search_string, item);
-        results.push([distance, item]);
-    });
-    results.sort(function(a,b) {
-        return a[0] - b[0];
-    });
-    var choices = [];
-    var min_distance = results[0][0];
-    results.forEach(function(item) {
-        var distance = item[0];
-        var match = item[1];
-        if (distance == min_distance) {
-            choices.push(match);
-        }
-    });
-
-    return choices;
-}
-function get_command_and_targets(message, commands, arg_string) {
-    var command = commands[0];
-    var target = "general";
-    var channel = channelsByID[message.channel];
-    if (channel && channel.name) {
-        target = channel.name;
-    }
-    var args = arg_string;
-    if (args) {
-        args = args.split(" ");
-        if (args.length > 2) {
-            throw new Error("too many arguments to determine target / or command: ", arg_string);
-        }
-        args.forEach(function(item) {
-            var found = false;
-            commands.forEach(function(c) {
-                if (found) { return; }
-                if (levenshtein.get(c, item) < c.length / 2) {
-                    found = true;
-                    command = item;
-                }
-            });
-            if (!found) {
-                target = item;
-            }
-        });
-    }
-    command = fuzzy_match(command, commands);
-    target = fuzzy_match(target, LONEWOLF_TARGETS.concat(TEAM_TARGETS));
-    if (command.length > 1) {
-        console.log("Ambiguous command: ", command, target);
-        return {
-            command: null,
-            target: null
-        };
-    }
-    command = command[0];
-    var team_votes = 0;
-    var wolf_votes = 0;
-    target.forEach(function(item) {
-        var is_team = TEAM_TARGETS.indexOf(item) > -1;
-        var is_lonewolf = LONEWOLF_TARGETS.indexOf(item) > -1;
-        if (is_team) team_votes++;
-        if (is_lonewolf) wolf_votes++;
-
-    });
-    var retval = {
-        command: command,
-        target: null,
-    };
-    if (team_votes == wolf_votes) {
-        console.log("Ambiguous target!");
-    } else if (team_votes > wolf_votes) {
-        retval.target = "team";
-    } else if (wolf_votes > team_votes) {
-        retval.target = "lonewolf";
-    }
-    return retval;
-}
-
-controller.spawn({
-  token: process.env.token
-}).startRTM(function(err, bot) {
+function update_users(bot){
     // @ https://api.slack.com/methods/users.list
     bot.api.users.list({}, function (err, response) {
+        if (err) {
+            throw new Error(err);
+        }
+
         if (response.hasOwnProperty('members') && response.ok) {
+            var byName = {};
             var total = response.members.length;
             for (var i = 0; i < total; i++) {
                 var member = response.members[i];
-                users[member.name] = member;
+                byName[member.name] = member;
             }
+            users.byName = byName;
         }
         console.log("info: got users");
     });
+}
 
+function update_channels(bot){
     // @ https://api.slack.com/methods/channels.list
     bot.api.channels.list({}, function (err, response) {
+        if (err) {
+            throw new Error(err);
+        }
+
         if (response.hasOwnProperty('channels') && response.ok) {
+            var byName = {};
+            var byId = {};
             var total = response.channels.length;
             for (var i = 0; i < total; i++) {
                 var channel = response.channels[i];
-                channels[channel.name] = channel;
-                channelsByID[channel.id] = channel;
+                byName[channel.name] = channel;
+                byId[channel.id] = channel;
             }
+            channels.byName = byName;
+            channels.byId = byId;
         }
         console.log("info: got channels");
     });
+
+}
+
+/* 
+   updates the user list
+   updates the channel lists
+   then repeats in new thread
+   
+   if it encounters an error it will exit the process with exit code 1
+*/
+var count = 0;
+function refresh(bot, delay) {
+    critical_path(function(){
+        console.log("doing refresh " + count++);
+        bot.rtm.ping();
+        
+        update_users(bot);
+        update_channels(bot);
+        setTimeout(function(){ 
+            refresh(bot, delay);
+        }, delay);
+    });
+}
+
+controller.spawn({
+  token: config.token
+}).startRTM(function(err, bot) {
+
     if (err) {
         throw new Error(err);
     }
+    
+    //refresh your user and channel list every 2 minutes
+    //would be nice if this was push model, not poll but oh well.
+    refresh(bot, 120 * SECONDS);
+
 });
 
 /* stop giritime */
@@ -207,7 +197,7 @@ controller.hears([
 ],[
 	'ambient'
 ],function(bot,message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         var response = "Stop... Giri Time!\n" + "Hi! Im Chesster. Ill be your new bot. " + 
 						"To interact with me, mention " + users.getIdString("chesster") + 
 						" in a message";
@@ -231,7 +221,7 @@ controller.hears([
     'direct_mention',
     'direct_message'
 ], function(bot, message){
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         bot.reply(message, prepareCaptainsGuidelines());
     });
 });
@@ -243,7 +233,7 @@ controller.hears([
     'direct_mention', 
     'direct_message'
 ],function(bot,message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         var self = this;
         loadSheet(self, function(){
             getTeams(self, function(){
@@ -309,7 +299,7 @@ controller.hears([
 	'direct_mention', 
 	'direct_message'
 ],function(bot,message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         var self = this;
         var player_name = message.text.split(" ").slice(1).join(" ");
         if(player_name && player_name != ""){
@@ -397,7 +387,7 @@ controller.hears([
 	'direct_mention', 
 	'direct_message'
 ], function(bot,message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         bot.reply(message, prepareCommandsMessage());
     });
 });
@@ -447,9 +437,9 @@ controller.hears([
     'direct_mention', 
     'direct_message'
 ], function(bot, message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         var args = message.match.slice(1).join(" ");
-        var results = get_command_and_targets(message, ["list", "summon"], args);
+        var results = fuzzy.match(message, ["list", "summon"], channels.byId, args);
         var command = results.command;
         var target = results.target;
         if (!target) {
@@ -475,7 +465,7 @@ controller.hears([
 /* help */
 
 controller.hears(['help'],['direct_mention', 'direct_message'],function(bot,message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         bot.startPrivateConversation(message, howMayIHelpYou);
     });
 });
@@ -604,7 +594,7 @@ controller.hears([
 	'direct_mention', 
 	'direct_message'
 ],function(bot, message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         var self = this;
         bot.reply(message, prepareChannelListMessage());
     });
@@ -615,7 +605,7 @@ controller.hears([
 ],[
 	'direct_mention'
 ],function(bot, message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         var channel_name = message.text.split(" ").slice(2).join(" ");
         bot.reply(message, prepareChannelDetailMessage(channel_name));
     });
@@ -640,7 +630,7 @@ controller.hears([
     'direct_mention', 
     'direct_message'
 ],function(bot, message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         bot.reply(message, preparePairingsMessage());
     });
 });
@@ -664,7 +654,7 @@ controller.hears([
     'direct_mention', 
     'direct_message'
 ],function(bot, message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         bot.reply(message, prepareStandingsMessage());
     });
 });
@@ -686,7 +676,7 @@ controller.hears([
     'direct_message',
     'direct_mention'
 ], function (bot, message){
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         bot.reply(message, prepareRulesMessage());
     });
 });
@@ -702,7 +692,11 @@ function sayGoodbye(convo){
 function loadSheet(self, callback){
     var doc = new GoogleSpreadsheet('1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4');
     doc.getInfo(function(err, info) {
-        self.sheet = info.worksheets[4];                    
+        for(var wi in info.worksheets){
+            if(info.worksheets[wi].title == "Rosters"){
+                self.sheet = info.worksheets[wi];
+            }
+        }
         callback();
     });
 }
@@ -714,32 +708,10 @@ controller.hears([
 ], [
 	"ambient"
 ], function(bot, message){
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         throw new Error("an error");
     });
 });
-
-function exception_handler(bot, message, todo){
-    try{
-        todo();
-    }catch(e){
-        var error_log = "An error occurred:" + 
-            "\nDatetime: " + new Date() + 
-            "\nMessage: " +  JSON.stringify(message) + 
-            "\nError: " + JSON.stringify(e) + 
-            "\nStack: " + e.stack +
-            "\n\n";
-        console.log(error_log);
-        fs.appendFile("./errors_log", error_log, function(err) {
-            if(err) {
-                console.log("failed to write to the file...")
-                console.log(e);
-                return console.log(err);
-            }            
-        }); 
-        bot.reply(message, "Something has gone terribly terribly wrong. Please forgive me.");
-    }
-}
 
 /* teams */
 
@@ -791,7 +763,7 @@ controller.hears([
 	'direct_mention', 
 	'direct_message'
 ], function(bot, message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         var self = this;
         var team_name = message.text.split(" ").slice(2).join(" ");
         loadSheet(self, function(){
@@ -817,7 +789,7 @@ controller.hears([
 	'direct_mention', 
 	'direct_message'
 ], function(bot,message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         var self = this;
         loadSheet(self, function(){
             getTeams(self, function(){
@@ -840,6 +812,7 @@ function getMembers(self, callback){
     self.members = [];
     self.sheet.getCells({
         "min-row": TEAM_START_ROW,
+        "max-row": TEAM_END_ROW,
         "min-col": TEAM_NAME, 
         "max-col": BOARD_6_NAME,
     }, function(err, cells) {
@@ -848,7 +821,7 @@ function getMembers(self, callback){
         for(var ci = 0; ci < num_cells; ++ci){
             var cell = cells[ci];
             if(cell.col == TEAM_NAME){
-                if(cell.value == self.team_name){
+                if(cell.value.toUpperCase() == self.team_name.toUpperCase()){
                     team_row = cell.row;
                     break;
                 }
@@ -914,26 +887,30 @@ controller.hears([
 	'direct_mention', 
 	'direct_message'
 ], function(bot, message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         var self = this;
         self.team_name = message.text.split(" ").slice(2).join(" ");
         if(self.team_name && self.team_name != ""){
 	    loadSheet(self, function(){
 	        getMembers(self, function(){
-	            async.series([
-	                playerRatingAsyncJob(self.members[0]),
-                        playerRatingAsyncJob(self.members[1]),
-                        playerRatingAsyncJob(self.members[2]),
-                        playerRatingAsyncJob(self.members[3]),
-                        playerRatingAsyncJob(self.members[4]),
-                        playerRatingAsyncJob(self.members[5]),
-                    ], function(err){
-                       if(!err){
-                           bot.reply(message, prepareMembersResponse(self));
-                       }else{
-                           bot.reply(message, err);
-                       }
-                    });
+	            if(self.members.length == 6){
+                        async.series([
+                            playerRatingAsyncJob(self.members[0]),
+                            playerRatingAsyncJob(self.members[1]),
+                            playerRatingAsyncJob(self.members[2]),
+                            playerRatingAsyncJob(self.members[3]),
+                            playerRatingAsyncJob(self.members[4]),
+                            playerRatingAsyncJob(self.members[5]),
+                        ], function(err){
+                            if(!err){
+                                bot.reply(message, prepareMembersResponse(self));
+                            }else{
+                                bot.reply(message, err);
+                            }
+                        });
+                    }else{
+                        bot.reply(message, "I could not find that team.");
+                    }
                 });
             });
         }else{
@@ -973,7 +950,7 @@ function getClassicalRating(opp, callback){
 /* welcome */
 
 controller.on('user_channel_join', function(bot, message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         if(message.channel == channels.getId("general")){
             bot.reply(message, "Everyone, please welcome the newest member of the " 
                              + "Lichess 45+45 League, <@" + message.user + ">!");
@@ -1022,7 +999,7 @@ controller.hears([
 	'direct_mention', 
 	'direct_message'
 ], function(bot,message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         bot.reply(message, prepareStarterGuideMessage());
         bot.reply(message, STARTER_URL);
     });
@@ -1035,7 +1012,7 @@ controller.hears([
 ], [
 	"direct_mention"
 ], function(bot, message){
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         bot.reply(message, "As a computer, I am not great at understanding tone. Whether this was positive, negative, constructive or deconstructive feedback, I cannot tell. But regardless, I am quite glad you took the time to leave it for me. \n\nWith love and admiration,\nChesster.");
         var feedback_log = "Receieved new feedback:" + 
                            "\nMessage: " + JSON.stringify(message) + "\n\n";
@@ -1057,7 +1034,7 @@ controller.hears([
 	'mention', 
 	'direct_message'
 ], function(bot,message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         bot.reply(message, "It is my pleasure to serve you!");
     });
 });
@@ -1080,7 +1057,7 @@ controller.hears([
     'direct_message',
     'direct_mention'
 ], function(bot, message){
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         bot.reply(message, prepareRegistrationMessage());
     });
 });
@@ -1095,7 +1072,7 @@ controller.hears([
 	'direct_mention', 
 	'direct_message'
 ], function(bot,message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
     });
 });
 
@@ -1107,7 +1084,7 @@ controller.hears([
     'direct_message',
     'direct_mention'
 ], function(bot, message){
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         fs.readFile("./changelog", 'utf8', function(err, data) {
             if(err) {
                 throw err;
@@ -1126,7 +1103,7 @@ controller.hears([
     'direct_message',
     'direct_mention'
 ], function(bot, message){
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         bot.reply(message, GITHUB_URL);
     });
 });
@@ -1178,7 +1155,7 @@ controller.hears([
 	'direct_mention', 
 	'direct_message'
 ], function(bot, message) {
-    exception_handler(bot, message, function(){
+    bot_exception_handler(bot, message, function(){
         var self = this;
         self.board_number = parseInt(message.text.split(" ")[1]);
         if(self.board_number && !isNaN(self.board_number)){
