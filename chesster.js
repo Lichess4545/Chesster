@@ -76,7 +76,7 @@ exception_handler(function(){
     var config_file = process.argv[2] || "config.json";
 
     console.log("Loading configuration from " + config_file);
-    config = JSON.parse(fs.readFileSync(config_file, 'utf8'));
+    config = JSON.parse(fs.readFileSync(config_file, 'utf-8'));
 }, function(){
     console.log("Failed to load config file.");
     process.exit(1);
@@ -92,19 +92,19 @@ var controller = Botkit.slackbot({
 });
 
 var users = {
-    list: [],
+    byName: {},
     getId: function(name){
-        return this.list[name].id;
+        return this.byName[name].id;
     },
     getIdString: function(name){
         return "<@"+this.getId(name)+">";
     }
 };
 var channels = {
-    list: [],
+    byName: {},
     byId: {},
     getId: function(name){
-        return this.list[name].id;
+        return this.byName[name].id;
     },
     getIdString: function(name){
         return "<#"+this.getId(name)+">";
@@ -112,7 +112,6 @@ var channels = {
 };
 
 function update_users(bot){
-    users.list = [];
     // @ https://api.slack.com/methods/users.list
     bot.api.users.list({}, function (err, response) {
         if (err) {
@@ -120,19 +119,19 @@ function update_users(bot){
         }
 
         if (response.hasOwnProperty('members') && response.ok) {
+            var byName = {};
             var total = response.members.length;
-             for (var i = 0; i < total; i++) {
+            for (var i = 0; i < total; i++) {
                 var member = response.members[i];
-                users.list[member.name] = member;
+                byName[member.name] = member;
             }
+            users.byName = byName;
         }
         console.log("info: got users");
     });
 }
 
 function update_channels(bot){
-    channels.list = [];
-    channels.byId = [];
     // @ https://api.slack.com/methods/channels.list
     bot.api.channels.list({}, function (err, response) {
         if (err) {
@@ -140,12 +139,16 @@ function update_channels(bot){
         }
 
         if (response.hasOwnProperty('channels') && response.ok) {
+            var byName = {};
+            var byId = {};
             var total = response.channels.length;
             for (var i = 0; i < total; i++) {
                 var channel = response.channels[i];
-                channels.list[channel.name] = channel;
-                 channels.byId[channel.id] = channel;
+                byName[channel.name] = channel;
+                byId[channel.id] = channel;
             }
+            channels.byName = byName;
+            channels.byId = byId;
         }
         console.log("info: got channels");
     });
@@ -155,7 +158,7 @@ function update_channels(bot){
 /* 
    updates the user list
    updates the channel lists
-   then repeats in new threat
+   then repeats in new thread
    
    if it encounters an error it will exit the process with exit code 1
 */
@@ -181,8 +184,8 @@ controller.spawn({
         throw new Error(err);
     }
     
-    //rrefresh your user and channel list every 2 minutes
-    //woudl be nice if this was push model, not poll but oh well.
+    //refresh your user and channel list every 2 minutes
+    //would be nice if this was push model, not poll but oh well.
     refresh(bot, 120 * SECONDS);
 
 });
