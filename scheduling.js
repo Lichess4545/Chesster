@@ -49,13 +49,10 @@ var WORDS_TO_IGNORE = [
 // first parameter is the string to parse
 // second parameter is an options dict specifying the round extrema options
 function parse_scheduling(string, options) {
-    // Only going to deal with lowercase
+    // Do some basic preprocessing
     string = string.toLowerCase();
-
-    // Remove punctionation.
     string = string.replace(/[@\.,\(\)]/g, ' ');
 
-    // Split it up
     var parts = string.split(" ");
 
     // Filter it to remove all the noise
@@ -137,17 +134,28 @@ function update_schedule(white, black, date, callback) {
     var doc = new GoogleSpreadsheet('1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4');
     var pairings_sheet = undefined;
     doc.getInfo(function(err, info) {
+        // Find the last spreadsheet with the word "round" in the title.
+        // this ought to work for both tournaments
         info.worksheets.forEach(function(sheet) {
             if (sheet.title.toLowerCase().indexOf("round") != -1) {
                 pairings_sheet = sheet;
             }
         });
+        // Query for the appropriate row.
+        // Again, this ought to work for both tournaments
         pairings_sheet.getRows({
             offset: 0,
-            limit: 80,
+            limit: 2,
             query: '(white == ' + white + ' and black == ' + black + ') or (white == ' + black + ' and black == ' + white + ')'
-        }, function( err, rows ){
+        }, function(err, rows) {
+            // Only update it if we found an exact match
+            if (rows.length > 1) {
+                throw new Error("Unable to find pairing. More than one row was returned!");
+            }
+            // This portion is specific to the team tournament
             rows[0].timemmddhhmm = date.format("MM/DD @ HH:mm");
+
+            // TODO: This won't work until get chesster setup with a service account
             rows[0].save(function(err) {
                 console.log(err);
                 callback();
