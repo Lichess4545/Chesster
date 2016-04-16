@@ -138,7 +138,7 @@ function get_round_extrema(options) {
 }
 
 // Update the schedule
-function update_schedule(serviceAccountAuth, key, colname, schedule, callback) {
+function update_schedule(serviceAccountAuth, key, colname, format, schedule, callback) {
     var white = schedule.white;
     var black = schedule.black;
     var date = schedule.date;
@@ -185,7 +185,7 @@ function update_schedule(serviceAccountAuth, key, colname, schedule, callback) {
                 var reversed = potential_rows[0][1];
 
                 // This portion is specific to the team tournament
-                row[colname] = date.format("MM/DD HH:mm");
+                row[colname] = date.format(format);
 
                 row.save(function(err) {
                     return callback(err, reversed);

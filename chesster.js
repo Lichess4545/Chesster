@@ -1201,6 +1201,7 @@ controller.on('ambient', function(bot, message) {
                 config.serviceAccountAuth,
                 scheduling_options.key,
                 scheduling_options.colname,
+                scheduling_options.format,
                 results,
                 function(err, reversed) {
                     if (err) {
