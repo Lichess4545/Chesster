@@ -1,5 +1,6 @@
 var moment = require("moment");
 var fuzzy_match = require("./fuzzy_match");
+var GoogleSpreadsheet = require("google-spreadsheet");
 
 var ISO_TUESDAY = 2;
 var DATE_FORMATS = [
@@ -131,5 +132,30 @@ function get_round_extrema(options) {
     return [round_start, round_end];
 }
 
+// Update the schedule
+function update_schedule(white, black, date, callback) {
+    var doc = new GoogleSpreadsheet('1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4');
+    var pairings_sheet = undefined;
+    doc.getInfo(function(err, info) {
+        info.worksheets.forEach(function(sheet) {
+            if (sheet.title.toLowerCase().indexOf("round") != -1) {
+                pairings_sheet = sheet;
+            }
+        });
+        pairings_sheet.getRows({
+            offset: 0,
+            limit: 80,
+            query: '(white == ' + white + ' and black == ' + black + ') or (white == ' + black + ' and black == ' + white + ')'
+        }, function( err, rows ){
+            rows[0].timemmddhhmm = date.format("MM/DD @ HH:mm");
+            rows[0].save(function(err) {
+                console.log(err);
+                callback();
+            });
+        });
+    });
+}
+
 module.exports.get_round_extrema = get_round_extrema;
 module.exports.parse_scheduling = parse_scheduling;
+module.exports.update_schedule = update_schedule;

@@ -38,6 +38,7 @@ describe('scheduling', function() {
             var options = {
                 containing_date: moment.utc("2016-04-15")
             };
+            // TODO: put a bunch of the team scheduling message in here.
         });
         it("Test lonewolf-scheduling messages", function() {
             var options = {
@@ -329,6 +330,13 @@ describe('scheduling', function() {
                     date: "2016-04-13T07:00:00+00:00"
                 }
             );
+        });
+    });
+    //--------------------------------------------------------------------------
+    describe('#update_schedule()', function () {
+        it("just testing", function(done) {
+            this.timeout(10000);
+            scheduling.update_schedule("osskjc", "lakinwecker", moment.utc(), done);
         });
     });
 });
