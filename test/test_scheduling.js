@@ -94,7 +94,7 @@ describe('scheduling', function() {
                 "osskjc vs Stoy Fri. 15th 8:00 GMT.",
                 {
                     white: "osskjc",
-                    black: "stoy",
+                    black: "Stoy",
                     date: "2016-04-15T08:00:00+00:00"
                 }
             );
@@ -150,7 +150,7 @@ describe('scheduling', function() {
                 "@seb32 vs @ Petruchio 4/15 23:00 GMT.",
                 {
                     white: "seb32",
-                    black: "petruchio",
+                    black: "Petruchio",
                     date: "2016-04-15T23:00:00+00:00"
                 }
             );
@@ -330,13 +330,6 @@ describe('scheduling', function() {
                     date: "2016-04-13T07:00:00+00:00"
                 }
             );
-        });
-    });
-    //--------------------------------------------------------------------------
-    describe('#update_schedule()', function () {
-        it("just testing", function(done) {
-            this.timeout(10000);
-            scheduling.update_schedule("osskjc", "lakinwecker", moment.utc(), done);
         });
     });
 });

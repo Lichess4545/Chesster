@@ -44,14 +44,19 @@ var WORDS_TO_IGNORE = [
     "steveharwell"
 ];
 
+// A scheduling error (as opposed to other errors)
+function SchedulingError () {}
+SchedulingError.prototype = new Error();
+function PairingError () {}
+PairingError.prototype = new Error();
+
 // Make an attempt to parse a scheduling string. 
 //
 // first parameter is the string to parse
 // second parameter is an options dict specifying the round extrema options
 function parse_scheduling(string, options) {
     // Do some basic preprocessing
-    string = string.toLowerCase();
-    string = string.replace(/[@\.,\(\)]/g, ' ');
+    string = string.replace(/[@\.,\(\)\<\>]/g, ' ');
 
     var parts = string.split(" ");
 
@@ -59,19 +64,21 @@ function parse_scheduling(string, options) {
     var filtered_parts = [];
     parts.forEach(function(part) {
         // Remove all lone 
-        if (WORDS_TO_IGNORE.indexOf(part) != -1) {
+        if (WORDS_TO_IGNORE.indexOf(part.toLowerCase()) != -1) {
             return;
         }
         filtered_parts.push(part);
     });
     if (filtered_parts.length < 3) {
-        throw new Error("Unable to parse scheduling string: " + string);
+        console.log("Unable to parse scheduling string: " + string);
+        throw new SchedulingError();
     }
 
     // Now build up some possible strings and try a bunch of patterns
     // to find a date in our range.
     var extrema = get_round_extrema(options);
     date_string = filtered_parts.slice(2).join(" ");
+    date_string = date_string.toLowerCase();
     var date_strings = [];
     date_strings.push(date_string)
     var now = moment.utc();
@@ -94,7 +101,8 @@ function parse_scheduling(string, options) {
         });
     });
     if (dates.length < 1) {
-        throw new Error("Couldn't parse date: " + date_strings[0]);
+        console.log("Couldn't parse date: " + date_strings[0]);
+        throw new SchedulingError();
     }
 
     // strip out any punctuation from the usernames
@@ -130,35 +138,58 @@ function get_round_extrema(options) {
 }
 
 // Update the schedule
-function update_schedule(white, black, date, callback) {
-    var doc = new GoogleSpreadsheet('1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4');
-    var pairings_sheet = undefined;
-    doc.getInfo(function(err, info) {
-        // Find the last spreadsheet with the word "round" in the title.
-        // this ought to work for both tournaments
-        info.worksheets.forEach(function(sheet) {
-            if (sheet.title.toLowerCase().indexOf("round") != -1) {
-                pairings_sheet = sheet;
-            }
-        });
-        // Query for the appropriate row.
-        // Again, this ought to work for both tournaments
-        pairings_sheet.getRows({
-            offset: 0,
-            limit: 2,
-            query: '(white == ' + white + ' and black == ' + black + ') or (white == ' + black + ' and black == ' + white + ')'
-        }, function(err, rows) {
-            // Only update it if we found an exact match
-            if (rows.length > 1) {
-                throw new Error("Unable to find pairing. More than one row was returned!");
-            }
-            // This portion is specific to the team tournament
-            rows[0].timemmddhhmm = date.format("MM/DD @ HH:mm");
+function update_schedule(serviceAccountAuth, key, colname, schedule, callback) {
+    var white = schedule.white;
+    var black = schedule.black;
+    var date = schedule.date;
+    var doc = new GoogleSpreadsheet(key);
+    doc.useServiceAccountAuth(serviceAccountAuth, function(err, info) {
+        var pairings_sheet = undefined;
+        doc.getInfo(function(err, info) {
+            if (err) { return callback(err, info); }
+            // Find the last spreadsheet with the word "round" in the title.
+            // this ought to work for both tournaments
+            info.worksheets.forEach(function(sheet) {
+                if (sheet.title.toLowerCase().indexOf("round") != -1) {
+                    pairings_sheet = sheet;
+                }
+            });
+            // Query for the appropriate row.
+            // Again, this ought to work for both tournaments
+            pairings_sheet.getRows({
+                offset: 1,
+                limit: 100,
+            }, function(err, rows) {
+                if (err) { return callback(err, rows); }
+                var potential_rows = [];
+                rows.forEach(function(row) {
+                    var row_black = row.black.toLowerCase();
+                    var row_white = row.white.toLowerCase();
+                    if (
+                        (row_black.indexOf(black) != -1 && row_white.indexOf(white) != -1)
+                    ) {
+                        potential_rows.push([row, false]);
+                    } else if (
+                        (row_white.indexOf(black) != -1 && row_black.indexOf(white) != -1)
+                    ) {
+                        potential_rows.push([row, true]);
+                    }
+                });
+                // Only update it if we found an exact match
+                if (potential_rows.length > 1) {
+                    return callback("Unable to find pairing. More than one row was returned!");
+                } else if(potential_rows.length < 1) {
+                    return callback("Unable to find pairing. No rows were returned!");
+                }
+                var row = potential_rows[0][0];
+                var reversed = potential_rows[0][1];
 
-            // TODO: This won't work until get chesster setup with a service account
-            rows[0].save(function(err) {
-                console.log(err);
-                callback();
+                // This portion is specific to the team tournament
+                row[colname] = date.format("MM/DD HH:mm");
+
+                row.save(function(err) {
+                    return callback(err, reversed);
+                });
             });
         });
     });
@@ -167,3 +198,5 @@ function update_schedule(white, black, date, callback) {
 module.exports.get_round_extrema = get_round_extrema;
 module.exports.parse_scheduling = parse_scheduling;
 module.exports.update_schedule = update_schedule;
+module.exports.SchedulingError = SchedulingError;
+module.exports.PairingError = PairingError;

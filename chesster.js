@@ -3,6 +3,7 @@ var Botkit = require('botkit');
 var GoogleSpreadsheet = require("google-spreadsheet");
 var fs = require('fs');
 var fuzzy = require('./fuzzy_match.js');
+var scheduling = require('./scheduling.js');
 
 var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs";
 var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
@@ -93,11 +94,15 @@ var controller = Botkit.slackbot({
 
 var users = {
     byName: {},
+    byId: {},
     getId: function(name){
         return this.byName[name].id;
     },
     getIdString: function(name){
         return "<@"+this.getId(name)+">";
+    },
+    getByNameOrID: function(nameOrId) {
+        return this.byId[nameOrId] || this.byName[nameOrId];
     }
 };
 var channels = {
@@ -120,12 +125,15 @@ function update_users(bot){
 
         if (response.hasOwnProperty('members') && response.ok) {
             var byName = {};
+            var byId = {};
             var total = response.members.length;
             for (var i = 0; i < total; i++) {
                 var member = response.members[i];
                 byName[member.name] = member;
+                byId[member.id] = member
             }
             users.byName = byName;
+            users.byId = byId;
         }
         console.log("info: got users");
     });
@@ -1166,6 +1174,73 @@ controller.hears([
             });
         }else{
             bot.reply(message, "Which board did you say? [ board <number> ]. Please try again.");
+        }
+    });
+});
+
+
+/* Scheduling */
+
+// reply to any incoming message
+controller.on('ambient', function(bot, message) {
+    bot_exception_handler(bot, message, function(){
+        var channel = channels.byId[message.channel];
+        var scheduling_options = config.scheduling[channel.name];
+        if (!scheduling_options) {
+            return;
+        } 
+        try {
+            var results = scheduling.parse_scheduling(message.text, {
+                offset_hours: scheduling_options.offset_hours
+            });
+            var white = users.getByNameOrID(results.white);
+            var black = users.getByNameOrID(results.black);
+            results.white = white.name;
+            results.black = black.name;
+            scheduling.update_schedule(
+                config.serviceAccountAuth,
+                scheduling_options.key,
+                scheduling_options.colname,
+                results,
+                function(err, reversed) {
+                    if (err) {
+                        if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                            user = "<@"+message.user+">";
+                            bot.reply(message, user + " I couldn't find your pairing. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+                        } else {
+                            bot.reply(message, "Something went wrong. Notify @lakinwecker");
+                            throw new Error("Error updating scheduling sheet: " + err);
+                        }
+                    } else {
+                        if (reversed) {
+                            var tmp = white;
+                            white = black;
+                            black = tmp;
+                        }
+                        var whiteDate = results.date.clone().utcOffset(white.tz_offset/60);
+                        var blackDate = results.date.clone().utcOffset(black.tz_offset/60);
+                        var format = "YYYY-MM-DD @ HH:mm";
+                        var dates = [
+                            results.date.format(format) + " in UTC",
+                            whiteDate.format(format + " ZZ") + " for " + white.name,
+                            blackDate.format(format + " ZZ") + " for " + black.name,
+                        ];
+                        date_formats  = dates.join("\n\t");
+
+                        bot.reply(message, 
+                            "@" + white.name + " (white pieces) vs " + "@" + black.name + " (black pieces) scheduled for: \n\t" + date_formats
+                        );
+                    }
+                }
+            );
+
+        } catch (e) {
+            if (e instanceof (scheduling.SchedulingError)) {
+                user = "<@"+message.user+">";
+                bot.reply(message, user + " I couldn't understand your time. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+            } else {
+                throw e; // let others bubble up
+            }
         }
     });
 });
