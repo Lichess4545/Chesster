@@ -1226,6 +1226,18 @@ function scheduling_reply_too_late(bot, message, scheduling_options) {
     bot.reply(message, ":x: " + user + " " + scheduling_options.late_message);
 }
 
+// can't find the users you menteiond
+function scheduling_reply_cant_schedule_others(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " you may not schedule games for other people. You may only schedule your own games.");
+}
+
+// can't find the users you menteiond
+function scheduling_reply_cant_find_user(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " I don't recognize one of the players you mentioned.");
+}
+
 // Scheduling will occur on any message
 controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
@@ -1238,6 +1250,16 @@ controller.on('ambient', function(bot, message) {
             var results = spreadsheets.parse_scheduling(message.text, scheduling_options);
             var white = users.getByNameOrID(results.white);
             var black = users.getByNameOrID(results.black);
+            if (!white || !black) {
+                scheduling_reply_cant_find_user(bot, message);
+                return;
+            }
+            var speaker = users.getByNameOrID(message.user);
+            if (white.id != speaker.id && black.id != speaker.id) {
+                scheduling_reply_cant_schedule_others(bot, message);
+                return;
+            }
+            console.log(message);
             results.white = white.name;
             results.black = black.name;
             spreadsheets.update_schedule(
