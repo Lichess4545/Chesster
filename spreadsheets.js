@@ -116,20 +116,39 @@ function parse_scheduling(string, options) {
     };
 }
 
-// Calculate the extrema of the current round.
+// Calculate the extrema of the current round for both leagues.
+//
+// Each league has  slightly different requirements for when your
+// game must be played. This method will return the given start datetime
+// and end datetime for the round.
+//
+// Options:
+//     reference_date: If this is provided it the round is guaranteed
+//       to include this date. Mostly used for tests.
+//     offset_hours: if this is provided it is the applied to both the
+//       start and end dates to offset it appropriately.
 function get_round_extrema(options) {
     options = options || {};
-    if (!options.containing_date) {
+
+    // Get the reference date, which is either today or the reference_date
+    // from the options
+    if (!options.reference_date) {
         round_start = moment.utc();
     } else {
-        round_start = moment(options.containing_date).clone();
+        round_start = moment(options.reference_date).clone();
     }
 
+    // find the starting date
     while (round_start.isoWeekday() != ISO_TUESDAY) {
         round_start.subtract(1, 'days');
     }
+
+    // Make it midnight
     round_start.hour(0).minute(0).second(0);
     round_end = round_start.clone().add(7, 'days');
+
+    // If we have an offset apply it so that the bounds are appropriate
+    // for the given league.
     if (options.offset_hours) {
         round_start.subtract(options.offset_hours, 'hours');
         round_end.subtract(options.offset_hours, 'hours');

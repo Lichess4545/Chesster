@@ -14,7 +14,7 @@ describe('scheduling', function() {
         });
         it("The bounds containing 2016-04-15 are 2016-04-12T00:00:00 and 2016-04-19T:00:00:00 ", function() {
             var bounds = spreadsheets.get_round_extrema({
-                containing_date: moment.utc("2016-04-15")
+                reference_date: moment.utc("2016-04-15")
             });
             start = bounds[0];
             end = bounds[1];
@@ -23,7 +23,7 @@ describe('scheduling', function() {
         });
         it("The bounds containing 2016-04-15 but offset by an hour are 2016-04-11T23:00:00 and 2016-04-18T:23:00:00 ", function() {
             var bounds = spreadsheets.get_round_extrema({
-                containing_date: moment.utc("2016-04-15"),
+                reference_date: moment.utc("2016-04-15"),
                 offset_hours: 1
             });
             start = bounds[0];
@@ -36,13 +36,13 @@ describe('scheduling', function() {
     describe('#parse_scheduling()', function () {
         it("Test team-scheduling messages", function() {
             var options = {
-                containing_date: moment.utc("2016-04-15")
+                reference_date: moment.utc("2016-04-15")
             };
             // TODO: put a bunch of the team scheduling message in here.
         });
         it("Test lonewolf-scheduling messages", function() {
             var options = {
-                containing_date: moment.utc("2016-04-15"),
+                reference_date: moment.utc("2016-04-15"),
                 offset_hours: 1
             };
             function test_parse_scheduling(string, expected)  {
