@@ -91,14 +91,6 @@ describe('scheduling', function() {
                 }
             );
             test_parse_scheduling(
-                "osskjc vs Stoy Fri. 15th 8:00 GMT.",
-                {
-                    white: "osskjc",
-                    black: "Stoy",
-                    date: "2016-04-15T08:00:00+00:00"
-                }
-            );
-            test_parse_scheduling(
                 "@ronaldulyssesswanson – @esolcneveton on Saturday, April 16th at 14:00 GMT.",
                 {
                     white: "ronaldulyssesswanson",
@@ -328,6 +320,14 @@ describe('scheduling', function() {
                     white: "modakshantanu",
                     black: "hakonj",
                     date: "2016-04-13T07:00:00+00:00"
+                }
+            );
+            test_parse_scheduling(
+                "osskjc vs Stoy Fri. 15th 8:00 GMT.",
+                {
+                    white: "osskjc",
+                    black: "Stoy",
+                    date: "2016-04-15T08:00:00+00:00"
                 }
             );
         });
