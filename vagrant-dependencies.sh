@@ -11,3 +11,4 @@ sudo npm install -g --save google-spreadsheet
 sudo npm install -g --save mocha
 sudo npm install -g --save chai
 sudo npm install -g --save moment
+sudo npm install -g --save merge
