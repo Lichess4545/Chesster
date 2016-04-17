@@ -3,7 +3,7 @@ var Botkit = require('botkit');
 var GoogleSpreadsheet = require("google-spreadsheet");
 var fs = require('fs');
 var fuzzy = require('./fuzzy_match.js');
-var scheduling = require('./scheduling.js');
+var spreadsheets = require('./spreadsheets.js');
 
 var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs";
 var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
@@ -1190,14 +1190,14 @@ controller.on('ambient', function(bot, message) {
             return;
         } 
         try {
-            var results = scheduling.parse_scheduling(message.text, {
+            var results = spreadsheets.parse_scheduling(message.text, {
                 offset_hours: scheduling_options.offset_hours
             });
             var white = users.getByNameOrID(results.white);
             var black = users.getByNameOrID(results.black);
             results.white = white.name;
             results.black = black.name;
-            scheduling.update_schedule(
+            spreadsheets.update_schedule(
                 config.serviceAccountAuth,
                 scheduling_options.key,
                 scheduling_options.colname,
@@ -1236,7 +1236,7 @@ controller.on('ambient', function(bot, message) {
             );
 
         } catch (e) {
-            if (e instanceof (scheduling.SchedulingError)) {
+            if (e instanceof (spreadsheets.SchedulingError)) {
                 user = "<@"+message.user+">";
                 bot.reply(message, ":x: " + user + " I couldn't understand your time. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
             } else {
