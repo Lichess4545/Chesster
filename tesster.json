@@ -1,1 +1,21 @@
-{"token":"xoxb-29213869793-IL4oV0KHJduISeQbteUq5qUR"}
+{
+    "token":"xoxb-29213869793-IL4oV0KHJduISeQbteUq5qUR",
+    "service_account_auth": {
+        "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
+        "private_key": ""
+    },
+    "scheduling": {
+        "unstable_bot-lonewolf": {
+            "key": "1xBofd1bFIB4OBUOErWqFWTjTc0dFuTf6WlHxZf3FbIU",
+            "colname": "gamescheduledingmt",
+            "offset_hours": 1,
+            "format": "MM/DD HH:mm"
+        },
+        "unstable_bot2": {
+            "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
+            "colname": "timemmddhhmm",
+            "offset_hours": 0,
+            "format": "MM/DD @ HH:mm"
+        }
+    }
+}
