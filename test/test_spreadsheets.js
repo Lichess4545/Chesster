@@ -2,49 +2,62 @@ var assert = require('chai').assert;
 var moment = require("moment");
 var spreadsheets = require('../spreadsheets');
 
-var ISO_TUESDAY = 2;
-
 describe('scheduling', function() {
     //--------------------------------------------------------------------------
     describe('#get_round_extrema()', function () {
-        it(".isoWeekday() of the bounds should always return 2", function() {
-            var bounds = spreadsheets.get_round_extrema();
-            assert.equal(ISO_TUESDAY, bounds[0].isoWeekday());
-            assert.equal(ISO_TUESDAY, bounds[1].isoWeekday());
+        var options = {
+            "extrema": {
+                "iso_weekday": 1,
+                "hour": 11,
+                "minute": 0,
+            }
+        };
+        it(".isoWeekday() of the bounds should always return the value passed in", function() {
+            var bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(1, bounds.start.isoWeekday());
+            assert.equal(1, bounds.end.isoWeekday());
+
+            options.extrema.iso_weekday = 2;
+            bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(2, bounds.start.isoWeekday());
+            assert.equal(2, bounds.end.isoWeekday());
+            var now = moment.utc();
+            assert.equal(true, now.isAfter(bounds.start));
+            assert.equal(true, now.isBefore(bounds.end));
         });
-        it("The bounds containing 2016-04-15 are 2016-04-12T00:00:00 and 2016-04-19T:00:00:00 ", function() {
-            var bounds = spreadsheets.get_round_extrema({
-                reference_date: moment.utc("2016-04-15")
-            });
-            start = bounds[0];
-            end = bounds[1];
-            assert.equal(start.format(), "2016-04-12T00:00:00+00:00")
-            assert.equal(end.format(), "2016-04-19T00:00:00+00:00")
+        it("The bounds respects the passed in extrama and reference date", function() {
+            options.extrema.iso_weekday = 1;
+            options.extrema.reference_date = moment.utc("2016-04-07");
+            var bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(bounds.start.format(), "2016-04-04T11:00:00+00:00")
+            assert.equal(bounds.end.format(), "2016-04-11T11:00:00+00:00")
         });
-        it("The bounds containing 2016-04-15 but offset by an hour are 2016-04-11T23:00:00 and 2016-04-18T:23:00:00 ", function() {
-            var bounds = spreadsheets.get_round_extrema({
-                reference_date: moment.utc("2016-04-15"),
-                offset_hours: 1
-            });
-            start = bounds[0];
-            end = bounds[1];
-            assert.equal(start.format(), "2016-04-11T23:00:00+00:00")
-            assert.equal(end.format(), "2016-04-18T23:00:00+00:00")
+        it("Test warning_hours", function() {
+            options.extrema.iso_weekday = 1;
+            options.extrema.reference_date = moment.utc("2016-04-07");
+            options.extrema.warning_hours = 1;
+            var bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(bounds.start.format(), "2016-04-04T11:00:00+00:00");
+            assert.equal(bounds.end.format(), "2016-04-11T11:00:00+00:00");
+            assert.equal(bounds.warning.format(), "2016-04-11T10:00:00+00:00");
         });
     });
     //--------------------------------------------------------------------------
     describe('#parse_scheduling()', function () {
+        var options = {
+            "extrema": {
+                "iso_weekday": 1,
+                "hour": 23,
+                "minute": 0,
+            }
+        };
         it("Test team-scheduling messages", function() {
-            var options = {
-                reference_date: moment.utc("2016-04-15")
-            };
+            options.extrema.reference_date = moment.utc("2016-04-15");
+
             // TODO: put a bunch of the team scheduling message in here.
         });
         it("Test lonewolf-scheduling messages", function() {
-            var options = {
-                reference_date: moment.utc("2016-04-15"),
-                offset_hours: 1
-            };
+            options.extrema.reference_date = moment.utc("2016-04-15");
             function test_parse_scheduling(string, expected)  {
                 var results = spreadsheets.parse_scheduling(string, options);
                 assert.equal(results.date.format(), expected.date);
@@ -330,6 +343,109 @@ describe('scheduling', function() {
                     date: "2016-04-15T08:00:00+00:00"
                 }
             );
+        });
+        it("Test lonewolf-scheduling messages that are out of bounds", function() {
+            var options = {
+                reference_date: moment.utc("2016-04-15"),
+                pairing_offset_hours: 1,
+                game_max_length_hours: 3
+            };
+            function test_parse_scheduling(string, expected)  {
+                assert.equal(results.date.format(), expected.date);
+                assert.equal(results.white, expected.white);
+                assert.equal(results.black, expected.black);
+            }
+            try {
+                var results = spreadsheets.parse_scheduling(
+                    "@autotelic v @explodingllama 4/19 @ 0900 GMT",
+                    options
+                );
+                assert.fail("The date should be considered out of bounds!");
+            } catch (e) {
+                if (e instanceof (spreadsheets.ScheduleOutOfBounds)) {
+                    // Good!
+                } else {
+                    assert.fail("Fail!");
+                }
+            }
+        });
+        it("Test lonewolf-scheduling messages that are out of bounds", function() {
+            var options = {
+                "reference_date": moment.utc("2016-04-15"),
+                "extrema": {
+                    "iso_weekday": 1,
+                    "hour": 22,
+                    "minute": 0,
+                }
+            };
+            function test_parse_scheduling(string)  {
+                try {
+                    var results = spreadsheets.parse_scheduling(
+                        string,
+                        options
+                    );
+                    assert.fail("The date should be considered out of bounds!");
+                } catch (e) {
+                    if (e instanceof (spreadsheets.ScheduleOutOfBounds)) {
+                        // Good!
+                    } else {
+                        assert.fail("Fail: " + e.stack);
+                    }
+                }
+            }
+            test_parse_scheduling("@autotelic v @explodingllama 4/19 @ 0900 GMT");
+            test_parse_scheduling("@autotelic v @explodingllama 4/18 @ 2230 GMT");
+            test_parse_scheduling("@autotelic v @explodingllama 4/18 @ 2201 GMT");
+        });
+        it("Test lonewolf-scheduling messages that are in the warning time-period", function() {
+            var options = {
+                "reference_date": moment.utc("2016-04-15"),
+                "extrema": {
+                    "iso_weekday": 1,
+                    "hour": 22,
+                    "minute": 0,
+                    "warning_hours": 1
+                }
+            };
+            function test_parse_scheduling(string, expected)  {
+                assert.equal(results.date.format(), expected.date);
+                assert.equal(results.white, expected.white);
+                assert.equal(results.black, expected.black);
+            }
+            var results = spreadsheets.parse_scheduling(
+                "@autotelic v @explodingllama 4/18 @ 2200 GMT",
+                options
+            );
+            assert.equal(true, results.warn);
+            var results = spreadsheets.parse_scheduling(
+                "@autotelic v @explodingllama 4/18 @ 2159 GMT",
+                options
+            );
+            assert.equal(true, results.warn);
+            var results = spreadsheets.parse_scheduling(
+                "@autotelic v @explodingllama 4/18 @ 2130 GMT",
+                options
+            );
+            assert.equal(true, results.warn);
+            var results = spreadsheets.parse_scheduling(
+                "@autotelic v @explodingllama 4/18 @ 2101 GMT",
+                options
+            );
+            var results = spreadsheets.parse_scheduling(
+                "@autotelic v @explodingllama 4/18 @ 2100 GMT",
+                options
+            );
+            assert.equal(false, results.warn);
+            var results = spreadsheets.parse_scheduling(
+                "@autotelic v @explodingllama 4/18 @ 2059 GMT",
+                options
+            );
+            assert.equal(false, results.warn);
+            var results = spreadsheets.parse_scheduling(
+                "@autotelic v @explodingllama 4/18 @ 2030 GMT",
+                options
+            );
+            assert.equal(false, results.warn);
         });
     });
 });

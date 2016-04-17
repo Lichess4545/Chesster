@@ -1236,7 +1236,7 @@ controller.on('ambient', function(bot, message) {
             );
 
         } catch (e) {
-            if (e instanceof (spreadsheets.SchedulingError)) {
+            if (e instanceof (spreadsheets.DateParsingError)) {
                 user = "<@"+message.user+">";
                 bot.reply(message, ":x: " + user + " I couldn't understand your time. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
             } else {
