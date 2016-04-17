@@ -47,8 +47,9 @@ describe('scheduling', function() {
         var options = {
             "extrema": {
                 "iso_weekday": 1,
-                "hour": 23,
+                "hour": 22,
                 "minute": 0,
+                "warning_hours": 1
             }
         };
         it("Test team-scheduling messages", function() {
@@ -57,7 +58,7 @@ describe('scheduling', function() {
             // TODO: put a bunch of the team scheduling message in here.
         });
         it("Test lonewolf-scheduling messages", function() {
-            options.extrema.reference_date = moment.utc("2016-04-15");
+            //options.extrema.reference_date = moment.utc("2016-04-15");
             function test_parse_scheduling(string, expected)  {
                 var results = spreadsheets.parse_scheduling(string, options);
                 assert.equal(results.date.format(), expected.date);
@@ -396,6 +397,7 @@ describe('scheduling', function() {
             test_parse_scheduling("@autotelic v @explodingllama 4/19 @ 0900 GMT");
             test_parse_scheduling("@autotelic v @explodingllama 4/18 @ 2230 GMT");
             test_parse_scheduling("@autotelic v @explodingllama 4/18 @ 2201 GMT");
+            test_parse_scheduling("narud vs lakinwecker 04/18 @ 23:56 GMT");
         });
         it("Test lonewolf-scheduling messages that are in the warning time-period", function() {
             var options = {

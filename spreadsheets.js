@@ -11,7 +11,6 @@ var EXTREMA_DEFAULTS = {
 };
 var DATE_FORMATS = [
     "YYYYMMDD HHmm",
-    "YYYYMMDD Hmm",
     "HHmm DDMMYYYY"
 ];
 var WORDS_TO_IGNORE = [

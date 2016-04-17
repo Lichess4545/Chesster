@@ -1190,9 +1190,7 @@ controller.on('ambient', function(bot, message) {
             return;
         } 
         try {
-            var results = spreadsheets.parse_scheduling(message.text, {
-                offset_hours: scheduling_options.offset_hours
-            });
+            var results = spreadsheets.parse_scheduling(message.text, scheduling_options);
             var white = users.getByNameOrID(results.white);
             var black = users.getByNameOrID(results.black);
             results.white = white.name;
@@ -1218,6 +1216,11 @@ controller.on('ambient', function(bot, message) {
                             white = black;
                             black = tmp;
                         }
+                        if (results.warn) {
+                            bot.reply(message, 
+                                ":heavy_exclamation_mark: @" + white.name + " " + "@" + black.name + " " + scheduling_options.warning_message
+                            );
+                        }
                         var whiteDate = results.date.clone().utcOffset(white.tz_offset/60);
                         var blackDate = results.date.clone().utcOffset(black.tz_offset/60);
                         var format = "YYYY-MM-DD @ HH:mm";
@@ -1238,7 +1241,10 @@ controller.on('ambient', function(bot, message) {
         } catch (e) {
             if (e instanceof (spreadsheets.DateParsingError)) {
                 user = "<@"+message.user+">";
-                bot.reply(message, ":x: " + user + " I couldn't understand your time. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+                bot.reply(message, ":x: " + user + " I don't understand. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+            } else if (e instanceof (spreadsheets.ScheduleOutOfBounds)) {
+                user = "<@"+message.user+">";
+                bot.reply(message, ":x: " + user + " " + scheduling_options.late_message);
             } else {
                 throw e; // let others bubble up
             }
