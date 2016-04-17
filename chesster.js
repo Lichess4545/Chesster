@@ -1198,7 +1198,7 @@ controller.on('ambient', function(bot, message) {
             results.white = white.name;
             results.black = black.name;
             spreadsheets.update_schedule(
-                config.serviceAccountAuth,
+                config.service_account_auth,
                 scheduling_options.key,
                 scheduling_options.colname,
                 scheduling_options.format,
