@@ -1207,7 +1207,7 @@ controller.on('ambient', function(bot, message) {
                     if (err) {
                         if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
                             user = "<@"+message.user+">";
-                            bot.reply(message, user + " I couldn't find your pairing. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+                            bot.reply(message, ":x: " + user + " I couldn't find your pairing. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
                         } else {
                             bot.reply(message, "Something went wrong. Notify @lakinwecker");
                             throw new Error("Error updating scheduling sheet: " + err);
@@ -1229,7 +1229,7 @@ controller.on('ambient', function(bot, message) {
                         date_formats  = dates.join("\n\t");
 
                         bot.reply(message, 
-                            "@" + white.name + " (white pieces) vs " + "@" + black.name + " (black pieces) scheduled for: \n\t" + date_formats
+                            ":heavy_check_mark: @" + white.name + " (white pieces) vs " + "@" + black.name + " (black pieces) scheduled for: \n\t" + date_formats
                         );
                     }
                 }
@@ -1238,7 +1238,7 @@ controller.on('ambient', function(bot, message) {
         } catch (e) {
             if (e instanceof (scheduling.SchedulingError)) {
                 user = "<@"+message.user+">";
-                bot.reply(message, user + " I couldn't understand your time. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+                bot.reply(message, ":x: " + user + " I couldn't understand your time. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
             } else {
                 throw e; // let others bubble up
             }

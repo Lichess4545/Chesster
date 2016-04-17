@@ -137,13 +137,9 @@ function get_round_extrema(options) {
     return [round_start, round_end];
 }
 
-// Update the schedule
-function update_schedule(serviceAccountAuth, key, colname, format, schedule, callback) {
-    var white = schedule.white;
-    var black = schedule.black;
-    var date = schedule.date;
-    var doc = new GoogleSpreadsheet(key);
-    doc.useServiceAccountAuth(serviceAccountAuth, function(err, info) {
+function find_pairing(service_account_auth, spreadsheet_key, white, black, callback) {
+    var doc = new GoogleSpreadsheet(spreadsheet_key);
+    doc.useServiceAccountAuth(service_account_auth, function(err, info) {
         var pairings_sheet = undefined;
         doc.getInfo(function(err, info) {
             if (err) { return callback(err, info); }
@@ -154,11 +150,15 @@ function update_schedule(serviceAccountAuth, key, colname, format, schedule, cal
                     pairings_sheet = sheet;
                 }
             });
+            if (!pairings_sheet) {
+                callback("Unable to find pairings worksheet");
+                return;
+            }
             // Query for the appropriate row.
             // Again, this ought to work for both tournaments
             pairings_sheet.getRows({
                 offset: 1,
-                limit: 100,
+                limit: 100
             }, function(err, rows) {
                 if (err) { return callback(err, rows); }
                 var potential_rows = [];
@@ -183,14 +183,27 @@ function update_schedule(serviceAccountAuth, key, colname, format, schedule, cal
                 }
                 var row = potential_rows[0][0];
                 var reversed = potential_rows[0][1];
-
-                // This portion is specific to the team tournament
-                row[colname] = date.format(format);
-
-                row.save(function(err) {
-                    return callback(err, reversed);
-                });
+                callback(undefined, row, reversed);
             });
+        });
+    });
+
+}
+
+// Update the schedule
+function update_schedule(service_account_auth, key, colname, format, schedule, callback) {
+    var white = schedule.white;
+    var black = schedule.black;
+    var date = schedule.date;
+    find_pairing(service_account_auth, key, white, black, function(err, row, reversed) {
+        if (err) {
+            return callback(err);
+        }
+        // This portion is specific to the team tournament
+        row[colname] = date.format(format);
+
+        row.save(function(err) {
+            return callback(err, reversed);
         });
     });
 }
