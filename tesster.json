@@ -1,5 +1,6 @@
 {
     "token":"xoxb-29213869793-IL4oV0KHJduISeQbteUq5qUR",
+
     "service_account_auth": {
         "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
         "private_key": ""
@@ -8,13 +9,27 @@
         "unstable_bot-lonewolf": {
             "key": "1xBofd1bFIB4OBUOErWqFWTjTc0dFuTf6WlHxZf3FbIU",
             "colname": "gamescheduledingmt",
-            "offset_hours": 1,
+            "extrema": {
+                "iso_weekday": 1,
+                "hour": 22,
+                "minute": 0,
+                "warning_hours": 1
+            },
+            "warning_message": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
+            "late_message": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
             "format": "MM/DD HH:mm"
         },
         "unstable_bot2": {
             "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
             "colname": "timemmddhhmm",
-            "offset_hours": 0,
+            "extrema": {
+                "iso_weekday": 1,
+                "hours": 11,
+                "minute": 0,
+                "warning_hours": 1
+            },
+            "warning_message": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
+            "late_message": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 12:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
             "format": "MM/DD @ HH:mm"
         }
     }
