@@ -1181,7 +1181,52 @@ controller.hears([
 
 /* Scheduling */
 
-// reply to any incoming message
+// Scheduling reply helpers
+
+// Can't find the pairing
+function scheduling_reply_missing_pairing(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " I couldn't find your pairing. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+}
+
+// you are very close to the cutoff
+function scheduling_reply_close_to_cutoff(bot, message, scheduling_options, white, black) {
+    bot.reply(message, 
+        ":heavy_exclamation_mark: @" + white.name + " " + "@" + black.name + " " + scheduling_options.warning_message
+    );
+}
+
+// Game has been scheduled.
+function scheduling_reply_scheduled(bot, message, results, white, black) {
+    var whiteDate = results.date.clone().utcOffset(white.tz_offset/60);
+    var blackDate = results.date.clone().utcOffset(black.tz_offset/60);
+    var format = "YYYY-MM-DD @ HH:mm";
+    var dates = [
+        results.date.format(format) + " in UTC",
+        whiteDate.format(format + " ZZ") + " for " + white.name,
+        blackDate.format(format + " ZZ") + " for " + black.name,
+    ];
+    date_formats  = dates.join("\n\t");
+
+    bot.reply(message, 
+        ":heavy_check_mark: @" + white.name + " (white pieces) vs " + "@" + black.name + " (black pieces) scheduled for: \n\t" + date_formats
+    );
+}
+
+
+// Can't parse the date
+function scheduling_reply_cant_parse(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " I don't understand. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+}
+
+// Your game is out of bounds
+function scheduling_reply_too_late(bot, message, scheduling_options) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " " + scheduling_options.late_message);
+}
+
+// Scheduling will occur on any message
 controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
         var channel = channels.byId[message.channel];
@@ -1204,8 +1249,7 @@ controller.on('ambient', function(bot, message) {
                 function(err, reversed) {
                     if (err) {
                         if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
-                            user = "<@"+message.user+">";
-                            bot.reply(message, ":x: " + user + " I couldn't find your pairing. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+                            scheduling_reply_missing_pairing(bot, message);
                         } else {
                             bot.reply(message, "Something went wrong. Notify @lakinwecker");
                             throw new Error("Error updating scheduling sheet: " + err);
@@ -1217,34 +1261,18 @@ controller.on('ambient', function(bot, message) {
                             black = tmp;
                         }
                         if (results.warn) {
-                            bot.reply(message, 
-                                ":heavy_exclamation_mark: @" + white.name + " " + "@" + black.name + " " + scheduling_options.warning_message
-                            );
+                            scheduling_reply_close_to_cutoff(bot, message, scheduling_options, white, black);
                         }
-                        var whiteDate = results.date.clone().utcOffset(white.tz_offset/60);
-                        var blackDate = results.date.clone().utcOffset(black.tz_offset/60);
-                        var format = "YYYY-MM-DD @ HH:mm";
-                        var dates = [
-                            results.date.format(format) + " in UTC",
-                            whiteDate.format(format + " ZZ") + " for " + white.name,
-                            blackDate.format(format + " ZZ") + " for " + black.name,
-                        ];
-                        date_formats  = dates.join("\n\t");
-
-                        bot.reply(message, 
-                            ":heavy_check_mark: @" + white.name + " (white pieces) vs " + "@" + black.name + " (black pieces) scheduled for: \n\t" + date_formats
-                        );
+                        scheduling_reply_scheduled(bot, message, results, white, black);
                     }
                 }
             );
 
         } catch (e) {
             if (e instanceof (spreadsheets.DateParsingError)) {
-                user = "<@"+message.user+">";
-                bot.reply(message, ":x: " + user + " I don't understand. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+                scheduling_reply_cant_parse(bot, message);
             } else if (e instanceof (spreadsheets.ScheduleOutOfBounds)) {
-                user = "<@"+message.user+">";
-                bot.reply(message, ":x: " + user + " " + scheduling_options.late_message);
+                scheduling_reply_too_late(bot, message, scheduling_options);
             } else {
                 throw e; // let others bubble up
             }
