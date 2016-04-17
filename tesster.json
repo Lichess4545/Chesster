@@ -24,7 +24,7 @@
             "colname": "timemmddhhmm",
             "extrema": {
                 "iso_weekday": 1,
-                "hours": 11,
+                "hour": 11,
                 "minute": 0,
                 "warning_hours": 1
             },
