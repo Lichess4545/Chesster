@@ -113,4 +113,5 @@ function match(message, commands, channels, arg_string) {
     return retval;
 }
 
-module.exports.match= match;
+module.exports.match = match;
+module.exports.rank_choices = rank_choices;

@@ -3,6 +3,7 @@ var Botkit = require('botkit');
 var GoogleSpreadsheet = require("google-spreadsheet");
 var fs = require('fs');
 var fuzzy = require('./fuzzy_match.js');
+var spreadsheets = require('./spreadsheets.js');
 
 var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs";
 var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
@@ -93,11 +94,15 @@ var controller = Botkit.slackbot({
 
 var users = {
     byName: {},
+    byId: {},
     getId: function(name){
         return this.byName[name].id;
     },
     getIdString: function(name){
         return "<@"+this.getId(name)+">";
+    },
+    getByNameOrID: function(nameOrId) {
+        return this.byId[nameOrId] || this.byName[nameOrId];
     }
 };
 var channels = {
@@ -120,12 +125,15 @@ function update_users(bot){
 
         if (response.hasOwnProperty('members') && response.ok) {
             var byName = {};
+            var byId = {};
             var total = response.members.length;
             for (var i = 0; i < total; i++) {
                 var member = response.members[i];
                 byName[member.name] = member;
+                byId[member.id] = member
             }
             users.byName = byName;
+            users.byId = byId;
         }
         console.log("info: got users");
     });
@@ -1166,6 +1174,130 @@ controller.hears([
             });
         }else{
             bot.reply(message, "Which board did you say? [ board <number> ]. Please try again.");
+        }
+    });
+});
+
+
+/* Scheduling */
+
+// Scheduling reply helpers
+
+// Can't find the pairing
+function scheduling_reply_missing_pairing(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " I couldn't find your pairing. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+}
+
+// you are very close to the cutoff
+function scheduling_reply_close_to_cutoff(bot, message, scheduling_options, white, black) {
+    bot.reply(message, 
+        ":heavy_exclamation_mark: @" + white.name + " " + "@" + black.name + " " + scheduling_options.warning_message
+    );
+}
+
+// Game has been scheduled.
+function scheduling_reply_scheduled(bot, message, results, white, black) {
+    var whiteDate = results.date.clone().utcOffset(white.tz_offset/60);
+    var blackDate = results.date.clone().utcOffset(black.tz_offset/60);
+    var format = "YYYY-MM-DD @ HH:mm";
+    var dates = [
+        results.date.format(format) + " in UTC",
+        whiteDate.format(format + " ZZ") + " for " + white.name,
+        blackDate.format(format + " ZZ") + " for " + black.name,
+    ];
+    date_formats  = dates.join("\n\t");
+
+    bot.reply(message, 
+        ":heavy_check_mark: @" + white.name + " (white pieces) vs " + "@" + black.name + " (black pieces) scheduled for: \n\t" + date_formats
+    );
+}
+
+
+// Can't parse the date
+function scheduling_reply_cant_parse(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " I don't understand. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+}
+
+// Your game is out of bounds
+function scheduling_reply_too_late(bot, message, scheduling_options) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " " + scheduling_options.late_message);
+}
+
+// can't find the users you menteiond
+function scheduling_reply_cant_schedule_others(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " you may not schedule games for other people. You may only schedule your own games.");
+}
+
+// can't find the users you menteiond
+function scheduling_reply_cant_find_user(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " I don't recognize one of the players you mentioned.");
+}
+
+// Scheduling will occur on any message
+controller.on('ambient', function(bot, message) {
+    bot_exception_handler(bot, message, function(){
+        var channel = channels.byId[message.channel];
+        var scheduling_options = config.scheduling[channel.name];
+        if (!scheduling_options) {
+            return;
+        } 
+        try {
+            var results = spreadsheets.parse_scheduling(message.text, scheduling_options);
+            var white = users.getByNameOrID(results.white);
+            var black = users.getByNameOrID(results.black);
+            if (!white || !black) {
+                scheduling_reply_cant_find_user(bot, message);
+                return;
+            }
+            var speaker = users.getByNameOrID(message.user);
+            if (white.id != speaker.id && black.id != speaker.id) {
+                scheduling_reply_cant_schedule_others(bot, message);
+                return;
+            }
+            console.log(message);
+            results.white = white.name;
+            results.black = black.name;
+            spreadsheets.update_schedule(
+                config.service_account_auth,
+                scheduling_options.key,
+                scheduling_options.colname,
+                scheduling_options.format,
+                results,
+                function(err, reversed) {
+                    if (err) {
+                        if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                            scheduling_reply_missing_pairing(bot, message);
+                        } else {
+                            bot.reply(message, "Something went wrong. Notify @lakinwecker");
+                            throw new Error("Error updating scheduling sheet: " + err);
+                        }
+                    } else {
+                        if (reversed) {
+                            var tmp = white;
+                            white = black;
+                            black = tmp;
+                        }
+                        if (results.warn) {
+                            scheduling_reply_close_to_cutoff(bot, message, scheduling_options, white, black);
+                        }
+                        scheduling_reply_scheduled(bot, message, results, white, black);
+                    }
+                }
+            );
+
+        } catch (e) {
+            if (e instanceof (spreadsheets.DateParsingError)) {
+                scheduling_reply_cant_parse(bot, message);
+            } else if (e instanceof (spreadsheets.ScheduleOutOfBounds)) {
+                scheduling_reply_too_late(bot, message, scheduling_options);
+            } else {
+                throw e; // let others bubble up
+            }
         }
     });
 });
