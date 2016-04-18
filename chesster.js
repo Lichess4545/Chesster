@@ -1242,6 +1242,9 @@ function scheduling_reply_cant_find_user(bot, message) {
 controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
         var channel = channels.byId[message.channel];
+        if (!channel) {
+            return;
+        }
         var scheduling_options = config.scheduling[channel.name];
         if (!scheduling_options) {
             return;
