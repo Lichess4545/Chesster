@@ -1186,7 +1186,7 @@ controller.hears([
 // Can't find the pairing
 function scheduling_reply_missing_pairing(bot, message) {
     var user = "<@"+message.user+">";
-    bot.reply(message, ":x: " + user + " I couldn't find your pairing. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+    bot.reply(message, ":x: " + user + " I couldn't find your pairing. Please use a format like: @white v @black 04/16 @ 16:00");
 }
 
 // you are very close to the cutoff
@@ -1217,7 +1217,7 @@ function scheduling_reply_scheduled(bot, message, results, white, black) {
 // Can't parse the date
 function scheduling_reply_cant_parse(bot, message) {
     var user = "<@"+message.user+">";
-    bot.reply(message, ":x: " + user + " I don't understand. Please use a format like: @lakinwecker v @lakinwecker 04/16 @ 16:00 GMT");
+    bot.reply(message, ":x: " + user + " I don't understand. Please use a format like: @white v @black 04/16 @ 16:00");
 }
 
 // Your game is out of bounds
