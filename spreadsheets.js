@@ -188,14 +188,14 @@ function get_round_extrema(options) {
     };
 }
 
-// find_rows is a client side implementation of the record-type results that we
+// get_rows is a client side implementation of the record-type results that we
 // got from the row based API. Instead, we now implement this in the following
 // manner:
 //   1. Query for all cells in a particular range.
 //   2. Asssume first row is a header row.
 //   3. Turn each subsequent row into an object, of key-values based on the header
 //   4. return rows.
-function find_rows(service_account_auth, spreadsheet_key, options, callback) {
+function get_rows(service_account_auth, spreadsheet_key, options, callback) {
     var doc = new GoogleSpreadsheet(spreadsheet_key);
     doc.useServiceAccountAuth(service_account_auth, function(err, info) {
         var pairings_sheet = undefined;
@@ -277,7 +277,7 @@ function find_pairing(service_account_auth, spreadsheet_key, white, black, callb
         }
         return false;
     }
-    find_rows(
+    get_rows(
         service_account_auth,
         spreadsheet_key,
         options,
