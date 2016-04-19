@@ -258,6 +258,8 @@ function get_rows(service_account_auth, spreadsheet_key, options, callback) {
     });
 }
 
+// Finds the given pairing in one of the team spreadsheets
+// callback gets three values: error, row, whether the pairing is reversed or not.
 function find_pairing(service_account_auth, spreadsheet_key, white, black, callback) {
     var options = {
         'min-col': 1,
