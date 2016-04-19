@@ -1,7 +1,7 @@
 var moment = require("moment");
 var fuzzy_match = require("./fuzzy_match");
 var GoogleSpreadsheet = require("google-spreadsheet");
-var merge = require("merge");
+var _ = require("underscore");
 
 var EXTREMA_DEFAULTS = {
     'iso_weekday': 2,
@@ -160,7 +160,8 @@ function parse_scheduling(input_string, options) {
 //       cutoff during which we will warn users they are cutting it close.
 function get_round_extrema(options) {
     options = options || {};
-    extrema = options.extrema = merge(EXTREMA_DEFAULTS, options.extrema || {});
+    extrema = {};
+    _.extend(extrema, EXTREMA_DEFAULTS, options.extrema);
 
     // Get the reference date, which is either today or the reference_date
     // from the options
@@ -187,7 +188,14 @@ function get_round_extrema(options) {
     };
 }
 
-function find_pairing(service_account_auth, spreadsheet_key, white, black, callback) {
+// get_rows is a client side implementation of the record-type results that we
+// got from the row based API. Instead, we now implement this in the following
+// manner:
+//   1. Query for all cells in a particular range.
+//   2. Asssume first row is a header row.
+//   3. Turn each subsequent row into an object, of key-values based on the header
+//   4. return rows.
+function get_rows(service_account_auth, spreadsheet_key, options, callback) {
     var doc = new GoogleSpreadsheet(spreadsheet_key);
     doc.useServiceAccountAuth(service_account_auth, function(err, info) {
         var pairings_sheet = undefined;
@@ -206,38 +214,93 @@ function find_pairing(service_account_auth, spreadsheet_key, white, black, callb
             }
             // Query for the appropriate row.
             // Again, this ought to work for both tournaments
-            pairings_sheet.getRows({
-                offset: 1,
-                limit: 100
-            }, function(err, rows) {
-                if (err) { return callback(err, rows); }
-                var potential_rows = [];
-                rows.forEach(function(row) {
-                    var row_black = row.black.toLowerCase();
-                    var row_white = row.white.toLowerCase();
-                    if (
-                        (row_black.indexOf(black) != -1 && row_white.indexOf(white) != -1)
-                    ) {
-                        potential_rows.push([row, false]);
-                    } else if (
-                        (row_white.indexOf(black) != -1 && row_black.indexOf(white) != -1)
-                    ) {
-                        potential_rows.push([row, true]);
-                    }
-                });
-                // Only update it if we found an exact match
-                if (potential_rows.length > 1) {
-                    return callback("Unable to find pairing. More than one row was returned!");
-                } else if(potential_rows.length < 1) {
-                    return callback("Unable to find pairing. No rows were returned!");
+            options = _.clone(options);
+            var defaults = {
+                'min-row': 1,
+                'max-row': 100,
+                'min-col': 1,
+                'max-col': 8,
+                'return-empty': true
+            }
+            options = _.defaults(options, defaults);
+            pairings_sheet.getCells(
+                options,
+                function(err, cells) {
+                    if (err) { return callback(err, cells); }
+
+                    // Take the single list and turn it into rows
+                    var rows = [];
+                    cells.forEach(function(cell) {
+                        // Create the empty row if needed.
+                        if (!(cell.row in rows)) {
+                            rows[cell.row] = [];
+                        }
+                        rows[cell.row][cell.col] = cell;
+                    });
+
+                    // Convert each row into a record with keys
+                    var header_row = rows[1];
+                    header_row = _.map(header_row, function(item, i) {
+                        if (item) {
+                            return item.value.toLowerCase();
+                        } else {
+                            return i;
+                        }
+                    });
+                    var record_rows = [];
+                    rows.slice(2).forEach(function(row) {
+                        record_rows.push(_.object(_.zip(header_row, row)));
+                    });
+                    callback(undefined, record_rows);
                 }
-                var row = potential_rows[0][0];
-                var reversed = potential_rows[0][1];
-                callback(undefined, row, reversed);
-            });
+            );
         });
     });
+}
 
+// Finds the given pairing in one of the team spreadsheets
+// callback gets three values: error, row, whether the pairing is reversed or not.
+function find_pairing(service_account_auth, spreadsheet_key, white, black, callback) {
+    var options = {
+        'min-col': 1,
+        'max-col': 6
+    };
+    function row_matches_pairing(row) {
+        var row_black = row.black.value.toLowerCase();
+        var row_white = row.white.value.toLowerCase();
+        if (
+            (row_black.indexOf(black) != -1 && row_white.indexOf(white) != -1)
+        ) {
+            return true;
+        } else if (
+            (row_white.indexOf(black) != -1 && row_black.indexOf(white) != -1)
+        ) {
+            return true;
+        }
+        return false;
+    }
+    get_rows(
+        service_account_auth,
+        spreadsheet_key,
+        options,
+        function(err, rows) {
+            var rows = _.filter(rows, row_matches_pairing);
+            // Only update it if we found an exact match
+            if (rows.length > 1) {
+                return callback("Unable to find pairing. More than one row was returned!");
+            } else if(rows.length < 1) {
+                return callback("Unable to find pairing. No rows were returned!");
+            }
+            var row = rows[0];
+            var row_black = row.black.value.toLowerCase();
+            var row_white = row.white.value.toLowerCase();
+            var reversed = false;
+            if (row_white.indexOf(black) != -1) {
+                reversed = true
+            }
+            callback(undefined, row, reversed);
+        }
+    );
 }
 
 // Update the schedule
@@ -250,9 +313,10 @@ function update_schedule(service_account_auth, key, colname, format, schedule, c
             return callback(err);
         }
         // This portion is specific to the team tournament
-        row[colname] = date.format(format);
+        var schedule_cell = row[colname];
+        schedule_cell.value = date.format(format);
 
-        row.save(function(err) {
+        schedule_cell.save(function(err) {
             return callback(err, reversed);
         });
     });
