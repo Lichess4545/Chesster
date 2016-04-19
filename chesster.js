@@ -1200,16 +1200,17 @@ function scheduling_reply_close_to_cutoff(bot, message, scheduling_options, whit
 function scheduling_reply_scheduled(bot, message, results, white, black) {
     var whiteDate = results.date.clone().utcOffset(white.tz_offset/60);
     var blackDate = results.date.clone().utcOffset(black.tz_offset/60);
-    var format = "YYYY-MM-DD @ HH:mm";
+    var format = "YYYY-MM-DD @ HH:mm UTC";
+    var friendly_format = "ddd @ HH:mm";
     var dates = [
-        results.date.format(format) + " in UTC",
-        whiteDate.format(format + " ZZ") + " for " + white.name,
-        blackDate.format(format + " ZZ") + " for " + black.name,
+        results.date.format(format) + " ",
+        whiteDate.format(friendly_format) + " for " + white.name,
+        blackDate.format(friendly_format) + " for " + black.name,
     ];
     date_formats  = dates.join("\n\t");
 
     bot.reply(message, 
-        ":heavy_check_mark: @" + white.name + " (white pieces) vs " + "@" + black.name + " (black pieces) scheduled for: \n\t" + date_formats
+        ":heavy_check_mark: @" + white.name + " (_white pieces_) vs " + "@" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats
     );
 }
 
