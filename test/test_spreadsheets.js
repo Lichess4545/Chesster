@@ -64,7 +64,6 @@ describe('scheduling', function() {
                 assert.equal(results.date.format(), expected.date);
                 assert.equal(results.white, expected.white);
                 assert.equal(results.black, expected.black);
-                assert.equal(results.black, expected.black);
             }
             test_parse_scheduling(
                 "@autotelic v @explodingllama 4/16 @ 0900 GMT", {
