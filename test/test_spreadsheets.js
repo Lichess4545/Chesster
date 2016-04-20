@@ -347,15 +347,13 @@ describe('scheduling', function() {
         });
         it("Test lonewolf-scheduling messages that are out of bounds", function() {
             var options = {
-                reference_date: moment.utc("2016-04-15"),
-                pairing_offset_hours: 1,
-                game_max_length_hours: 3
+                "extrema": {
+                    reference_date: moment.utc("2016-04-15"),
+                    "iso_weekday": 1,
+                    "hour": 22,
+                    "minute": 0,
+                }
             };
-            function test_parse_scheduling(string, expected)  {
-                assert.equal(results.date.format(), expected.date);
-                assert.equal(results.white, expected.white);
-                assert.equal(results.black, expected.black);
-            }
             try {
                 var results = spreadsheets.parse_scheduling(
                     "@autotelic v @explodingllama 4/19 @ 0900 GMT",
@@ -372,8 +370,8 @@ describe('scheduling', function() {
         });
         it("Test lonewolf-scheduling messages that are out of bounds", function() {
             var options = {
-                "reference_date": moment.utc("2016-04-15"),
                 "extrema": {
+                    "reference_date": moment.utc("2016-04-15"),
                     "iso_weekday": 1,
                     "hour": 22,
                     "minute": 0,
@@ -401,8 +399,8 @@ describe('scheduling', function() {
         });
         it("Test lonewolf-scheduling messages that are in the warning time-period", function() {
             var options = {
-                "reference_date": moment.utc("2016-04-15"),
                 "extrema": {
+                    "reference_date": moment.utc("2016-04-15"),
                     "iso_weekday": 1,
                     "hour": 22,
                     "minute": 0,
