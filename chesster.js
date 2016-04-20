@@ -1263,7 +1263,6 @@ controller.on('ambient', function(bot, message) {
                 scheduling_reply_cant_schedule_others(bot, message);
                 return;
             }
-            console.log(message);
             results.white = white.name;
             results.black = black.name;
             spreadsheets.update_schedule(
