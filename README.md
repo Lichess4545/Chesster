@@ -23,7 +23,7 @@ ps. I will add more detail here later. I just want to get some bare bones instru
 6. Install mocha. ` > node install --save mocha `
 7. Install chai. ` > node install --save chai `
 8. Install moment. ` > node install --save moment `
-9. Install merge. ` > node install --save merge `
+9. Install underscore. ` > node install --save underscore `
 
 ## Start Chesster
 1. Generate a bot token in your Slack Team's Services and Customization.

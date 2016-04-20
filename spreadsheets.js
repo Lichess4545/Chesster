@@ -67,7 +67,7 @@ PairingError.prototype = new Error();
 //         before the round end that we want to warn people about.
 function parse_scheduling(input_string, options) {
     // Do some basic preprocessing
-    input_string = input_string.replace(/[@\.,\(\)\<\>]/g, ' ');
+    input_string = input_string.replace(/[:@\.,\(\)\<\>]/g, ' ');
 
     var parts = input_string.split(" ");
 
