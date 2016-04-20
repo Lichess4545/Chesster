@@ -344,6 +344,14 @@ describe('scheduling', function() {
                     date: "2016-04-15T08:00:00+00:00"
                 }
             );
+            test_parse_scheduling(
+                "<@U0DJTJ15W>: vs <@U0YUPPF4H> 04/16/16 00:00 GMT",
+                {
+                    white: "U0DJTJ15W",
+                    black: "U0YUPPF4H",
+                    date: "2016-04-16T00:00:00+00:00"
+                }
+            );
         });
         it("Test lonewolf-scheduling messages that are out of bounds", function() {
             var options = {
