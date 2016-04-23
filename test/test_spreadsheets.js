@@ -249,14 +249,6 @@ describe('scheduling', function() {
                 }
             );
             test_parse_scheduling(
-                "@steveharwell (greentiger) v @harrison2 Apr 15 at 1500 GMT",
-                {
-                    white: "greentiger",
-                    black: "harrison2",
-                    date: "2016-04-15T15:00:00+00:00"
-                }
-            );
-            test_parse_scheduling(
                 "@jyr vs @droodjerky  15/04 at 17:00 GMT",
                 {
                     white: "jyr",
@@ -350,6 +342,14 @@ describe('scheduling', function() {
                     white: "U0DJTJ15W",
                     black: "U0YUPPF4H",
                     date: "2016-04-16T00:00:00+00:00"
+                }
+            );
+            test_parse_scheduling(
+                "<@U0DJTJ15W> (white pieces) vs <@U0YUPPF4H> (Black pieces) Saturday, 4/17 @20:00 GMT",
+                {
+                    white: "U0DJTJ15W",
+                    black: "U0YUPPF4H",
+                    date: "2016-04-17T20:00:00+00:00"
                 }
             );
         });

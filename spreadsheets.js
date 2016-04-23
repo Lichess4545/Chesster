@@ -44,9 +44,9 @@ var WORDS_TO_IGNORE = [
     "thurs",
     "fri",
     "sat",
-
-    // TODO: yes, this is oddly specific - but unless he changes his username ....
-    "steveharwell"
+    "white",
+    "black",
+    "pieces"
 ];
 
 // A scheduling error (as opposed to other errors)
