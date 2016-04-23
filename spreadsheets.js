@@ -9,10 +9,85 @@ var EXTREMA_DEFAULTS = {
     'minute': 0,
     'warning_hours': 1,
 };
-var DATE_FORMATS = [
-    "YYYYMMDD HHmm",
-    "HHmm DDMMYYYY"
+var BASE_DATE_FORMATS = [
+    "YYYY-MM-DD",
+    "YYYY-MM-D",
+    "YYYY-M-DD",
+    "YYYY-M-D",
+    "YY-MM-DD",
+    "YY-MM-D",
+    "YY-M-DD",
+    "YY-M-D",
+    "MM-DD-YYYY",
+    "MM-D-YYYY",
+    "M-DD-YYYY",
+    "M-D-YYYY",
+    "MM-DD-YY",
+    "MM-D-YY",
+    "M-DD-YY",
+    "M-D-YY",
+    "YYYY-DD-MM",
+    "YYYY-D-MM",
+    "YYYY-DD-M",
+    "YYYY-D-M",
+    "YY-DD-MM",
+    "YY-D-MM",
+    "YY-DD-M",
+    "YY-D-M",
+    "DD-MM-YYYY",
+    "D-MM-YYYY",
+    "DD-M-YYYY",
+    "D-M-YYYY",
+    "DD-MM-YY",
+    "D-MM-YY",
+    "DD-M-YY",
+    "D-M-YY",
+    "YYYY-MMMM Do",
+    "YY-MMMM Do",
+    "MMMM Do YYYY",
+    "MMMM Do YY",
+    "YYYY-Do MMMM",
+    "YY-Do MMMM",
+    "Do MMMM YYYY",
+    "Do MMMM YY",
+    "YYYY-MMMM DD",
+    "YY-MMMM DD",
+    "MMMM DD YYYY",
+    "MMMM DD YY",
+    "YYYY-DD MMMM",
+    "YY-DD MMMM",
+    "DD MMMM YYYY",
+    "DD MMMM YY",
+    "YYYY-MMMM D",
+    "YY-MMMM D",
+    "MMMM D YYYY",
+    "MMMM D YY",
+    "YYYY-D MMMM",
+    "YY-D MMMM",
+    "D MMMM YYYY",
+    "D MMMM YY",
 ];
+var BASE_TIME_FORMATS = [
+    "HH:mm",
+    "H:mm",
+    "H:m"
+];
+var DATE_FORMATS = [
+];
+BASE_DATE_FORMATS.forEach(function(date_format) {
+    BASE_TIME_FORMATS.forEach(function(time_format) {
+        var date_format2 = date_format.replace(/[-]/g, '');
+        var time_format2 = time_format.replace(/[:]/g, '');
+        DATE_FORMATS.push(date_format + " " + time_format);
+        DATE_FORMATS.push(time_format + " " + date_format);
+        DATE_FORMATS.push(date_format2 + " " + time_format2);
+        DATE_FORMATS.push(time_format2 + " " + date_format2);
+        DATE_FORMATS.push(date_format2 + " " + time_format);
+        DATE_FORMATS.push(time_format + " " + date_format2);
+        DATE_FORMATS.push(date_format + " " + time_format2);
+        DATE_FORMATS.push(time_format2 + " " + date_format);
+    });
+});
 var WORDS_TO_IGNORE = [
     "",
     "-",
@@ -20,6 +95,8 @@ var WORDS_TO_IGNORE = [
     "at",
     "on",
     "gmt",
+    "gmt.",
+    "gmt:",
     "rescheduled",
     "reschedule",
     "reschedule:",
@@ -50,10 +127,8 @@ var WORDS_TO_IGNORE = [
 ];
 
 // A scheduling error (as opposed to other errors)
-function DateParsingError () {}
-DateParsingError.prototype = new Error();
-function ScheduleOutOfBounds () {}
-ScheduleOutOfBounds.prototype = new Error();
+function ScheduleParsingError () {}
+ScheduleParsingError.prototype = new Error();
 function PairingError () {}
 PairingError.prototype = new Error();
 
@@ -67,7 +142,15 @@ PairingError.prototype = new Error();
 //         before the round end that we want to warn people about.
 function parse_scheduling(input_string, options) {
     // Do some basic preprocessing
-    input_string = input_string.replace(/[:@\.,\(\)\<\>]/g, ' ');
+    // Replace non-date punctuation/symbols with spaces
+    input_string = input_string.replace(/[@,\(\)]/g, ' ');
+    input_string = input_string.replace(/[<\>]/g, '');
+
+    // Change / to -
+    input_string = input_string.replace(/[\/]/g, '-');
+
+    // Change . to :
+    input_string = input_string.replace(/[\.]/g, ':');
 
     var parts = input_string.split(" ");
 
@@ -82,7 +165,7 @@ function parse_scheduling(input_string, options) {
     });
     if (filtered_parts.length < 3) {
         console.log("Unable to parse date: " + input_string);
-        throw new DateParsingError();
+        throw new ScheduleParsingError();
     }
 
     // Now build up some possible strings and try a bunch of patterns
@@ -90,21 +173,29 @@ function parse_scheduling(input_string, options) {
     var extrema = get_round_extrema(options);
     date_string = filtered_parts.slice(2).join(" ");
     date_string = date_string.toLowerCase();
+    date_string = date_string.replace(/gmt/g, "");
+    date_string = date_string.replace(/utc/g, "");
     var date_strings = [];
     date_strings.push(date_string)
     var now = moment.utc();
     year = now.year();
     month = now.month()+1;
-    date_strings.push("" + year + "/" + date_string);
-    date_strings.push("" + year + "/" + month + "/" + date_string);
+    date_strings.push("" + year + "-" + date_string);
+    date_strings.push("" + year + "-0" + date_string);
+    date_strings.push("" + year + "-" + month + "-" + date_string);
+    date_strings.push("" + year + "-" + month + "-0" + date_string);
+    //date_strings.push("" + year + month + date_string);
 
     var valid_in_bounds_dates = [];
     var valid_out_of_bounds_dates = [];
-    date_strings.forEach(function(date_string) {
-        DATE_FORMATS.forEach(function(format) {
-            var date = moment.utc(date_string, format);
+    // Using _.every and returning false to break out of loops
+    // checking every possible date format even after we have found
+    // a valid one is wasteful, so this allows us to short circuit that process.
+    _.every(date_strings, function(date_string) {
+        _.every(DATE_FORMATS, function(format) {
+            var date = moment.utc(date_string, format, true);
             if (!date.isValid()) {
-                return;
+                return true;
             }
             valid_out_of_bounds_dates.push(date);
             // TODO: This check will prevent us from publishing pairings
@@ -112,35 +203,44 @@ function parse_scheduling(input_string, options) {
             //       Which is unfortunate, but I haven't thought of an elegant
             //       or easy way to allow for this. :/
             if (date.isBefore(extrema.start) || date.isAfter(extrema.end)) {
-                return;
+                return true;
             }
             valid_in_bounds_dates.push(date);
+            return false;
         });
+        if (valid_in_bounds_dates.length > 0) {
+            return false;
+        }
+        return true;
     });
     if (valid_in_bounds_dates.length == 0 && valid_out_of_bounds_dates.length == 0) {
         console.log("Unable to parse date: [" + input_string + "]");
-        throw new DateParsingError();
-    }
-    if (valid_in_bounds_dates.length == 0 && valid_out_of_bounds_dates.length > 0) {
-        throw new ScheduleOutOfBounds();
-    }
-
-    var date = valid_in_bounds_dates[0];
-
-    var warn = false;
-    if (date.isAfter(extrema.warning)) {
-        warn = true;
+        throw new ScheduleParsingError();
     }
 
     // strip out any punctuation from the usernames
     var white = filtered_parts[0].replace(/[@\.,\(\):]/g, '');
     var black = filtered_parts[1].replace(/[@\.,\(\):]/g, '');
-    // return the result
+
+    var date;
+    var out_of_bounds = false;
+    var warn = false;
+
+    if (valid_in_bounds_dates.length == 0 && valid_out_of_bounds_dates.length > 0) {
+        date = valid_out_of_bounds_dates[0];
+        out_of_bounds = true;
+    } else {
+        var date = valid_in_bounds_dates[0];
+        if (date.isAfter(extrema.warning)) {
+            warn = true;
+        }
+    }
     return {
         white: white,
         black: black,
         date: date,
-        warn: warn
+        warn: warn,
+        out_of_bounds: out_of_bounds
     };
 }
 
@@ -325,6 +425,5 @@ function update_schedule(service_account_auth, key, colname, format, schedule, c
 module.exports.get_round_extrema = get_round_extrema;
 module.exports.parse_scheduling = parse_scheduling;
 module.exports.update_schedule = update_schedule;
-module.exports.DateParsingError = DateParsingError;
-module.exports.ScheduleOutOfBounds = ScheduleOutOfBounds;
+module.exports.ScheduleParsingError = ScheduleParsingError;
 module.exports.PairingError = PairingError;
