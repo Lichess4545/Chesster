@@ -1323,7 +1323,6 @@ controller.on('ambient', function(bot, message) {
                 }
                 if (results.warn) {
                     scheduling_reply_close_to_cutoff(bot, message, scheduling_options, white, black);
-                    return;
                 }
                 scheduling_reply_scheduled(bot, message, results, white, black);
             }
