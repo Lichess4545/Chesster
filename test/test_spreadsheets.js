@@ -305,35 +305,11 @@ describe('scheduling', function() {
                 }
             );
             test_parse_scheduling(
-                "@imakethenews v. @daveyjones01  April 15, 22:00 GMT, 18:00 EDT",
-                {
-                    white: "imakethenews",
-                    black: "daveyjones01",
-                    date: "2016-04-15T22:00:00+00:00"
-                }
-            );
-            test_parse_scheduling(
-                "@imakethenews v. @daveyjones01  April 15, 22:00 GMT, 18:00 EDT",
-                {
-                    white: "imakethenews",
-                    black: "daveyjones01",
-                    date: "2016-04-15T22:00:00+00:00"
-                }
-            );
-            test_parse_scheduling(
                 "@modakshantanu v @hakonj April 13th 07:00 GMT",
                 {
                     white: "modakshantanu",
                     black: "hakonj",
                     date: "2016-04-13T07:00:00+00:00"
-                }
-            );
-            test_parse_scheduling(
-                "osskjc vs Stoy Fri. 15th 8:00 GMT.",
-                {
-                    white: "osskjc",
-                    black: "Stoy",
-                    date: "2016-04-15T08:00:00+00:00"
                 }
             );
             test_parse_scheduling(
@@ -362,19 +338,11 @@ describe('scheduling', function() {
                     "minute": 0,
                 }
             };
-            try {
-                var results = spreadsheets.parse_scheduling(
-                    "@autotelic v @explodingllama 4/19 @ 0900 GMT",
-                    options
-                );
-                assert.fail("The date should be considered out of bounds!");
-            } catch (e) {
-                if (e instanceof (spreadsheets.ScheduleOutOfBounds)) {
-                    // Good!
-                } else {
-                    assert.fail("Fail!");
-                }
-            }
+            var results = spreadsheets.parse_scheduling(
+                "@autotelic v @explodingllama 4/19 @ 0900 GMT",
+                options
+            );
+            assert.equal(true, results.out_of_bounds);
         });
         it("Test lonewolf-scheduling messages that are out of bounds", function() {
             var options = {
@@ -386,19 +354,11 @@ describe('scheduling', function() {
                 }
             };
             function test_parse_scheduling(string)  {
-                try {
-                    var results = spreadsheets.parse_scheduling(
-                        string,
-                        options
-                    );
-                    assert.fail("The date should be considered out of bounds!");
-                } catch (e) {
-                    if (e instanceof (spreadsheets.ScheduleOutOfBounds)) {
-                        // Good!
-                    } else {
-                        assert.fail("Fail: " + e.stack);
-                    }
-                }
+                var results = spreadsheets.parse_scheduling(
+                    string,
+                    options
+                );
+                assert.equal(true, results.out_of_bounds);
             }
             test_parse_scheduling("@autotelic v @explodingllama 4/19 @ 0900 GMT");
             test_parse_scheduling("@autotelic v @explodingllama 4/18 @ 2230 GMT");
