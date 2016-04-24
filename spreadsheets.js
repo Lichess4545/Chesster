@@ -379,7 +379,7 @@ function get_rows(service_account_auth, spreadsheet_key, options, callback) {
 function find_pairing(service_account_auth, spreadsheet_key, white, black, callback) {
     var options = {
         'min-col': 1,
-        'max-col': 6
+        'max-col': 7
     };
     function row_matches_pairing(row) {
         var row_black = row.black.value.toLowerCase();
