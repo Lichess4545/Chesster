@@ -1390,3 +1390,60 @@ function resultereply_missing_pairing(bot, message){
 function result_reply_updated(bot, message, result){
     bot.reply(message, "Got it. @" + result.white.name + " " + result.result + " @" + result.black.name);
 }
+
+
+
+/* game link parsing */
+
+
+// results processing will occur on any message
+controller.on('ambient', function(bot, message) {
+    bot_exception_handler(bot, message, function(){
+        var channel = channels.byId[message.channel];
+        if (!channel) {
+            return;
+        }
+        var results_options = config.results[channel.name];
+        if (!results_options) {
+            return;
+        }
+        try{
+            /*var result = spreadsheets.parse_result(message.text, results_options);
+
+            if(!result.white || !result.black || !result.result){
+                return;
+            }
+
+            result.white = users.getByNameOrID(result.white.replace(/[\<\@\>]/g, ''));
+            result.black = users.getByNameOrID(result.black.replace(/[\<\@\>]/g, ''));
+
+            if(result.white.id != message.user && result.black.id != message.user){
+                reply_permission_failure(bot, message);
+                return;
+            }
+
+            spreadsheets.update_result(
+                config.service_account_auth,
+                results_options.key,
+                results_options.colname,
+                result,
+                function(err, reversed){
+                    if (err) {
+                        if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                            result_reply_missing_pairing(bot, message);
+                        } else {
+                            bot.reply(message, "Something went wrong. Notify @endrawes0");
+                            throw new Error("Error updating scheduling sheet: " + err);
+                        }
+                    } else {
+                        result_reply_updated(bot, message, result);
+                    }
+                });
+             */
+        }catch(e){
+            //at the moment, we do not throw from inside the api - rethrow
+            throw e;
+        }
+    });
+});
+
