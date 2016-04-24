@@ -1383,7 +1383,7 @@ function reply_permission_failure(bot, message){
     bot.reply(message, "Sorry, you do not have permissin to update that pairing.");
 }
 
-function resultereply_missing_pairing(bot, message){
+function result_reply_missing_pairing(bot, message){
     bot.reply(message, "Sorry, I could not find that pairing.");
 }
 
