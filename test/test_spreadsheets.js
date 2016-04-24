@@ -29,17 +29,17 @@ describe('scheduling', function() {
             options.extrema.iso_weekday = 1;
             options.extrema.reference_date = moment.utc("2016-04-07");
             var bounds = spreadsheets.get_round_extrema(options);
-            assert.equal(bounds.start.format(), "2016-04-04T11:00:00+00:00")
-            assert.equal(bounds.end.format(), "2016-04-11T11:00:00+00:00")
+            assert.equal(bounds.start.format(), "2016-04-04T11:00:00Z")
+            assert.equal(bounds.end.format(), "2016-04-11T11:00:00Z")
         });
         it("Test warning_hours", function() {
             options.extrema.iso_weekday = 1;
             options.extrema.reference_date = moment.utc("2016-04-07");
             options.extrema.warning_hours = 1;
             var bounds = spreadsheets.get_round_extrema(options);
-            assert.equal(bounds.start.format(), "2016-04-04T11:00:00+00:00");
-            assert.equal(bounds.end.format(), "2016-04-11T11:00:00+00:00");
-            assert.equal(bounds.warning.format(), "2016-04-11T10:00:00+00:00");
+            assert.equal(bounds.start.format(), "2016-04-04T11:00:00Z");
+            assert.equal(bounds.end.format(), "2016-04-11T11:00:00Z");
+            assert.equal(bounds.warning.format(), "2016-04-11T10:00:00Z");
         });
     });
     //--------------------------------------------------------------------------
@@ -69,7 +69,7 @@ describe('scheduling', function() {
                 "@autotelic v @explodingllama 4/16 @ 0900 GMT", {
                     white: "autotelic",
                     black: "explodingllama",
-                    date: "2016-04-16T09:00:00+00:00"
+                    date: "2016-04-16T09:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -77,7 +77,7 @@ describe('scheduling', function() {
                 {
                     white: "ronaldulyssesswanson",
                     black: "esolcneveton",
-                    date: "2016-04-17T14:00:00+00:00"
+                    date: "2016-04-17T14:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -85,7 +85,7 @@ describe('scheduling', function() {
                 {
                     white: "adrianchessnow",
                     black: "mydogeatslemons",
-                    date: "2016-04-15T23:00:00+00:00"
+                    date: "2016-04-15T23:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -93,7 +93,7 @@ describe('scheduling', function() {
                 {
                     white: "juansnow",
                     black: "jimcube27",
-                    date: "2016-04-17T10:30:00+00:00"
+                    date: "2016-04-17T10:30:00Z"
                 }
             );
             test_parse_scheduling(
@@ -101,7 +101,7 @@ describe('scheduling', function() {
                 {
                     white: "mrrobot",
                     black: "ashkanjah",
-                    date: "2016-04-16T14:00:00+00:00"
+                    date: "2016-04-16T14:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -109,7 +109,7 @@ describe('scheduling', function() {
                 {
                     white: "ronaldulyssesswanson",
                     black: "esolcneveton",
-                    date: "2016-04-16T14:00:00+00:00"
+                    date: "2016-04-16T14:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -117,7 +117,7 @@ describe('scheduling', function() {
                 {
                     white: "rreyv",
                     black: "krzem",
-                    date: "2016-04-17T15:00:00+00:00"
+                    date: "2016-04-17T15:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -125,7 +125,7 @@ describe('scheduling', function() {
                 {
                     white: "atrophied",
                     black: "jaivl",
-                    date: "2016-04-14T20:00:00+00:00"
+                    date: "2016-04-14T20:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -133,7 +133,7 @@ describe('scheduling', function() {
                 {
                     white: "modakshantanu",
                     black: "hakonj",
-                    date: "2016-04-14T07:00:00+00:00"
+                    date: "2016-04-14T07:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -141,7 +141,7 @@ describe('scheduling', function() {
                 {
                     white: "quirked",
                     black: "vishysoisse",
-                    date: "2016-04-14T21:00:00+00:00"
+                    date: "2016-04-14T21:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -149,7 +149,7 @@ describe('scheduling', function() {
                 {
                     white: "theino",
                     black: "cactus",
-                    date: "2016-04-14T02:30:00+00:00"
+                    date: "2016-04-14T02:30:00Z"
                 }
             );
             test_parse_scheduling(
@@ -157,7 +157,7 @@ describe('scheduling', function() {
                 {
                     white: "seb32",
                     black: "Petruchio",
-                    date: "2016-04-15T23:00:00+00:00"
+                    date: "2016-04-15T23:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -165,7 +165,7 @@ describe('scheduling', function() {
                 {
                     white: "soldadofiel",
                     black: "durchnachtundwind",
-                    date: "2016-04-13T23:09:00+00:00"
+                    date: "2016-04-13T23:09:00Z"
                 }
             );
             test_parse_scheduling(
@@ -173,7 +173,7 @@ describe('scheduling', function() {
                 {
                     white: "greyhawk",
                     black: "immortality",
-                    date: "2016-04-14T21:00:00+00:00"
+                    date: "2016-04-14T21:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -181,7 +181,7 @@ describe('scheduling', function() {
                 {
                     white: "soldadofiel",
                     black: "durchnachtundwind",
-                    date: "2016-04-13T23:09:00+00:00"
+                    date: "2016-04-13T23:09:00Z"
                 }
             );
             test_parse_scheduling(
@@ -189,7 +189,7 @@ describe('scheduling', function() {
                 {
                     white: "nacional100",
                     black: "tnan123",
-                    date: "2016-04-15T14:00:00+00:00"
+                    date: "2016-04-15T14:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -197,7 +197,7 @@ describe('scheduling', function() {
                 {
                     white: "hillrp",
                     black: "endrawes0",
-                    date: "2016-04-17T01:00:00+00:00"
+                    date: "2016-04-17T01:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -205,7 +205,7 @@ describe('scheduling', function() {
                 {
                     white: "saschlars",
                     black: "preserve",
-                    date: "2016-04-16T12:00:00+00:00"
+                    date: "2016-04-16T12:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -213,7 +213,7 @@ describe('scheduling', function() {
                 {
                     white: "modakshantanu",
                     black: "hakonj",
-                    date: "2016-04-14T15:00:00+00:00"
+                    date: "2016-04-14T15:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -221,7 +221,7 @@ describe('scheduling', function() {
                 {
                     white: "ihaterbf",
                     black: "hyzer",
-                    date: "2016-04-16T22:00:00+00:00"
+                    date: "2016-04-16T22:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -229,7 +229,7 @@ describe('scheduling', function() {
                 {
                     white: "djcrisce",
                     black: "zantawb",
-                    date: "2016-04-15T00:00:00+00:00"
+                    date: "2016-04-15T00:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -237,7 +237,7 @@ describe('scheduling', function() {
                 {
                     white: "jptriton",
                     black: "cyanfish",
-                    date: "2016-04-14T18:00:00+00:00"
+                    date: "2016-04-14T18:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -245,15 +245,7 @@ describe('scheduling', function() {
                 {
                     white: "narud",
                     black: "lakinwecker",
-                    date: "2016-04-16T17:00:00+00:00"
-                }
-            );
-            test_parse_scheduling(
-                "@steveharwell (greentiger) v @harrison2 Apr 15 at 1500 GMT",
-                {
-                    white: "greentiger",
-                    black: "harrison2",
-                    date: "2016-04-15T15:00:00+00:00"
+                    date: "2016-04-16T17:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -261,7 +253,7 @@ describe('scheduling', function() {
                 {
                     white: "jyr",
                     black: "droodjerky",
-                    date: "2016-04-15T17:00:00+00:00"
+                    date: "2016-04-15T17:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -269,7 +261,7 @@ describe('scheduling', function() {
                 {
                     white: "chill5555",
                     black: "doganof",
-                    date: "2016-04-15T17:00:00+00:00"
+                    date: "2016-04-15T17:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -277,7 +269,7 @@ describe('scheduling', function() {
                 {
                     white: "oldtom",
                     black: "bramminator",
-                    date: "2016-04-17T16:15:00+00:00"
+                    date: "2016-04-17T16:15:00Z"
                 }
             );
             test_parse_scheduling(
@@ -285,7 +277,7 @@ describe('scheduling', function() {
                 {
                     white: "ctorh",
                     black: "practicedave",
-                    date: "2016-04-18T18:00:00+00:00"
+                    date: "2016-04-18T18:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -293,7 +285,7 @@ describe('scheduling', function() {
                 {
                     white: "boviced",
                     black: "hoxhound",
-                    date: "2016-04-14T16:00:00+00:00"
+                    date: "2016-04-14T16:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -301,7 +293,7 @@ describe('scheduling', function() {
                 {
                     white: "pasternak",
                     black: "riemannn",
-                    date: "2016-04-14T20:00:00+00:00"
+                    date: "2016-04-14T20:00:00Z"
                 }
             );
             test_parse_scheduling(
@@ -309,23 +301,7 @@ describe('scheduling', function() {
                 {
                     white: "angborxley",
                     black: "theknug",
-                    date: "2016-04-17T13:30:00+00:00"
-                }
-            );
-            test_parse_scheduling(
-                "@imakethenews v. @daveyjones01  April 15, 22:00 GMT, 18:00 EDT",
-                {
-                    white: "imakethenews",
-                    black: "daveyjones01",
-                    date: "2016-04-15T22:00:00+00:00"
-                }
-            );
-            test_parse_scheduling(
-                "@imakethenews v. @daveyjones01  April 15, 22:00 GMT, 18:00 EDT",
-                {
-                    white: "imakethenews",
-                    black: "daveyjones01",
-                    date: "2016-04-15T22:00:00+00:00"
+                    date: "2016-04-17T13:30:00Z"
                 }
             );
             test_parse_scheduling(
@@ -333,66 +309,56 @@ describe('scheduling', function() {
                 {
                     white: "modakshantanu",
                     black: "hakonj",
-                    date: "2016-04-13T07:00:00+00:00"
+                    date: "2016-04-13T07:00:00Z"
                 }
             );
             test_parse_scheduling(
-                "osskjc vs Stoy Fri. 15th 8:00 GMT.",
+                "<@U0DJTJ15W>: vs <@U0YUPPF4H> 04/16/16 00:00 GMT",
                 {
-                    white: "osskjc",
-                    black: "Stoy",
-                    date: "2016-04-15T08:00:00+00:00"
+                    white: "U0DJTJ15W",
+                    black: "U0YUPPF4H",
+                    date: "2016-04-16T00:00:00Z"
+                }
+            );
+            test_parse_scheduling(
+                "<@U0DJTJ15W> (white pieces) vs <@U0YUPPF4H> (Black pieces) Saturday, 4/17 @20:00 GMT",
+                {
+                    white: "U0DJTJ15W",
+                    black: "U0YUPPF4H",
+                    date: "2016-04-17T20:00:00Z"
                 }
             );
         });
         it("Test lonewolf-scheduling messages that are out of bounds", function() {
             var options = {
-                reference_date: moment.utc("2016-04-15"),
-                pairing_offset_hours: 1,
-                game_max_length_hours: 3
-            };
-            function test_parse_scheduling(string, expected)  {
-                assert.equal(results.date.format(), expected.date);
-                assert.equal(results.white, expected.white);
-                assert.equal(results.black, expected.black);
-            }
-            try {
-                var results = spreadsheets.parse_scheduling(
-                    "@autotelic v @explodingllama 4/19 @ 0900 GMT",
-                    options
-                );
-                assert.fail("The date should be considered out of bounds!");
-            } catch (e) {
-                if (e instanceof (spreadsheets.ScheduleOutOfBounds)) {
-                    // Good!
-                } else {
-                    assert.fail("Fail!");
+                "extrema": {
+                    reference_date: moment.utc("2016-04-15"),
+                    "iso_weekday": 1,
+                    "hour": 22,
+                    "minute": 0,
                 }
-            }
+            };
+            var results = spreadsheets.parse_scheduling(
+                "@autotelic v @explodingllama 4/19 @ 0900 GMT",
+                options
+            );
+            assert.equal(true, results.out_of_bounds);
         });
         it("Test lonewolf-scheduling messages that are out of bounds", function() {
             var options = {
-                "reference_date": moment.utc("2016-04-15"),
                 "extrema": {
+                    "reference_date": moment.utc("2016-04-15"),
                     "iso_weekday": 1,
                     "hour": 22,
                     "minute": 0,
                 }
             };
             function test_parse_scheduling(string)  {
-                try {
-                    var results = spreadsheets.parse_scheduling(
-                        string,
-                        options
-                    );
-                    assert.fail("The date should be considered out of bounds!");
-                } catch (e) {
-                    if (e instanceof (spreadsheets.ScheduleOutOfBounds)) {
-                        // Good!
-                    } else {
-                        assert.fail("Fail: " + e.stack);
-                    }
-                }
+                var results = spreadsheets.parse_scheduling(
+                    string,
+                    options
+                );
+                assert.equal(true, results.out_of_bounds);
             }
             test_parse_scheduling("@autotelic v @explodingllama 4/19 @ 0900 GMT");
             test_parse_scheduling("@autotelic v @explodingllama 4/18 @ 2230 GMT");
@@ -401,8 +367,8 @@ describe('scheduling', function() {
         });
         it("Test lonewolf-scheduling messages that are in the warning time-period", function() {
             var options = {
-                "reference_date": moment.utc("2016-04-15"),
                 "extrema": {
+                    "reference_date": moment.utc("2016-04-15"),
                     "iso_weekday": 1,
                     "hour": 22,
                     "minute": 0,
@@ -452,4 +418,111 @@ describe('scheduling', function() {
     });
 });
 
-
+// we are exposing 2 new functions - oarse_reuslt and update_result
+// we cant unit test update_result becauase it has side effects and depends on the spreadsheet.
+// A thorough test of thhose functions would require a lot of setup and tear down or a mock spreadsheet.
+// ill stick with the tests for result oarsing.
+describe('results', function(){
+    describe('#parse_result', function(){
+        it("Test results from parsing", function() {
+            //options.extrema.reference_date = moment.utc("2016-04-15");
+            function test_parse_result(string, expected)  {
+                var result = spreadsheets.parse_result(string);
+                assert.equal(result.result, expected.result);
+                assert.equal(result.white, expected.white);
+                assert.equal(result.black, expected.black);
+            }
+            test_parse_result(
+                "<@U1234567> v <@U2345678> 1-0", {
+                    white: "<@U1234567>",
+                    black: "<@U2345678>",
+                    result: "1-0"
+                }
+            );
+            test_parse_result(
+                "<@U1234567> 0-1 <@U2345678>", {
+                    white: "<@U1234567>",
+                    black: "<@U2345678>",
+                    result: "0-1"
+                }
+            );
+            test_parse_result(
+                "<@U1234567> 0-0 <@U2345678>", {
+                    white: "<@U1234567>",
+                    black: "<@U2345678>",
+                    result: "0-0"
+                }
+            );
+            test_parse_result(
+                "<@U1234567> 0F-1X <@U2345678>", {
+                    white: "<@U1234567>",
+                    black: "<@U2345678>",
+                    result: "0F-1X"
+                }
+            );
+            test_parse_result(
+                "<@U1234567> 1X-0F <@U2345678>", {
+                    white: "<@U1234567>",
+                    black: "<@U2345678>",
+                    result: "1X-0F"
+                }
+            );
+            test_parse_result(
+                "<@U1234567> 1/2X-1/2X <@U2345678>", {
+                    white: "<@U1234567>",
+                    black: "<@U2345678>",
+                    result: "1/2X-1/2X"
+                }
+            );
+            test_parse_result(
+                "<@U1234567> 0F-0F <@U2345678>", {
+                    white: "<@U1234567>",
+                    black: "<@U2345678>",
+                    result: "0F-0F"
+                }
+            );
+            test_parse_result(
+                "<@U1234567> and <@U2345678> drew", {
+                    white: "<@U1234567>",
+                    black: "<@U2345678>",
+                    result: "1/2-1/2"
+                }
+            );
+            test_parse_result(
+                "<@U1234567> 0.5-0.5 <@U2345678>", {
+                    white: "<@U1234567>",
+                    black: "<@U2345678>",
+                    result: "1/2-1/2"
+                }
+            );
+            test_parse_result(
+                "the <@U1234567> and <@U2345678> game was a draw", {
+                    white: "<@U1234567>",
+                    black: "<@U2345678>",
+                    result: "1/2-1/2"
+                }
+            );
+            test_parse_result(
+                "this has only one player <@U1234567> and no result", {
+                    white: undefined,
+                    black: undefined,
+                    result: undefined,
+                } 
+            );
+            test_parse_result(
+                "this has only two players <@U1234567> v <@U2345678> and no result", {
+                    white: "<@U1234567>",
+                    black: "<@U2345678>",
+                    result: undefined,
+                }
+            );
+            test_parse_result(
+                "this has no players but a result 1-0", {
+                    white: undefined,
+                    black: undefined,
+                    result: "1-0",
+                }
+            );
+        });
+    });
+});

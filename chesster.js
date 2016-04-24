@@ -5,13 +5,6 @@ var fs = require('fs');
 var fuzzy = require('./fuzzy_match.js');
 var spreadsheets = require('./spreadsheets.js');
 
-var SHEET_URL = "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs";
-var RULES_URL = "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations";
-var STARTER_URL = "https://lichess4545.slack.com/files/endrawes0/F0W382170/lichess4545leagueplayerguide";
-var CAPTAINS_URL = "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc";
-var REGISTRATION_URL = "https://docs.google.com/a/georgetown.edu/forms/d/1u-fjOm1Mouz8J7WAsPhB1CJpB3k10FSp4-fZ-bwvykY/viewform";
-var GITHUB_URL = "https://github.com/endrawes0/Chesster";
-
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
 
@@ -216,7 +209,7 @@ controller.hears([
 /* captains */
 
 function prepareCaptainsGuidelines(){
-    return "Here are the captain's guidelines:\n" + CAPTAINS_URL;
+    return "Here are the captain's guidelines:\n" + config.links.captains;
 }
 
 function sayCaptainsGuidelnes(convo){
@@ -624,7 +617,7 @@ controller.hears([
 
 function preparePairingsMessage(){
     return "Here is the pairings sheet:\n" + 
-            SHEET_URL + 
+            config.links.team + 
             "\nAlternatively, try [ @chesster pairing <competitor> <round> ] - coming soon...";
 }
 
@@ -647,7 +640,7 @@ controller.hears([
 
 function prepareStandingsMessage(){
     return "Here is the standings sheet:\n" + 
-            SHEET_URL + 
+            config.links.team + 
             "\nAlternatively, try [ @chesster result <competitor> <round> ] - coming soon...";
     
 }
@@ -670,7 +663,7 @@ controller.hears([
 /* rules */
 
 function prepareRulesMessage(){
-    return "Here are the rules and regulations:\n" + RULES_URL;
+    return "Here are the rules and regulations:\n" + config.links.rules;
 }
 
 function sayRules(convo){
@@ -978,8 +971,8 @@ controller.on('user_channel_join', function(bot, message) {
                         + "connected with the league. It is the easiest way for most "
                         + "of us to communicate and you will find that many of us "
                         + "are active in this community every day. Make yourself at home.");
-                convo.say(STARTER_URL);
-                convo.say(RULES_URL);
+                convo.say(config.links.guide);
+                convo.say(config.links.rules);
                 convo.say("\tIf there is anything else I can help you with, do not hesitate to ask. " 
                         + "You can send me a direct message in this private channel. " 
                         + "Just say `commands` to see a list of ways that I can help you.\n" 
@@ -996,7 +989,7 @@ function prepareStarterGuideMessage(){
 
 function sayStarterGuide(convo){
     convo.say(prepareStarterGuideMessage());
-    convo.say(STARTER_URL);
+    convo.say(config.links.guide);
 }
 
 controller.hears([
@@ -1009,7 +1002,7 @@ controller.hears([
 ], function(bot,message) {
     bot_exception_handler(bot, message, function(){
         bot.reply(message, prepareStarterGuideMessage());
-        bot.reply(message, STARTER_URL);
+        bot.reply(message, config.links.guide);
     });
 });
 
@@ -1054,7 +1047,7 @@ function sayRegistrationMessage(convo){
 }
 
 function prepareRegistrationMessage(){
-    return "You can sign up for Season 3 here: " + REGISTRATION_URL;
+    return "You can sign up for Season 3 here: " + config.links.registration;
 }
 
 controller.hears([
@@ -1112,7 +1105,7 @@ controller.hears([
     'direct_mention'
 ], function(bot, message){
     bot_exception_handler(bot, message, function(){
-        bot.reply(message, GITHUB_URL);
+        bot.reply(message, config.links.source);
     });
 });
 
@@ -1215,12 +1208,6 @@ function scheduling_reply_scheduled(bot, message, results, white, black) {
 }
 
 
-// Can't parse the date
-function scheduling_reply_cant_parse(bot, message) {
-    var user = "<@"+message.user+">";
-    bot.reply(message, ":x: " + user + " I don't understand. Please use a format like: @white v @black 04/16 @ 16:00");
-}
-
 // Your game is out of bounds
 function scheduling_reply_too_late(bot, message, scheduling_options) {
     var user = "<@"+message.user+">";
@@ -1250,58 +1237,156 @@ controller.on('ambient', function(bot, message) {
         if (!scheduling_options) {
             return;
         } 
-        try {
-            var results = spreadsheets.parse_scheduling(message.text, scheduling_options);
-            var white = users.getByNameOrID(results.white);
-            var black = users.getByNameOrID(results.black);
-            if (!white || !black) {
-                scheduling_reply_cant_find_user(bot, message);
-                return;
-            }
-            var speaker = users.getByNameOrID(message.user);
-            if (white.id != speaker.id && black.id != speaker.id) {
-                scheduling_reply_cant_schedule_others(bot, message);
-                return;
-            }
-            console.log(message);
-            results.white = white.name;
-            results.black = black.name;
-            spreadsheets.update_schedule(
-                config.service_account_auth,
-                scheduling_options.key,
-                scheduling_options.colname,
-                scheduling_options.format,
-                results,
-                function(err, reversed) {
-                    if (err) {
-                        if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
-                            scheduling_reply_missing_pairing(bot, message);
-                        } else {
-                            bot.reply(message, "Something went wrong. Notify @lakinwecker");
-                            throw new Error("Error updating scheduling sheet: " + err);
-                        }
-                    } else {
-                        if (reversed) {
-                            var tmp = white;
-                            white = black;
-                            black = tmp;
-                        }
-                        if (results.warn) {
-                            scheduling_reply_close_to_cutoff(bot, message, scheduling_options, white, black);
-                        }
-                        scheduling_reply_scheduled(bot, message, results, white, black);
-                    }
-                }
-            );
 
+        var is_potential_schedule = false;
+        var references_slack_users = false;
+        var has_pairing = false;
+
+        var results = {
+            white: '',
+            black: ''
+        };
+
+        // Step 1. See if we can parse the dates
+        try {
+            results = spreadsheets.parse_scheduling(message.text, scheduling_options);
+            is_potential_schedule = true;
         } catch (e) {
-            if (e instanceof (spreadsheets.DateParsingError)) {
-                scheduling_reply_cant_parse(bot, message);
-            } else if (e instanceof (spreadsheets.ScheduleOutOfBounds)) {
-                scheduling_reply_too_late(bot, message, scheduling_options);
+            if (e instanceof (spreadsheets.ScheduleParsingError)) {
             } else {
                 throw e; // let others bubble up
             }
         }
+
+        // Unless they included a date we can parse, ignore this message.
+        if (!is_potential_schedule) {
+            return;
+        }
+
+        // Step 2. See if we have valid named players
+        var white = users.getByNameOrID(results.white);
+        var black = users.getByNameOrID(results.black);
+        if (white && black) {
+            results.white = white.name;
+            results.black = black.name;
+            references_slack_users = true;
+        }
+
+
+        // Step 3. attempt to update the spreadsheet
+        spreadsheets.update_schedule(
+            config.service_account_auth,
+            scheduling_options.key,
+            scheduling_options.colname,
+            scheduling_options.format,
+            results,
+            function(err, reversed) {
+                if (err) {
+                    if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                        has_pairing = false;
+                    } else {
+                        bot.reply(message, "Something went wrong. Notify @lakinwecker");
+                        throw new Error("Error updating scheduling sheet: " + err);
+                    }
+                } else {
+                    has_pairing = true;
+                }
+                if (reversed) {
+                    var tmp = white;
+                    white = black;
+                    black = tmp;
+                }
+
+                if (!references_slack_users) {
+                    scheduling_reply_cant_find_user(bot, message);
+                    return;
+                }
+                var speaker = users.getByNameOrID(message.user);
+                if (white.id != speaker.id && black.id != speaker.id) {
+                    scheduling_reply_cant_schedule_others(bot, message);
+                    return;
+                }
+                if (!has_pairing) {
+                    scheduling_reply_missing_pairing(bot, message);
+                    return;
+                }
+                if (results.out_of_bounds) {
+                    scheduling_reply_too_late(bot, message, scheduling_options);
+                    return;
+                }
+                if (results.warn) {
+                    scheduling_reply_close_to_cutoff(bot, message, scheduling_options, white, black);
+                }
+                scheduling_reply_scheduled(bot, message, results, white, black);
+            }
+        );
     });
 });
+
+
+
+/* results parsing */
+
+
+// results processing will occur on any message
+controller.on('ambient', function(bot, message) {
+    bot_exception_handler(bot, message, function(){
+        var channel = channels.byId[message.channel];
+        if (!channel) {
+            return;
+        }
+        var results_options = config.results[channel.name];
+        if (!results_options) {
+            return;
+        }
+        try{
+            var result = spreadsheets.parse_result(message.text, results_options);
+     
+            if(!result.white || !result.black || !result.result){
+		return;
+            }
+
+            result.white = users.getByNameOrID(result.white.replace(/[\<\@\>]/g, ''));
+            result.black = users.getByNameOrID(result.black.replace(/[\<\@\>]/g, ''));
+            
+            if(result.white.id != message.user && result.black.id != message.user){
+                reply_permission_failure(bot, message);
+                return;
+            }
+
+            spreadsheets.update_result(
+                config.service_account_auth,
+                results_options.key,
+                results_options.colname,
+                result, 
+                function(err, reversed){
+                    if (err) {
+                        if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                            result_reply_missing_pairing(bot, message);
+                        } else {
+                            bot.reply(message, "Something went wrong. Notify @endrawes0");
+                            throw new Error("Error updating scheduling sheet: " + err);
+                        }
+                    } else {
+                        result_reply_updated(bot, message, result);
+                    }
+                });
+
+        }catch(e){
+            //at the moment, we do not throw from inside the api - rethrow
+            throw e;
+        }
+    });
+});
+
+function reply_permission_failure(bot, message){
+    bot.reply(message, "Sorry, you do not have permissin to update that pairing.");
+}
+
+function result_reply_missing_pairing(bot, message){
+    bot.reply(message, "Sorry, I could not find that pairing.");
+}
+
+function result_reply_updated(bot, message, result){
+    bot.reply(message, "Got it. @" + result.white.name + " " + result.result + " @" + result.black.name);
+}
