@@ -1,1 +1,35 @@
-{token:"xoxb-29431979265-cAQXTlDH9XSjjPX55fvJIxxV"}
+{
+    "token":"xoxb-29431979265-fHoq02GZ2TYYk56Y6vyLa2EQ",
+    "service_account_auth": {
+        "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
+        "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCOvIAAs5O3oGMM\nNQ+JQCmFHWlDwdMDji3mlIm8ZqilZQ2+NpaD+vdwdXuerXHZd2TNUonmmyf7G7wp\npP/siMaOwLqPU1pzNOOBTSUHR1/9KRmeV8YaABR7oV4gX040pqpzjxR23aH4uHrU\nrUbFtnuJi+n/YiyWnWf9s0myxYW8S3WKMuq16NgjnjjIyRZEoXY3Kkv644TLQMpb\nqgiksxT6iSzQ3AJv8q2Mnsc14Tlnw65QPiqOJm8qB1AUvEoOiPRgtVl/B38VebuG\nIn/L5MAl4d8zo0HIGkT6C8vzV1Z+lOltGG0sbJ64bAdHD3keuI8qwvh4JW4oUzDV\n2qLVNwHHAgMBAAECggEAAoj+jQSjfwNuPu1CVWG6Ww7mq7lpkgqYbhv9Rkdcf3OI\nBvTZP4bZljm/9FWITCB+vdbVdC8VSrR3ZxXzJbRYMnjh12HXnWw3Djjci4CNB+YO\n+mz8q8GMm5WGInUO4oiDRoIoDuRo2A4OwHBDbYeMMik2Ar8vo40wJ6VjjbVMZse5\nh0a2+Yr1d9kzR4vsCNkHsDXcDYJD76z13rMkgyUlF52OWDKbw+Dcp+yzuTvTKg2I\nREz+HoGvj27QCNzeRfr4EdWcFaGorBKx7O542AkjgVpF++MHkYTcnGNywri1e9J7\nUEp8QQJo9GLGk9aOEdDPhl6oWUv4/oYcYKcFvtIBgQKBgQDGIPz4q5thpAzx1i3v\nDexS/bWJNwIhNMU/6tckrmYlECtsLYfBOXfT4Rj401T73Wc7U/dFQ+IKKQIcmKSn\nHPakT9/0k8r3q1NazQRB6TcdkNCf5Fl+JBMtluwyQHhhwIjtLAn/H3Y8LykbM57E\nzBbO7z5eMOdyMzNmWGNvmnR9MQKBgQC4bY5NeZo3a6BsnJGRfbstgiICPog4De2Q\nrGwizJbIKR+9nPYh4CEANHYMa3HC2IDjL+daZ1dLPvV7sY6W4XaXJZPfXhjVVEvE\nNtTVhsA11AQyhLp9JF95pDXH2NDV1c6YPEMX8t1SFhOlH4HhG3SXEM+pPl/KJNN/\nGxGBHqnQdwKBgBcY0WTL3JlNXpTyuvgbT2l9WiRc3UqxtCz3W41TJ2U6tVUvGZxU\n7rssipS3TjjuXpJz/2d7umYk0bIzuT4iCj6tcRY6BHdK6bS0IcLtRReVQjzhie1C\nl1nBNlfFXENJBq1fbOro6AesF8asBd47TI1jJookeVa+0UclFrJz9xCBAoGBAIST\nRLNO0dw7AwRwfHgQ4Ofy3w2r8/IPmRHh0I4ncdCLN2Tvm0N4wWBLVfzRk+KUDfrC\nqdWj6e2OYZs8ZRrzEnPOsIDmPIXF5f0zyUWBa1SGh0nlfcWNyxA/SeXSZzUAUFXB\nJB3oGM70TcTqZEv0l5gsnoqz6tn+JQb+51NhPoM7AoGBAKdoHCa5rwNBsfrivSWy\nVRdMsM8mzoR+h/ePdKdrP+nx2HRTII9ZNcEdDugsoZiQn4RJggCCtXxNYtxA/r+N\nwZS441ydZntVCHapFKHidv7msq1myfLFwpOV9Mk6hNpwhyFar4I99y5epSnRuBxi\nFfU0fueKWBULnB+XAiAucIJJ\n-----END PRIVATE KEY-----\n"
+    },
+    "scheduling": {
+        "lonewolf-scheduling": {
+            "key": "1p8RMKSKDryavipF5RzNOxIhonK5lOf6OkQPtpkzCRng",
+            "colname": "gamescheduledingmt",
+            "extrema": {
+                "iso_weekday": 1,
+                "hour": 22,
+                "minute": 0,
+                "warning_hours": 1
+            },
+            "warning_message": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
+            "late_message": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
+            "format": "MM/DD HH:mm"
+        },
+        "team-scheduling": {
+            "key": "1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4",
+            "colname": "timemmddhhmm",
+            "extrema": {
+                "iso_weekday": 1,
+                "hour": 11,
+                "minute": 0,
+                "warning_hours": 1
+            },
+            "warning_message": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
+            "late_message": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 12:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
+            "format": "MM/DD @ HH:mm"
+        }
+    }
+}
