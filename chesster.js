@@ -1208,12 +1208,6 @@ function scheduling_reply_scheduled(bot, message, results, white, black) {
 }
 
 
-// Can't parse the date
-function scheduling_reply_cant_parse(bot, message) {
-    var user = "<@"+message.user+">";
-    bot.reply(message, ":x: " + user + " I don't understand. Please use a format like: @white v @black 04/16 @ 16:00");
-}
-
 // Your game is out of bounds
 function scheduling_reply_too_late(bot, message, scheduling_options) {
     var user = "<@"+message.user+">";
@@ -1243,58 +1237,89 @@ controller.on('ambient', function(bot, message) {
         if (!scheduling_options) {
             return;
         } 
-        try {
-            var results = spreadsheets.parse_scheduling(message.text, scheduling_options);
-            var white = users.getByNameOrID(results.white);
-            var black = users.getByNameOrID(results.black);
-            if (!white || !black) {
-                scheduling_reply_cant_find_user(bot, message);
-                return;
-            }
-            var speaker = users.getByNameOrID(message.user);
-            if (white.id != speaker.id && black.id != speaker.id) {
-                scheduling_reply_cant_schedule_others(bot, message);
-                return;
-            }
-            results.white = white.name;
-            results.black = black.name;
-            spreadsheets.update_schedule(
-                config.service_account_auth,
-                scheduling_options.key,
-                scheduling_options.colname,
-                scheduling_options.format,
-                results,
-                function(err, reversed) {
-                    if (err) {
-                        if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
-                            scheduling_reply_missing_pairing(bot, message);
-                        } else {
-                            bot.reply(message, "Something went wrong. Notify @lakinwecker");
-                            throw new Error("Error updating scheduling sheet: " + err);
-                        }
-                    } else {
-                        if (reversed) {
-                            var tmp = white;
-                            white = black;
-                            black = tmp;
-                        }
-                        if (results.warn) {
-                            scheduling_reply_close_to_cutoff(bot, message, scheduling_options, white, black);
-                        }
-                        scheduling_reply_scheduled(bot, message, results, white, black);
-                    }
-                }
-            );
 
+        var is_potential_schedule = false;
+        var references_slack_users = false;
+        var has_pairing = false;
+
+        var results = {
+            white: '',
+            black: ''
+        };
+
+        // Step 1. See if we can parse the dates
+        try {
+            results = spreadsheets.parse_scheduling(message.text, scheduling_options);
+            is_potential_schedule = true;
         } catch (e) {
-            if (e instanceof (spreadsheets.DateParsingError)) {
-                scheduling_reply_cant_parse(bot, message);
-            } else if (e instanceof (spreadsheets.ScheduleOutOfBounds)) {
-                scheduling_reply_too_late(bot, message, scheduling_options);
+            if (e instanceof (spreadsheets.ScheduleParsingError)) {
             } else {
                 throw e; // let others bubble up
             }
         }
+
+        // Unless they included a date we can parse, ignore this message.
+        if (!is_potential_schedule) {
+            return;
+        }
+
+        // Step 2. See if we have valid named players
+        var white = users.getByNameOrID(results.white);
+        var black = users.getByNameOrID(results.black);
+        if (white && black) {
+            results.white = white.name;
+            results.black = black.name;
+            references_slack_users = true;
+        }
+
+
+        // Step 3. attempt to update the spreadsheet
+        spreadsheets.update_schedule(
+            config.service_account_auth,
+            scheduling_options.key,
+            scheduling_options.colname,
+            scheduling_options.format,
+            results,
+            function(err, reversed) {
+                if (err) {
+                    if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                        has_pairing = false;
+                    } else {
+                        bot.reply(message, "Something went wrong. Notify @lakinwecker");
+                        throw new Error("Error updating scheduling sheet: " + err);
+                    }
+                } else {
+                    has_pairing = true;
+                }
+                if (reversed) {
+                    var tmp = white;
+                    white = black;
+                    black = tmp;
+                }
+
+                if (!references_slack_users) {
+                    scheduling_reply_cant_find_user(bot, message);
+                    return;
+                }
+                var speaker = users.getByNameOrID(message.user);
+                if (white.id != speaker.id && black.id != speaker.id) {
+                    scheduling_reply_cant_schedule_others(bot, message);
+                    return;
+                }
+                if (!has_pairing) {
+                    scheduling_reply_missing_pairing(bot, message);
+                    return;
+                }
+                if (results.out_of_bounds) {
+                    scheduling_reply_too_late(bot, message, scheduling_options);
+                    return;
+                }
+                if (results.warn) {
+                    scheduling_reply_close_to_cutoff(bot, message, scheduling_options, white, black);
+                }
+                scheduling_reply_scheduled(bot, message, results, white, black);
+            }
+        );
     });
 });
 
