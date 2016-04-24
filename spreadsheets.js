@@ -536,6 +536,5 @@ module.exports.parse_scheduling = parse_scheduling;
 module.exports.parse_result = parse_result;
 module.exports.update_schedule = update_schedule;
 module.exports.update_result = update_result;
-module.exports.DateParsingError = DateParsingError;
 module.exports.ScheduleParsingError = ScheduleParsingError;
 module.exports.PairingError = PairingError;
