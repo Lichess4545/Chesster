@@ -126,6 +126,22 @@ var WORDS_TO_IGNORE = [
     "pieces"
 ];
 
+var VALID_RESULTS = {
+    "0-0":"0-0",
+    "1-0":"1-0",
+    "0-1":"0-1",
+    "1/2-1/2":"1/2-1/2",
+    "0.5-0.5":"1/2-1/2",
+    "1X-0F":"1X-0F",
+    "0F-1X":"0F-1X",
+    "0F-0F":"0F-0F",
+    "1/2Z-1/2Z":"1/2Z-1/2Z",
+    "0.5Z-0.5Z":"1/2Z-1/2Z",
+    "DRAW":"1/2-1/2",
+    "DREW":"1/2-1/2",
+    "GIRI":"1/2-1/2"
+};
+
 // A scheduling error (as opposed to other errors)
 function ScheduleParsingError () {}
 ScheduleParsingError.prototype = new Error();
@@ -422,8 +438,103 @@ function update_schedule(service_account_auth, key, colname, format, schedule, c
     });
 }
 
+// parse the input string for a results update
+function parse_result(input_string){
+    var tokens = get_tokens(input_string);   
+    var result = find_result(tokens);
+    var players = find_players(tokens);
+    
+    return {
+        "white": players.white,
+        "black": players.black,
+        "result": result,
+    };
+}
+
+function get_tokens(input_string){
+    return input_string.split(" ");
+}
+
+function find_result(tokens){
+    var result;
+    _.some(tokens, function(token){
+        return (result = VALID_RESULTS[token.toUpperCase()]) ? true : false;
+    });
+    return result;
+}
+
+function find_players(tokens){
+    // in reality, the order is arbitrary.
+    // just assuming first I find is white, the second is black
+    var players = {};
+    
+    var player_tokens = filter_player_tokens(tokens);
+
+    //assuming we found 2 tokens, we should convert them to player names
+    if(player_tokens.length == 2){
+        players.white = player_tokens[0];
+        players.black = player_tokens[1];
+    }
+
+    return players;
+}
+
+function filter_player_tokens(tokens){
+    return _.filter(tokens, function(token){
+        return /^\<@[A-Z0-9]+\>$/.test(token);
+    });
+}
+
+//this assumes it is being given a valid result - that is th contract
+//error handling for a bad result should happen outside this function
+function update_result(service_account_auth, key, colname, result, callback){
+    var white = result.white;
+    var black = result.black;
+    var result = result.result;
+    
+    find_pairing(
+        service_account_auth, 
+        key, 
+        white.name, 
+        black.name, 
+        function(err, row, reversed){
+            if(err){
+                return callback(err);
+            }
+            var result_cell = row[colname];
+            console.log(result_cell);
+
+            //make the update to the cell
+            //parse the links out of the function
+            //update only the result - will create a function to update the gamelink
+            
+            if(reversed){
+                //switch the result
+               var lhs = result.split('-')[0];
+               var rhs = result.split('-')[1];
+               result = rhs + '-' + lhs;
+            }
+
+            var gamelink = ' ';            
+
+            var formula = result_cell.formula;
+            if(formula && formula.toUpperCase().includes("HYPERLINK")){
+               gamelink = formula.split("\"")[1];
+            }
+
+            result_cell.formula = '=HYPERLINK("' + gamelink + '","' + result + '")';
+
+            result_cell.save(function(err){
+                return callback(err, reversed);
+            });
+        }
+    );
+}
+
 module.exports.get_round_extrema = get_round_extrema;
 module.exports.parse_scheduling = parse_scheduling;
+module.exports.parse_result = parse_result;
 module.exports.update_schedule = update_schedule;
+module.exports.update_result = update_result;
 module.exports.ScheduleParsingError = ScheduleParsingError;
 module.exports.PairingError = PairingError;
