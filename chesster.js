@@ -397,28 +397,36 @@ controller.hears([
 
 function prepareSummonModsMessage(){
     return "Summoning mods:" + 
-		users.getIdString("endrawes0") + ", " + 
-		users.getIdString("mkoga") + ", " +
-		users.getIdString("mrlegilimens") + ", " +
-		users.getIdString("petruchio") + ", " +
-		users.getIdString("seb32") + ", " +
-		users.getIdString("theino");
+        users.getIdString("endrawes0") + ", " +
+        users.getIdString("mkoga") + ", " +
+        users.getIdString("mrlegilimens") + ", " +
+        users.getIdString("petruchio") + ", " +
+        users.getIdString("seb32") + ", " +
+        users.getIdString("theino");
 }
 
 function prepareSummonLoneWolfModsMessage(){
     return "Summoning LoneWolf mods:" + 
-		users.getIdString("endrawes0") + ", " + 
-		users.getIdString("matuiss2") + ", " +
-	users.getIdString("lakinwecker") + ", " +
-		users.getIdString("theino");
+        users.getIdString("endrawes0") + ", " +
+        users.getIdString("lakinwecker") + ", " +
+        users.getIdString("theino");
 }
 
+/*
+ * The funky character in theinos name is a zero-width-space:
+ * https://en.wikipedia.org/wiki/Zero-width_space
+ *
+ * It prevents slack from notifying him, but actually doesn't get
+ * copy/pasted so if someone copies his name and then pastes it, it
+ * works fine.
+ *
+ */
 function prepareModsMessage(){
-    return "Mods: endrawes0, mkoga, mrlegilimens, petruchio, seb32, theino";
+    return "Mods: endrawes0, mkoga, mrlegilimens, petruchio, seb32, t\u200Bheino";
 }
 
 function prepareLoneWolfModsMessage(){
-    return "LoneWolf mods: endrawes0, matuiss2, lakinwecker, theino";
+    return "LoneWolf mods: endrawes0, lakinwecker, t\u200Bheino";
 }
 
 function sayMods(convo){
@@ -1157,19 +1165,22 @@ controller.hears([
 	'direct_message'
 ], function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        var self = this;
-        self.board_number = parseInt(message.text.split(" ")[1]);
-        if(self.board_number && !isNaN(self.board_number)){
-	    loadSheet(self, function(){
-	        getBoard(self, function(){
-                    bot.reply(message, prepareBoardResponse(self));
+        bot.startPrivateConversation(message, function (response, convo) {
+            var self = this;
+            self.board_number = parseInt(message.text.split(" ")[1]);
+            if(self.board_number && !isNaN(self.board_number)){
+                loadSheet(self, function(){
+                    getBoard(self, function(){
+                        convo.say(prepareBoardResponse(self));
+                    });
                 });
-            });
-        }else{
-            bot.reply(message, "Which board did you say? [ board <number> ]. Please try again.");
-        }
+            }else{
+                convo.say("Which board did you say? [ board <number> ]. Please try again.");
+            }
+        });
     });
 });
+
 
 
 /* Scheduling */
