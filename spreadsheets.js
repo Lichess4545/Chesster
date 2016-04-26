@@ -190,7 +190,7 @@ function get_possible_date_strings(date_string, extrema) {
     });
     date_strings.push(tokens.join(" "));
 
-    // now make one wher we remove weekdays
+    // now make one wher we remove date names completely.
     tokens = date_string.split(" ");
     tokens = _.map(tokens, function(part) {
         if (date_name_mappings[part.toLowerCase()]) {
@@ -202,15 +202,13 @@ function get_possible_date_strings(date_string, extrema) {
     tokens = _.filter(tokens, function(i) { return i.length > 0; });
     date_strings.push(tokens.join(" "));
 
-    // Now make some where we inject various date pieces into the string.
+    // Now make some where we inject the year at the beginning
     var now = moment.utc();
     year = now.format("YYYY");
     month = now.format("MM");
     date_strings.slice().forEach(function(date_string) {
         date_strings.push("" + year + "-" + date_string);
     });
-    //console.log(date_strings);
-    //date_strings.push("" + year + month + date_string);
     return date_strings;
 }
 
