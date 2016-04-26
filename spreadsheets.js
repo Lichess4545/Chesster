@@ -68,24 +68,22 @@ var BASE_DATE_FORMATS = [
     "D MMMM YY",
 ];
 var BASE_TIME_FORMATS = [
-    "HH:mm",
-    "H:mm",
-    "H:m"
+    "HHmm",
+    "Hmm",
+    "Hm",
+    "HH-mm",
+    "H-mm",
+    "H-m"
 ];
 var DATE_FORMATS = [
 ];
 BASE_DATE_FORMATS.forEach(function(date_format) {
     BASE_TIME_FORMATS.forEach(function(time_format) {
         var date_format2 = date_format.replace(/[-]/g, '');
-        var time_format2 = time_format.replace(/[:]/g, '');
         DATE_FORMATS.push(date_format + " " + time_format);
         DATE_FORMATS.push(time_format + " " + date_format);
-        DATE_FORMATS.push(date_format2 + " " + time_format2);
-        DATE_FORMATS.push(time_format2 + " " + date_format2);
         DATE_FORMATS.push(date_format2 + " " + time_format);
         DATE_FORMATS.push(time_format + " " + date_format2);
-        DATE_FORMATS.push(date_format + " " + time_format2);
-        DATE_FORMATS.push(time_format2 + " " + date_format);
     });
 });
 var WORDS_TO_IGNORE = [
@@ -103,7 +101,6 @@ var WORDS_TO_IGNORE = [
     "to",
     "v",
     "vs",
-    "vs.",
     "versus",
     "sunday",
     "monday",
@@ -148,6 +145,27 @@ ScheduleParsingError.prototype = new Error();
 function PairingError () {}
 PairingError.prototype = new Error();
 
+// Get an appropriate set of base tokens for the scheduling messages
+function get_tokens_scheduling(input_string){
+    // Do some basic preprocessing
+    // Replace non-date punctuation/symbols with spaces
+    input_string = input_string.replace(/[@,\(\)]/g, ' ');
+    input_string = input_string.replace(/[<\>]/g, '');
+
+    var parts = _.map(input_string.split(" "), function(item) {
+        // Remove . and / and : and - from the beginning and end of the string
+        item = item.replace(/^[:\.\/-]/g, '');
+        item = item.replace(/[:\.\/-]$/g, '');
+
+        return item;
+    });
+    parts = _.filter(parts, function(i) { return i.length > 0; });
+    parts = _.filter(parts, function(i) {
+        return WORDS_TO_IGNORE.indexOf(i.toLowerCase()) == -1;
+    });
+    return parts;
+}
+
 // Make an attempt to parse a scheduling string. 
 //
 // Parameters:
@@ -157,29 +175,10 @@ PairingError.prototype = new Error();
 //     options.warning_hours: an integer specifying how many hours
 //         before the round end that we want to warn people about.
 function parse_scheduling(input_string, options) {
-    // Do some basic preprocessing
-    // Replace non-date punctuation/symbols with spaces
-    input_string = input_string.replace(/[@,\(\)]/g, ' ');
-    input_string = input_string.replace(/[<\>]/g, '');
-
-    // Change / to -
-    input_string = input_string.replace(/[\/]/g, '-');
-
-    // Change . to :
-    input_string = input_string.replace(/[\.]/g, ':');
-
-    var parts = input_string.split(" ");
+    var parts = get_tokens_scheduling(input_string);
 
     // Filter out word that we know we want to ignore.
-    var filtered_parts = [];
-    parts.forEach(function(part) {
-        // Remove all lone 
-        if (WORDS_TO_IGNORE.indexOf(part.toLowerCase()) != -1) {
-            return;
-        }
-        filtered_parts.push(part);
-    });
-    if (filtered_parts.length < 3) {
+    if (parts.length < 3) {
         console.log("Unable to parse date: " + input_string);
         throw new ScheduleParsingError();
     }
@@ -187,7 +186,9 @@ function parse_scheduling(input_string, options) {
     // Now build up some possible strings and try a bunch of patterns
     // to find a date in our range.
     var extrema = get_round_extrema(options);
-    date_string = filtered_parts.slice(2).join(" ");
+    date_string = parts.slice(2).join(" ");
+    // Change /.: to -
+    date_string = date_string.replace(/[\/:\.]/g, '-');
     date_string = date_string.toLowerCase();
     date_string = date_string.replace(/gmt/g, "");
     date_string = date_string.replace(/utc/g, "");
@@ -235,8 +236,8 @@ function parse_scheduling(input_string, options) {
     }
 
     // strip out any punctuation from the usernames
-    var white = filtered_parts[0].replace(/[@\.,\(\):]/g, '');
-    var black = filtered_parts[1].replace(/[@\.,\(\):]/g, '');
+    var white = parts[0].replace(/[@\.,\(\):]/g, '');
+    var black = parts[1].replace(/[@\.,\(\):]/g, '');
 
     var date;
     var out_of_bounds = false;
@@ -440,7 +441,7 @@ function update_schedule(service_account_auth, key, colname, format, schedule, c
 
 // parse the input string for a results update
 function parse_result(input_string){
-    var tokens = get_tokens(input_string);   
+    var tokens = get_tokens_result(input_string);   
     var result = find_result(tokens);
     var players = find_players(tokens);
     
@@ -451,7 +452,7 @@ function parse_result(input_string){
     };
 }
 
-function get_tokens(input_string){
+function get_tokens_result(input_string){
     return input_string.split(" ");
 }
 

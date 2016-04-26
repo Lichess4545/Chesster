@@ -2,6 +2,10 @@ var assert = require('chai').assert;
 var moment = require("moment");
 var spreadsheets = require('../spreadsheets');
 
+
+
+var fmt = "YYYY-MM-DDTHH:mm:ssZZ";
+
 describe('scheduling', function() {
     //--------------------------------------------------------------------------
     describe('#get_round_extrema()', function () {
@@ -29,17 +33,17 @@ describe('scheduling', function() {
             options.extrema.iso_weekday = 1;
             options.extrema.reference_date = moment.utc("2016-04-07");
             var bounds = spreadsheets.get_round_extrema(options);
-            assert.equal(bounds.start.format(), "2016-04-04T11:00:00Z")
-            assert.equal(bounds.end.format(), "2016-04-11T11:00:00Z")
+            assert.equal(bounds.start.format(fmt), "2016-04-04T11:00:00+0000")
+            assert.equal(bounds.end.format(fmt), "2016-04-11T11:00:00+0000")
         });
         it("Test warning_hours", function() {
             options.extrema.iso_weekday = 1;
             options.extrema.reference_date = moment.utc("2016-04-07");
             options.extrema.warning_hours = 1;
             var bounds = spreadsheets.get_round_extrema(options);
-            assert.equal(bounds.start.format(), "2016-04-04T11:00:00Z");
-            assert.equal(bounds.end.format(), "2016-04-11T11:00:00Z");
-            assert.equal(bounds.warning.format(), "2016-04-11T10:00:00Z");
+            assert.equal(bounds.start.format(fmt), "2016-04-04T11:00:00+0000");
+            assert.equal(bounds.end.format(fmt), "2016-04-11T11:00:00+0000");
+            assert.equal(bounds.warning.format(fmt), "2016-04-11T10:00:00+0000");
         });
     });
     //--------------------------------------------------------------------------
@@ -61,7 +65,7 @@ describe('scheduling', function() {
             //options.extrema.reference_date = moment.utc("2016-04-15");
             function test_parse_scheduling(string, expected)  {
                 var results = spreadsheets.parse_scheduling(string, options);
-                assert.equal(results.date.format(), expected.date);
+                assert.equal(results.date.format(fmt), expected.date);
                 assert.equal(results.white, expected.white);
                 assert.equal(results.black, expected.black);
             }
@@ -69,7 +73,7 @@ describe('scheduling', function() {
                 "@autotelic v @explodingllama 4/16 @ 0900 GMT", {
                     white: "autotelic",
                     black: "explodingllama",
-                    date: "2016-04-16T09:00:00Z"
+                    date: "2016-04-16T09:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -77,7 +81,7 @@ describe('scheduling', function() {
                 {
                     white: "ronaldulyssesswanson",
                     black: "esolcneveton",
-                    date: "2016-04-17T14:00:00Z"
+                    date: "2016-04-17T14:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -85,7 +89,7 @@ describe('scheduling', function() {
                 {
                     white: "adrianchessnow",
                     black: "mydogeatslemons",
-                    date: "2016-04-15T23:00:00Z"
+                    date: "2016-04-15T23:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -93,7 +97,7 @@ describe('scheduling', function() {
                 {
                     white: "juansnow",
                     black: "jimcube27",
-                    date: "2016-04-17T10:30:00Z"
+                    date: "2016-04-17T10:30:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -101,7 +105,7 @@ describe('scheduling', function() {
                 {
                     white: "mrrobot",
                     black: "ashkanjah",
-                    date: "2016-04-16T14:00:00Z"
+                    date: "2016-04-16T14:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -109,7 +113,7 @@ describe('scheduling', function() {
                 {
                     white: "ronaldulyssesswanson",
                     black: "esolcneveton",
-                    date: "2016-04-16T14:00:00Z"
+                    date: "2016-04-16T14:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -117,7 +121,7 @@ describe('scheduling', function() {
                 {
                     white: "rreyv",
                     black: "krzem",
-                    date: "2016-04-17T15:00:00Z"
+                    date: "2016-04-17T15:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -125,7 +129,7 @@ describe('scheduling', function() {
                 {
                     white: "atrophied",
                     black: "jaivl",
-                    date: "2016-04-14T20:00:00Z"
+                    date: "2016-04-14T20:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -133,7 +137,7 @@ describe('scheduling', function() {
                 {
                     white: "modakshantanu",
                     black: "hakonj",
-                    date: "2016-04-14T07:00:00Z"
+                    date: "2016-04-14T07:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -141,7 +145,7 @@ describe('scheduling', function() {
                 {
                     white: "quirked",
                     black: "vishysoisse",
-                    date: "2016-04-14T21:00:00Z"
+                    date: "2016-04-14T21:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -149,7 +153,7 @@ describe('scheduling', function() {
                 {
                     white: "theino",
                     black: "cactus",
-                    date: "2016-04-14T02:30:00Z"
+                    date: "2016-04-14T02:30:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -157,7 +161,7 @@ describe('scheduling', function() {
                 {
                     white: "seb32",
                     black: "Petruchio",
-                    date: "2016-04-15T23:00:00Z"
+                    date: "2016-04-15T23:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -165,7 +169,7 @@ describe('scheduling', function() {
                 {
                     white: "soldadofiel",
                     black: "durchnachtundwind",
-                    date: "2016-04-13T23:09:00Z"
+                    date: "2016-04-13T23:09:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -173,7 +177,7 @@ describe('scheduling', function() {
                 {
                     white: "greyhawk",
                     black: "immortality",
-                    date: "2016-04-14T21:00:00Z"
+                    date: "2016-04-14T21:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -181,7 +185,7 @@ describe('scheduling', function() {
                 {
                     white: "soldadofiel",
                     black: "durchnachtundwind",
-                    date: "2016-04-13T23:09:00Z"
+                    date: "2016-04-13T23:09:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -189,7 +193,7 @@ describe('scheduling', function() {
                 {
                     white: "nacional100",
                     black: "tnan123",
-                    date: "2016-04-15T14:00:00Z"
+                    date: "2016-04-15T14:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -197,7 +201,7 @@ describe('scheduling', function() {
                 {
                     white: "hillrp",
                     black: "endrawes0",
-                    date: "2016-04-17T01:00:00Z"
+                    date: "2016-04-17T01:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -205,7 +209,7 @@ describe('scheduling', function() {
                 {
                     white: "saschlars",
                     black: "preserve",
-                    date: "2016-04-16T12:00:00Z"
+                    date: "2016-04-16T12:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -213,7 +217,7 @@ describe('scheduling', function() {
                 {
                     white: "modakshantanu",
                     black: "hakonj",
-                    date: "2016-04-14T15:00:00Z"
+                    date: "2016-04-14T15:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -221,7 +225,7 @@ describe('scheduling', function() {
                 {
                     white: "ihaterbf",
                     black: "hyzer",
-                    date: "2016-04-16T22:00:00Z"
+                    date: "2016-04-16T22:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -229,7 +233,7 @@ describe('scheduling', function() {
                 {
                     white: "djcrisce",
                     black: "zantawb",
-                    date: "2016-04-15T00:00:00Z"
+                    date: "2016-04-15T00:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -237,7 +241,7 @@ describe('scheduling', function() {
                 {
                     white: "jptriton",
                     black: "cyanfish",
-                    date: "2016-04-14T18:00:00Z"
+                    date: "2016-04-14T18:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -245,7 +249,7 @@ describe('scheduling', function() {
                 {
                     white: "narud",
                     black: "lakinwecker",
-                    date: "2016-04-16T17:00:00Z"
+                    date: "2016-04-16T17:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -253,7 +257,7 @@ describe('scheduling', function() {
                 {
                     white: "jyr",
                     black: "droodjerky",
-                    date: "2016-04-15T17:00:00Z"
+                    date: "2016-04-15T17:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -261,7 +265,7 @@ describe('scheduling', function() {
                 {
                     white: "chill5555",
                     black: "doganof",
-                    date: "2016-04-15T17:00:00Z"
+                    date: "2016-04-15T17:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -269,7 +273,7 @@ describe('scheduling', function() {
                 {
                     white: "oldtom",
                     black: "bramminator",
-                    date: "2016-04-17T16:15:00Z"
+                    date: "2016-04-17T16:15:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -277,7 +281,7 @@ describe('scheduling', function() {
                 {
                     white: "ctorh",
                     black: "practicedave",
-                    date: "2016-04-18T18:00:00Z"
+                    date: "2016-04-18T18:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -285,7 +289,7 @@ describe('scheduling', function() {
                 {
                     white: "boviced",
                     black: "hoxhound",
-                    date: "2016-04-14T16:00:00Z"
+                    date: "2016-04-14T16:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -293,7 +297,7 @@ describe('scheduling', function() {
                 {
                     white: "pasternak",
                     black: "riemannn",
-                    date: "2016-04-14T20:00:00Z"
+                    date: "2016-04-14T20:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -301,7 +305,7 @@ describe('scheduling', function() {
                 {
                     white: "angborxley",
                     black: "theknug",
-                    date: "2016-04-17T13:30:00Z"
+                    date: "2016-04-17T13:30:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -309,7 +313,7 @@ describe('scheduling', function() {
                 {
                     white: "modakshantanu",
                     black: "hakonj",
-                    date: "2016-04-13T07:00:00Z"
+                    date: "2016-04-13T07:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -317,7 +321,7 @@ describe('scheduling', function() {
                 {
                     white: "U0DJTJ15W",
                     black: "U0YUPPF4H",
-                    date: "2016-04-16T00:00:00Z"
+                    date: "2016-04-16T00:00:00+0000"
                 }
             );
             test_parse_scheduling(
@@ -325,7 +329,23 @@ describe('scheduling', function() {
                 {
                     white: "U0DJTJ15W",
                     black: "U0YUPPF4H",
-                    date: "2016-04-17T20:00:00Z"
+                    date: "2016-04-17T20:00:00+0000"
+                }
+            );
+            test_parse_scheduling(
+                "imakethenews vs. riemannn  4/17 00:00 GMT",
+                {
+                    white: "imakethenews",
+                    black: "riemannn",
+                    date: "2016-04-17T00:00:00+0000"
+                }
+            );
+            test_parse_scheduling(
+                "resonantpillow vs steiger07 : sunday 17.04. @ 16:00 GMT",
+                {
+                    white: "resonantpillow",
+                    black: "steiger07",
+                    date: "2016-04-17T16:00:00+0000"
                 }
             );
         });
@@ -375,11 +395,6 @@ describe('scheduling', function() {
                     "warning_hours": 1
                 }
             };
-            function test_parse_scheduling(string, expected)  {
-                assert.equal(results.date.format(), expected.date);
-                assert.equal(results.white, expected.white);
-                assert.equal(results.black, expected.black);
-            }
             var results = spreadsheets.parse_scheduling(
                 "@autotelic v @explodingllama 4/18 @ 2200 GMT",
                 options
@@ -468,10 +483,10 @@ describe('results', function(){
                 }
             );
             test_parse_result(
-                "<@U1234567> 1/2X-1/2X <@U2345678>", {
+                "<@U1234567> 1/2Z-1/2Z <@U2345678>", {
                     white: "<@U1234567>",
                     black: "<@U2345678>",
-                    result: "1/2X-1/2X"
+                    result: "1/2Z-1/2Z"
                 }
             );
             test_parse_result(
