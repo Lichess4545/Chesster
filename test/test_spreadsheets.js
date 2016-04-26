@@ -77,14 +77,6 @@ describe('scheduling', function() {
                 }
             );
             test_parse_scheduling(
-                "@ronaldulyssesswanson – @esolcneveton rescheduled to Sunday, April 17th at 14:00 GMT.",
-                {
-                    white: "ronaldulyssesswanson",
-                    black: "esolcneveton",
-                    date: "2016-04-17T14:00:00+0000"
-                }
-            );
-            test_parse_scheduling(
                 "@adrianchessnow:  v @mydogeatslemons: 4/15 2300 GMT",
                 {
                     white: "adrianchessnow",
@@ -105,14 +97,6 @@ describe('scheduling', function() {
                 {
                     white: "mrrobot",
                     black: "ashkanjah",
-                    date: "2016-04-16T14:00:00+0000"
-                }
-            );
-            test_parse_scheduling(
-                "@ronaldulyssesswanson – @esolcneveton on Saturday, April 16th at 14:00 GMT.",
-                {
-                    white: "ronaldulyssesswanson",
-                    black: "esolcneveton",
                     date: "2016-04-16T14:00:00+0000"
                 }
             );
@@ -346,6 +330,30 @@ describe('scheduling', function() {
                     white: "resonantpillow",
                     black: "steiger07",
                     date: "2016-04-17T16:00:00+0000"
+                }
+            );
+            test_parse_scheduling(
+                "supervj: v ecstaticbroccoli Wednesday 19:00 GMT",
+                {
+                    white: "supervj",
+                    black: "ecstaticbroccoli",
+                    date: "2016-04-13T19:00:00+0000"
+                }
+            );
+            test_parse_scheduling(
+                "@ronaldulyssesswanson – @esolcneveton on Saturday, April 16th at 14:00 GMT.",
+                {
+                    white: "ronaldulyssesswanson",
+                    black: "esolcneveton",
+                    date: "2016-04-16T14:00:00+0000"
+                }
+            );
+            test_parse_scheduling(
+                "@ronaldulyssesswanson – @esolcneveton rescheduled to Sunday, April 17th at 14:00 GMT.",
+                {
+                    white: "ronaldulyssesswanson",
+                    black: "esolcneveton",
+                    date: "2016-04-17T14:00:00+0000"
                 }
             );
         });
