@@ -56,6 +56,12 @@ describe('scheduling', function() {
                 "warning_hours": 1
             }
         };
+        function test_parse_scheduling(string, expected)  {
+            var results = spreadsheets.parse_scheduling(string, options);
+            assert.equal(results.date.format(fmt), expected.date);
+            assert.equal(results.white, expected.white);
+            assert.equal(results.black, expected.black);
+        }
         it("Test team-scheduling messages", function() {
             options.extrema.reference_date = moment.utc("2016-04-15");
 
@@ -63,12 +69,6 @@ describe('scheduling', function() {
         });
         it("Test lonewolf-scheduling messages", function() {
             //options.extrema.reference_date = moment.utc("2016-04-15");
-            function test_parse_scheduling(string, expected)  {
-                var results = spreadsheets.parse_scheduling(string, options);
-                assert.equal(results.date.format(fmt), expected.date);
-                assert.equal(results.white, expected.white);
-                assert.equal(results.black, expected.black);
-            }
             test_parse_scheduling(
                 "@autotelic v @explodingllama 4/16 @ 0900 GMT", {
                     white: "autotelic",
@@ -354,6 +354,57 @@ describe('scheduling', function() {
                     white: "ronaldulyssesswanson",
                     black: "esolcneveton",
                     date: "2016-04-17T14:00:00+0000"
+                }
+            );
+        });
+        it("Test lonewolf-scheduling messages #2", function() {
+            options.extrema.reference_date = moment.utc("2016-04-28");
+            test_parse_scheduling(
+                "steiger07 vs matuiss2 Sun 01.05.2016 @ 16:00 GMT",
+                {
+                    white: "steiger07",
+                    black: "matuiss2",
+                    date: "2016-05-01T16:00:00+0000"
+                }
+            );
+            test_parse_scheduling(
+                "steiger07 vs matuiss2 01.05.2016 @ 16:00 GMT",
+                {
+                    white: "steiger07",
+                    black: "matuiss2",
+                    date: "2016-05-01T16:00:00+0000"
+                }
+            );
+            test_parse_scheduling(
+                "@steiger07 vs @matuiss2 5/1 @ 16:00 GMT",
+                {
+                    white: "steiger07",
+                    black: "matuiss2",
+                    date: "2016-05-01T16:00:00+0000"
+                }
+            );
+            test_parse_scheduling(
+                "@theknug: vs. @fradtheimpaler Sat. 4/30 at 14:00 GMT",
+                {
+                    white: "theknug",
+                    black: "fradtheimpaler",
+                    date: "2016-04-30T14:00:00+0000"
+                }
+            );
+            test_parse_scheduling(
+                "@theknug - @fradtheimpaler saturday 30/4 14 GMT",
+                {
+                    white: "theknug",
+                    black: "fradtheimpaler",
+                    date: "2016-04-30T14:00:00+0000"
+                }
+            );
+            test_parse_scheduling(
+                "captncarter vs Kimaga 17.00 GMT 27-04",
+                {
+                    white: "captncarter",
+                    black: "Kimaga",
+                    date: "2016-04-27T17:00:00+0000"
                 }
             );
         });

@@ -65,7 +65,8 @@ var BASE_TIME_FORMATS = [
     "HHmm",
     "Hmm",
     "HH-mm",
-    "H-mm"
+    "H-mm",
+    "HH"
 ];
 var DATE_FORMATS = [
 ];
@@ -208,6 +209,7 @@ function get_possible_date_strings(date_string, extrema) {
     month = now.format("MM");
     date_strings.slice().forEach(function(date_string) {
         date_strings.push("" + year + "-" + date_string);
+        date_strings.push(date_string + "-" + year);
     });
     return date_strings;
 }
