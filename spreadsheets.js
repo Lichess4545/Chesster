@@ -10,6 +10,8 @@ var EXTREMA_DEFAULTS = {
     'warning_hours': 1,
 };
 var BASE_DATE_FORMATS = [
+    "YYYY-MM-DD MM DD",
+    "YYYY-MM DD",
     "YYYY-MM-DD",
     "YYYY-MM-D",
     "YYYY-M-DD",
@@ -42,14 +44,6 @@ var BASE_DATE_FORMATS = [
     "D-MM-YY",
     "DD-M-YY",
     "D-M-YY",
-    "YYYY-MMMM Do",
-    "YY-MMMM Do",
-    "MMMM Do YYYY",
-    "MMMM Do YY",
-    "YYYY-Do MMMM",
-    "YY-Do MMMM",
-    "Do MMMM YYYY",
-    "Do MMMM YY",
     "YYYY-MMMM DD",
     "YY-MMMM DD",
     "MMMM DD YYYY",
@@ -68,24 +62,18 @@ var BASE_DATE_FORMATS = [
     "D MMMM YY",
 ];
 var BASE_TIME_FORMATS = [
-    "HH:mm",
-    "H:mm",
-    "H:m"
+    "HHmm",
+    "Hmm",
+    "HH-mm",
+    "H-mm",
+    "HH"
 ];
 var DATE_FORMATS = [
 ];
 BASE_DATE_FORMATS.forEach(function(date_format) {
     BASE_TIME_FORMATS.forEach(function(time_format) {
-        var date_format2 = date_format.replace(/[-]/g, '');
-        var time_format2 = time_format.replace(/[:]/g, '');
         DATE_FORMATS.push(date_format + " " + time_format);
         DATE_FORMATS.push(time_format + " " + date_format);
-        DATE_FORMATS.push(date_format2 + " " + time_format2);
-        DATE_FORMATS.push(time_format2 + " " + date_format2);
-        DATE_FORMATS.push(date_format2 + " " + time_format);
-        DATE_FORMATS.push(time_format + " " + date_format2);
-        DATE_FORMATS.push(date_format + " " + time_format2);
-        DATE_FORMATS.push(time_format2 + " " + date_format);
     });
 });
 var WORDS_TO_IGNORE = [
@@ -103,24 +91,7 @@ var WORDS_TO_IGNORE = [
     "to",
     "v",
     "vs",
-    "vs.",
     "versus",
-    "sunday",
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-    "sun",
-    "mon",
-    "tues",
-    "wed",
-    "thu",
-    "thur",
-    "thurs",
-    "fri",
-    "sat",
     "white",
     "black",
     "pieces"
@@ -148,6 +119,101 @@ ScheduleParsingError.prototype = new Error();
 function PairingError () {}
 PairingError.prototype = new Error();
 
+// Get an appropriate set of base tokens for the scheduling messages
+function get_tokens_scheduling(input_string){
+    // Do some basic preprocessing
+    // Replace non-date punctuation/symbols with spaces
+    input_string = input_string.replace(/[@,\(\)]/g, ' ');
+    input_string = input_string.replace(/[<\>]/g, '');
+
+    var parts = _.map(input_string.split(" "), function(item) {
+        // Remove . and / and : and - from the beginning and end of the word
+        item = item.replace(/^[:\.\/-]/g, '');
+        item = item.replace(/[:\.\/-]$/g, '');
+
+        return item;
+    });
+    parts = _.filter(parts, function(i) { return i.length > 0; });
+    parts = _.filter(parts, function(i) {
+        return WORDS_TO_IGNORE.indexOf(i.toLowerCase()) == -1;
+    });
+    return parts;
+}
+
+// Take the string they posted and turn it into a set of possible date
+// strings by doing things like:
+//
+// Unifying the punctuation.
+// removing gmt/utc
+// Adding the current-year
+// replacing day of the week tokens with the appropriate date format
+function get_possible_date_strings(date_string, extrema) {
+    var date_strings = [];
+
+    // Unify some common stuff first.
+    //
+    // Change /.: to -
+    date_string = date_string.replace(/[\/:\.]/g, '-');
+    date_string = date_string.toLowerCase();
+    date_string = date_string.replace(/gmt/g, "");
+    date_string = date_string.replace(/utc/g, "");
+
+    var date_name_mappings = {};
+
+    var cur = extrema.start.clone();
+    var now = moment.utc();
+    while (!cur.isAfter(extrema.end)) {
+        var month_day = cur.format("MM-DD");
+        // Deal with a couple of formats that moment doesn't produce but are used.
+        if (cur.format("dddd") == "Thursday") {
+            date_name_mappings["thurs"] = month_day;
+        } if (cur.format("dddd") == "Wednesday") {
+            date_name_mappings["weds"] = month_day;
+        }
+        date_name_mappings[cur.format("dd").toLowerCase()] = month_day;
+        date_name_mappings[cur.format("ddd").toLowerCase()] = month_day;
+        date_name_mappings[cur.format("dddd").toLowerCase()] = month_day;
+        date_name_mappings[cur.format("Do").toLowerCase()] = cur.format("DD");
+        var month = cur.format("MM");
+        date_name_mappings[cur.format("MMM").toLowerCase()] = month;
+        date_name_mappings[cur.format("MMMM").toLowerCase()] = month;
+        cur.add(1, 'days');
+    }
+
+    // Now make one where we map date names to their date
+    var tokens = date_string.split(" ");
+    tokens = _.map(tokens, function(part) {
+        if (date_name_mappings[part.toLowerCase()]) {
+            return date_name_mappings[part.toLowerCase()];
+        } else {
+            return part;
+        }
+    });
+    date_strings.push(tokens.join(" "));
+
+    // now make one wher we remove date names completely.
+    tokens = date_string.split(" ");
+    tokens = _.map(tokens, function(part) {
+        if (date_name_mappings[part.toLowerCase()]) {
+            return "";
+        } else {
+            return part;
+        }
+    });
+    tokens = _.filter(tokens, function(i) { return i.length > 0; });
+    date_strings.push(tokens.join(" "));
+
+    // Now make some where we inject the year at the beginning
+    var now = moment.utc();
+    year = now.format("YYYY");
+    month = now.format("MM");
+    date_strings.slice().forEach(function(date_string) {
+        date_strings.push("" + year + "-" + date_string);
+        date_strings.push(date_string + "-" + year);
+    });
+    return date_strings;
+}
+
 // Make an attempt to parse a scheduling string. 
 //
 // Parameters:
@@ -157,29 +223,10 @@ PairingError.prototype = new Error();
 //     options.warning_hours: an integer specifying how many hours
 //         before the round end that we want to warn people about.
 function parse_scheduling(input_string, options) {
-    // Do some basic preprocessing
-    // Replace non-date punctuation/symbols with spaces
-    input_string = input_string.replace(/[@,\(\)]/g, ' ');
-    input_string = input_string.replace(/[<\>]/g, '');
-
-    // Change / to -
-    input_string = input_string.replace(/[\/]/g, '-');
-
-    // Change . to :
-    input_string = input_string.replace(/[\.]/g, ':');
-
-    var parts = input_string.split(" ");
+    var parts = get_tokens_scheduling(input_string);
 
     // Filter out word that we know we want to ignore.
-    var filtered_parts = [];
-    parts.forEach(function(part) {
-        // Remove all lone 
-        if (WORDS_TO_IGNORE.indexOf(part.toLowerCase()) != -1) {
-            return;
-        }
-        filtered_parts.push(part);
-    });
-    if (filtered_parts.length < 3) {
+    if (parts.length < 3) {
         console.log("Unable to parse date: " + input_string);
         throw new ScheduleParsingError();
     }
@@ -187,20 +234,7 @@ function parse_scheduling(input_string, options) {
     // Now build up some possible strings and try a bunch of patterns
     // to find a date in our range.
     var extrema = get_round_extrema(options);
-    date_string = filtered_parts.slice(2).join(" ");
-    date_string = date_string.toLowerCase();
-    date_string = date_string.replace(/gmt/g, "");
-    date_string = date_string.replace(/utc/g, "");
-    var date_strings = [];
-    date_strings.push(date_string)
-    var now = moment.utc();
-    year = now.year();
-    month = now.month()+1;
-    date_strings.push("" + year + "-" + date_string);
-    date_strings.push("" + year + "-0" + date_string);
-    date_strings.push("" + year + "-" + month + "-" + date_string);
-    date_strings.push("" + year + "-" + month + "-0" + date_string);
-    //date_strings.push("" + year + month + date_string);
+    var date_strings = get_possible_date_strings(parts.slice(2).join(" "), extrema);
 
     var valid_in_bounds_dates = [];
     var valid_out_of_bounds_dates = [];
@@ -235,8 +269,8 @@ function parse_scheduling(input_string, options) {
     }
 
     // strip out any punctuation from the usernames
-    var white = filtered_parts[0].replace(/[@\.,\(\):]/g, '');
-    var black = filtered_parts[1].replace(/[@\.,\(\):]/g, '');
+    var white = parts[0].replace(/[@\.,\(\):]/g, '');
+    var black = parts[1].replace(/[@\.,\(\):]/g, '');
 
     var date;
     var out_of_bounds = false;
@@ -440,7 +474,7 @@ function update_schedule(service_account_auth, key, colname, format, schedule, c
 
 // parse the input string for a results update
 function parse_result(input_string){
-    var tokens = get_tokens(input_string);   
+    var tokens = get_tokens_result(input_string);   
     var result = find_result(tokens);
     var players = find_players(tokens);
     
@@ -451,7 +485,7 @@ function parse_result(input_string){
     };
 }
 
-function get_tokens(input_string){
+function get_tokens_result(input_string){
     return input_string.split(" ");
 }
 
@@ -502,7 +536,6 @@ function update_result(service_account_auth, key, colname, result, callback){
                 return callback(err);
             }
             var result_cell = row[colname];
-            console.log(result_cell);
 
             //make the update to the cell
             //parse the links out of the function
