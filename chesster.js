@@ -89,20 +89,20 @@ var users = {
     byName: {},
     byId: {},
     getId: function(name){
-        return this.byName[name.toLowerCase()].id;
+        return this.byName[name].id;
     },
     getIdString: function(name){
         return "<@"+this.getId(name)+">";
     },
     getByNameOrID: function(nameOrId) {
-        return this.byId[nameOrId.toLowerCase()] || this.byName[nameOrId.toLowerCase()];
+        return this.byId[nameOrId] || this.byName[nameOrId];
     }
 };
 var channels = {
     byName: {},
     byId: {},
     getId: function(name){
-        return this.byName[name.toLowerCase()].id;
+        return this.byName[name].id;
     },
     getIdString: function(name){
         return "<#"+this.getId(name)+">";
@@ -122,8 +122,8 @@ function update_users(bot){
             var total = response.members.length;
             for (var i = 0; i < total; i++) {
                 var member = response.members[i];
-                byName[member.name.toLowerCase()] = member;
-                byId[member.id.toLowerCase()] = member
+                byName[member.name] = member;
+                byId[member.id] = member
             }
             users.byName = byName;
             users.byId = byId;
@@ -145,8 +145,8 @@ function update_channels(bot){
             var total = response.channels.length;
             for (var i = 0; i < total; i++) {
                 var channel = response.channels[i];
-                byName[channel.name.toLowerCase()] = channel;
-                byId[channel.id.toLowerCase()] = channel;
+                byName[channel.name] = channel;
+                byId[channel.id] = channel;
             }
             channels.byName = byName;
             channels.byId = byId;
@@ -407,18 +407,26 @@ function prepareSummonModsMessage(){
 
 function prepareSummonLoneWolfModsMessage(){
     return "Summoning LoneWolf mods:" + 
-        users.getIdString("endrawes0") + ", " + 
-        users.getIdString("matuiss2") + ", " +
+        users.getIdString("endrawes0") + ", " +
         users.getIdString("lakinwecker") + ", " +
         users.getIdString("theino");
 }
 
+/*
+ * The funky character in theinos name is a zero-width-space:
+ * https://en.wikipedia.org/wiki/Zero-width_space
+ *
+ * It prevents slack from notifying him, but actually doesn't get
+ * copy/pasted so if someone copies his name and then pastes it, it
+ * works fine.
+*
+ */
 function prepareModsMessage(){
-    return "Mods: endrawes0, mkoga, mrlegilimens, petruchio, seb32, theino";
+    return "Mods: endrawes0, mkoga, mrlegilimens, petruchio, seb32, t\u200Bheino";
 }
 
 function prepareLoneWolfModsMessage(){
-    return "LoneWolf mods: endrawes0, matuiss2, lakinwecker, theino";
+    return "LoneWolf mods: endrawes0, lakinwecker, t\u200Bheino";
 }
 
 function sayMods(convo){
@@ -1157,19 +1165,22 @@ controller.hears([
 	'direct_message'
 ], function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        var self = this;
-        self.board_number = parseInt(message.text.split(" ")[1]);
-        if(self.board_number && !isNaN(self.board_number)){
-	    loadSheet(self, function(){
-	        getBoard(self, function(){
-                    bot.reply(message, prepareBoardResponse(self));
+        bot.startPrivateConversation(message, function (response, convo) {
+            var self = this;
+            self.board_number = parseInt(message.text.split(" ")[1]);
+            if(self.board_number && !isNaN(self.board_number)){
+                loadSheet(self, function(){
+                    getBoard(self, function(){
+                        convo.say(prepareBoardResponse(self));
+                    });
                 });
-            });
-        }else{
-            bot.reply(message, "Which board did you say? [ board <number> ]. Please try again.");
-        }
+            }else{
+                convo.say("Which board did you say? [ board <number> ]. Please try again.");
+            }
+        });
     });
 });
+
 
 
 /* Scheduling */
@@ -1229,7 +1240,7 @@ function scheduling_reply_cant_find_user(bot, message) {
 // Scheduling will occur on any message
 controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        var channel = channels.byId[message.channel.toLowerCase()];
+        var channel = channels.byId[message.channel];
         if (!channel) {
             return;
         }
@@ -1331,7 +1342,7 @@ controller.on('ambient', function(bot, message) {
 // results processing will occur on any message
 controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        var channel = channels.byId[message.channel.toLowerCase()];
+        var channel = channels.byId[message.channel];
         if (!channel) {
             return;
         }
@@ -1363,7 +1374,7 @@ controller.on('ambient', function(bot, message) {
                 results_options.key,
                 results_options.colname,
                 result,
-                function(err, gamelink_ida){
+                function(err, gamelink_id){
                     if(!err && gamelink_id){
                         result.gamelink_id = gamelink_id;
                     }
@@ -1450,10 +1461,36 @@ function fetch_gamelink_details(gamelink_id, callback){
     });
 }
 
+function validate_game_details(details, options){
+    debugger;
+    var result = {
+        valid: true,
+        reason: "",
+    };
+    if(details.rated != options.rated){
+        result.valid = false;
+        result.reason = "this game is unrated.";
+    }else if(details.clock.initial != options.clock.initial * 60 || details.clock.increment != options.clock.increment){
+        result.valid = false;
+        result.reason = "the time control is incorrect."
+    }else if(details.variant != options.variant){
+        result.valid = false;
+        result.reason = "the variant should be standard."
+    }else{
+        var extrema = spreadsheets.get_round_extrema(options);
+        var game_start = new Date(details.timestamp * SECONDS);
+        if(game_start < extrema.start || game_start > extrema.end){
+            result.valid = false;
+            result.reason = "the game was not played in the current round.";
+        }
+    }
+    return result;
+}
+
 // results processing will occur on any message
 controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        var channel = channels.byId[message.channel.toLowerCase()];
+        var channel = channels.byId[message.channel];
         if (!channel) {
             return;
         }
@@ -1471,6 +1508,13 @@ controller.on('ambient', function(bot, message) {
                 if(!details){
                      bot.reply(message, "Sorry, I could not find that game.");
                      return;
+                }
+
+                var validity = validate_game_details(details, results_options);
+                if(!validity.valid){
+                    bot.reply(message, "I am sorry, <@" + message.user + ">,  the link you posted is *not* valid becuase " + validity.reason);
+                    bot.reply(message, "If this was a mistake, please correct it and try again. If intentional, please contact one of the moderators for review. Thank you.");
+                    return;
                 }
 
                 var white = details.players.white;
@@ -1495,7 +1539,9 @@ controller.on('ambient', function(bot, message) {
                         if (err) {
                             if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
                                 result_reply_missing_pairing(bot, message);
-                            } else {
+                            }else if(reversed){
+                                bot.reply(message, "This game requires moderator review becuase the colors are reversed.");
+                            }else{
                                 bot.reply(message, "Something went wrong. Notify @endrawes0");
                                 throw new Error("Error updating scheduling sheet: " + err);
                             }
