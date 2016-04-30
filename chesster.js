@@ -1,6 +1,7 @@
 var async = require("async");
 var Botkit = require('botkit');
 var GoogleSpreadsheet = require("google-spreadsheet");
+var moment = require('moment');
 var fs = require('fs');
 var fuzzy = require('./fuzzy_match.js');
 var spreadsheets = require('./spreadsheets.js');
@@ -23,6 +24,8 @@ var BOARD_5_NAME = 14;
 var BOARD_5_RATING = 16;
 var BOARD_6_NAME = 17;
 var BOARD_6_RATING = 19;
+
+var ROUND_ROW_LIMIT = 79;
 
 /* exception handling */
 /* later this will move it its own module */
@@ -626,7 +629,7 @@ controller.hears([
 function preparePairingsMessage(){
     return "Here is the pairings sheet:\n" + 
             config.links.team + 
-            "\nAlternatively, try [ @chesster pairing <competitor> <round> ] - coming soon...";
+            "\nAlternatively, try [ @chesster pairing <competitor> <round> ]";
 }
 
 function sayPairings(convo){
@@ -644,6 +647,78 @@ controller.hears([
     });
 });
 
+controller.hears([
+    'pairing ([a-zA-Z0-9]+) ([1-8])'
+], [
+    'direct_mention',
+    'direct_message'
+], function(bot, message) {
+    bot_exception_handler(bot, message, function() {
+        var player_name = message.match[1];
+        var round = message.match[2]
+        preparePairingCompetitorMessage(player_name, round, function(response) {
+            bot.reply(message, response);
+        });
+    });
+});
+
+function preparePairingCompetitorMessage(player, round, callback) {
+    var self = this;
+    loadSheet(self, function() {
+
+        for (var i = 0; i < self.rounds.length; i++) {
+            if (self.rounds[i].title === "Round " + round) {
+                // Get the spreadsheet for that round
+                parsePairingForRound(self.rounds[i], player, callback);
+                return;
+            } 
+        }
+
+        // If the round has not yet been scheduled, reply that and exit
+        callback("Round " + round + " has not been scheduled yet");
+    });
+}
+
+function parsePairingForRound(roundSheet, player, callback) {
+    // The user was either WHITE or BLACK, so find him in one column
+    // and get his opponent's name from the other column
+    
+    roundSheet.getRows({
+        limit: ROUND_ROW_LIMIT
+    }, function(err, rows) {
+        for (var i = 0; i < rows.length; i++) {
+            var cr = rows[i];
+
+            // Adjust for the possibility of checking the captain
+            if (cr.white === player || cr.white === player + "*") {
+                parsePairingResult(player, cr.black, 0, cr.date, cr.time, cr.result, callback);
+                return;
+            } else if (cr.black === player || cr.black === player + "*") {
+                parsePairingResult(player, cr.white, 1, cr.date, cr.time, cr.result, callback);
+                return;
+            } 
+        }
+
+        callback("Could not locate player " + player + " on that round");
+    });
+}
+
+function parsePairingResult(player, opponent, color, date, time, result, callback) {
+
+    var opponentName = opponent.endsWith("*") ? opponent.substring(0, opponent.length - 1) : opponent;
+    getPlayerByName(opponentName, function(opponent) {
+        getClassicalRating(opponent, function(rating) {
+            if (result) {
+                var resultString = result.split("-")[color] === "1" ? "won" : result.split("-")[color] === "0" ? "lost" : "drew";
+                callback(player + " played " + opponentName + " (" + rating + ") on " + date + " at " + time + " and " + resultString);
+            } else {
+                var timeUntil = moment(date + " " + time, "MM/DD HH:mm Z").fromNow(true);
+                callback(player + " will play " + opponentName + " (" + rating + ") on " + date + " at " + time + " which is in " + timeUntil);
+            }
+        });
+    });
+}
+
 /* standings */
 
 function prepareStandingsMessage(){
@@ -652,6 +727,7 @@ function prepareStandingsMessage(){
             "\nAlternatively, try [ @chesster result <competitor> <round> ] - coming soon...";
     
 }
+
 
 function sayStandings(convo){
     convo.say(prepareStandingsMessage());
@@ -701,9 +777,14 @@ function sayGoodbye(convo){
 function loadSheet(self, callback){
     var doc = new GoogleSpreadsheet('1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4');
     doc.getInfo(function(err, info) {
+
+        self.rounds = []
+
         for(var wi in info.worksheets){
             if(info.worksheets[wi].title == "Rosters"){
                 self.sheet = info.worksheets[wi];
+            } else {
+                self.rounds.push(info.worksheets[wi]);
             }
         }
         callback();
