@@ -468,10 +468,10 @@ describe('results', function(){
                 }
             );
             test_parse_result(
-                "<@U1234567> 1/2X-1/2X <@U2345678>", {
+                "<@U1234567> 1/2Z-1/2Z <@U2345678>", {
                     white: "<@U1234567>",
                     black: "<@U2345678>",
-                    result: "1/2X-1/2X"
+                    result: "1/2Z-1/2Z"
                 }
             );
             test_parse_result(

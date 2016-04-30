@@ -472,8 +472,8 @@ function find_players(tokens){
 
     //assuming we found 2 tokens, we should convert them to player names
     if(player_tokens.length == 2){
-        players.white = player_tokens[0];
-        players.black = player_tokens[1];
+        players.white = player_tokens[0].replace(":", "");
+        players.black = player_tokens[1].replace(":", "");
     }
 
     return players;
@@ -481,7 +481,7 @@ function find_players(tokens){
 
 function filter_player_tokens(tokens){
     return _.filter(tokens, function(token){
-        return /^\<@[A-Z0-9]+\>$/.test(token);
+        return /^\<@[A-Z0-9]+\>[:]*$/.test(token);
     });
 }
 
@@ -490,8 +490,9 @@ function filter_player_tokens(tokens){
 function update_result(service_account_auth, key, colname, result, callback){
     var white = result.white;
     var black = result.black;
-    var result = result.result;
-    
+    var result_string = result.result;
+    var gamelink = "http://en.lichess.org/" + result.gamelink_id;
+   
     find_pairing(
         service_account_auth, 
         key, 
@@ -509,23 +510,54 @@ function update_result(service_account_auth, key, colname, result, callback){
             
             if(reversed){
                 //switch the result
-               var lhs = result.split('-')[0];
-               var rhs = result.split('-')[1];
-               result = rhs + '-' + lhs;
+               var lhs = result_string.split('-')[0];
+               var rhs = result_string.split('-')[1];
+               result_string = rhs + '-' + lhs;
             }
-
-            var gamelink = ' ';            
 
             var formula = result_cell.formula;
-            if(formula && formula.toUpperCase().includes("HYPERLINK")){
-               gamelink = formula.split("\"")[1];
+            if(!gamelink && formula && formula.toUpperCase().includes("HYPERLINK")){
+                //there is no gamelink, fill from the formula
+                gamelink = formula.split("\"")[1];
+            }else if(!gamelink){
+                //no gamelink and no formula
+                gamelink = '';
             }
 
-            result_cell.formula = '=HYPERLINK("' + gamelink + '","' + result + '")';
+            //if no game link is found, just post the result
+            if(gamelink == ''){
+                result_cell.value = result_string;
+            }else{
+                result_cell.formula = '=HYPERLINK("' + gamelink + '","' + result_string + '")';
+            }
 
             result_cell.save(function(err){
                 return callback(err, reversed);
             });
+        }
+    );
+}
+
+function fetch_pairing_gamelink(service_account_auth, key, colname, result, callback){
+    var white = result.white;
+    var black = result.black;
+
+    find_pairing(
+        service_account_auth,
+        key, 
+        white.name,
+        black.name,
+        function(err, row){
+            if(err){
+                callback(err);
+            }
+            result_cell = row[colname];
+            var formula = result_cell.formula;
+            if(formula && formula.toUpperCase().includes("HYPERLINK")){
+                callback(err, formula.split("\"")[1]);
+            }else{
+                callback(err, undefined);
+            }
         }
     );
 }
@@ -535,5 +567,6 @@ module.exports.parse_scheduling = parse_scheduling;
 module.exports.parse_result = parse_result;
 module.exports.update_schedule = update_schedule;
 module.exports.update_result = update_result;
+module.exports.fetch_pairing_gamelink;
 module.exports.ScheduleParsingError = ScheduleParsingError;
 module.exports.PairingError = PairingError;

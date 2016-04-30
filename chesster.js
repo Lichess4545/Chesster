@@ -89,20 +89,20 @@ var users = {
     byName: {},
     byId: {},
     getId: function(name){
-        return this.byName[name].id;
+        return this.byName[name.toLowerCase()].id;
     },
     getIdString: function(name){
         return "<@"+this.getId(name)+">";
     },
     getByNameOrID: function(nameOrId) {
-        return this.byId[nameOrId] || this.byName[nameOrId];
+        return this.byId[nameOrId.toLowerCase()] || this.byName[nameOrId.toLowerCase()];
     }
 };
 var channels = {
     byName: {},
     byId: {},
     getId: function(name){
-        return this.byName[name].id;
+        return this.byName[name.toLowerCase()].id;
     },
     getIdString: function(name){
         return "<#"+this.getId(name)+">";
@@ -122,8 +122,8 @@ function update_users(bot){
             var total = response.members.length;
             for (var i = 0; i < total; i++) {
                 var member = response.members[i];
-                byName[member.name] = member;
-                byId[member.id] = member
+                byName[member.name.toLowerCase()] = member;
+                byId[member.id.toLowerCase()] = member
             }
             users.byName = byName;
             users.byId = byId;
@@ -145,8 +145,8 @@ function update_channels(bot){
             var total = response.channels.length;
             for (var i = 0; i < total; i++) {
                 var channel = response.channels[i];
-                byName[channel.name] = channel;
-                byId[channel.id] = channel;
+                byName[channel.name.toLowerCase()] = channel;
+                byId[channel.id.toLowerCase()] = channel;
             }
             channels.byName = byName;
             channels.byId = byId;
@@ -397,20 +397,20 @@ controller.hears([
 
 function prepareSummonModsMessage(){
     return "Summoning mods:" + 
-		users.getIdString("endrawes0") + ", " + 
-		users.getIdString("mkoga") + ", " +
-		users.getIdString("mrlegilimens") + ", " +
-		users.getIdString("petruchio") + ", " +
-		users.getIdString("seb32") + ", " +
-		users.getIdString("theino");
+        users.getIdString("endrawes0") + ", " + 
+        users.getIdString("mkoga") + ", " +
+        users.getIdString("mrlegilimens") + ", " +
+        users.getIdString("petruchio") + ", " +
+        users.getIdString("seb32") + ", " +
+        users.getIdString("theino");
 }
 
 function prepareSummonLoneWolfModsMessage(){
     return "Summoning LoneWolf mods:" + 
-		users.getIdString("endrawes0") + ", " + 
-		users.getIdString("matuiss2") + ", " +
-	users.getIdString("lakinwecker") + ", " +
-		users.getIdString("theino");
+        users.getIdString("endrawes0") + ", " + 
+        users.getIdString("matuiss2") + ", " +
+        users.getIdString("lakinwecker") + ", " +
+        users.getIdString("theino");
 }
 
 function prepareModsMessage(){
@@ -1229,7 +1229,7 @@ function scheduling_reply_cant_find_user(bot, message) {
 // Scheduling will occur on any message
 controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        var channel = channels.byId[message.channel];
+        var channel = channels.byId[message.channel.toLowerCase()];
         if (!channel) {
             return;
         }
@@ -1331,7 +1331,7 @@ controller.on('ambient', function(bot, message) {
 // results processing will occur on any message
 controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        var channel = channels.byId[message.channel];
+        var channel = channels.byId[message.channel.toLowerCase()];
         if (!channel) {
             return;
         }
@@ -1354,23 +1354,39 @@ controller.on('ambient', function(bot, message) {
                 return;
             }
 
-            spreadsheets.update_result(
+            //this could and probably should be improved
+            //this will require two requests to the spread sheet
+            //it can be done in one, but I am trying to resuse what 
+            //I wrote before as simply as possibe for now
+            spreadsheets.fetch_pairing_gamelink(
                 config.service_account_auth,
                 results_options.key,
                 results_options.colname,
-                result, 
-                function(err, reversed){
-                    if (err) {
-                        if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
-                            result_reply_missing_pairing(bot, message);
-                        } else {
-                            bot.reply(message, "Something went wrong. Notify @endrawes0");
-                            throw new Error("Error updating scheduling sheet: " + err);
-                        }
-                    } else {
-                        result_reply_updated(bot, message, result);
+                result,
+                function(err, gamelink_ida){
+                    if(!err && gamelink_id){
+                        result.gamelink_id = gamelink_id;
                     }
-                });
+                    spreadsheets.update_result(
+                        config.service_account_auth,
+                        results_options.key,
+                        results_options.colname,
+                        result, 
+                        function(err, reversed){
+                            if (err) {
+                                if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                                    result_reply_missing_pairing(bot, message);
+                                } else {
+                                    bot.reply(message, "Something went wrong. Notify @endrawes0");
+                                    throw new Error("Error updating scheduling sheet: " + err);
+                                }
+                            } else {
+                                result_reply_updated(bot, message, result);
+                            }
+                        }
+                    );
+                }
+            );
 
         }catch(e){
             //at the moment, we do not throw from inside the api - rethrow
@@ -1395,51 +1411,100 @@ function result_reply_updated(bot, message, result){
 
 /* game link parsing */
 
+function parse_gamelink(message_text){
+    var tokens = message_text.split(/[\/ \t\n\r]/);
+    var found_base_url = false;
+    var gamelink_id;
+    tokens.some(function(token){
+        if(found_base_url){
+            gamelink_id = token.replace('>', ''); 
+            //some tokens will have a > if its the last token
+            return true;
+        }
+        if(token.includes("lichess.org")){
+            found_base_url = true;
+        }
+        return false;
+    });
+    return { gamelink_id: gamelink_id };
+}
+
+function fetch_gamelink_details(gamelink_id, callback){
+    const http = require('http');
+    var url = "http://en.lichess.org/api/game/" + gamelink_id;
+    http.get(url, (res) => {
+        var body = "";
+        res.on('data', function (chunk) {
+            body += chunk;
+        });
+        res.on('end', () => {
+            if(body != ""){
+                callback(JSON.parse(body));
+            }else{
+                callback();
+            }
+        });
+    }).on('error', (e) => {
+        console.log(e);
+        callback()
+    });
+}
 
 // results processing will occur on any message
 controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        var channel = channels.byId[message.channel];
+        var channel = channels.byId[message.channel.toLowerCase()];
         if (!channel) {
             return;
         }
-        var results_options = config.results[channel.name];
+        var results_options = config.gamelinks[channel.name];
         if (!results_options) {
             return;
         }
         try{
-            /*var result = spreadsheets.parse_result(message.text, results_options);
-
-            if(!result.white || !result.black || !result.result){
+            var result = parse_gamelink(message.text, results_options);
+            if(!result.gamelink_id){
                 return;
             }
 
-            result.white = users.getByNameOrID(result.white.replace(/[\<\@\>]/g, ''));
-            result.black = users.getByNameOrID(result.black.replace(/[\<\@\>]/g, ''));
+            fetch_gamelink_details(result.gamelink_id, function(details){
+                if(!details){
+                     bot.reply(message, "Sorry, I could not find that game.");
+                     return;
+                }
 
-            if(result.white.id != message.user && result.black.id != message.user){
-                reply_permission_failure(bot, message);
-                return;
-            }
+                var white = details.players.white;
+                var black = details.players.black;
+                result.white = users.getByNameOrID(white.userId);
+                result.black = users.getByNameOrID(black.userId);
 
-            spreadsheets.update_result(
-                config.service_account_auth,
-                results_options.key,
-                results_options.colname,
-                result,
-                function(err, reversed){
-                    if (err) {
-                        if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
-                            result_reply_missing_pairing(bot, message);
+                if(details.players.winner == "black"){
+                    result.result = "0-1";
+                }else if(details.players.winner = "white"){
+                    result.result = "1-0";
+                }else{
+                    result.result = "1/2-1/2";
+                }
+
+                spreadsheets.update_result(
+                    config.service_account_auth,
+                    results_options.key,
+                    results_options.colname,
+                    result,
+                    function(err, reversed){
+                        if (err) {
+                            if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                                result_reply_missing_pairing(bot, message);
+                            } else {
+                                bot.reply(message, "Something went wrong. Notify @endrawes0");
+                                throw new Error("Error updating scheduling sheet: " + err);
+                            }
                         } else {
-                            bot.reply(message, "Something went wrong. Notify @endrawes0");
-                            throw new Error("Error updating scheduling sheet: " + err);
+                            result_reply_updated(bot, message, result);
                         }
-                    } else {
-                        result_reply_updated(bot, message, result);
                     }
-                });
-             */
+                );
+            });
         }catch(e){
             //at the moment, we do not throw from inside the api - rethrow
             throw e;
