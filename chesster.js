@@ -648,30 +648,42 @@ controller.hears([
 });
 
 controller.hears([
-    'pairing ([a-zA-Z0-9]+) ([1-8])'
+    /pairing @?([^\s]+)( ([1-8]))?/
 ], [
     'direct_mention',
     'direct_message'
 ], function(bot, message) {
     bot_exception_handler(bot, message, function() {
-        var player_name = message.match[1];
-        var round = message.match[2]
-        preparePairingCompetitorMessage(player_name, round, function(response) {
+        // The user is either a string or an id
+        var nameOrId = message.match[1];
+
+        var player = users.getByNameOrID(nameOrId);
+        if (!player) {
+            player = users.getByNameOrID(nameOrId.match(/<@([^\s]+)>/)[1]);
+        }
+
+        var round = message.match[3]
+        preparePairingCompetitorMessage(message.user, player.name, round, function(response) {
             bot.reply(message, response);
         });
     });
 });
 
-function preparePairingCompetitorMessage(player, round, callback) {
+function preparePairingCompetitorMessage(slack_name, player, round, callback) {
     var self = this;
     loadSheet(self, function() {
 
-        for (var i = 0; i < self.rounds.length; i++) {
-            if (self.rounds[i].title === "Round " + round) {
-                // Get the spreadsheet for that round
-                parsePairingForRound(self.rounds[i], player, callback);
-                return;
-            } 
+        if (round) {
+            for (var i = 0; i < self.rounds.length; i++) {
+                if (self.rounds[i].title === "Round " + round) {
+                    // Get the spreadsheet for that round
+                    parsePairingForRound(self.rounds[i], slack_name, player, callback);
+                    return;
+                } 
+            }
+        } else {
+            parsePairingForRound(self.rounds[self.rounds.length - 1], slack_name, player, callback);
+            return;
         }
 
         // If the round has not yet been scheduled, reply that and exit
@@ -679,22 +691,23 @@ function preparePairingCompetitorMessage(player, round, callback) {
     });
 }
 
-function parsePairingForRound(roundSheet, player, callback) {
+function parsePairingForRound(roundSheet, slack_name, player, callback) {
     // The user was either WHITE or BLACK, so find him in one column
     // and get his opponent's name from the other column
     
     roundSheet.getRows({
         limit: ROUND_ROW_LIMIT
     }, function(err, rows) {
+        var tz_offset = users.getByNameOrID(slack_name).tz_offset / 60;
         for (var i = 0; i < rows.length; i++) {
             var cr = rows[i];
 
             // Adjust for the possibility of checking the captain
             if (cr.white === player || cr.white === player + "*") {
-                parsePairingResult(player, cr.black, 0, cr.date, cr.time, cr.result, callback);
+                parsePairingResult(player, tz_offset, cr.black, 0, cr.date, cr.time, cr.result, callback);
                 return;
             } else if (cr.black === player || cr.black === player + "*") {
-                parsePairingResult(player, cr.white, 1, cr.date, cr.time, cr.result, callback);
+                parsePairingResult(player, tz_offset, cr.white, 1, cr.date, cr.time, cr.result, callback);
                 return;
             } 
         }
@@ -703,17 +716,26 @@ function parsePairingForRound(roundSheet, player, callback) {
     });
 }
 
-function parsePairingResult(player, opponent, color, date, time, result, callback) {
+function parsePairingResult(player, tz_offset, opponent, color, date, time, result, callback) {
 
     var opponentName = opponent.endsWith("*") ? opponent.substring(0, opponent.length - 1) : opponent;
+    
     getPlayerByName(opponentName, function(opponent) {
         getClassicalRating(opponent, function(rating) {
+            var localTime = moment.utc(date + " " + time, "MM/DD HH:mm").utcOffset(tz_offset);
+            var localDateTimeString = localTime.format("dddd [at] HH:mm");
+
+            // If the match took place in the past, display the date instead of the day
+            if (moment.utc().isAfter(localTime)) {
+                localDateTimeString = localTime.format("MM/DD [at] HH:mm");
+            }
+
             if (result) {
                 var resultString = result.split("-")[color] === "1" ? "won" : result.split("-")[color] === "0" ? "lost" : "drew";
-                callback(player + " played " + opponentName + " (" + rating + ") on " + date + " at " + time + " and " + resultString);
+                callback(player + " played " + opponentName + " (" + rating + ") on " + localDateTimeString + " and " + resultString);
             } else {
-                var timeUntil = moment(date + " " + time, "MM/DD HH:mm Z").fromNow(true);
-                callback(player + " will play " + opponentName + " (" + rating + ") on " + date + " at " + time + " which is in " + timeUntil);
+                var timeUntil = localTime.fromNow(true);
+                callback(player + " will play " + opponentName + " (" + rating + ") on " + localDateTimeString + " which is in " + timeUntil);
             }
         });
     });
@@ -783,7 +805,7 @@ function loadSheet(self, callback){
         for(var wi in info.worksheets){
             if(info.worksheets[wi].title == "Rosters"){
                 self.sheet = info.worksheets[wi];
-            } else {
+            } else if (info.worksheets[wi].title.indexOf("Round") > -1) {
                 self.rounds.push(info.worksheets[wi]);
             }
         }
