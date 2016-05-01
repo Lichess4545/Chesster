@@ -1380,7 +1380,11 @@ controller.on('ambient', function(bot, message) {
                 function(err, gamelink){
                     //if a gamelink is found, use it to acquire details and process them
                     if(!err && gamelink){
-                        process_gamelink(bot, message, gamelink, results_options);
+                        process_gamelink(
+                            bot, 
+                            message, 
+                            gamelink, 
+                            config.gamelinks[channel.name]);
                     }else{
                         //update the spreadsheet with result only
                         spreadsheets.update_result(
