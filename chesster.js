@@ -1375,7 +1375,6 @@ controller.on('ambient', function(bot, message) {
                 results_options.colname,
                 result,
                 function(err, gamelink){
-debugger;
                     //if a gamelink is found, use it to acquire details and process them
                     if(!err && gamelink){
                         process_gamelink(bot, message, gamelink, results_options);
@@ -1458,7 +1457,7 @@ function validate_game_details(details, options){
     if(details.rated != options.rated){
         //the game is not rated correctly
         result.valid = false;
-        result.reason = "the game is " + (options.rated? + "unrated." : "rated.");
+        result.reason = "the game is " + ( options.rated ? "unrated." : "rated." );
     }else if( !details.clock || ( // no clock - unlimited or coorespondence
         details.clock && ( //clock
             details.clock.initial != options.clock.initial * 60 || // initial time
@@ -1508,7 +1507,6 @@ function process_gamelink(bot, message, gamelink, options){
         //no gamelink found. we can ignore this message
         return;
     }
-debugger;
     //get the game details
     fetch_game_details(result.gamelink_id, function(details){
         process_game_details(bot, message, details, options);
@@ -1530,7 +1528,6 @@ function process_game_details(bot, message, details, options){
         gamelink_reply_invalid(bot, message, validity.reason);
         return;
     }
-
     var result = {};
     //our game is valid
     //get players to update the result in the sheet
@@ -1539,14 +1536,18 @@ function process_game_details(bot, message, details, options){
     result.white = users.getByNameOrID(white.userId);
     result.black = users.getByNameOrID(black.userId);
     result.gamelink_id = details.id;
-
+ 
     //get the result in the correct format
-    if(details.players.winner == "black"){
-        result.result = "0-1";
-    }else if(details.players.winner = "white"){
-        result.result = "1-0";
+    if(details.winner){
+        if(details.winner == "black"){
+            result.result = "0-1";
+        }else if(details.winner == "white"){
+            result.result = "1-0";
+        }else{
+            result.result = "1/2-1/2";
+        }
     }else{
-        result.result = "1/2-1/2";
+        result.result = "-";
     }
     //gamelinks only come from played games, so ignoring forfeit result types
 
@@ -1587,7 +1588,6 @@ controller.on('ambient', function(bot, message) {
             return;
         }
         try{
-debugger;
             process_gamelink(bot, message, message.text, results_options);
         }catch(e){
             //at the moment, we do not throw from inside the api - rethrow

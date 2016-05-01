@@ -546,14 +546,15 @@ function update_result(service_account_auth, key, colname, result, callback){
                 //this is an error - games must be played by proper colors
                 return callback("the colors are reversed.", true);
             }
-            
-            //this is just the addition of a result
-            //we will use the gamelink to verify the result if we have it
-            if(reversed){
-                //switch the result
-               var lhs = result_string.split('-')[0];
-               var rhs = result_string.split('-')[1];
-               result_string = rhs + '-' + lhs;
+            if(result_string != "-"){
+                //this is just the addition of a result
+                //we will use the gamelink to verify the result if we have it
+                if(reversed){
+                    //switch the result
+                    var lhs = result_string.split('-')[0];
+                    var rhs = result_string.split('-')[1];
+                    result_string = rhs + '-' + lhs;
+                }
             }
 
             //get the formula, if there is one
