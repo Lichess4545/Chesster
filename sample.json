@@ -1,13 +1,13 @@
 {
-    "token":"",
+    "token":"<bot-token>",
 
     "service_account_auth": {
-        "client_email": "",
-        "private_key": ""
+        "client_email": "<google-service-acount-email>",
+        "private_key": "<google-service-account-private-key>"
     },
     "scheduling": {
-        "unstable_bot-lonewolf2": {
-            "key": "",
+        "unstable-bot_lonewolf2": {
+            "key": "<spreadsheet-key>",
             "colname": "gamescheduledingmt",
             "extrema": {
                 "iso_weekday": 1,
@@ -20,7 +20,7 @@
             "format": "MM/DD HH:mm"
         },
         "unstable_bot2": {
-            "key": "",
+            "key": "<spreadsheet-key>",
             "colname": "time (mm/dd @ hh:mm*)",
             "extrema": {
                 "iso_weekday": 1,
@@ -35,7 +35,17 @@
     },
     "results": {
         "unstable_bot": {
-            "key": "",
+            "key": "<spreadsheet-key>",
+            "colname": "result",
+        },
+        "unstable_bot-lonewolf": {
+            "key": "<spreadsheet-key>",
+            "colname": "result",
+        }
+    },
+    "gamelinks": {
+        "unstable_bot": {
+            "key": "<spreadsheet-key>",
             "colname": "result",
             "clock": {
                 "initial": 45,
@@ -51,7 +61,7 @@
             }
         },
         "unstable_bot-lonewolf": {
-            "key": "",
+            "key": "<spreadsheet-key>",
             "colname": "result",
             "clock": {
                 "initial": 30,
@@ -66,7 +76,6 @@
                 "warning_hours": 1
             }
         }
-
     },
     "links": {
         "rules": "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations",
