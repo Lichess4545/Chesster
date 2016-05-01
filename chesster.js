@@ -419,7 +419,6 @@ function prepareSummonLoneWolfModsMessage(){
  * It prevents slack from notifying him, but actually doesn't get
  * copy/pasted so if someone copies his name and then pastes it, it
  * works fine.
-*
  */
 function prepareModsMessage(){
     return "Mods: endrawes0, mkoga, mrlegilimens, petruchio, seb32, t\u200Bheino";
@@ -1338,7 +1337,6 @@ controller.on('ambient', function(bot, message) {
 
 /* results parsing */
 
-
 // results processing will occur on any message
 controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
@@ -1376,31 +1374,32 @@ controller.on('ambient', function(bot, message) {
                 results_options.key,
                 results_options.colname,
                 result,
-                function(err, gamelink_id){
-                   //if a gamelink is gound, add it to the result that was parsed 
-                   if(!err && gamelink_id){
-                        result.gamelink_id = gamelink_id;
-                    }
-                    
-                    //update the spreadsheet with result and gamelink
-                    spreadsheets.update_result(
-                        config.service_account_auth,
-                        results_options.key,
-                        results_options.colname,
-                        result,
-                        function(err, reversed){
-                            if (err) {
-                                if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
-                                    result_reply_missing_pairing(bot, message);
+                function(err, gamelink){
+debugger;
+                    //if a gamelink is found, use it to acquire details and process them
+                    if(!err && gamelink){
+                        process_gamelink(bot, message, gamelink, results_options);
+                    }else{
+                        //update the spreadsheet with result only
+                        spreadsheets.update_result(
+                            config.service_account_auth,
+                            results_options.key,
+                            results_options.colname,
+                            result,
+                            function(err, reversed){
+                                if (err) {
+                                    if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                                        result_reply_missing_pairing(bot, message);
+                                    } else {
+                                        bot.reply(message, "Something went wrong. Notify @endrawes0");
+                                        throw new Error("Error updating scheduling sheet: " + err);
+                                    }
                                 } else {
-                                    bot.reply(message, "Something went wrong. Notify @endrawes0");
-                                    throw new Error("Error updating scheduling sheet: " + err);
+                                    result_reply_updated(bot, message, result);
                                 }
-                            } else {
-                                result_reply_updated(bot, message, result);
                             }
-                        }
-                    );
+                        );
+                    }
                 }
             );
 
@@ -1429,7 +1428,7 @@ function result_reply_updated(bot, message, result){
 
 //given a gamelink_id, use the lichess api to get the game details
 //pass the details to the callback as a JSON object
-function fetch_gamelink_details(gamelink_id, callback){
+function fetch_game_details(gamelink_id, callback){
     const http = require('http');
     var url = "http://en.lichess.org/api/game/" + gamelink_id;
     http.get(url, (res) => {
@@ -1502,6 +1501,78 @@ function gamelink_reply_unknown(bot, message){
     bot.reply(message, "Sorry, I could not find that game. Please verify your gamelink.");
 }
 
+function process_gamelink(bot, message, gamelink, options){
+    //get the gamelink id if one is in the message
+    var result = spreadsheets.parse_gamelink(gamelink, options);
+    if(!result.gamelink_id){
+        //no gamelink found. we can ignore this message
+        return;
+    }
+debugger;
+    //get the game details
+    fetch_game_details(result.gamelink_id, function(details){
+        process_game_details(bot, message, details, options);
+    });
+
+}
+
+function process_game_details(bot, message, details, options){
+    //if no details were found the link was no good
+    if(!details){
+        gamelink_reply_unkown(bot, message);
+        return;
+    }
+
+    //verify the game meets the requirements of the channel we are in
+    var validity = validate_game_details(details, options);
+    if(!validity.valid){
+        //game was not valid
+        gamelink_reply_invalid(bot, message, validity.reason);
+        return;
+    }
+
+    var result = {};
+    //our game is valid
+    //get players to update the result in the sheet
+    var white = details.players.white;
+    var black = details.players.black;
+    result.white = users.getByNameOrID(white.userId);
+    result.black = users.getByNameOrID(black.userId);
+    result.gamelink_id = details.id;
+
+    //get the result in the correct format
+    if(details.players.winner == "black"){
+        result.result = "0-1";
+    }else if(details.players.winner = "white"){
+        result.result = "1-0";
+    }else{
+        result.result = "1/2-1/2";
+    }
+    //gamelinks only come from played games, so ignoring forfeit result types
+
+    //update the spreadsheet with results from gamelink
+    spreadsheets.update_result(
+        config.service_account_auth,
+        options.key,
+        options.colname,
+        result,
+        function(err, reversed){
+            if (err) {
+                if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                    result_reply_missing_pairing(bot, message);
+                }else if(reversed){
+                    gamelink_reply_invalid(bot, message, err);
+                }else{
+                    reply_generic_failure(bot, message, "@endrawes0");
+                    throw new Error("Error updating scheduling sheet: " + err);
+                }
+            } else {
+                result_reply_updated(bot, message, result);
+            }
+        }
+    );
+}
+
 // gamelink processing will occur on any message
 controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
@@ -1510,74 +1581,14 @@ controller.on('ambient', function(bot, message) {
             return;
         }
         //get the configuration for the channel
-        var gamelink_options = config.gamelinks[channel.name];
-        if (!gamelink_options) {
+        var results_options = config.results[channel.name];
+        if (!results_options) {
             //drop messages that are not in a gamelink channel
             return;
         }
         try{
-            //get the gamelink id if one is in the message
-            var result = spreadsheets.parse_gamelink(message.text, gamelink_options);
-            if(!result.gamelink_id){
-                //no gamelink found. we can ignore this message
-                return;
-            }
-
-            //get the game details
-            fetch_gamelink_details(result.gamelink_id, function(details){
-                //if no details were found the link was no good
-                if(!details){
-                    gamelink_reply_unkown(bot, message);
-                    return;
-                }
-
-                //verify the game meets the requirements of the channel we are in
-                var validity = validate_game_details(details, gamelink_options);
-                if(!validity.valid){
-                    //game was not valid
-                    gamelink_reply_invalid(bot, message, validity.reason);
-                    return;
-                }
-
-                //our game is valid
-                //get players to update the result in the sheet
-                var white = details.players.white;
-                var black = details.players.black;
-                result.white = users.getByNameOrID(white.userId);
-                result.black = users.getByNameOrID(black.userId);
-
-                //get the result in the correct format
-                if(details.players.winner == "black"){
-                    result.result = "0-1";
-                }else if(details.players.winner = "white"){
-                    result.result = "1-0";
-                }else{
-                    result.result = "1/2-1/2";
-                }
-                //gamelinks only come from played games, so ignoring forfeit result types
-
-                //update the spreadsheet with results from gamelink
-                spreadsheets.update_result(
-                    config.service_account_auth,
-                    gamelink_options.key,
-                    gamelink_options.colname,
-                    result,
-                    function(err, reversed){
-                        if (err) {
-                            if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
-                                result_reply_missing_pairing(bot, message);
-                            }else if(reversed){
-                                gamelink_reply_invalid(bot, message, err);
-                            }else{
-                                reply_generic_failure(bot, message, "@endrawes0");
-                                throw new Error("Error updating scheduling sheet: " + err);
-                            }
-                        } else {
-                            result_reply_updated(bot, message, result);
-                        }
-                    }
-                );
-            });
+debugger;
+            process_gamelink(bot, message, message.text, results_options);
         }catch(e){
             //at the moment, we do not throw from inside the api - rethrow
             throw e;

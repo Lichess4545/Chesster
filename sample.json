@@ -7,7 +7,7 @@
     },
     "scheduling": {
         "unstable_bot-lonewolf2": {
-            "key": "1xBofd1bFIB4OBUOErWqFWTjTc0dFuTf6WlHxZf3FbIU",
+            "key": "",
             "colname": "gamescheduledingmt",
             "extrema": {
                 "iso_weekday": 1,
@@ -20,7 +20,7 @@
             "format": "MM/DD HH:mm"
         },
         "unstable_bot2": {
-            "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
+            "key": "",
             "colname": "time (mm/dd @ hh:mm*)",
             "extrema": {
                 "iso_weekday": 1,
@@ -35,9 +35,38 @@
     },
     "results": {
         "unstable_bot": {
-            "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
-            "colname": "result"
+            "key": "",
+            "colname": "result",
+            "clock": {
+                "initial": 45,
+                "increment": 45
+            },
+            "rated": true,
+            "variant" : "standard",
+            "extrema": {
+                "iso_weekday": 1,
+                "hour": 22,
+                "minute": 0,
+                "warning_hours": 1
+            }
+        },
+        "unstable_bot-lonewolf": {
+            "key": "",
+            "colname": "result",
+            "clock": {
+                "initial": 30,
+                "increment": 30
+            },
+            "rated": true,
+            "variant" : "standard",
+            "extrema": {
+                "iso_weekday": 1,
+                "hour": 11,
+                "minute": 0,
+                "warning_hours": 1
+            }
         }
+
     },
     "links": {
         "rules": "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations",
