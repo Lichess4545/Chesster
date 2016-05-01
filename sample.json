@@ -36,11 +36,11 @@
     "results": {
         "unstable_bot": {
             "key": "<spreadsheet-key>",
-            "colname": "result",
+            "colname": "result"
         },
         "unstable_bot-lonewolf": {
             "key": "<spreadsheet-key>",
-            "colname": "result",
+            "colname": "result"
         }
     },
     "gamelinks": {

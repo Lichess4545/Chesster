@@ -1349,7 +1349,10 @@ controller.on('ambient', function(bot, message) {
             return;
         }
         try{
-            var result = spreadsheets.parse_result(message.text, results_options);
+            var result = 
+                spreadsheets.parse_result(
+                    message.text, 
+                    config.gamelinks[channel.name]);
      
             if(!result.white || !result.black || !result.result){
 		return;
@@ -1582,13 +1585,13 @@ controller.on('ambient', function(bot, message) {
             return;
         }
         //get the configuration for the channel
-        var results_options = config.results[channel.name];
-        if (!results_options) {
+        var gamelinks_options = config.gamelinks[channel.name];
+        if (!gamelinks_options) {
             //drop messages that are not in a gamelink channel
             return;
         }
         try{
-            process_gamelink(bot, message, message.text, results_options);
+            process_gamelink(bot, message, message.text, gamelinks_options);
         }catch(e){
             //at the moment, we do not throw from inside the api - rethrow
             throw e;

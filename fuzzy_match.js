@@ -57,7 +57,7 @@ function rank_choices(search_string, targets) {
 function match(message, commands, channels, arg_string) {
     var command = commands[0];
     var target = "general";
-    var channel = channels[message.channel.toLowerCase()];
+    var channel = channels[message.channel];
     if (channel && channel.name) {
         target = channel.name;
     }
