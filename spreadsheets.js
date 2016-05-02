@@ -320,8 +320,14 @@ function get_round_extrema(options) {
     } else {
         round_start = moment(extrema.reference_date).clone();
     }
+    reference_date = round_start.clone()
     // Make it the right time of day.
     round_start.hour(extrema.hour).minute(extrema.minute).second(0);
+
+    // Ensure that doing so doesn't put us into the next round
+    if (round_start.isAfter(reference_date)) {
+        round_start.subtract(1, 'days');
+    }
 
     // find the appropriate weekday
     while (round_start.isoWeekday() != extrema.iso_weekday) {
