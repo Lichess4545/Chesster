@@ -1,14 +1,14 @@
 {
-    "token":"YOU NEED ONE OF THESE - slack provides them, and you can use the modster one.",
+    "token":"<bot-token>",
 
     "service_account_auth": {
-        "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
-        "private_key": "YOU NEED THIS AS WELL!  if you don't have this, then ask Lakin for a copy - or make your own service account and share the spreadsheets you will use with that account. "
+        "client_email": "<google-service-acount-email>",
+        "private_key": "<google-service-account-private-key>"
     },
     "scheduling": {
-        "lonewolf-scheduling": {
-            "key": "1p8RMKSKDryavipF5RzNOxIhonK5lOf6OkQPtpkzCRng",
-            "colname": "game scheduled (in gmt)",
+        "unstable-bot_lonewolf2": {
+            "key": "<spreadsheet-key>",
+            "colname": "gamescheduledingmt",
             "extrema": {
                 "iso_weekday": 1,
                 "hour": 22,
@@ -19,8 +19,8 @@
             "late_message": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
             "format": "MM/DD HH:mm"
         },
-        "team-scheduling": {
-            "key": "1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4",
+        "unstable_bot2": {
+            "key": "<spreadsheet-key>",
             "colname": "time (mm/dd @ hh:mm*)",
             "extrema": {
                 "iso_weekday": 1,
@@ -34,15 +34,48 @@
         }
     },
     "results": {
-        "lonewolf-results": {
-            "key": "1p8RMKSKDryavipF5RzNOxIhonK5lOf6OkQPtpkzCRng",
+        "unstable_bot": {
+            "key": "<spreadsheet-key>",
             "colname": "result"
         },
-        "team-results": {
-            "key": "1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4",
+        "unstable_bot-lonewolf": {
+            "key": "<spreadsheet-key>",
             "colname": "result"
-        }	
-
+        }
+    },
+    "gamelinks": {
+        "unstable_bot": {
+            "key": "<spreadsheet-key>",
+            "colname": "result",
+            "clock": {
+                "initial": 45,
+                "increment": 45
+            },
+            "rated": true,
+            "variant" : "standard",
+            "extrema": {
+                "iso_weekday": 1,
+                "hour": 22,
+                "minute": 0,
+                "warning_hours": 1
+            }
+        },
+        "unstable_bot-lonewolf": {
+            "key": "<spreadsheet-key>",
+            "colname": "result",
+            "clock": {
+                "initial": 30,
+                "increment": 30
+            },
+            "rated": true,
+            "variant" : "standard",
+            "extrema": {
+                "iso_weekday": 1,
+                "hour": 11,
+                "minute": 0,
+                "warning_hours": 1
+            }
+        }
     },
     "links": {
         "rules": "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations",
