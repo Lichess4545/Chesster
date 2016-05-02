@@ -1528,7 +1528,7 @@ function validate_user_result(details, result){
                         + "but the gamelink specifies black as the winner.";
         validity.valid = false;
     }else if( details.winner == "white" && result.result == "0-1"){
-        //the detauks gave the winner as white but the user claimed black
+        //the details gave the winner as white but the user claimed black
         validity.reason = "the user claimed a win for black " 
                         + "but the gamelink specifies white as the winner.";
         validity.valid = false;
