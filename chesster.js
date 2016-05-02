@@ -1483,7 +1483,6 @@ function validate_game_details(details, options){
         result.reason = "the variant should be standard."
     }else{
         //the link is too old or too new
-        debugger;
         var extrema = spreadsheets.get_round_extrema(options);
         var game_start = moment.utc(details.timestamp);
         if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
@@ -1568,7 +1567,7 @@ function process_gamelink(bot, message, gamelink, options, user_result){
 function process_game_details(bot, message, details, options){
     //if no details were found the link was no good
     if(!details){
-        gamelink_reply_unkown(bot, message);
+        gamelink_reply_unknown(bot, message);
         return;
     }
 
