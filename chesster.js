@@ -1587,7 +1587,7 @@ function process_game_details(bot, message, details, options){
     result.gamelink_id = details.id;
  
     //get the result in the correct format
-    if(details.winner){
+    if(details.status == "draw" || details.winner){
         if(details.winner == "black"){
             result.result = "0-1";
         }else if(details.winner == "white"){
