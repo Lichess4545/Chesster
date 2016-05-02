@@ -492,13 +492,45 @@ describe('scheduling', function() {
     });
 });
 
+describe('gamelinks', function(){
+    describe('#parse_gamelink', function(){
+        it("Tests gamelinks format parsing.", function(){
+            function test_parse_gamelink(string, expected)  {
+                var result = spreadsheets.parse_gamelink(string);
+                assert.equal(result.gamelink_id, expected);
+            }
+            test_parse_gamelink(
+                "<@U1234567> http://en.lichess.org/H5YNnlR5RqMN",
+                "H5YNnlR5RqMN"
+            );
+            test_parse_gamelink(
+                "http://en.lichess.org/H5YNnlR5RqMN/white",
+                "H5YNnlR5RqMN"
+            );
+            test_parse_gamelink(
+                "http://en.lichess.org/H5YNnlR5RqMN/black",
+                "H5YNnlR5RqMN"
+            );
+            test_parse_gamelink(
+                "some words http://en.lichess.org/H5YNnlR5RqMN and other stuff",
+                "H5YNnlR5RqMN"
+            );
+            test_parse_gamelink(
+                "there is no link here",
+                undefined
+            );
+
+        });
+    });
+});
+
 // we are exposing 2 new functions - oarse_reuslt and update_result
 // we cant unit test update_result becauase it has side effects and depends on the spreadsheet.
 // A thorough test of thhose functions would require a lot of setup and tear down or a mock spreadsheet.
 // ill stick with the tests for result oarsing.
 describe('results', function(){
     describe('#parse_result', function(){
-        it("Test results from parsing", function() {
+        it("Test result format parsing.", function() {
             //options.extrema.reference_date = moment.utc("2016-04-15");
             function test_parse_result(string, expected)  {
                 var result = spreadsheets.parse_result(string);
