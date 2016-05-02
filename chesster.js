@@ -4,6 +4,7 @@ var GoogleSpreadsheet = require("google-spreadsheet");
 var fs = require('fs');
 var fuzzy = require('./fuzzy_match.js');
 var spreadsheets = require('./spreadsheets.js');
+var http = require('http');
 
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
@@ -1349,10 +1350,7 @@ controller.on('ambient', function(bot, message) {
             return;
         }
         try{
-            var result = 
-                spreadsheets.parse_result(
-                    message.text, 
-                    config.gamelinks[channel.name]);
+            var result = spreadsheets.parse_result(message.text);
      
             if(!result.white || !result.black || !result.result){
 		return;
@@ -1384,7 +1382,8 @@ controller.on('ambient', function(bot, message) {
                             bot, 
                             message, 
                             gamelink, 
-                            config.gamelinks[channel.name]);
+                            config.gamelinks[channel.name], 
+                            result); //user specified result
                     }else{
                         //update the spreadsheet with result only
                         spreadsheets.update_result(
@@ -1435,8 +1434,11 @@ function result_reply_updated(bot, message, result){
 //given a gamelink_id, use the lichess api to get the game details
 //pass the details to the callback as a JSON object
 function fetch_game_details(gamelink_id, callback){
+    fetch_url_into_json("http://en.lichess.org/api/game/" + gamelink_id, callback);
+}
+
+function fetch_url_into_json(url, callback){
     const http = require('http');
-    var url = "http://en.lichess.org/api/game/" + gamelink_id;
     http.get(url, (res) => {
         var body = "";
         res.on('data', function (chunk) {
@@ -1507,15 +1509,55 @@ function gamelink_reply_unknown(bot, message){
     bot.reply(message, "Sorry, I could not find that game. Please verify your gamelink.");
 }
 
-function process_gamelink(bot, message, gamelink, options){
+function validate_user_result(details, result){
+    //if colors are reversed, in the game link, we will catch that later
+    //we know the players are correct or we would not already be here
+    //the only way we can validate the result is if the order is 100% correct.
+    var validity = {
+        valid: true,
+        reason: ""
+    };
+    if( details.winner && result.result == "1/2-1/2" ){
+        //the details gave a winner but the user claimed draw
+        validity.reason = "the user claimed a draw " 
+                        + "but the gamelink specifies " + details.winner + " as the winner.";
+        validity.valid = false;
+   }else if( details.winner == "black" && result.result == "1-0"){
+        //the details gave the winner as black but the user claimed white
+        validity.reason = "the user claimed a win for white " 
+                        + "but the gamelink specifies black as the winner.";
+        validity.valid = false;
+    }else if( details.winner == "white" && result.result == "0-1"){
+        //the detauks gave the winner as white but the user claimed black
+        validity.reason = "the user claimed a win for black " 
+                        + "but the gamelink specifies white as the winner.";
+        validity.valid = false;
+    }else if( details.status == "draw" && result.result != "1/2-1/2" ){
+        //the details gave a draw but the user did not claim a draw
+        validity.reason = "the user claimed a decisive result " 
+                        + "but the gamelink specifies a draw.";
+        validity.valid = false;
+    }
+    return validity;
+}
+
+function process_gamelink(bot, message, gamelink, options, user_result){
     //get the gamelink id if one is in the message
-    var result = spreadsheets.parse_gamelink(gamelink, options);
+    var result = spreadsheets.parse_gamelink(gamelink);
     if(!result.gamelink_id){
         //no gamelink found. we can ignore this message
         return;
     }
     //get the game details
     fetch_game_details(result.gamelink_id, function(details){
+        //validate the game details vs the user specified result
+        if(user_result){
+            var validity = validate_user_result(details, user_result);
+            if(!validity.valid){
+                gamelink_reply_invalid(bot, message, validity.reason);
+                return;
+            }
+        }
         process_game_details(bot, message, details, options);
     });
 
@@ -1554,7 +1596,7 @@ function process_game_details(bot, message, details, options){
             result.result = "1/2-1/2";
         }
     }else{
-        result.result = "-";
+        result.result = "\u2694";
     }
     //gamelinks only come from played games, so ignoring forfeit result types
 

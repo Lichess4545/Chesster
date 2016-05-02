@@ -501,7 +501,6 @@ function find_players(tokens){
     // in reality, the order is arbitrary.
     // just assuming first I find is white, the second is black
     var players = {};
-    
     var player_tokens = filter_player_tokens(tokens);
 
     //assuming we found 2 tokens, we should convert them to player names
@@ -518,7 +517,7 @@ function find_players(tokens){
 function filter_player_tokens(tokens){
     return _.filter(tokens, function(token){
         //matches slack uer ids: <@[A-Z0-9]>[:]*
-        return /^\<@[A-Z0-9]+\>[:]*$/.test(token);
+        return /^\<@[A-Z0-9]+\>[:,.-]*$/.test(token);
     });
 }
 
@@ -589,7 +588,7 @@ function update_result(service_account_auth, key, colname, result, callback){
 //given the input text from a essage
 function parse_gamelink(message_text){
     //split it into tokens separated by white space and slashes
-    var tokens = message_text.split(/[\/ \t\n\r]/);
+    var tokens = message_text.split(/[\/\s]/);
     var found_base_url = false;
     var gamelink_id;
 
