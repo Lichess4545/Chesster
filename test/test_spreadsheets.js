@@ -29,12 +29,35 @@ describe('scheduling', function() {
             assert.equal(true, now.isAfter(bounds.start));
             assert.equal(true, now.isBefore(bounds.end));
         });
-        it("The bounds respects the passed in extrama and reference date", function() {
+        it("The bounds respects the passed in extrema and reference date", function() {
             options.extrema.iso_weekday = 1;
             options.extrema.reference_date = moment.utc("2016-04-07");
             var bounds = spreadsheets.get_round_extrema(options);
             assert.equal(bounds.start.format(fmt), "2016-04-04T11:00:00+0000")
             assert.equal(bounds.end.format(fmt), "2016-04-11T11:00:00+0000")
+        });
+        it("The round extrema works on day when the rounds change, durng the period leading up to the cutoff", function() {
+            options.extrema.iso_weekday = 1;
+            options.extrema.reference_date = moment.utc("2016-05-02T03:55:00");
+            var bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(bounds.start.format(fmt), "2016-04-25T11:00:00+0000")
+            assert.equal(bounds.end.format(fmt), "2016-05-02T11:00:00+0000")
+            options.extrema.reference_date = moment.utc("2016-05-02T10:59:59");
+            bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(bounds.start.format(fmt), "2016-04-25T11:00:00+0000")
+            assert.equal(bounds.end.format(fmt), "2016-05-02T11:00:00+0000")
+        });
+        it("The round extrema works on day when the rounds change, during the period after up to the cutoff", function() {
+            options.extrema.iso_weekday = 1;
+            options.extrema.reference_date = moment.utc("2016-05-02T12:55:00");
+            var bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(bounds.start.format(fmt), "2016-05-02T11:00:00+0000")
+            assert.equal(bounds.end.format(fmt), "2016-05-09T11:00:00+0000")
+
+            options.extrema.reference_date = moment.utc("2016-05-02T11:00:00");
+            bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(bounds.start.format(fmt), "2016-05-02T11:00:00+0000")
+            assert.equal(bounds.end.format(fmt), "2016-05-09T11:00:00+0000")
         });
         it("Test warning_hours", function() {
             options.extrema.iso_weekday = 1;
