@@ -501,13 +501,14 @@ function find_players(tokens){
     // in reality, the order is arbitrary.
     // just assuming first I find is white, the second is black
     var players = {};
-    
     var player_tokens = filter_player_tokens(tokens);
 
     //assuming we found 2 tokens, we should convert them to player names
     if(player_tokens.length == 2){
-        players.white = player_tokens[0];
-        players.black = player_tokens[1];
+        //remove punctuation and store. this fixes losts of stuff.
+        //most frequent issue is the : added after a name by slack
+        players.white = player_tokens[0].replace(/[:,.-]/, "");
+        players.black = player_tokens[1].replace(/[:,.-]/, "");
     }
 
     return players;
@@ -515,7 +516,8 @@ function find_players(tokens){
 
 function filter_player_tokens(tokens){
     return _.filter(tokens, function(token){
-        return /^\<@[A-Z0-9]+\>$/.test(token);
+        //matches slack uer ids: <@[A-Z0-9]>[:]*
+        return /^\<@[A-Z0-9]+\>[:,.-]*$/.test(token);
     });
 }
 
@@ -524,8 +526,9 @@ function filter_player_tokens(tokens){
 function update_result(service_account_auth, key, colname, result, callback){
     var white = result.white;
     var black = result.black;
-    var result = result.result;
-    
+    var result_string = result.result;
+    var gamelink_id = result.gamelink_id;
+
     find_pairing(
         service_account_auth, 
         key, 
@@ -537,26 +540,44 @@ function update_result(service_account_auth, key, colname, result, callback){
             }
             var result_cell = row[colname];
 
-            //make the update to the cell
-            //parse the links out of the function
-            //update only the result - will create a function to update the gamelink
-            
-            if(reversed){
-                //switch the result
-               var lhs = result.split('-')[0];
-               var rhs = result.split('-')[1];
-               result = rhs + '-' + lhs;
+            //a gamelink was passed in and the names were reversed
+            if(gamelink_id && reversed){
+                //this is an error - games must be played by proper colors
+                return callback("the colors are reversed.", true);
+            }
+            if(result_string != "-"){
+                //this is just the addition of a result
+                //we will use the gamelink to verify the result if we have it
+                if(reversed){
+                    //switch the result
+                    var lhs = result_string.split('-')[0];
+                    var rhs = result_string.split('-')[1];
+                    result_string = rhs + '-' + lhs;
+                }
             }
 
-            var gamelink = ' ';            
-
+            //get the formula, if there is one
             var formula = result_cell.formula;
-            if(formula && formula.toUpperCase().includes("HYPERLINK")){
-               gamelink = formula.split("\"")[1];
+            
+            var gamelink;
+            if(!gamelink_id && formula && formula.toUpperCase().includes("HYPERLINK")){
+                //there is no gamelink, fill from the formula
+                gamelink = formula.split("\"")[1];
+            }else if(!result.gamelink_id){
+                //no gamelink and no formula
+                gamelink = '';
+            }else{
+                gamelink =  "http://en.lichess.org/" + result.gamelink_id;
             }
 
-            result_cell.formula = '=HYPERLINK("' + gamelink + '","' + result + '")';
+            //if no game link is found, just post the result
+            if(gamelink == ''){
+                result_cell.value = result_string;
+            }else{
+                result_cell.formula = '=HYPERLINK("' + gamelink + '","' + result_string + '")';
+            }
 
+            //save the cell in the spreadsheet
             result_cell.save(function(err){
                 return callback(err, reversed);
             });
@@ -564,10 +585,64 @@ function update_result(service_account_auth, key, colname, result, callback){
     );
 }
 
+//given the input text from a essage
+function parse_gamelink(message_text){
+    //split it into tokens separated by white space and slashes
+    var tokens = message_text.split(/[\/\s]/);
+    var found_base_url = false;
+    var gamelink_id;
+
+    //for each token, walk the list looking for a lichess url
+    tokens.some(function(token){
+        //if previously token was a lichess url
+        //this token should be the gamelink_id
+        if(found_base_url){
+            gamelink_id = token.replace('>', '');
+            //some tokens will have a > if its the last token
+            //return true to stop iterating
+            return true;
+        }
+        //current token is the base of the lichess url
+        if(token.includes("lichess.org")){
+            found_base_url = true;
+        }
+        return false;
+    });
+    return { gamelink_id: gamelink_id };
+}
+
+//given a pairing, get a game link if one already exists
+function fetch_pairing_gamelink(service_account_auth, key, colname, result, callback){
+    var white = result.white;
+    var black = result.black;
+
+    //given a pairing, white and black, get the row in the spreadsheet
+    find_pairing(
+        service_account_auth,
+        key, 
+        white.name,
+        black.name,
+        function(err, row){
+            if(err){
+                callback(err);
+            }
+            result_cell = row[colname];
+            var formula = result_cell.formula;
+            if(formula && formula.toUpperCase().includes("HYPERLINK")){
+                callback(err, formula.split("\"")[1]);
+            }else{
+                callback(err, undefined);
+            }
+        }
+    );
+}
+
 module.exports.get_round_extrema = get_round_extrema;
 module.exports.parse_scheduling = parse_scheduling;
 module.exports.parse_result = parse_result;
+module.exports.parse_gamelink = parse_gamelink;
 module.exports.update_schedule = update_schedule;
 module.exports.update_result = update_result;
+module.exports.fetch_pairing_gamelink = fetch_pairing_gamelink;
 module.exports.ScheduleParsingError = ScheduleParsingError;
 module.exports.PairingError = PairingError;
