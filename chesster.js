@@ -5,6 +5,7 @@ var fs = require('fs');
 var fuzzy = require('./fuzzy_match.js');
 var spreadsheets = require('./spreadsheets.js');
 var http = require('http');
+var moment = require('moment');
 
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
@@ -1482,9 +1483,10 @@ function validate_game_details(details, options){
         result.reason = "the variant should be standard."
     }else{
         //the link is too old or too new
+        debugger;
         var extrema = spreadsheets.get_round_extrema(options);
-        var game_start = new Date(details.timestamp);
-        if(game_start < extrema.start || game_start > extrema.end){
+        var game_start = moment.utc(details.timestamp);
+        if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
             result.valid = false;
             result.reason = "the game was not played in the current round.";
         }
