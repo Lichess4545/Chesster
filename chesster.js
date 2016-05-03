@@ -5,6 +5,7 @@ var fs = require('fs');
 var fuzzy = require('./fuzzy_match.js');
 var spreadsheets = require('./spreadsheets.js');
 var http = require('http');
+var moment = require('moment');
 
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
@@ -1483,8 +1484,8 @@ function validate_game_details(details, options){
     }else{
         //the link is too old or too new
         var extrema = spreadsheets.get_round_extrema(options);
-        var game_start = new Date(details.timestamp);
-        if(game_start < extrema.start || game_start > extrema.end){
+        var game_start = moment.utc(details.timestamp);
+        if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
             result.valid = false;
             result.reason = "the game was not played in the current round.";
         }
@@ -1566,7 +1567,7 @@ function process_gamelink(bot, message, gamelink, options, user_result){
 function process_game_details(bot, message, details, options){
     //if no details were found the link was no good
     if(!details){
-        gamelink_reply_unkown(bot, message);
+        gamelink_reply_unknown(bot, message);
         return;
     }
 
