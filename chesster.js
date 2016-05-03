@@ -630,7 +630,7 @@ controller.hears([
 function preparePairingsMessage(){
     return "Here is the pairings sheet:\n" + 
             config.links.team + 
-            "\nAlternatively, try [ @chesster pairing <competitor> <round> ]";
+            "\nAlternatively, try [ @chesster pairing <competitor>]";
 }
 
 function sayPairings(convo){
@@ -655,26 +655,28 @@ controller.hears([
     'direct_message'
 ], function(bot, message) {
     bot_exception_handler(bot, message, function() {
-        // The user is either a string or an id
-        var nameOrId = message.match[1];
-        var requesting_player = users.getByNameOrID(message.user);
+        bot.startPrivateConversation(message, function (response, convo) {
+            // The user is either a string or an id
+            var nameOrId = message.match[1];
+            var requesting_player = users.getByNameOrID(message.user);
 
-        // The name or Id was provided, so parse it out
-        var player = null;
-        var player = users.getByNameOrID(nameOrId);
+            // The name or Id was provided, so parse it out
+            var player = null;
+            var player = users.getByNameOrID(nameOrId);
 
-        // If the player didn't exist that way, then it could be the @notation
-        if (!player) {
-            player = users.getByNameOrID(nameOrId.match(/<@([^\s]+)>/)[1]);
-        }
+            // If the player didn't exist that way, then it could be the @notation
+            if (!player && nameOrId) {
+                player = users.getByNameOrID(nameOrId.match(/<@([^\s]+)>/)[1]);
+            }
 
-        // If that still yields nothing, then must be the player from the message
-        if (!player) {
-            player = requesting_player;
-        }
+            // If that still yields nothing, then must be the player from the message
+            if (!player) {
+                player = requesting_player;
+            }
 
-        preparePairingCompetitorMessage(requesting_player, player, function(response) {
-            bot.reply(message, response);
+            preparePairingCompetitorMessage(requesting_player, player, function(response) {
+                convo.say(response);
+            });
         });
     });
 });
