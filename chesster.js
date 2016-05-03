@@ -648,7 +648,7 @@ controller.hears([
 });
 
 controller.hears([
-    /pairing @?([^\s]+)( ([1-8]))?/
+    /pairing(?: @?([^\s]+))?/
 ], [
     'direct_mention',
     'direct_message'
@@ -657,68 +657,65 @@ controller.hears([
         // The user is either a string or an id
         var nameOrId = message.match[1];
 
+        // The name or Id was provided, so parse it out
+        var player = null;
         var player = users.getByNameOrID(nameOrId);
+
+        // If the player didn't exist that way, then it could be the @notation
         if (!player) {
             player = users.getByNameOrID(nameOrId.match(/<@([^\s]+)>/)[1]);
         }
 
-        var round = message.match[3]
-        preparePairingCompetitorMessage(message.user, player.name, round, function(response) {
+        // If that still yields nothing, then must be the player from the message
+        if (!player) {
+            player = users.getByNameOrID(message.user);
+        }
+
+        preparePairingCompetitorMessage(users.getByNameOrID(message.user), player, function(response) {
             bot.reply(message, response);
         });
     });
 });
 
-function preparePairingCompetitorMessage(slack_name, player, round, callback) {
+function uncaptain(playerName) {
+    return playerName.endsWith("*") ? playerName.substring(0, playerName.length - 1) : playerName;
+}
+
+function preparePairingCompetitorMessage(requesting_player, target_player, callback) {
     var self = this;
     loadSheet(self, function() {
-
-        if (round) {
-            for (var i = 0; i < self.rounds.length; i++) {
-                if (self.rounds[i].title === "Round " + round) {
-                    // Get the spreadsheet for that round
-                    parsePairingForRound(self.rounds[i], slack_name, player, callback);
-                    return;
-                } 
-            }
-        } else {
-            parsePairingForRound(self.rounds[self.rounds.length - 1], slack_name, player, callback);
-            return;
-        }
-
-        // If the round has not yet been scheduled, reply that and exit
-        callback("Round " + round + " has not been scheduled yet");
+        parsePairingForRound(self.currentRound, requesting_player, target_player, callback);
     });
 }
 
-function parsePairingForRound(roundSheet, slack_name, player, callback) {
+function parsePairingForRound(roundSheet, requesting_player, target_player, callback) {
+    var tz_offset = requesting_player.tz_offset / 60;
+
     // The user was either WHITE or BLACK, so find him in one column
     // and get his opponent's name from the other column
-    
     roundSheet.getRows({
         limit: ROUND_ROW_LIMIT
     }, function(err, rows) {
-        var tz_offset = users.getByNameOrID(slack_name).tz_offset / 60;
         for (var i = 0; i < rows.length; i++) {
             var cr = rows[i];
 
             // Adjust for the possibility of checking the captain
-            if (cr.white === player || cr.white === player + "*") {
-                parsePairingResult(player, tz_offset, cr.black, 0, cr.date, cr.time, cr.result, callback);
+            if (uncaptain(cr.white) === target_player.name) {
+                parsePairingResult(target_player.name, tz_offset, cr.black, 0, cr.date, cr.time, callback);
                 return;
-            } else if (cr.black === player || cr.black === player + "*") {
-                parsePairingResult(player, tz_offset, cr.white, 1, cr.date, cr.time, cr.result, callback);
+            } else if (uncaptain(cr.black) === target_player.name) {
+                parsePairingResult(target_player.name, tz_offset, cr.white, 1, cr.date, cr.time, callback);
                 return;
             } 
         }
 
-        callback("Could not locate player " + player + " on that round");
+        callback(target_player.name + " is not playing in this round");
     });
 }
 
-function parsePairingResult(player, tz_offset, opponent, color, date, time, result, callback) {
+function parsePairingResult(player, tz_offset, opponent, color, date, time, callback) {
 
-    var opponentName = opponent.endsWith("*") ? opponent.substring(0, opponent.length - 1) : opponent;
+    var opponentName = uncaptain(opponent);
     
     getPlayerByName(opponentName, function(opponent) {
         getClassicalRating(opponent, function(rating) {
@@ -728,15 +725,12 @@ function parsePairingResult(player, tz_offset, opponent, color, date, time, resu
             // If the match took place in the past, display the date instead of the day
             if (moment.utc().isAfter(localTime)) {
                 localDateTimeString = localTime.format("MM/DD [at] HH:mm");
-            }
-
-            if (result) {
-                var resultString = result.split("-")[color] === "1" ? "won" : result.split("-")[color] === "0" ? "lost" : "drew";
-                callback(player + " played " + opponentName + " (" + rating + ") on " + localDateTimeString + " and " + resultString);
+                callback(player + " played " + opponentName + " (" + rating + ") on " + localDateTimeString);
             } else {
                 var timeUntil = localTime.fromNow(true);
                 callback(player + " will play " + opponentName + " (" + rating + ") on " + localDateTimeString + " which is in " + timeUntil);
             }
+
         });
     });
 }
@@ -799,14 +793,11 @@ function sayGoodbye(convo){
 function loadSheet(self, callback){
     var doc = new GoogleSpreadsheet('1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4');
     doc.getInfo(function(err, info) {
-
-        self.rounds = []
-
         for(var wi in info.worksheets){
             if(info.worksheets[wi].title == "Rosters"){
                 self.sheet = info.worksheets[wi];
-            } else if (info.worksheets[wi].title.indexOf("Round") > -1) {
-                self.rounds.push(info.worksheets[wi]);
+            }  else if (info.worksheets[wi].title.match(/Round \d/)) {
+                self.currentRound = info.worksheets[wi];
             }
         }
         callback();
