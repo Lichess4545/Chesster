@@ -656,6 +656,7 @@ controller.hears([
     bot_exception_handler(bot, message, function() {
         // The user is either a string or an id
         var nameOrId = message.match[1];
+        var requesting_player = users.getByNameOrID(message.user);
 
         // The name or Id was provided, so parse it out
         var player = null;
@@ -668,10 +669,10 @@ controller.hears([
 
         // If that still yields nothing, then must be the player from the message
         if (!player) {
-            player = users.getByNameOrID(message.user);
+            player = requesting_player;
         }
 
-        preparePairingCompetitorMessage(users.getByNameOrID(message.user), player, function(response) {
+        preparePairingCompetitorMessage(requesting_player, player, function(response) {
             bot.reply(message, response);
         });
     });
