@@ -29,12 +29,35 @@ describe('scheduling', function() {
             assert.equal(true, now.isAfter(bounds.start));
             assert.equal(true, now.isBefore(bounds.end));
         });
-        it("The bounds respects the passed in extrama and reference date", function() {
+        it("The bounds respects the passed in extrema and reference date", function() {
             options.extrema.iso_weekday = 1;
             options.extrema.reference_date = moment.utc("2016-04-07");
             var bounds = spreadsheets.get_round_extrema(options);
             assert.equal(bounds.start.format(fmt), "2016-04-04T11:00:00+0000")
             assert.equal(bounds.end.format(fmt), "2016-04-11T11:00:00+0000")
+        });
+        it("The round extrema works on day when the rounds change, durng the period leading up to the cutoff", function() {
+            options.extrema.iso_weekday = 1;
+            options.extrema.reference_date = moment.utc("2016-05-02T03:55:00");
+            var bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(bounds.start.format(fmt), "2016-04-25T11:00:00+0000")
+            assert.equal(bounds.end.format(fmt), "2016-05-02T11:00:00+0000")
+            options.extrema.reference_date = moment.utc("2016-05-02T10:59:59");
+            bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(bounds.start.format(fmt), "2016-04-25T11:00:00+0000")
+            assert.equal(bounds.end.format(fmt), "2016-05-02T11:00:00+0000")
+        });
+        it("The round extrema works on day when the rounds change, during the period after up to the cutoff", function() {
+            options.extrema.iso_weekday = 1;
+            options.extrema.reference_date = moment.utc("2016-05-02T12:55:00");
+            var bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(bounds.start.format(fmt), "2016-05-02T11:00:00+0000")
+            assert.equal(bounds.end.format(fmt), "2016-05-09T11:00:00+0000")
+
+            options.extrema.reference_date = moment.utc("2016-05-02T11:00:00");
+            bounds = spreadsheets.get_round_extrema(options);
+            assert.equal(bounds.start.format(fmt), "2016-05-02T11:00:00+0000")
+            assert.equal(bounds.end.format(fmt), "2016-05-09T11:00:00+0000")
         });
         it("Test warning_hours", function() {
             options.extrema.iso_weekday = 1;
@@ -492,13 +515,49 @@ describe('scheduling', function() {
     });
 });
 
+describe('gamelinks', function(){
+    describe('#parse_gamelink', function(){
+        it("Tests gamelinks format parsing.", function(){
+            function test_parse_gamelink(string, expected)  {
+                var result = spreadsheets.parse_gamelink(string);
+                assert.equal(result.gamelink_id, expected);
+            }
+            test_parse_gamelink(
+                "<@U1234567> http://en.lichess.org/H5YNnlR5RqMN",
+                "H5YNnlR5RqMN"
+            );
+            test_parse_gamelink(
+                "http://en.lichess.org/H5YNnlR5RqMN/white",
+                "H5YNnlR5RqMN"
+            );
+            test_parse_gamelink(
+                "http://en.lichess.org/H5YNnlR5RqMN/black",
+                "H5YNnlR5RqMN"
+            );
+            test_parse_gamelink(
+                "some words http://en.lichess.org/H5YNnlR5RqMN and other stuff",
+                "H5YNnlR5RqMN"
+            );
+            test_parse_gamelink(
+                "<en.lichess.org/ClhKGw8s|en.lichess.org/ClhKGw8s>",
+                "ClhKGw8s"
+            );
+            test_parse_gamelink(
+                "there is no link here",
+                undefined
+            );
+
+        });
+    });
+});
+
 // we are exposing 2 new functions - oarse_reuslt and update_result
 // we cant unit test update_result becauase it has side effects and depends on the spreadsheet.
 // A thorough test of thhose functions would require a lot of setup and tear down or a mock spreadsheet.
 // ill stick with the tests for result oarsing.
 describe('results', function(){
     describe('#parse_result', function(){
-        it("Test results from parsing", function() {
+        it("Test result format parsing.", function() {
             //options.extrema.reference_date = moment.utc("2016-04-15");
             function test_parse_result(string, expected)  {
                 var result = spreadsheets.parse_result(string);
