@@ -630,7 +630,7 @@ controller.hears([
 function preparePairingsMessage(){
     return "Here is the pairings sheet:\n" + 
             config.links.team + 
-            "\nAlternatively, try [ @chesster pairing <competitor>]";
+            "\nAlternatively, try [ @chesster pairing [competitor] ]";
 }
 
 function sayPairings(convo){
