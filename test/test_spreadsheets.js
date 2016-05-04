@@ -539,6 +539,10 @@ describe('gamelinks', function(){
                 "H5YNnlR5RqMN"
             );
             test_parse_gamelink(
+                "<en.lichess.org/ClhKGw8s|en.lichess.org/ClhKGw8s>",
+                "ClhKGw8s"
+            );
+            test_parse_gamelink(
                 "there is no link here",
                 undefined
             );

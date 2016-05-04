@@ -594,7 +594,7 @@ function update_result(service_account_auth, key, colname, result, callback){
 //given the input text from a essage
 function parse_gamelink(message_text){
     //split it into tokens separated by white space and slashes
-    var tokens = message_text.split(/[\/\s]/);
+    var tokens = message_text.split(/[\<\>\|\/\s]/);
     var found_base_url = false;
     var gamelink_id;
 
