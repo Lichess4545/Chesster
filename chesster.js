@@ -661,7 +661,6 @@ controller.hears([
             var requesting_player = users.getByNameOrID(message.user);
 
             // The name or Id was provided, so parse it out
-            var player = null;
             var player = users.getByNameOrID(nameOrId);
 
             // If the player didn't exist that way, then it could be the @notation
