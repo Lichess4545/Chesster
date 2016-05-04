@@ -1,6 +1,7 @@
 var async = require("async");
 var Botkit = require('botkit');
 var GoogleSpreadsheet = require("google-spreadsheet");
+var moment = require('moment');
 var fs = require('fs');
 var fuzzy = require('./fuzzy_match.js');
 var spreadsheets = require('./spreadsheets.js');
@@ -25,6 +26,8 @@ var BOARD_5_NAME = 14;
 var BOARD_5_RATING = 16;
 var BOARD_6_NAME = 17;
 var BOARD_6_RATING = 19;
+
+var ROUND_ROW_LIMIT = 79;
 
 /* exception handling */
 /* later this will move it its own module */
@@ -627,7 +630,7 @@ controller.hears([
 function preparePairingsMessage(){
     return "Here is the pairings sheet:\n" + 
             config.links.team + 
-            "\nAlternatively, try [ @chesster pairing <competitor> <round> ] - coming soon...";
+            "\nAlternatively, try [ @chesster pairing [competitor] ]";
 }
 
 function sayPairings(convo){
@@ -645,6 +648,96 @@ controller.hears([
     });
 });
 
+controller.hears([
+    /pairing(?: @?([^\s]+))?/
+], [
+    'direct_mention',
+    'direct_message'
+], function(bot, message) {
+    bot_exception_handler(bot, message, function() {
+        bot.startPrivateConversation(message, function (response, convo) {
+            // The user is either a string or an id
+            var nameOrId = message.match[1];
+            var requesting_player = users.getByNameOrID(message.user);
+
+            // The name or Id was provided, so parse it out
+            var player = users.getByNameOrID(nameOrId);
+
+            // If the player didn't exist that way, then it could be the @notation
+            if (!player && nameOrId) {
+                player = users.getByNameOrID(nameOrId.match(/<@([^\s]+)>/)[1]);
+            }
+
+            // If that still yields nothing, then must be the player from the message
+            if (!player) {
+                player = requesting_player;
+            }
+
+            preparePairingCompetitorMessage(requesting_player, player, function(response) {
+                convo.say(response);
+            });
+        });
+    });
+});
+
+function uncaptain(playerName) {
+    return playerName.endsWith("*") ? playerName.substring(0, playerName.length - 1) : playerName;
+}
+
+function preparePairingCompetitorMessage(requesting_player, target_player, callback) {
+    var self = this;
+    loadSheet(self, function() {
+        parsePairingForRound(self.currentRound, requesting_player, target_player, callback);
+    });
+}
+
+function parsePairingForRound(roundSheet, requesting_player, target_player, callback) {
+    var tz_offset = requesting_player.tz_offset / 60;
+
+    // The user was either WHITE or BLACK, so find him in one column
+    // and get his opponent's name from the other column
+    roundSheet.getRows({
+        limit: ROUND_ROW_LIMIT
+    }, function(err, rows) {
+        for (var i = 0; i < rows.length; i++) {
+            var cr = rows[i];
+
+            // Adjust for the possibility of checking the captain
+            if (uncaptain(cr.white) === target_player.name) {
+                parsePairingResult(target_player.name, tz_offset, cr.black, 0, cr.date, cr.time, callback);
+                return;
+            } else if (uncaptain(cr.black) === target_player.name) {
+                parsePairingResult(target_player.name, tz_offset, cr.white, 1, cr.date, cr.time, callback);
+                return;
+            } 
+        }
+
+        callback(target_player.name + " is not playing in this round");
+    });
+}
+
+function parsePairingResult(player, tz_offset, opponent, color, date, time, callback) {
+
+    var opponentName = uncaptain(opponent);
+    
+    getPlayerByName(opponentName, function(opponent) {
+        getClassicalRating(opponent, function(rating) {
+            var localTime = moment.utc(date + " " + time, "MM/DD HH:mm").utcOffset(tz_offset);
+            var localDateTimeString = localTime.format("dddd [at] HH:mm");
+
+            // If the match took place in the past, display the date instead of the day
+            if (moment.utc().isAfter(localTime)) {
+                localDateTimeString = localTime.format("MM/DD [at] HH:mm");
+                callback(player + " played " + opponentName + " (" + rating + ") on " + localDateTimeString);
+            } else {
+                var timeUntil = localTime.fromNow(true);
+                callback(player + " will play " + opponentName + " (" + rating + ") on " + localDateTimeString + " which is in " + timeUntil);
+            }
+
+        });
+    });
+}
+
 /* standings */
 
 function prepareStandingsMessage(){
@@ -653,6 +746,7 @@ function prepareStandingsMessage(){
             "\nAlternatively, try [ @chesster result <competitor> <round> ] - coming soon...";
     
 }
+
 
 function sayStandings(convo){
     convo.say(prepareStandingsMessage());
@@ -705,6 +799,8 @@ function loadSheet(self, callback){
         for(var wi in info.worksheets){
             if(info.worksheets[wi].title == "Rosters"){
                 self.sheet = info.worksheets[wi];
+            }  else if (info.worksheets[wi].title.match(/Round \d/)) {
+                self.currentRound = info.worksheets[wi];
             }
         }
         callback();
