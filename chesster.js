@@ -657,23 +657,31 @@ controller.hears([
     bot_exception_handler(bot, message, function() {
         bot.startPrivateConversation(message, function (response, convo) {
             // The user is either a string or an id
-            var nameOrId = message.match[1].toLowerCase();
-            var requesting_player = users.getByNameOrID(message.user);
+            var nameOrId = message.user;
+            var requestingPlayer= users.getByNameOrID(message.user);
+
+            if (message.match[1]) {
+                nameOrId = message.match[1];
+            }
 
             // The name or Id was provided, so parse it out
             var player = users.getByNameOrID(nameOrId);
 
             // If the player didn't exist that way, then it could be the @notation
             if (!player && nameOrId) {
-                player = users.getByNameOrID(nameOrId.match(/<@([^\s]+)>/)[1]);
+                var userIdExtraction = nameOrId.match(/<@([^\s]+)>/);
+                if (userIdExtraction) {
+                    player = users.getByNameOrID(userIdExtraction[1]);
+                } else {
+                    player = users.getByNameOrID(nameOrId.toLowerCase());
+                }
             }
 
-            // If that still yields nothing, then must be the player from the message
             if (!player) {
-                player = requesting_player;
+                player = requestingPlayer; 
             }
 
-            preparePairingCompetitorMessage(requesting_player, player, function(response) {
+            preparePairingCompetitorMessage(requestingPlayer, player, function(response) {
                 convo.say(response);
             });
         });
@@ -691,9 +699,10 @@ function preparePairingCompetitorMessage(requesting_player, target_player, callb
     });
 }
 
-function parsePairingForRound(roundSheet, requesting_player, target_player, callback) {
-    var tz_offset = requesting_player.tz_offset / 60;
+function parsePairingForRound(roundSheet, requestingPlayer, targetPlayer, callback) {
+    var tzOffset = requestingPlayer.tz_offset / 60;
 
+    var targetPlayerName = targetPlayer.name.toLowerCase();
     // The user was either WHITE or BLACK, so find him in one column
     // and get his opponent's name from the other column
     roundSheet.getRows({
@@ -703,16 +712,16 @@ function parsePairingForRound(roundSheet, requesting_player, target_player, call
             var cr = rows[i];
 
             // Adjust for the possibility of checking the captain
-            if (uncaptain(cr.white).toLowerCase() === target_player.name) {
-                parsePairingResult(target_player.name, tz_offset, cr.black, 0, cr.date, cr.time, callback);
+            if (uncaptain(cr.white).toLowerCase() === targetPlayerName) {
+                parsePairingResult(targetPlayer.name, tzOffset, cr.black, 0, cr.date, cr.time, callback);
                 return;
-            } else if (uncaptain(cr.black).toLowerCase() === target_player.name) {
-                parsePairingResult(target_player.name, tz_offset, cr.white, 1, cr.date, cr.time, callback);
+            } else if (uncaptain(cr.black).toLowerCase() === targetPlayerName) {
+                parsePairingResult(targetPlayer.name, tzOffset, cr.white, 1, cr.date, cr.time, callback);
                 return;
             } 
         }
 
-        callback(target_player.name + " is not playing in this round");
+        callback(targetPlayer.name + " is not playing in this round");
     });
 }
 
