@@ -734,13 +734,17 @@ function parsePairingResult(player, tz_offset, opponent, color, date, time, call
             var localTime = moment.utc(date + " " + time, "MM/DD HH:mm").utcOffset(tz_offset);
             var localDateTimeString = localTime.format("dddd [at] HH:mm");
 
-            // If the match took place in the past, display the date instead of the day
-            if (moment.utc().isAfter(localTime)) {
+
+            if (!localTime.isValid()) {
+                callback(player + " will play " + opponentName + "(" + rating + ").  The game is unscheduled.");
+            } else if (moment.utc().isAfter(localTime)) {
+                // If the match took place in the past, display the date instead of the day
                 localDateTimeString = localTime.format("MM/DD [at] HH:mm");
-                callback(player + " played " + opponentName + " (" + rating + ") on " + localDateTimeString);
+                callback(player + " played " + opponentName + " (" + rating + ") on " + localDateTimeString + ".");
             } else {
+                // Otherwise display the time until the match
                 var timeUntil = localTime.fromNow(true);
-                callback(player + " will play " + opponentName + " (" + rating + ") on " + localDateTimeString + " which is in " + timeUntil);
+                callback(player + " will play " + opponentName + " (" + rating + ") on " + localDateTimeString + " which is in " + timeUntil + ".");
             }
 
         });
