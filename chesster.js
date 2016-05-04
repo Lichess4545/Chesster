@@ -657,7 +657,7 @@ controller.hears([
     bot_exception_handler(bot, message, function() {
         bot.startPrivateConversation(message, function (response, convo) {
             // The user is either a string or an id
-            var nameOrId = message.match[1];
+            var nameOrId = message.match[1].toLowerCase();
             var requesting_player = users.getByNameOrID(message.user);
 
             // The name or Id was provided, so parse it out
@@ -703,10 +703,10 @@ function parsePairingForRound(roundSheet, requesting_player, target_player, call
             var cr = rows[i];
 
             // Adjust for the possibility of checking the captain
-            if (uncaptain(cr.white) === target_player.name) {
+            if (uncaptain(cr.white).toLowerCase() === target_player.name) {
                 parsePairingResult(target_player.name, tz_offset, cr.black, 0, cr.date, cr.time, callback);
                 return;
-            } else if (uncaptain(cr.black) === target_player.name) {
+            } else if (uncaptain(cr.black).toLowerCase() === target_player.name) {
                 parsePairingResult(target_player.name, tz_offset, cr.white, 1, cr.date, cr.time, callback);
                 return;
             } 
