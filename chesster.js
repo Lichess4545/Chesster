@@ -7,6 +7,7 @@ var fuzzy = require('./fuzzy_match.js');
 var spreadsheets = require('./spreadsheets.js');
 var http = require('http');
 var moment = require('moment');
+var players = require("./player.js");
 
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
@@ -300,14 +301,13 @@ function sayCaptains(self, convo, callback){
 /* rating */
 
 controller.hears([
-	'rating'
+    players.appendPlayerRegex("rating", true)	
 ],[
 	'direct_mention', 
 	'direct_message'
 ],function(bot,message) {
     bot_exception_handler(bot, message, function(){
-        var self = this;
-        var player_name = message.text.split(" ").slice(1).join(" ");
+        var player_name = players.getSlackUser(users, message).name;
         if(player_name && player_name != ""){
             getRating(player_name, function(rating){
                 if(rating){
@@ -649,37 +649,15 @@ controller.hears([
 });
 
 controller.hears([
-    /pairing(?: @?([^\s]+))?/
+    players.appendPlayerRegex("pairing", true)
 ], [
     'direct_mention',
     'direct_message'
 ], function(bot, message) {
     bot_exception_handler(bot, message, function() {
         bot.startPrivateConversation(message, function (response, convo) {
-            // The user is either a string or an id
-            var nameOrId = message.user;
-            var requestingPlayer= users.getByNameOrID(message.user);
-
-            if (message.match[1]) {
-                nameOrId = message.match[1];
-            }
-
-            // The name or Id was provided, so parse it out
-            var player = users.getByNameOrID(nameOrId);
-
-            // If the player didn't exist that way, then it could be the @notation
-            if (!player && nameOrId) {
-                var userIdExtraction = nameOrId.match(/<@([^\s]+)>/);
-                if (userIdExtraction) {
-                    player = users.getByNameOrID(userIdExtraction[1]);
-                } else {
-                    player = users.getByNameOrID(nameOrId.toLowerCase());
-                }
-            }
-
-            if (!player) {
-                player = requestingPlayer; 
-            }
+            var requestingPlayer = users.getByNameOrID(message.user);
+            var player = players.getSlackUser(users, message);
 
             preparePairingCompetitorMessage(requestingPlayer, player, function(response) {
                 convo.say(response);
@@ -733,7 +711,6 @@ function parsePairingResult(player, tz_offset, opponent, color, date, time, call
         getClassicalRating(opponent, function(rating) {
             var localTime = moment.utc(date + " " + time, "MM/DD HH:mm").utcOffset(tz_offset);
             var localDateTimeString = localTime.format("dddd [at] HH:mm");
-
 
             if (!localTime.isValid()) {
                 callback(player + " will play " + opponentName + "(" + rating + ").  The game is unscheduled.");
@@ -1604,7 +1581,7 @@ function validate_game_details(details, options){
 
 function gamelink_reply_invalid(bot, message, reason){
     bot.reply(message, "I am sorry, <@" + message.user + ">,  "
-                     + "the link you posted is *not valid* becuase "
+                     + "the link you posted is *not valid* because "
                      + "*" + reason + "*");
     bot.reply(message, "If this was a mistake, please correct it and "
                      + "try again. If intentional, please contact one "
