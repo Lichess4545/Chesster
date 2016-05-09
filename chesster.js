@@ -308,18 +308,13 @@ controller.hears([
 ],function(bot,message) {
     bot_exception_handler(bot, message, function(){
         var player_name = players.getSlackUser(users, message).name;
-        if(player_name && player_name != ""){
-            getRating(player_name, function(rating){
-                if(rating){
-                    bot.reply(message, prepareRatingMessage(player_name, rating));
-                }else{
-                    bot.reply(message, "I am sorry. I could not find that player.");
-                }
-            });
-        }else{
-            bot.reply(message, "Rating of which player? [ " + users.getIdString("chesster") + 
-								" rating <player> ]. Please try again.");
-        }
+        getRating(player_name, function(rating){
+            if(rating){
+                bot.reply(message, prepareRatingMessage(player_name, rating));
+            }else{
+                bot.reply(message, "I am sorry. I could not find that player.");
+            }
+        });
     });
 });
 
