@@ -1,2 +1,2 @@
 #!/bin/bash
-node chesster.js $1 >> stdout_log 2>> stderr_log
+node chesster.js $1 2&>1 >> output.log
