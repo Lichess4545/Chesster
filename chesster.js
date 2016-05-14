@@ -8,6 +8,7 @@ var spreadsheets = require('./spreadsheets.js');
 var http = require('http');
 var moment = require('moment');
 var players = require("./player.js");
+var league = require("./league.js");
 
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
@@ -70,17 +71,7 @@ function critical_path(todo){
 
 /* static entry point */
 
-var config;
-
-exception_handler(function(){ 
-    var config_file = process.argv[2] || "config.json";
-
-    console.log("Loading configuration from " + config_file);
-    config = JSON.parse(fs.readFileSync(config_file, 'utf-8'));
-}, function(){
-    console.log("Failed to load config file.");
-    process.exit(1);
-});
+var config = require("./config").config;
 
 if (!config.token) { 
     console.log('Failed to load token from: ' + config_file);
@@ -161,6 +152,17 @@ function update_channels(bot){
     });
 
 }
+function refreshCurrentRoundSchedules() {
+    var _45_45 = league.getLeague("45+45", config);
+    _45_45.getCurrentRoundSchedule(function(err, pairings) {
+        if (err) {
+            console.error("Unable to get schedule: " + err);
+            throw new Error(err);
+        } else {
+            console.log("Found " + pairings.length + " pairings for 45+45");
+        }
+    });
+}
 
 /* 
    updates the user list
@@ -177,6 +179,7 @@ function refresh(bot, delay) {
         
         update_users(bot);
         update_channels(bot);
+        refreshCurrentRoundSchedules();
         setTimeout(function(){ 
             refresh(bot, delay);
         }, delay);
@@ -652,71 +655,51 @@ controller.hears([
     bot_exception_handler(bot, message, function() {
         bot.startPrivateConversation(message, function (response, convo) {
             var requestingPlayer = users.getByNameOrID(message.user);
-            var player = players.getSlackUser(users, message);
+            var targetPlayer = players.getSlackUser(users, message);
+            var _45_45 = league.getLeague("45+45", config);
+            if (!_45_45) { return; }
+            var pairings = _45_45.findPairing(targetPlayer.name);
+            if (pairings.length != 1) {
+                convo.say(targetPlayer.name + " is not playing in this round");
+                return;
+            }
+            pairing = pairings[0];
+            var tzOffset = requestingPlayer.tz_offset / 60;
+            var color = "";
+            if (pairing.white.toLowerCase() == targetPlayer.name.toLowerCase()) {
+                color = "white";
+                opponent = pairing.black;
+            } else {
+                color = "black";
+                opponent = pairing.white;
+            }
 
-            preparePairingCompetitorMessage(requestingPlayer, player, function(response) {
+            preparePairingCompetitorMessage(targetPlayer.name, tzOffset, opponent, color, pairing.scheduled_date, function(response) {
                 convo.say(response);
             });
         });
     });
 });
 
-function uncaptain(playerName) {
-    return playerName.endsWith("*") ? playerName.substring(0, playerName.length - 1) : playerName;
-}
+function preparePairingCompetitorMessage(targetPlayer, tzOffset, opponentName, color, date, callback) {
 
-function preparePairingCompetitorMessage(requesting_player, target_player, callback) {
-    var self = this;
-    loadSheet(self, function() {
-        parsePairingForRound(self.currentRound, requesting_player, target_player, callback);
-    });
-}
+    getPlayerByName(opponentName, function(opponentInfo) {
+        getClassicalRating(opponentInfo, function(rating) {
 
-function parsePairingForRound(roundSheet, requestingPlayer, targetPlayer, callback) {
-    var tzOffset = requestingPlayer.tz_offset / 60;
-
-    var targetPlayerName = targetPlayer.name.toLowerCase();
-    // The user was either WHITE or BLACK, so find him in one column
-    // and get his opponent's name from the other column
-    roundSheet.getRows({
-        limit: ROUND_ROW_LIMIT
-    }, function(err, rows) {
-        for (var i = 0; i < rows.length; i++) {
-            var cr = rows[i];
-
-            // Adjust for the possibility of checking the captain
-            if (uncaptain(cr.white).toLowerCase() === targetPlayerName) {
-                parsePairingResult(targetPlayer.name, tzOffset, cr.black, 0, cr.date, cr.time, callback);
-                return;
-            } else if (uncaptain(cr.black).toLowerCase() === targetPlayerName) {
-                parsePairingResult(targetPlayer.name, tzOffset, cr.white, 1, cr.date, cr.time, callback);
-                return;
-            } 
-        }
-
-        callback(targetPlayer.name + " is not playing in this round");
-    });
-}
-
-function parsePairingResult(player, tz_offset, opponent, color, date, time, callback) {
-
-    var opponentName = uncaptain(opponent);
-    
-    getPlayerByName(opponentName, function(opponent) {
-        getClassicalRating(opponent, function(rating) {
-            var localTime = moment.utc(date + " " + time, "MM/DD HH:mm").utcOffset(tz_offset);
-            var localDateTimeString = localTime.format("dddd [at] HH:mm");
-
-            if (!localTime.isValid()) {
-                callback(player + " will play " + opponentName + "(" + rating + ").  The game is unscheduled.");
-            } else if (moment.utc().isAfter(localTime)) {
-                // If the match took place in the past, display the date instead of the day
-                localDateTimeString = localTime.format("MM/DD [at] HH:mm");
-                callback(player + " played " + opponentName + " (" + rating + ") on " + localDateTimeString + ".");
+            if (!date) {
+                callback(targetPlayer + " will play " + opponentName + "(" + rating + ").  The game is unscheduled.");
             } else {
-                // Otherwise display the time until the match
-                var timeUntil = localTime.fromNow(true);
-                callback(player + " will play " + opponentName + " (" + rating + ") on " + localDateTimeString + " which is in " + timeUntil + ".");
+                var localTime = date.utcOffset(tzOffset);
+                var localDateTimeString = localTime.format("dddd [at] HH:mm");
+                if (moment.utc().isAfter(localTime)) {
+                    // If the match took place in the past, display the date instead of the day
+                    localDateTimeString = localTime.format("MM/DD [at] HH:mm");
+                    callback(targetPlayer + " played " + opponentName + " (" + rating + ") on " + localDateTimeString + ".");
+                } else {
+                    // Otherwise display the time until the match
+                    var timeUntil = localTime.fromNow(true);
+                    callback(targetPlayer + " will play " + opponentName + " (" + rating + ") on " + localDateTimeString + " which is in " + timeUntil + ".");
+                }
             }
 
         });

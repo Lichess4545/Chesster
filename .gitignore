@@ -3,3 +3,5 @@ errors_log
 feedback_log
 node_modules
 .vagrant
+service_account_key.js
+slack_token.js

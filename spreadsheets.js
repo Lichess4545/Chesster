@@ -351,6 +351,8 @@ function get_round_extrema(options) {
 //   2. Asssume first row is a header row.
 //   3. Turn each subsequent row into an object, of key-values based on the header
 //   4. return rows.
+// TODO: This should be renamed, it's not a general get "rows" it's a
+// get_schedule_rows
 function get_rows(service_account_auth, spreadsheet_key, options, callback) {
     var doc = new GoogleSpreadsheet(spreadsheet_key);
     doc.useServiceAccountAuth(service_account_auth, function(err, info) {
@@ -643,10 +645,34 @@ function fetch_pairing_gamelink(service_account_auth, key, colname, result, call
     );
 }
 
+// Given '=HYPERLINK("http://en.lichess.org/FwYcks48","1-0")'
+// return {'text': '1-0', 'url': 'http://en.lichess.org/FwYcks48'}
+function parse_hyperlink(hyperlink) {
+    var results = {
+        'text': '',
+        'href': ''
+    };
+    if(!hyperlink.toUpperCase().includes("HYPERLINK")) {
+        return results;
+    }
+    var parts = hyperlink.split("\"");
+    if (parts.length != 5) {
+        return results;
+    }
+    if (parts[0].toUpperCase() != "=HYPERLINK(") {
+        return results;
+    }
+    results['href'] = parts[1];
+    results['text'] = parts[3];
+    return results;
+}
+
+module.exports.get_rows = get_rows;
 module.exports.get_round_extrema = get_round_extrema;
 module.exports.parse_scheduling = parse_scheduling;
 module.exports.parse_result = parse_result;
 module.exports.parse_gamelink = parse_gamelink;
+module.exports.parse_hyperlink = parse_hyperlink;
 module.exports.update_schedule = update_schedule;
 module.exports.update_result = update_result;
 module.exports.fetch_pairing_gamelink = fetch_pairing_gamelink;
