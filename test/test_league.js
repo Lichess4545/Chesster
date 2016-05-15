@@ -28,14 +28,14 @@ var _45_45_LEAGUE_CONF = {
 
 describe('league', function() {
     //--------------------------------------------------------------------------
-    describe('#getCurrentRoundSchedule()', function () {
-        it("Testing the getCurrentRoundSchedule()", function(done) {
+    describe('#refreshCurrentRoundSchedules()', function () {
+        it("Testing the refreshCurrentRoundSchedules()", function(done) {
             this.timeout(15000);
             // Normally I would split this test out into multiples,
             // but this is slow enough that I want to test everything at this
             // point.
             _45_league = new league.League(_45_45_LEAGUE_CONF);
-            _45_league.getCurrentRoundSchedule(function(err, pairings) {
+            _45_league.refreshCurrentRoundSchedules(function(err, pairings) {
                 // Ensure we got the right amount of pairings
                 assert.equal(pairings.length, 78);
 

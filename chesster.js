@@ -152,17 +152,6 @@ function update_channels(bot){
     });
 
 }
-function refreshCurrentRoundSchedules() {
-    var _45_45 = league.getLeague("45+45", config);
-    _45_45.getCurrentRoundSchedule(function(err, pairings) {
-        if (err) {
-            console.error("Unable to get schedule: " + err);
-            throw new Error(err);
-        } else {
-            console.log("Found " + pairings.length + " pairings for 45+45");
-        }
-    });
-}
 
 /* 
    updates the user list
@@ -179,7 +168,8 @@ function refresh(bot, delay) {
         
         update_users(bot);
         update_channels(bot);
-        refreshCurrentRoundSchedules();
+        var _45_45 = league.getLeague("45+45", config);
+        _45_45.refresh();
         setTimeout(function(){ 
             refresh(bot, delay);
         }, delay);
@@ -659,6 +649,8 @@ controller.hears([
             var _45_45 = league.getLeague("45+45", config);
             if (!_45_45) { return; }
             var pairings = _45_45.findPairing(targetPlayer.name);
+            console.log(pairings);
+            console.log(targetPlayer.name);
             if (pairings.length != 1) {
                 convo.say(targetPlayer.name + " is not playing in this round");
                 return;

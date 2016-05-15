@@ -10,6 +10,7 @@ var _ = require("underscore");
 var spreadsheets = require("./spreadsheets");
 var moment = require("moment");
 LEAGUE_DEFAULTS = {
+    "name": "",
     "spreadsheet": {
         "key": "",
         "service_account_auth": {
@@ -50,52 +51,52 @@ league_attributes = {
     },
 
     //--------------------------------------------------------------------------
-    // Syncs the latest team information
+    // Refreshes everything
     //--------------------------------------------------------------------------
-    'get_rosters': function(callback) {
+    'refresh': function() {
+        var self = this;
+        self.refreshMods(function(err, mods) {
+            if (err) {
+                console.error("Unable to refresh mods: " + err);
+                throw new Error(err);
+            } else {
+                console.log("Found " + mods.length + " mods for " + self.options.name);
+            }
+        });
+        self.refreshRosters(function(err, rosters) {
+            if (err) {
+                console.error("Unable to refresh rosters: " + err);
+                throw new Error(err);
+            } else {
+                console.log("Found " + rosters.length + " teams for " + self.options.name);
+            }
+        });
+        self.refreshCurrentRoundSchedules(function(err, pairings) {
+            if (err) {
+                console.error("Unable to refresh schedule: " + err);
+                throw new Error(err);
+            } else {
+                console.log("Found " + pairings.length + " pairings for " + self.options.name);
+            }
+        });
     },
 
     //--------------------------------------------------------------------------
-    // Figures out who the mods are
+    // Refreshes the latest roster information
     //--------------------------------------------------------------------------
-    'get_mods': function(callback) {
+    'refreshRosters': function(callback) {
     },
 
     //--------------------------------------------------------------------------
-    // Finds the pairing for this current round given either a black or a white
-    // username.
+    // Refreshes the latest mods information
     //--------------------------------------------------------------------------
-    'findPairing': function(white, black) {
-        white = white || undefined;
-        if (!white) {
-            throw new Error("findPairing requires at least one username.");
-        }
-        black = black || undefined;
-        var possibilities = this._pairings;
-        if (white) {
-            possibilities = _.filter(possibilities, function(item) {
-                return (
-                    item.white.toLowerCase().includes(white) ||
-                    item.black.toLowerCase().includes(white)
-                );
-            });
-
-        }
-        if (black) {
-            possibilities = _.filter(possibilities, function(item) {
-                return (
-                    item.white.toLowerCase().includes(black) ||
-                    item.black.toLowerCase().includes(black)
-                );
-            });
-        }
-        return possibilities;
+    'refreshMods': function(callback) {
     },
 
     //--------------------------------------------------------------------------
     // Figures out the current scheduling information for the round.
     //--------------------------------------------------------------------------
-    'getCurrentRoundSchedule': function(callback) {
+    'refreshCurrentRoundSchedules': function(callback) {
         var query_options = {
             'min-row': 1,
             'max-row': 100,
@@ -136,7 +137,43 @@ league_attributes = {
                 callback(undefined, self._pairings);
             }
         );
-    }
+    },
+
+    //--------------------------------------------------------------------------
+    // Finds the pairing for this current round given either a black or a white
+    // username.
+    //--------------------------------------------------------------------------
+    'findPairing': function(white, black) {
+        console.log(white, black);
+        white = white || undefined;
+        if (!white) {
+            throw new Error("findPairing requires at least one username.");
+        }
+        black = black || undefined;
+        var possibilities = this._pairings;
+        console.log(possibilities.length);
+        if (white) {
+            possibilities = _.filter(possibilities, function(item) {
+                return (
+                    item.white.toLowerCase().includes(white) ||
+                    item.black.toLowerCase().includes(white)
+                );
+            });
+
+        }
+        console.log(possibilities.length);
+        if (black) {
+            possibilities = _.filter(possibilities, function(item) {
+                return (
+                    item.white.toLowerCase().includes(black) ||
+                    item.black.toLowerCase().includes(black)
+                );
+            });
+        }
+        console.log(possibilities.length);
+        return possibilities;
+    },
+
 };
 
 function League(options) {
@@ -145,22 +182,23 @@ function League(options) {
     _.extend(this, league_attributes);
 };
 
-var _cache = {};
 function getLeague(league_name, config) {
-    // If we already created it, return it.
-    var league = _cache[league_name];
-    if (league) return league;
-    console.log(league_name);
+    this._cache = ( this._cache ? this._cache : {} );
 
-    // Else create it if there is a config for it.
-    var league_options = config[league_name] || undefined;
-    if (league_options) {
-        league = new League(league_options);
-        _cache[league_name] = league;
-        return league;
+    if(!this._cache[league_name]) {
+        // Else create it if there is a config for it.
+        var league_options = config[league_name] || undefined;
+        if (league_options) {
+            console.log("Creating new league for " + league_name);
+            league_options = _.clone(league_options);
+            league_options.name = league_name;
+            league = new League(league_options);
+            this._cache[league_name] = league;
+        } else {
+            console.log("Couldn't find options for " + league_name + " league. Not creating object.");
+        }
     }
-    console.log("Couldn't find options for " + league_name + " league. Not creating object.");
-    return undefined;
+    return this._cache[league_name];
 }
 
 module.exports.League = League;
