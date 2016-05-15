@@ -41,16 +41,8 @@ function exception_handler(todo, on_error){
             "\nDatetime: " + new Date() +
             "\nError: " + JSON.stringify(e) +
             "\nStack: " + e.stack;
-        console.log(error_log);
-        fs.appendFile("./errors_log", error_log, function(err) {
-            if(err) {
-                console.log("failed to write to the file...")
-                console.log(e);
-                return console.log(err);
-            }
-        });
+        console.error(error_log);
         on_error && on_error();
-        console.log("\n");
     }
 }
 
@@ -319,10 +311,11 @@ controller.hears([
 });
 
 function getRating(player, callback){
-    getPlayerByName(player, function(opponent){
+    getPlayerByName(player, function(error, opponent){
         if(opponent){
             getClassicalRating(opponent, callback);
         }else{
+            console.error(JSON.stringify(error));
             callback();
         }
     });
@@ -686,10 +679,10 @@ function parsePairingForRound(roundSheet, requestingPlayer, targetPlayer, callba
 
             // Adjust for the possibility of checking the captain
             if (uncaptain(cr.white).toLowerCase() === targetPlayerName) {
-                parsePairingResult(targetPlayer.name, tzOffset, cr.black, 0, cr.date, cr.time, callback);
+                parsePairingResult(targetPlayer.name, tzOffset, cr.black, "white", cr.date, cr.time, callback);
                 return;
             } else if (uncaptain(cr.black).toLowerCase() === targetPlayerName) {
-                parsePairingResult(targetPlayer.name, tzOffset, cr.white, 1, cr.date, cr.time, callback);
+                parsePairingResult(targetPlayer.name, tzOffset, cr.white, "black", cr.date, cr.time, callback);
                 return;
             } 
         }
@@ -698,28 +691,58 @@ function parsePairingForRound(roundSheet, requestingPlayer, targetPlayer, callba
     });
 }
 
+function getRatingString(rating){
+    return ( rating ? " (" + rating + ")" : "" );
+}
+
+function formatPairingResult(details, callback){
+    var localTime = moment.utc(details.date + " " + details.time, "MM/DD HH:mm").utcOffset(details.tz_offset);
+    var localDateTimeString = localTime.format("dddd [at] HH:mm");
+    var player = details.player;
+    var opponent = details.opponent;
+    var color = details.color;
+    var rating = details.rating;
+
+    if (!localTime.isValid()) {
+        callback(player + " will play as " + color +" against " + opponent + getRatingString(rating) + ".  The game is unscheduled.");
+    } else if (moment.utc().isAfter(localTime)) {
+        // If the match took place in the past, display the date instead of the day
+        localDateTimeString = localTime.format("MM/DD [at] HH:mm");
+        callback(player + " played as " + color +" against " + opponent + getRatingString(rating) + " on " + localDateTimeString + ".");
+    } else {
+        // Otherwise display the time until the match
+        var timeUntil = localTime.fromNow(true);
+        callback(player + " will play as " + color +" against " + opponent + getRatingString(rating) + " on " + localDateTimeString + " which is in " + timeUntil + ".");
+    }
+}
+
 function parsePairingResult(player, tz_offset, opponent, color, date, time, callback) {
 
     var opponentName = uncaptain(opponent);
-    
-    getPlayerByName(opponentName, function(opponent) {
-        getClassicalRating(opponent, function(rating) {
-            var localTime = moment.utc(date + " " + time, "MM/DD HH:mm").utcOffset(tz_offset);
-            var localDateTimeString = localTime.format("dddd [at] HH:mm");
-
-            if (!localTime.isValid()) {
-                callback(player + " will play " + opponentName + "(" + rating + ").  The game is unscheduled.");
-            } else if (moment.utc().isAfter(localTime)) {
-                // If the match took place in the past, display the date instead of the day
-                localDateTimeString = localTime.format("MM/DD [at] HH:mm");
-                callback(player + " played " + opponentName + " (" + rating + ") on " + localDateTimeString + ".");
-            } else {
-                // Otherwise display the time until the match
-                var timeUntil = localTime.fromNow(true);
-                callback(player + " will play " + opponentName + " (" + rating + ") on " + localDateTimeString + " which is in " + timeUntil + ".");
-            }
-
-        });
+    getPlayerByName(opponentName, function(error, opponent) {
+        if(opponent){
+            getClassicalRating(opponent, function(rating) {
+                formatPairingResult({
+                    "player": player, 
+                    "tz_offset": tz_offset, 
+                    "opponent": opponentName, 
+                    "color": color, 
+                    "date": date, 
+                    "time": time, 
+                    "rating": rating, 
+                }, callback);
+            });
+        }else{
+            console.error(JSON.stringify(error));
+            formatPairingResult({
+                "player": player,
+                "tz_offset": tz_offset,
+                "opponent": opponentName,
+                "color": color,
+                "date": date,
+                "time": time,
+            }, callback);
+        }
     });
 }
 
@@ -959,13 +982,14 @@ function prepareMembersResponse(self){
 
 function playerRatingAsyncJob(team_member){
     return function(callback){
-        getPlayerByName(team_member.name, function(player){
+        getPlayerByName(team_member.name, function(error, player){
             if(player){
                 getClassicalRating(player, function(rating){
                     team_member.rating = rating;
                     callback();
                 });
             }else{
+                console.error(JSON.stringify(error));
                 callback("failed to get player: " + team_member.name);
             }
         });
@@ -1013,25 +1037,8 @@ controller.hears([
 /* LICHESS STUFF */
 
 function getPlayerByName(name, callback){
-    const http = require('http');
     var url = "http://en.lichess.org/api/user/" + name;
-    http.get(url, (res) => {
-        var body = "";
-        res.on('data', function (chunk) {
-            body += chunk;
-        });
-        res.on('end', () => {
-            if(body != ""){
-                console.log('BODY: ' + body);
-                callback(JSON.parse(body));
-            }else{
-                callback();
-            }
-        });
-    }).on('error', (e) => {
-        console.log(e);
-        callback()
-    });
+    fetch_url_into_json(url, callback);
 }
 
 function getClassicalRating(opp, callback){
@@ -1528,14 +1535,19 @@ function fetch_url_into_json(url, callback){
         });
         res.on('end', () => {
             if(body != ""){
-                callback(JSON.parse(body));
+                var json = JSON.parse(body);
+                if(json){
+                   callback(undefined, json);
+                }else{
+                   callback("body was not a valid JSON object");
+                }
             }else{
-                callback();
+                callback("body was empty from url: " + url);
             }
         });
     }).on('error', (e) => {
-        console.log(e);
-        callback()
+        console.error(JSON.stringify(e));
+        callback("failed to get a response from url: " + url);
     });
 }
 
@@ -1576,7 +1588,7 @@ function validate_game_details(details, options){
 
 function gamelink_reply_invalid(bot, message, reason){
     bot.reply(message, "I am sorry, <@" + message.user + ">,  "
-                     + "the link you posted is *not valid* because "
+                     + "your post is *not valid* because "
                      + "*" + reason + "*");
     bot.reply(message, "If this was a mistake, please correct it and "
                      + "try again. If intentional, please contact one "
@@ -1631,18 +1643,22 @@ function process_gamelink(bot, message, gamelink, options, user_result){
         return;
     }
     //get the game details
-    fetch_game_details(result.gamelink_id, function(details){
+    fetch_game_details(result.gamelink_id, function(error, details){
         //validate the game details vs the user specified result
-        if(user_result){
-            var validity = validate_user_result(details, user_result);
-            if(!validity.valid){
-                gamelink_reply_invalid(bot, message, validity.reason);
-                return;
+        if(details){
+            if(user_result){
+                var validity = validate_user_result(details, user_result);
+                if(!validity.valid){
+                    gamelink_reply_invalid(bot, message, validity.reason);
+                    return;
+                }
             }
+            process_game_details(bot, message, details, options);
+        }else{
+            console.error(JSON.stringify(error));
+            bot.reply(message, "Sorry, I failed to get game details for " + gamelink + ". Try again later or reach out to a moderator to make the update manually.");
         }
-        process_game_details(bot, message, details, options);
     });
-
 }
 
 function process_game_details(bot, message, details, options){
