@@ -311,7 +311,7 @@ controller.hears([
 });
 
 function getRating(player, callback){
-    getPlayerByName(player, function(opponent, error){
+    getPlayerByName(player, function(error, opponent){
         if(opponent){
             getClassicalRating(opponent, callback);
         }else{
@@ -719,7 +719,7 @@ function formatPairingResult(details, callback){
 function parsePairingResult(player, tz_offset, opponent, color, date, time, callback) {
 
     var opponentName = uncaptain(opponent);
-    getPlayerByName(opponentName, function(opponent, error) {
+    getPlayerByName(opponentName, function(error, opponent) {
         if(opponent){
             getClassicalRating(opponent, function(rating) {
                 formatPairingResult({
@@ -982,7 +982,7 @@ function prepareMembersResponse(self){
 
 function playerRatingAsyncJob(team_member){
     return function(callback){
-        getPlayerByName(team_member.name, function(player, error){
+        getPlayerByName(team_member.name, function(error, player){
             if(player){
                 getClassicalRating(player, function(rating){
                     team_member.rating = rating;
@@ -1537,17 +1537,17 @@ function fetch_url_into_json(url, callback){
             if(body != ""){
                 var json = JSON.parse(body);
                 if(json){
-                   callback(json);
+                   callback(undefined, json);
                 }else{
-                   callback(undefined, "body was not a valid JSON object");
+                   callback("body was not a valid JSON object");
                 }
             }else{
-                callback(undefined, "body was empty from url: " + url);
+                callback("body was empty from url: " + url);
             }
         });
     }).on('error', (e) => {
         console.error(JSON.stringify(e));
-        callback(undefined, "failed to get a response from url: " + url);
+        callback("failed to get a response from url: " + url);
     });
 }
 
@@ -1643,7 +1643,7 @@ function process_gamelink(bot, message, gamelink, options, user_result){
         return;
     }
     //get the game details
-    fetch_game_details(result.gamelink_id, function(details, error){
+    fetch_game_details(result.gamelink_id, function(error, details){
         //validate the game details vs the user specified result
         if(details){
             if(user_result){
