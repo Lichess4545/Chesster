@@ -144,14 +144,12 @@ league_attributes = {
     // username.
     //--------------------------------------------------------------------------
     'findPairing': function(white, black) {
-        console.log(white, black);
         white = white || undefined;
         if (!white) {
             throw new Error("findPairing requires at least one username.");
         }
         black = black || undefined;
         var possibilities = this._pairings;
-        console.log(possibilities.length);
         if (white) {
             possibilities = _.filter(possibilities, function(item) {
                 return (
@@ -161,7 +159,6 @@ league_attributes = {
             });
 
         }
-        console.log(possibilities.length);
         if (black) {
             possibilities = _.filter(possibilities, function(item) {
                 return (
@@ -170,7 +167,6 @@ league_attributes = {
                 );
             });
         }
-        console.log(possibilities.length);
         return possibilities;
     },
 

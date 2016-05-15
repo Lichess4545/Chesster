@@ -649,8 +649,6 @@ controller.hears([
             var _45_45 = league.getLeague("45+45", config);
             if (!_45_45) { return; }
             var pairings = _45_45.findPairing(targetPlayer.name);
-            console.log(pairings);
-            console.log(targetPlayer.name);
             if (pairings.length != 1) {
                 convo.say(targetPlayer.name + " is not playing in this round");
                 return;
