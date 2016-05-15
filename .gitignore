@@ -1,6 +1,5 @@
 *.swp
 output.log
-errors_log
 feedback_log
 node_modules
 .vagrant
