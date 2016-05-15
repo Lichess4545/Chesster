@@ -71,6 +71,7 @@ function critical_path(todo){
 
 /* static entry point */
 
+// TODO: make this come from the command line or here.
 var config = require("./config").config;
 
 if (!config.token) { 
