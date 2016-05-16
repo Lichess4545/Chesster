@@ -71,7 +71,9 @@ function critical_path(todo){
 /* static entry point */
 
 // TODO: make this come from the command line or here.
-var config = require("./config").config;
+var config_file = process.argv[2] || "./config.js"; 
+console.log("Loading config from: " + config_file);
+var config = require(config_file).config;
 
 if (!config.token) { 
     console.log('Failed to load token from: ' + config_file);
