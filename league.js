@@ -150,23 +150,18 @@ league_attributes = {
         }
         black = black || undefined;
         var possibilities = this._pairings;
-        if (white) {
-            possibilities = _.filter(possibilities, function(item) {
-                return (
-                    item.white.toLowerCase().includes(white) ||
-                    item.black.toLowerCase().includes(white)
-                );
-            });
-
-        }
-        if (black) {
-            possibilities = _.filter(possibilities, function(item) {
-                return (
-                    item.white.toLowerCase().includes(black) ||
-                    item.black.toLowerCase().includes(black)
-                );
-            });
-        }
+        function filter(playerName) {
+            if (playerName) {
+                possibilities = _.filter(possibilities, function(item) {
+                    return (
+                        item.white.toLowerCase().includes(playerName) ||
+                        item.black.toLowerCase().includes(playerName)
+                    );
+                });
+            }
+        };
+        filter(white);
+        filter(black);
         return possibilities;
     },
 
