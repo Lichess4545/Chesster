@@ -4,8 +4,7 @@
 var http = require("./http.js");
 
 
-// TODO: Ensure we have 
-
+// TODO: Ensure we respect the lichess API limits 
 // TODO: eventually cache these results.
 function getPlayerByName(name){
     var url = "http://en.lichess.org/api/user/" + name;
