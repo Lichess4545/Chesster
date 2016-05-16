@@ -44,7 +44,7 @@ league_attributes = {
     _pairings: [],
 
     //--------------------------------------------------------------------------
-    // Canonicallized the username
+    // Canonicalize the username
     //--------------------------------------------------------------------------
     canonical_username: function(username) {
         return username.replace("*", "");

@@ -42,16 +42,8 @@ function exception_handler(todo, on_error){
             "\nDatetime: " + new Date() +
             "\nError: " + JSON.stringify(e) +
             "\nStack: " + e.stack;
-        console.log(error_log);
-        fs.appendFile("./errors_log", error_log, function(err) {
-            if(err) {
-                console.log("failed to write to the file...")
-                console.log(e);
-                return console.log(err);
-            }
-        });
+        console.error(error_log);
         on_error && on_error();
-        console.log("\n");
     }
 }
 
@@ -313,10 +305,11 @@ controller.hears([
 });
 
 function getRating(player, callback){
-    getPlayerByName(player, function(opponent){
+    getPlayerByName(player, function(error, opponent){
         if(opponent){
             getClassicalRating(opponent, callback);
         }else{
+            console.error(JSON.stringify(error));
             callback();
         }
     });
@@ -665,35 +658,61 @@ controller.hears([
                 opponent = pairing.white;
             }
 
-            preparePairingCompetitorMessage(targetPlayer.name, tzOffset, opponent, color, pairing.scheduled_date, function(response) {
+            parsePairingResult(targetPlayer.name, tzOffset, opponent, color, pairing.scheduled_date, function(response) {
                 convo.say(response);
             });
         });
     });
 });
 
-function preparePairingCompetitorMessage(targetPlayer, tzOffset, opponentName, color, date, callback) {
+function getRatingString(rating){
+    return ( rating ? " (" + rating + ")" : "" );
+}
 
-    getPlayerByName(opponentName, function(opponentInfo) {
-        getClassicalRating(opponentInfo, function(rating) {
+function formatPairingResult(details, callback){
+    var localTime = details.date.utcOffset(details.tzOffset);
+    var localDateTimeString = localTime.format("dddd [at] HH:mm");
+    var player = details.player;
+    var opponent = details.opponent;
+    var color = details.color;
+    var rating = details.rating;
 
-            if (!date) {
-                callback(targetPlayer + " will play " + opponentName + "(" + rating + ").  The game is unscheduled.");
-            } else {
-                var localTime = date.utcOffset(tzOffset);
-                var localDateTimeString = localTime.format("dddd [at] HH:mm");
-                if (moment.utc().isAfter(localTime)) {
-                    // If the match took place in the past, display the date instead of the day
-                    localDateTimeString = localTime.format("MM/DD [at] HH:mm");
-                    callback(targetPlayer + " played " + opponentName + " (" + rating + ") on " + localDateTimeString + ".");
-                } else {
-                    // Otherwise display the time until the match
-                    var timeUntil = localTime.fromNow(true);
-                    callback(targetPlayer + " will play " + opponentName + " (" + rating + ") on " + localDateTimeString + " which is in " + timeUntil + ".");
-                }
-            }
+    if (!localTime.isValid()) {
+        callback(player + " will play as " + color +" against " + opponent + getRatingString(rating) + ".  The game is unscheduled.");
+    } else if (moment.utc().isAfter(localTime)) {
+        // If the match took place in the past, display the date instead of the day
+        localDateTimeString = localTime.format("MM/DD [at] HH:mm");
+        callback(player + " played as " + color +" against " + opponent + getRatingString(rating) + " on " + localDateTimeString + ".");
+    } else {
+        // Otherwise display the time until the match
+        var timeUntil = localTime.fromNow(true);
+        callback(player + " will play as " + color +" against " + opponent + getRatingString(rating) + " on " + localDateTimeString + " which is in " + timeUntil + ".");
+    }
+}
 
-        });
+function parsePairingResult(player, tzOffset, opponentName, color, date, callback) {
+    getPlayerByName(opponentName, function(error, opponent) {
+        if(opponent){
+            getClassicalRating(opponent, function(rating) {
+                formatPairingResult({
+                    "player": player, 
+                    "tzOffset": tzOffset, 
+                    "opponent": opponentName, 
+                    "color": color, 
+                    "date": date, 
+                    "rating": rating, 
+                }, callback);
+            });
+        }else{
+            console.error(JSON.stringify(error));
+            formatPairingResult({
+                "player": player,
+                "tzOffset": tzOffset,
+                "opponent": opponentName,
+                "color": color,
+                "date": date,
+            }, callback);
+        }
     });
 }
 
@@ -933,13 +952,14 @@ function prepareMembersResponse(self){
 
 function playerRatingAsyncJob(team_member){
     return function(callback){
-        getPlayerByName(team_member.name, function(player){
+        getPlayerByName(team_member.name, function(error, player){
             if(player){
                 getClassicalRating(player, function(rating){
                     team_member.rating = rating;
                     callback();
                 });
             }else{
+                console.error(JSON.stringify(error));
                 callback("failed to get player: " + team_member.name);
             }
         });
@@ -987,25 +1007,8 @@ controller.hears([
 /* LICHESS STUFF */
 
 function getPlayerByName(name, callback){
-    const http = require('http');
     var url = "http://en.lichess.org/api/user/" + name;
-    http.get(url, (res) => {
-        var body = "";
-        res.on('data', function (chunk) {
-            body += chunk;
-        });
-        res.on('end', () => {
-            if(body != ""){
-                console.log('BODY: ' + body);
-                callback(JSON.parse(body));
-            }else{
-                callback();
-            }
-        });
-    }).on('error', (e) => {
-        console.log(e);
-        callback()
-    });
+    fetch_url_into_json(url, callback);
 }
 
 function getClassicalRating(opp, callback){
@@ -1502,14 +1505,19 @@ function fetch_url_into_json(url, callback){
         });
         res.on('end', () => {
             if(body != ""){
-                callback(JSON.parse(body));
+                var json = JSON.parse(body);
+                if(json){
+                   callback(undefined, json);
+                }else{
+                   callback("body was not a valid JSON object");
+                }
             }else{
-                callback();
+                callback("body was empty from url: " + url);
             }
         });
     }).on('error', (e) => {
-        console.log(e);
-        callback()
+        console.error(JSON.stringify(e));
+        callback("failed to get a response from url: " + url);
     });
 }
 
@@ -1550,7 +1558,7 @@ function validate_game_details(details, options){
 
 function gamelink_reply_invalid(bot, message, reason){
     bot.reply(message, "I am sorry, <@" + message.user + ">,  "
-                     + "the link you posted is *not valid* because "
+                     + "your post is *not valid* because "
                      + "*" + reason + "*");
     bot.reply(message, "If this was a mistake, please correct it and "
                      + "try again. If intentional, please contact one "
@@ -1605,18 +1613,22 @@ function process_gamelink(bot, message, gamelink, options, user_result){
         return;
     }
     //get the game details
-    fetch_game_details(result.gamelink_id, function(details){
+    fetch_game_details(result.gamelink_id, function(error, details){
         //validate the game details vs the user specified result
-        if(user_result){
-            var validity = validate_user_result(details, user_result);
-            if(!validity.valid){
-                gamelink_reply_invalid(bot, message, validity.reason);
-                return;
+        if(details){
+            if(user_result){
+                var validity = validate_user_result(details, user_result);
+                if(!validity.valid){
+                    gamelink_reply_invalid(bot, message, validity.reason);
+                    return;
+                }
             }
+            process_game_details(bot, message, details, options);
+        }else{
+            console.error(JSON.stringify(error));
+            bot.reply(message, "Sorry, I failed to get game details for " + gamelink + ". Try again later or reach out to a moderator to make the update manually.");
         }
-        process_game_details(bot, message, details, options);
     });
-
 }
 
 function process_game_details(bot, message, details, options){
