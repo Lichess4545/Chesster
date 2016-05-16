@@ -558,20 +558,21 @@ slack.hears(
                 return;
             }
             var pairings = _45_45.findPairing(targetPlayer.name);
-            if (pairings.length != 1) {
+            if (pairings.length < 1) {
                 convo.say(targetPlayer.name + " is not playing in this round");
+                return;
+            } else if (pairings.length > 1) {
+                convo.say(targetPlayer.name + " is playing more than once this round?! Contact the mods.");
                 return;
             }
             pairing = pairings[0];
             var details = {
                 "player": targetPlayer.name, 
-                "date": pairing.scheduled_date, 
+                "color": "white",
+                "opponent":  pairing.black,
+                "date": pairing.scheduled_date
             }
-            var color = "";
-            if (pairing.white.toLowerCase() == targetPlayer.name.toLowerCase()) {
-                details.color = "white";
-                details.opponent = pairing.black;
-            } else {
+            if (pairing.white.toLowerCase() != targetPlayer.name.toLowerCase()) {
                 details.color = "black";
                 details.opponent = pairing.white;
             }
