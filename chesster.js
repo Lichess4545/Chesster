@@ -1,14 +1,21 @@
+// extlibs
 var async = require("async");
 var Botkit = require('botkit');
-var GoogleSpreadsheet = require("google-spreadsheet");
-var moment = require('moment');
 var fs = require('fs');
-var fuzzy = require('./fuzzy_match.js');
-var spreadsheets = require('./spreadsheets.js');
+var GoogleSpreadsheet = require("google-spreadsheet");
 var http = require('http');
 var moment = require('moment');
-var players = require("./player.js");
+var Q = require("q");
+
+// Our stuff
+var fuzzy = require('./fuzzy_match.js');
 var league = require("./league.js");
+var players = require("./player.js");
+var spreadsheets = require('./spreadsheets.js');
+var slack = require('./slack.js');
+var users = slack.users;
+var channels = slack.channels;
+var lichess = require('./lichess.js');
 
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
@@ -75,99 +82,6 @@ var controller = Botkit.slackbot({
     debug: false
 });
 
-var users = {
-    byName: {},
-    byId: {},
-    getId: function(name){
-        return this.byName[name].id;
-    },
-    getIdString: function(name){
-        return "<@"+this.getId(name)+">";
-    },
-    getByNameOrID: function(nameOrId) {
-        return this.byId[nameOrId] || this.byName[nameOrId];
-    }
-};
-var channels = {
-    byName: {},
-    byId: {},
-    getId: function(name){
-        return this.byName[name].id;
-    },
-    getIdString: function(name){
-        return "<#"+this.getId(name)+">";
-    }
-};
-
-function update_users(bot){
-    // @ https://api.slack.com/methods/users.list
-    bot.api.users.list({}, function (err, response) {
-        if (err) {
-            throw new Error(err);
-        }
-
-        if (response.hasOwnProperty('members') && response.ok) {
-            var byName = {};
-            var byId = {};
-            var total = response.members.length;
-            for (var i = 0; i < total; i++) {
-                var member = response.members[i];
-                byName[member.name] = member;
-                byId[member.id] = member
-            }
-            users.byName = byName;
-            users.byId = byId;
-        }
-        console.log("info: got users");
-    });
-}
-
-function update_channels(bot){
-    // @ https://api.slack.com/methods/channels.list
-    bot.api.channels.list({}, function (err, response) {
-        if (err) {
-            throw new Error(err);
-        }
-
-        if (response.hasOwnProperty('channels') && response.ok) {
-            var byName = {};
-            var byId = {};
-            var total = response.channels.length;
-            for (var i = 0; i < total; i++) {
-                var channel = response.channels[i];
-                byName[channel.name] = channel;
-                byId[channel.id] = channel;
-            }
-            channels.byName = byName;
-            channels.byId = byId;
-        }
-        console.log("info: got channels");
-    });
-
-}
-
-/* 
-   updates the user list
-   updates the channel lists
-   then repeats in new thread
-   
-   if it encounters an error it will exit the process with exit code 1
-*/
-var count = 0;
-function refresh(bot, delay) {
-    critical_path(function(){
-        console.log("doing refresh " + count++);
-        bot.rtm.ping();
-        
-        update_users(bot);
-        update_channels(bot);
-        var _45_45 = league.getLeague("45+45", config);
-        _45_45.refresh();
-        setTimeout(function(){ 
-            refresh(bot, delay);
-        }, delay);
-    });
-}
 
 controller.spawn({
   token: config.token
@@ -179,7 +93,7 @@ controller.spawn({
     
     //refresh your user and channel list every 2 minutes
     //would be nice if this was push model, not poll but oh well.
-    refresh(bot, 120 * SECONDS);
+    slack.refresh(bot, 120 * SECONDS, config);
 
 });
 
@@ -630,47 +544,58 @@ controller.hears([
     });
 });
 
-controller.hears([
-    players.appendPlayerRegex("pairing", true)
-], [
-    'direct_mention',
-    'direct_message'
-], function(bot, message) {
-    bot_exception_handler(bot, message, function() {
+slack.hears(
+    controller,
+    [players.appendPlayerRegex("pairing", true)],
+    ['direct_mention', 'direct_message'],
+    function(bot, message) {
+        var deferred = Q.defer();
         bot.startPrivateConversation(message, function (response, convo) {
-            var requestingPlayer = users.getByNameOrID(message.user);
             var targetPlayer = players.getSlackUser(users, message);
             var _45_45 = league.getLeague("45+45", config);
-            if (!_45_45) { return; }
+            if (!_45_45) {
+                console.error("Unable to construct/find 45+45 league object");
+                return;
+            }
             var pairings = _45_45.findPairing(targetPlayer.name);
             if (pairings.length != 1) {
                 convo.say(targetPlayer.name + " is not playing in this round");
                 return;
             }
             pairing = pairings[0];
-            var tzOffset = requestingPlayer.tz_offset / 60;
+            var details = {
+                "player": targetPlayer.name, 
+                "date": pairing.scheduled_date, 
+            }
             var color = "";
             if (pairing.white.toLowerCase() == targetPlayer.name.toLowerCase()) {
-                color = "white";
-                opponent = pairing.black;
+                details.color = "white";
+                details.opponent = pairing.black;
             } else {
-                color = "black";
-                opponent = pairing.white;
+                details.color = "black";
+                details.opponent = pairing.white;
             }
 
-            parsePairingResult(targetPlayer.name, tzOffset, opponent, color, pairing.scheduled_date, function(response) {
-                convo.say(response);
+            lichess.getPlayerRating(targetPlayer.name).then(function(rating) {
+                details['rating'] = rating;
+                convo.say(formatPairingResult(message.player, details));
+                deferred.resolve();
+            }, function(error) {
+                console.error(JSON.stringify(error));
+                convo.say(formatPairingResult(message.player, details));
+                deferred.resolve();
             });
         });
-    });
-});
+        return deferred.promise;
+    }
+);
 
 function getRatingString(rating){
     return ( rating ? " (" + rating + ")" : "" );
 }
 
-function formatPairingResult(details, callback){
-    var localTime = details.date.utcOffset(details.tzOffset);
+function formatPairingResult(requestingPlayer, details){
+    var localTime = requestingPlayer.localTime(details.date);
     var localDateTimeString = localTime.format("dddd [at] HH:mm");
     var player = details.player;
     var opponent = details.opponent;
@@ -678,42 +603,16 @@ function formatPairingResult(details, callback){
     var rating = details.rating;
 
     if (!localTime.isValid()) {
-        callback(player + " will play as " + color +" against " + opponent + getRatingString(rating) + ".  The game is unscheduled.");
+        return player + " will play as " + color +" against " + opponent + getRatingString(rating) + ".  The game is unscheduled.";
     } else if (moment.utc().isAfter(localTime)) {
         // If the match took place in the past, display the date instead of the day
         localDateTimeString = localTime.format("MM/DD [at] HH:mm");
-        callback(player + " played as " + color +" against " + opponent + getRatingString(rating) + " on " + localDateTimeString + ".");
+        return player + " played as " + color +" against " + opponent + getRatingString(rating) + " on " + localDateTimeString + ".";
     } else {
         // Otherwise display the time until the match
         var timeUntil = localTime.fromNow(true);
-        callback(player + " will play as " + color +" against " + opponent + getRatingString(rating) + " on " + localDateTimeString + " which is in " + timeUntil + ".");
+        return player + " will play as " + color +" against " + opponent + getRatingString(rating) + " on " + localDateTimeString + " which is in " + timeUntil + ".";
     }
-}
-
-function parsePairingResult(player, tzOffset, opponentName, color, date, callback) {
-    getPlayerByName(opponentName, function(error, opponent) {
-        if(opponent){
-            getClassicalRating(opponent, function(rating) {
-                formatPairingResult({
-                    "player": player, 
-                    "tzOffset": tzOffset, 
-                    "opponent": opponentName, 
-                    "color": color, 
-                    "date": date, 
-                    "rating": rating, 
-                }, callback);
-            });
-        }else{
-            console.error(JSON.stringify(error));
-            formatPairingResult({
-                "player": player,
-                "tzOffset": tzOffset,
-                "opponent": opponentName,
-                "color": color,
-                "date": date,
-            }, callback);
-        }
-    });
 }
 
 /* standings */

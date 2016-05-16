@@ -164,7 +164,6 @@ league_attributes = {
         filter(black);
         return possibilities;
     },
-
 };
 
 function League(options) {
