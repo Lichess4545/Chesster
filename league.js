@@ -7,8 +7,11 @@
 // specific league object, so that the code for scheduling, results or
 // gamelinks 
 var _ = require("underscore");
-var spreadsheets = require("./spreadsheets");
+var Q = require("q");
 var moment = require("moment");
+
+var spreadsheets = require("./spreadsheets");
+var lichess = require("./lichess");
 LEAGUE_DEFAULTS = {
     "name": "",
     "spreadsheet": {
@@ -47,6 +50,7 @@ league_attributes = {
     // Canonicalize the username
     //--------------------------------------------------------------------------
     canonical_username: function(username) {
+        username = username.split(" ")[0];
         return username.replace("*", "");
     },
 
@@ -164,6 +168,88 @@ league_attributes = {
         filter(black);
         return possibilities;
     },
+    //--------------------------------------------------------------------------
+    // Generates the appropriate data format for pairing result for this league.
+    //--------------------------------------------------------------------------
+    'getPairingDetails': function(targetPlayer) {
+        var self = this;
+        return Q.fcall(function() {
+            var pairings = self.findPairing(targetPlayer.name);
+            if (pairings.length < 1) {
+                return {};
+            }
+            // TODO: determine what to do if multiple pairings are returned. ?
+            pairing = pairings[0];
+            var details = {
+                "player": targetPlayer.name, 
+                "color": "white",
+                "opponent":  pairing.black,
+                "date": pairing.scheduled_date
+            }
+            if (pairing.white.toLowerCase() != targetPlayer.name.toLowerCase()) {
+                details.color = "black";
+                details.opponent = pairing.white;
+            }
+            return details;
+        }).then(function(details) {
+            var deferred = Q.defer();
+            if (details.opponent) {
+                lichess.getPlayerRating(details.opponent).then(function(rating) {
+                    details['rating'] = rating;
+                    deferred.resolve(details);
+                }, function(error) {
+                    console.error(JSON.stringify(error));
+                    deferred.resolve(details);
+                });
+            } else {
+                return deferred.resolve({});
+            }
+            return deferred.promise;
+        });
+    },
+    //--------------------------------------------------------------------------
+    // Formats the pairing result for this league
+    //--------------------------------------------------------------------------
+    'formatPairingDetails': function(requestingPlayer, details) {
+        function getRatingString(rating){
+            return ( rating ? " (" + rating + ")" : "" );
+        }
+        var self = this;
+        return Q.fcall(function() {
+            var localTime;
+            if (details.date) {
+               localTime = requestingPlayer.localTime(details.date);
+            }
+            var schedule_phrase = "";
+            var played_phrase = "";
+
+            if (!localTime || !localTime.isValid()) {
+                played_phrase = "will play as";
+                schedule_phrase = ". The game is unscheduled.";
+            } else if (moment.utc().isAfter(localTime)) {
+                // If the match took place in the past, display the date instead of the day
+                played_phrase = "played as";
+                schedule_phrase = " on {localDateTimeString}.".format({
+                    localDateTimeString: localTime.format("MM/DD [at] HH:mm")
+                });
+            } else {
+                played_phrase = "played as";
+                schedule_phrase = " on {localDateTimeString} which is in {timeUntil}".format({
+                    localDateTimeString: localTime.format("MM/DD [at] HH:mm"),
+                    timeUntil: localTime.fromNow(true)
+                })
+            }
+
+            // Otherwise display the time until the match
+            return "[{name}]: {details.player} {played_phrase} {details.color} against {details.opponent} {rating}{schedule_phrase}".format({
+                name: self.options.name,
+                details: details,
+                played_phrase: played_phrase,
+                schedule_phrase: schedule_phrase,
+                rating: getRatingString(details.rating),
+            });
+        });
+    },
 };
 
 function League(options) {
@@ -172,24 +258,37 @@ function League(options) {
     _.extend(this, league_attributes);
 };
 
-function getLeague(league_name, config) {
-    this._cache = ( this._cache ? this._cache : {} );
-
-    if(!this._cache[league_name]) {
-        // Else create it if there is a config for it.
-        var league_options = config[league_name] || undefined;
-        if (league_options) {
-            console.log("Creating new league for " + league_name);
-            league_options = _.clone(league_options);
-            league_options.name = league_name;
-            league = new League(league_options);
-            this._cache[league_name] = league;
-        } else {
-            console.log("Couldn't find options for " + league_name + " league. Not creating object.");
-        }
-    }
-    return this._cache[league_name];
+function getAllLeagues(config) {
+    var leagues = [];
+    var all_league_configs = config['leagues'] || {};
+    _.each(_.keys(all_league_configs), function(key) {
+        leagues.push(getLeague(key, config));
+    });
+    return leagues;
 }
+
+var getLeague = (function() {
+    var _league_cache = {};
+    return function (league_name, config) {
+
+        if(!_league_cache[league_name]) {
+            // Else create it if there is a config for it.
+            var all_league_configs = config['leagues'] || {};
+            var this_league_config = all_league_configs[league_name] || undefined;
+            if (this_league_config) {
+                console.log("Creating new league for " + league_name);
+                this_league_config = _.clone(this_league_config);
+                this_league_config.name = league_name;
+                league = new League(this_league_config);
+                _league_cache[league_name] = league;
+            } else {
+                console.log("Couldn't find options for " + league_name + " league. Not creating object.");
+            }
+        }
+        return _league_cache[league_name];
+    }
+})();
 
 module.exports.League = League;
 module.exports.getLeague = getLeague;
+module.exports.getAllLeagues = getAllLeagues;

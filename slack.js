@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 var Botkit = require('botkit');
 var Q = require("q");
+var _ = require("underscore");
 var league = require("./league.js");
 
 var users = {
@@ -93,15 +94,15 @@ function refresh(bot, delay, config) {
         
         updateUser(bot);
         updateChannels(bot);
-        var _45_45 = league.getLeague("45+45", config);
-        _45_45.refresh();
+        _.each(league.getAllLeagues(config), function(l) {
+            l.refresh();
+        });
         setTimeout(function(){ 
-            refresh(bot, delay);
+            refresh(bot, delay, config);
         }, delay);
     }));
 }
 
-//------------------------------------------------------------------------------
 function criticalPath(promise){
     exceptionLogger(promise).catch(function(e) {
         console.log("An exception was caught in a critical code-path. I am going down.");
@@ -110,7 +111,6 @@ function criticalPath(promise){
     return promise;
 }
 
-//------------------------------------------------------------------------------
 // a promise and ensures that uncaught exceptions are logged.
 function exceptionLogger(promise){
     var deferred = Q.defer();
@@ -127,19 +127,17 @@ function exceptionLogger(promise){
 
 function botExceptionHandler(bot, message, promise){
     exceptionLogger(promise).catch(function(e){
-        console.log("Message: " + JSON.stringify(message));
+        console.error("Message: " + JSON.stringify(message));
         bot.reply(message, "Something has gone terribly terribly wrong. Please forgive me.");
         
     });
     return promise;
 }
 
-//------------------------------------------------------------------------------
 function localTime(datetime) {
     return datetime.utcOffset(this.tz_offset / 60);
 }
 
-//------------------------------------------------------------------------------
 function hears(controller, patterns, message_types, callback) {
     controller.hears(patterns, message_types, function(bot, message) {
         return botExceptionHandler(bot, message, Q.fcall(function() {

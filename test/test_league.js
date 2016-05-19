@@ -28,7 +28,7 @@ var _45_45_LEAGUE_CONF = {
 
 describe('league', function() {
     //--------------------------------------------------------------------------
-    describe('#refreshCurrentRoundSchedules()', function () {
+    describe('after refreshCurrentRoundSchedules', function () {
         it("Testing the refreshCurrentRoundSchedules()", function(done) {
             this.timeout(15000);
             // Normally I would split this test out into multiples,

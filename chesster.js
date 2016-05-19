@@ -6,6 +6,9 @@ var GoogleSpreadsheet = require("google-spreadsheet");
 var http = require('http');
 var moment = require('moment');
 var Q = require("q");
+var _ = require("underscore");
+var format = require('string-format')
+format.extend(String.prototype)
 
 // Our stuff
 var fuzzy = require('./fuzzy_match.js');
@@ -551,72 +554,34 @@ slack.hears(
     [players.appendPlayerRegex("pairing", true)],
     ['direct_mention', 'direct_message'],
     function(bot, message) {
+        var targetPlayer = players.getSlackUser(users, message);
         var deferred = Q.defer();
+        var all_leagues = league.getAllLeagues(config);
         bot.startPrivateConversation(message, function (response, convo) {
-            var targetPlayer = players.getSlackUser(users, message);
-            var _45_45 = league.getLeague("45+45", config);
-            if (!_45_45) {
-                console.error("Unable to construct/find 45+45 league object");
-                return;
-            }
-            var pairings = _45_45.findPairing(targetPlayer.name);
-            if (pairings.length < 1) {
-                convo.say(targetPlayer.name + " is not playing in this round");
-                return;
-            } else if (pairings.length > 1) {
-                convo.say(targetPlayer.name + " is playing more than once this round?! Contact the mods.");
-                return;
-            }
-            pairing = pairings[0];
-            var details = {
-                "player": targetPlayer.name, 
-                "color": "white",
-                "opponent":  pairing.black,
-                "date": pairing.scheduled_date
-            }
-            if (pairing.white.toLowerCase() != targetPlayer.name.toLowerCase()) {
-                details.color = "black";
-                details.opponent = pairing.white;
-            }
-
-            lichess.getPlayerRating(targetPlayer.name).then(function(rating) {
-                details['rating'] = rating;
-                convo.say(formatPairingResult(message.player, details));
+            Q.all(
+                _.map(all_leagues, function(l) {
+                    return l.getPairingDetails(targetPlayer).then(function(details) {
+                        if (details && details.opponent) {
+                            return l.formatPairingDetails(message.player, details).then(function(message) {
+                                convo.say(message);
+                            });
+                        } else {
+                            convo.say("[" + l.options.name + "] Unable to find pairing for " + targetPlayer.name);
+                        }
+                    }, function(error) {
+                        console.log("error");
+                        console.error(JSON.stringify(error));
+                    });
+                })
+            ).then(function(results) {
                 deferred.resolve();
             }, function(error) {
-                console.error(JSON.stringify(error));
-                convo.say(formatPairingResult(message.player, details));
-                deferred.resolve();
+                deferred.reject(error);
             });
         });
         return deferred.promise;
     }
 );
-
-function getRatingString(rating){
-    return ( rating ? " (" + rating + ")" : "" );
-}
-
-function formatPairingResult(requestingPlayer, details){
-    var localTime = requestingPlayer.localTime(details.date);
-    var localDateTimeString = localTime.format("dddd [at] HH:mm");
-    var player = details.player;
-    var opponent = details.opponent;
-    var color = details.color;
-    var rating = details.rating;
-
-    if (!localTime.isValid()) {
-        return player + " will play as " + color +" against " + opponent + getRatingString(rating) + ".  The game is unscheduled.";
-    } else if (moment.utc().isAfter(localTime)) {
-        // If the match took place in the past, display the date instead of the day
-        localDateTimeString = localTime.format("MM/DD [at] HH:mm");
-        return player + " played as " + color +" against " + opponent + getRatingString(rating) + " on " + localDateTimeString + ".";
-    } else {
-        // Otherwise display the time until the match
-        var timeUntil = localTime.fromNow(true);
-        return player + " will play as " + color +" against " + opponent + getRatingString(rating) + " on " + localDateTimeString + " which is in " + timeUntil + ".";
-    }
-}
 
 /* standings */
 
