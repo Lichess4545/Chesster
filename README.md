@@ -1,4 +1,4 @@
-# CHESSTER
+# CHESSTER [![Build Status](https://travis-ci.org/endrawes0/Chesster.svg?branch=master)](https://travis-ci.org/endrawes0/Chesster)
 ## Introduction
 This bot was created to help moderate the Lichess45+45 league.
 
