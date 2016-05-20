@@ -2,7 +2,6 @@
 // Defines a league object which can be used to interact with the spreadsheet
 // for the given league
 //------------------------------------------------------------------------------
-// TODO: create a lichess object that does the same thing for lichess data.
 // TODO: create a set of slack helpers that map channel names to a
 // specific league object, so that the code for scheduling, results or
 // gamelinks 
