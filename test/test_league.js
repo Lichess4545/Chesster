@@ -33,12 +33,12 @@ describe('league', function() {
     describe('after refreshCurrentRoundSchedules', function () {
         _45_league = new league.League(_45_45_LEAGUE_CONF);
         before(function(done) {
+            this.timeout(5000);
             _45_league.refreshCurrentRoundSchedules(function(err, pairings) {
                 done();
             });
         });
         it("Testing refreshCurrentRoundSchedules()", function() {
-            this.timeout(15000);
             // Normally I would split this test out into multiples,
             // but this is slow enough that I want to test everything at this
             // point.
@@ -85,6 +85,7 @@ describe('league', function() {
                 function(details) {
                     assert.equal(details.opponent, "osskjc");
                     assert.equal(details.color, "white");
+                    assert.equal(details.rating > 0, true);
                     assert.equal(details.date.format("YYYY-MM-DD HH:mm"), "2016-04-25 10:30");
                 }
             ));
