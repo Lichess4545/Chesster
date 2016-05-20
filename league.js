@@ -202,7 +202,7 @@ league_attributes = {
                     deferred.resolve(details);
                 });
             } else {
-                return deferred.resolve({});
+                deferred.resolve({});
             }
             return deferred.promise;
         });

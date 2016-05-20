@@ -549,11 +549,11 @@ controller.hears([
     });
 });
 
-slack.hears(
-    controller,
-    [players.appendPlayerRegex("pairing", true)],
-    ['direct_mention', 'direct_message'],
-    function(bot, message) {
+slack.hears(controller, [
+    players.appendPlayerRegex("pairing", true)
+], [
+    'direct_mention', 'direct_message'
+], function(bot, message) {
         var targetPlayer = players.getSlackUser(users, message);
         var deferred = Q.defer();
         var all_leagues = league.getAllLeagues(config);

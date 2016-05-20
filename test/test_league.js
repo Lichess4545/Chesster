@@ -1,4 +1,6 @@
 var assert = require('chai').assert;
+var Q = require("q");
+var _ = require("underscore");
 var moment = require("moment");
 var league = require('../league');
 
@@ -29,7 +31,8 @@ var _45_45_LEAGUE_CONF = {
 describe('league', function() {
     //--------------------------------------------------------------------------
     describe('after refreshCurrentRoundSchedules', function () {
-        it("Testing the refreshCurrentRoundSchedules()", function(done) {
+        it("Testing stuff that needs refreshCurrentRoundSchedules()", function(done) {
+            var promises = [];
             this.timeout(15000);
             // Normally I would split this test out into multiples,
             // but this is slow enough that I want to test everything at this
@@ -68,7 +71,35 @@ describe('league', function() {
                 test_pairings(_45_league.findPairing("osskjc"));
                 test_pairings(_45_league.findPairing("lakinwecker", "osskjc"));
 
-                done();
+                var test_cases_run = 0;
+                promises.push(_45_league.getPairingDetails({'name': "made-up"}).then(
+                    function(details) {
+                        ++test_cases_run;
+                        assert.equal(true, _.isEqual({}, details));
+                    }
+                ));
+                promises.push(_45_league.getPairingDetails({'name': "lakinwecker"}).then(
+                    function(details) {
+                        ++test_cases_run;
+                        assert.equal(details.opponent, "osskjc");
+                        assert.equal(details.color, "white");
+                        assert.equal(details.date.format("YYYY-MM-DD HH:mm"), "2016-04-25 10:30");
+                    }
+                ));
+                promises.push(_45_league.getPairingDetails({'name': "jughandle10"}).then(
+                    function(details) {
+                        ++test_cases_run;
+                        assert.equal(details.opponent, "Cynosure");
+                        assert.equal(details.color, "black");
+                        assert.equal(details.date, undefined);
+                    }
+                ));
+
+                return Q.all(promises).then(function() {
+                    done();
+                }, function(error) {
+                    done(error);
+                });
             });
         });
     });
