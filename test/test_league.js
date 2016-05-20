@@ -8,6 +8,7 @@ var league = require('../league');
 // NOTE: this file is required, but not provided in the repository.
 var private_key = require("../service_account_key.js").key;
 var _45_45_LEAGUE_CONF = {
+    "name": "45+45",
     "spreadsheet": {
         "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
         "service_account_auth": {
@@ -98,6 +99,54 @@ describe('league', function() {
             ));
 
             return Q.all(promises).then(function() {
+                done();
+            }, function(error) {
+                done(error);
+            });
+        });
+        it("test formatPairingDetails", function(done) {
+            var requestingPlayer = {
+                name: "lakinwecker",
+                localTime: function(d) { return d; }
+            };
+            var common_details = {
+                player: "lakinwecker",
+                opponent: "osskjc",
+                rating: 1776,
+                color: "white",
+                date: undefined
+            };
+            Q.all([
+                _45_league.formatPairingDetails(
+                    requestingPlayer,
+                    _.extend({}, common_details)
+                ).then(function(message) {
+                    assert.equal(
+                        message,
+                        "[45+45]: lakinwecker will play as white against osskjc (1776). The game is unscheduled."
+                    );
+                }),
+                _45_league.formatPairingDetails(
+                    requestingPlayer,
+                    _.extend({}, common_details, {date: moment.utc("2016-04-25 17:00")})
+                ).then(function(message) {
+                    assert.equal(
+                        message,
+                        "[45+45]: lakinwecker played as white against osskjc (1776) on 04/25 at 17:00."
+                    );
+                }),
+                _45_league.formatPairingDetails(
+                    requestingPlayer,
+                    _.extend({}, common_details, {date: moment.utc().add(1, "day")})
+                ).then(function(message) {
+                    var date = moment.utc().add(1, "day");
+                    date = date.format("MM/DD [at] HH:mm");
+                    assert.equal(
+                        message,
+                        "[45+45]: lakinwecker will play as white against osskjc (1776) on " + date  + " which is in a day"
+                    );
+                })
+            ]).then(function() {
                 done();
             }, function(error) {
                 done(error);

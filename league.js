@@ -9,6 +9,8 @@
 var _ = require("underscore");
 var Q = require("q");
 var moment = require("moment");
+var format = require('string-format')
+format.extend(String.prototype)
 
 var spreadsheets = require("./spreadsheets");
 var lichess = require("./lichess");
@@ -233,7 +235,7 @@ league_attributes = {
                     localDateTimeString: localTime.format("MM/DD [at] HH:mm")
                 });
             } else {
-                played_phrase = "played as";
+                played_phrase = "will play as";
                 schedule_phrase = " on {localDateTimeString} which is in {timeUntil}".format({
                     localDateTimeString: localTime.format("MM/DD [at] HH:mm"),
                     timeUntil: localTime.fromNow(true)
@@ -241,7 +243,7 @@ league_attributes = {
             }
 
             // Otherwise display the time until the match
-            return "[{name}]: {details.player} {played_phrase} {details.color} against {details.opponent} {rating}{schedule_phrase}".format({
+            return "[{name}]: {details.player} {played_phrase} {details.color} against {details.opponent}{rating}{schedule_phrase}".format({
                 name: self.options.name,
                 details: details,
                 played_phrase: played_phrase,

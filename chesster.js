@@ -7,8 +7,6 @@ var http = require('http');
 var moment = require('moment');
 var Q = require("q");
 var _ = require("underscore");
-var format = require('string-format')
-format.extend(String.prototype)
 
 // Our stuff
 var fuzzy = require('./fuzzy_match.js');
