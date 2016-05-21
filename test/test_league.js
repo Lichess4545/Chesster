@@ -11,10 +11,8 @@ var private_key = null
 try {
     private_key = require("../test_service_account_key.js").key;
 } catch (e) {
-    private_key = process.env.TEST_SERVICE_ACCOUNT_KEY;
+    private_key = process.env.TEST_SERVICE_ACCOUNT_KEY.split("\\n").join("\n");
 }
-
-console.log(private_key)
 
 var _45_45_LEAGUE_CONF = {
     "name": "45+45",
