@@ -121,10 +121,6 @@ function prepareCaptainsGuidelines(){
     return "Here are the captain's guidelines:\n" + config.links.captains;
 }
 
-function sayCaptainsGuidelnes(convo){
-    convo.say(prepareCaptainsGuidelines());
-}
-
 controller.hears([
     'captain guidelines'
 ], [
@@ -196,11 +192,6 @@ function prepareCaptainsMessage(teams){
     return message;
 }
 
-function sayCaptains(self, convo, callback){
-    convo.say(prepareCaptainsMessage(self.teams));
-    convo.next();
-}
-
 /* rating */
 
 controller.hears([
@@ -230,10 +221,6 @@ function getRating(player, callback){
             callback();
         }
     });
-}
-
-function sayRating(player, rating, convo){
-    convo.say(prepareRatingMessage(player, rating));    
 }
 
 function prepareRatingMessage(player, rating, convo){
@@ -330,14 +317,6 @@ function prepareModsMessage(){
 
 function prepareLoneWolfModsMessage(){
     return "LoneWolf mods: endrawes0, lakinwecker, t\u200Bheino";
-}
-
-function sayMods(convo){
-    convo.say(prepareModsMessage());
-}
-
-function sayLoneWolfMods(convo){
-    convo.say(prepareLoneWolfModsMessage);
 }
 
 controller.hears([
@@ -495,10 +474,6 @@ function prepareChannelDetailMessage(channel){
     return CHANNEL_DETAILS[channel] || CHANNEL_DETAILS["default"] + ": " + channel;
 }
 
-function sayChannelDetail(convo, channel){
-    convo.say(prepareChannelDetailMessage(channel));
-}
-
 controller.hears([
 	'channels', 
 	'channel list'
@@ -634,10 +609,6 @@ controller.hears([
 
 function prepareRulesMessage(){
     return "Here are the rules and regulations:\n" + config.links.rules;
-}
-
-function sayRules(convo){
-    convo.say(prepareRulesMessage());
 }
 
 controller.hears([
