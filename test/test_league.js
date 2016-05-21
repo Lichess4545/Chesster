@@ -6,7 +6,14 @@ var league = require('../league');
 
 
 // NOTE: this file is required, but not provided in the repository.
-var private_key = require("../test_service_account_key.js").key;
+var private_key = null
+
+try {
+    private_key = require("../test_service_account_key.js").key;
+} catch (e) {
+    private_key = process.env.TEST_SERVICE_ACCOUNT_KEY.split("\\n").join("\n");
+}
+
 var _45_45_LEAGUE_CONF = {
     "name": "45+45",
     "spreadsheet": {
@@ -34,7 +41,7 @@ describe('league', function() {
     describe('after refreshCurrentRoundSchedules', function () {
         _45_league = new league.League(_45_45_LEAGUE_CONF);
         before(function(done) {
-            this.timeout(5000);
+            this.timeout(30000);
             _45_league.refreshCurrentRoundSchedules(function(err, pairings) {
                 done();
             });
