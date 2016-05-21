@@ -351,7 +351,8 @@ function get_round_extrema(options) {
 // get_schedule_rows
 function get_rows(service_account_auth, spreadsheet_key, options, callback) {
     var doc = new GoogleSpreadsheet(spreadsheet_key);
-    doc.useServiceAccountAuth(service_account_auth, function(err, info) {
+
+    function get_rows_implementation(err, info) {
         var pairings_sheet = undefined;
         doc.getInfo(function(err, info) {
             if (err) { return callback(err, info); }
@@ -409,7 +410,13 @@ function get_rows(service_account_auth, spreadsheet_key, options, callback) {
                 }
             );
         });
-    });
+    }
+
+    if (service_account_auth) {
+        doc.useServiceAccountAuth(service_account_auth, get_rows_implementation);
+    } else {
+        get_rows_implementation();
+    }
 }
 
 // Finds the given pairing in one of the team spreadsheets

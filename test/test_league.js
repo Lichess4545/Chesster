@@ -4,24 +4,11 @@ var _ = require("underscore");
 var moment = require("moment");
 var league = require('../league');
 
-
-// NOTE: this file is required, but not provided in the repository.
-var private_key = null
-
-try {
-    private_key = require("../test_service_account_key.js").key;
-} catch (e) {
-    private_key = process.env.TEST_SERVICE_ACCOUNT_KEY.split("\\n").join("\n");
-}
-
 var _45_45_LEAGUE_CONF = {
     "name": "45+45",
     "spreadsheet": {
         "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
-        "service_account_auth": {
-            "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
-            "private_key": private_key
-        },
+        "service_account_auth": undefined,
         "schedule_colname": "time (mm/dd @ hh:mm*)"
     },
     "channels": [],
@@ -35,6 +22,23 @@ var _45_45_LEAGUE_CONF = {
         "source": ""
     }
 };
+
+
+// NOTE: this key is required for the write tests, but not provided in the repository.
+var private_key = null
+try {
+    private_key = require("../test_service_account_key.js").key;
+} catch (e) {
+    if (process.env.TEST_SERVICE_ACCOUNT_KEY) {
+        private_key = process.env.TEST_SERVICE_ACCOUNT_KEY.split("\\n").join("\n");
+    }
+}
+if (private_key) {
+    _45_45_LEAGUE_CONF["spreadsheet"]["service_account_auth"] = {
+        "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
+        "private_key": private_key
+    }
+}
 
 describe('league', function() {
     //--------------------------------------------------------------------------
@@ -59,7 +63,6 @@ describe('league', function() {
             assert.equal(first_pairing.black.toLowerCase(), "toddle");
             assert.equal(first_pairing.scheduled_date.format("MM/DD @ HH:mm"), "04/14 @ 16:00");
             assert.equal(first_pairing.result, "1-0");
-            assert.equal(first_pairing.url, "http://en.lichess.org/FwYcks48");
 
             // Ensure that the second pairing is what we expect.
             var second_pairing = _45_league._pairings[1];
@@ -159,5 +162,15 @@ describe('league', function() {
                 done(error);
             });
         });
+        function testPairingsHaveURLS() {
+            var first_pairing = _45_league._pairings[0];
+            assert.equal(first_pairing.result, "1-0");
+            assert.equal(first_pairing.url, "http://en.lichess.org/FwYcks48");
+        };
+        if (private_key) {
+            it("test that we are getting the urls in the pairings", testPairingsHaveURLS);
+        } else {
+            it.skip("test that we are getting the urls in the pairings", testPairingsHaveURLS);
+        }
     });
 });

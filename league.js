@@ -127,7 +127,11 @@ league_attributes = {
                 var new_pairings = [];
                 rows.forEach(function(row) {
                     if (!row['white'].value || !row['black'].value) { return; }
-                    var link = spreadsheets.parse_hyperlink(row['result'].formula || "");
+                    if (row['result'].formula) {
+                        var link = spreadsheets.parse_hyperlink(row['result'].formula || "");
+                    } else {
+                        var link = {'text': row['result'].value};
+                    }
                     var date_string = row[self.options.spreadsheet.schedule_colname].value || '';
                     date_string = date_string.trim()
                     var date = moment.utc(
