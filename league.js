@@ -48,6 +48,11 @@ league_attributes = {
     _pairings: [],
 
     //--------------------------------------------------------------------------
+    // The datetime when we were last updated
+    //--------------------------------------------------------------------------
+    _lastUpdated: moment.utc(),
+
+    //--------------------------------------------------------------------------
     // Canonicalize the username
     //--------------------------------------------------------------------------
     canonical_username: function(username) {
@@ -67,6 +72,7 @@ league_attributes = {
             } else {
                 console.log("Found " + mods.length + " mods for " + self.options.name);
             }
+            self._lastUpdated = moment.utc();
         });
         self.refreshRosters(function(err, rosters) {
             if (err) {
@@ -75,6 +81,7 @@ league_attributes = {
             } else {
                 console.log("Found " + rosters.length + " teams for " + self.options.name);
             }
+            self._lastUpdated = moment.utc();
         });
         self.refreshCurrentRoundSchedules(function(err, pairings) {
             if (err) {
@@ -83,6 +90,7 @@ league_attributes = {
             } else {
                 console.log("Found " + pairings.length + " pairings for " + self.options.name);
             }
+            self._lastUpdated = moment.utc();
         });
     },
 
@@ -168,6 +176,21 @@ league_attributes = {
         filter(white);
         filter(black);
         return possibilities;
+    },
+    //--------------------------------------------------------------------------
+    // Prepare a debug message for this league
+    //--------------------------------------------------------------------------
+    'debugMessage': function() {
+        var self = this;
+
+        return Q.fcall(function() {
+            return  'DEBUG:\nLeague: {name}\nTotal Pairings: {pairingsCount}\nLast Updated: {lastUpdated} [{since} ago]'.format({
+                name: self.options.name,
+                pairingsCount: self._pairings.length,
+                lastUpdated: self._lastUpdated.format("YYYY-MM-DD HH:mm UTC"),
+                since: self._lastUpdated.fromNow(true)
+            })
+        });
     },
     //--------------------------------------------------------------------------
     // Generates the appropriate data format for pairing result for this league.
@@ -284,6 +307,7 @@ var getLeague = (function() {
                 _league_cache[league_name] = league;
             } else {
                 console.log("Couldn't find options for " + league_name + " league. Not creating object.");
+                return undefined;
             }
         }
         return _league_cache[league_name];

@@ -547,39 +547,63 @@ controller.hears([
     });
 });
 
-slack.hears(controller, [
-    players.appendPlayerRegex("pairing", true)
-], [
-    'direct_mention', 'direct_message'
-], function(bot, message) {
-        var targetPlayer = players.getSlackUser(users, message);
-        var deferred = Q.defer();
-        var all_leagues = league.getAllLeagues(config);
-        bot.startPrivateConversation(message, function (response, convo) {
-            Q.all(
-                _.map(all_leagues, function(l) {
-                    return l.getPairingDetails(targetPlayer).then(function(details) {
-                        if (details && details.opponent) {
-                            return l.formatPairingDetails(message.player, details).then(function(message) {
-                                convo.say(message);
-                            });
-                        } else {
-                            convo.say("[" + l.options.name + "] Unable to find pairing for " + targetPlayer.name);
-                        }
-                    }, function(error) {
-                        console.log("error");
-                        console.error(JSON.stringify(error));
-                    });
-                })
-            ).then(function(results) {
-                deferred.resolve();
-            }, function(error) {
-                deferred.reject(error);
-            });
+slack.hears(controller, {
+    patterns: [
+        players.appendPlayerRegex("pairing", true)
+    ],
+    message_types: [
+        'direct_mention', 'direct_message'
+    ],
+    config: config,
+}, function(bot, message) {
+    var targetPlayer = players.getSlackUser(users, message);
+    var deferred = Q.defer();
+    var allLeagues = league.getAllLeagues(config);
+    bot.startPrivateConversation(message, function (response, convo) {
+        Q.all(
+            _.map(allLeagues, function(l) {
+                return l.getPairingDetails(targetPlayer).then(function(details) {
+                    if (details && details.opponent) {
+                        return l.formatPairingDetails(message.player, details).then(function(message) {
+                            convo.say(message);
+                        });
+                    } else {
+                        convo.say("[" + l.options.name + "] Unable to find pairing for " + targetPlayer.name);
+                    }
+                }, function(error) {
+                    console.log("error");
+                    console.error(JSON.stringify(error));
+                });
+            })
+        ).then(function(results) {
+            deferred.resolve();
+        }, function(error) {
+            deferred.reject(error);
         });
-        return deferred.promise;
+    });
+    return deferred.promise;
+});
+
+slack.hears(controller, {
+    middleware: [slack.withLeague, slack.requiresModerator],
+    patterns: [
+        'debug(.*)'
+    ],
+    message_types: [
+        'direct_mention', 'direct_message'
+    ],
+    config: config,
+}, function(bot, message) {
+    if (message.league) {
+        return message.league.debugMessage().then(function(reply) {
+            bot.reply(message, reply);
+        });
+    } else {
+        return Q.fcall(function() {
+            bot.reply(message, "No league to debug!");
+        });
     }
-);
+});
 
 /* standings */
 
@@ -1561,6 +1585,9 @@ controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
         var channel = channels.byId[message.channel];
         if (!channel) {
+            return;
+        }
+        if (!config.gamelinks) {
             return;
         }
         //get the configuration for the channel

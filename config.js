@@ -14,6 +14,14 @@ var config = {
                 "Team",
                 "45",
             ],
+            "moderators": [
+                "endrawes0",
+                "mkoga",
+                "mrlegilimens",
+                "petruchio",
+                "seb32",
+                "theino"
+            ],
             "spreadsheet": {
                 "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
                 "service_account_auth": {
@@ -55,6 +63,11 @@ var config = {
                 "lonewolf",
                 "wolf",
             ],
+            "moderators": [
+                "endrawes0",
+                "lakinwecker",
+                "theino"
+            ],
             "spreadsheet": {
                 "key": "1xBofd1bFIB4OBUOErWqFWTjTc0dFuTf6WlHxZf3FbIU",
                 "service_account_auth": {
@@ -73,9 +86,11 @@ var config = {
         "lonewolf-results": "lonewolf",
         "lonewolf-gamelinks": "lonewolf",
         "lonewolf-scheduling": "lonewolf",
+        "unstable_bot-lonewolf": "lonewolf",
         "team-results": "45+45",
         "team-gamelinks": "45+45",
         "team-scheduling": "45+45",
+        "unstable_bot": "45+45"
     },
 
     "scheduling": {
