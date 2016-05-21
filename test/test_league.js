@@ -6,13 +6,13 @@ var league = require('../league');
 
 
 // NOTE: this file is required, but not provided in the repository.
-var private_key = require("../service_account_key.js").key;
+var private_key = require("../test_service_account_key.js").key;
 var _45_45_LEAGUE_CONF = {
     "name": "45+45",
     "spreadsheet": {
         "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
         "service_account_auth": {
-            "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
+            "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
             "private_key": private_key
         },
         "schedule_colname": "time (mm/dd @ hh:mm*)"
