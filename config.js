@@ -5,6 +5,9 @@ var private_key = require("./service_account_key.js").key;
 
 var config = {
     "token": token,
+    "links": {
+        "source": "https://githaub.com/endrawes0/Chesster"
+    },
 
     "leagues": {
         "45+45": {
@@ -47,9 +50,7 @@ var config = {
                 "team": "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs",
                 "guide": "http://bit.ly/1MW9YJ4",
                 "captains": "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc",
-                "registration": "https://docs.google.com/a/georgetown.edu/forms/d/1u-fjOm1Mouz8J7WAsPhB1CJpB3k10FSp4-fZ-bwvykY/viewform",
-                // TODO: this isn't league specific.
-                "source": "https://githaub.com/endrawes0/Chesster"
+                "registration": "https://docs.google.com/a/georgetown.edu/forms/d/1u-fjOm1Mouz8J7WAsPhB1CJpB3k10FSp4-fZ-bwvykY/viewform"
             }
         },
         "lonewolf": {
