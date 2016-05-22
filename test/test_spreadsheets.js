@@ -91,6 +91,7 @@ describe('scheduling', function() {
             // TODO: put a bunch of the team scheduling message in here.
         });
         it("Test lonewolf-scheduling messages", function() {
+            this.timeout(3000);
             //options.extrema.reference_date = moment.utc("2016-04-15");
             test_parse_scheduling(
                 "@autotelic v @explodingllama 4/16 @ 0900 GMT", {
