@@ -338,6 +338,21 @@ league_attributes = {
                 });
             }
         });
+    },
+    //--------------------------------------------------------------------------
+    // Formats the signup response
+    //--------------------------------------------------------------------------
+    'formatRegistrationResponse': function() {
+        var self = this;
+        return Q.fcall(function() {
+            if (self.options.links && self.options.links.registration) {
+                return "You can sign up here:\n" + self.options.links.registration;
+            } else {
+                return "The {name} league does not have an active signup form at the moment.".format({
+                    name: self.options.name
+                });
+            }
+        });
     }
 };
 

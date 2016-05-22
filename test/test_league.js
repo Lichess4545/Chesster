@@ -300,5 +300,37 @@ describe('league', function() {
                 done(error);
             });
         });
+        it("test formatRegistrationResponse", function(done) {
+            var promises = [];
+
+            // If there is a guidelines, then the response will contain it
+            _45_league = new league.League(
+                _.extend({}, _45_45_LEAGUE_CONF, {'links': { 'registration': '<registration>'}})
+            );
+            promises.push(
+                _45_league.formatRegistrationResponse().then(function(message) {
+                    assert.equal(
+                        message,
+                        "You can sign up here:\n<registration>"
+                    );
+                })
+            );
+            _45_league = new league.League(
+                _.extend({}, _45_45_LEAGUE_CONF, {'links': { 'registration': undefined}})
+            );
+            promises.push(
+                _45_league.formatRegistrationResponse().then(function(message) {
+                    assert.equal(
+                        message,
+                        "The 45+45 league does not have an active signup form at the moment."
+                    );
+                })
+            );
+            Q.all(promises).then(function() {
+                done();
+            }, function(error) {
+                done(error);
+            });
+        });
     });
 });

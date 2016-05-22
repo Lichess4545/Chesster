@@ -120,7 +120,7 @@ controller.hears([
 slack.hears(controller, {
     middleware: [slack.requiresLeague],
     patterns: [
-        'captain guidelines(.*)'
+        'captain guidelines'
     ],
     message_types: [
         'direct_mention',
@@ -506,8 +506,8 @@ controller.hears([
 slack.hears(controller, {
     middleware: [slack.requiresLeague],
     patterns: [
-        'pairings(.*)',
-        'standings(.*)'
+        'pairings',
+        'standings'
     ],
     message_types: [
         'direct_mention', 
@@ -561,7 +561,7 @@ slack.hears(controller, {
 slack.hears(controller, {
     middleware: [slack.withLeague, slack.requiresModerator],
     patterns: [
-        'debug(.*)'
+        'debug'
     ],
     message_types: [
         'direct_mention', 'direct_message'
@@ -596,8 +596,8 @@ controller.hears([
 slack.hears(controller, {
     middleware: [slack.requiresLeague],
     patterns: [
-        'rules(.*)',
-        'regulations(.*)'
+        'rules',
+        'regulations'
     ],
     message_types: [
         'direct_message',
@@ -965,16 +965,22 @@ function prepareRegistrationMessage(){
     return "You can sign up for Season 3 here: " + config.links.registration;
 }
 
-controller.hears([
-    "registration",
-    "register",
-    "sign up"
-], [
-    'direct_message',
-    'direct_mention'
-], function(bot, message){
-    bot_exception_handler(bot, message, function(){
-        bot.reply(message, prepareRegistrationMessage());
+slack.hears(controller, {
+    middleware: [slack.requiresLeague],
+    patterns: [
+        "registration",
+        "register",
+        "sign up"
+    ],
+    message_types: [
+        'direct_message',
+        'direct_mention'
+    ],
+    config: config
+},
+function(bot, message){
+    return message.league.formatRegistrationResponse().then(function(response) {
+        bot.reply(message, response);
     });
 });
 
