@@ -265,7 +265,6 @@ function prepareCommandsMessage(){
         "        mods summon (lonewolf)]    ! summon the mods\n" +
         "    [ faq ]                        ! a document of frequently asked questions\n" + 
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
-        "    [ changelog ]                  ! list a log of changes to Chesster \n" +
         "    [ source ]                     ! github repo for Chesster \n" +
         "```\n";
 }
@@ -957,14 +956,6 @@ controller.hears([
 
 /* registration */
 
-function sayRegistrationMessage(convo){
-    convo.say(prepareRegistrationMessage());
-}
-
-function prepareRegistrationMessage(){
-    return "You can sign up for Season 3 here: " + config.links.registration;
-}
-
 slack.hears(controller, {
     middleware: [slack.requiresLeague],
     patterns: [
@@ -995,25 +986,6 @@ controller.hears([
 	'direct_message'
 ], function(bot,message) {
     bot_exception_handler(bot, message, function(){
-    });
-});
-
-/* changelog */
-
-controller.hears([
-    "changelog",
-], [
-    'direct_message',
-    'direct_mention'
-], function(bot, message){
-    bot_exception_handler(bot, message, function(){
-        fs.readFile("./changelog", 'utf8', function(err, data) {
-            if(err) {
-                throw err;
-            }else{
-                bot.reply(message, data);
-            }
-        });
     });
 });
 
