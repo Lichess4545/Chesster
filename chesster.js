@@ -873,6 +873,9 @@ controller.on('user_channel_join', function(bot, message) {
                              + "Lichess 45+45 League, <@" + message.user + ">!");
             
             bot.startPrivateConversation(message, function(err, convo){
+                // TODO: the config links references below are hard coded
+                //       to the 45+45 league. Eventually, we'll want to fix that
+                //       but I'm not taking on that task right now.
                 convo.say("Hi <@" + message.user + ">, \n" 
                         + "\tIt seems you are new here. " 
                         + "We are happy to have you join the Lichess 45+45 League.\n"
@@ -887,8 +890,8 @@ controller.on('user_channel_join', function(bot, message) {
                         + "connected with the league. It is the easiest way for most "
                         + "of us to communicate and you will find that many of us "
                         + "are active in this community every day. Make yourself at home.");
-                convo.say(config.links.guide);
-                convo.say(config.links.rules);
+                convo.say(config["leagues"]["45+45"].links.guide);
+                convo.say(config["leagues"]["45+45"].links.rules);
                 convo.say("\tIf there is anything else I can help you with, do not hesitate to ask. " 
                         + "You can send me a direct message in this private channel. " 
                         + "Just say `commands` to see a list of ways that I can help you.\n" 
@@ -899,26 +902,22 @@ controller.on('user_channel_join', function(bot, message) {
     });
 });
 
-function prepareStarterGuideMessage(){
-    return "Here is everything you need to know... ";
-}
-
-function sayStarterGuide(convo){
-    convo.say(prepareStarterGuideMessage());
-    convo.say(config.links.guide);
-}
-
-controller.hears([
-	'welcome', 
-	'starter guide', 
-	'player handbook'
-], [
-	'direct_mention', 
-	'direct_message'
-], function(bot,message) {
-    bot_exception_handler(bot, message, function(){
-        bot.reply(message, prepareStarterGuideMessage());
-        bot.reply(message, config.links.guide);
+slack.hears(controller, {
+    middleware: [slack.requiresLeague],
+    patterns: [
+        'welcome',
+        'starter guide',
+        'player handbook'
+    ],
+    message_types: [
+        'direct_mention',
+        'direct_message'
+    ],
+    config: config,
+},
+function(bot,message) {
+    return message.league.formatStarterGuideResponse().then(function(response) {
+        bot.reply(message, response);
     });
 });
 

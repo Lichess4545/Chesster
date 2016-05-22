@@ -323,6 +323,21 @@ league_attributes = {
                 });
             }
         });
+    },
+    //--------------------------------------------------------------------------
+    // Formats the starter guide message
+    //--------------------------------------------------------------------------
+    'formatStarterGuideResponse': function() {
+        var self = this;
+        return Q.fcall(function() {
+            if (self.options.links && self.options.links.guide) {
+                return "Here is everything you need to know:\n" + self.options.links.guide;
+            } else {
+                return "The {name} league does not have a starter guide.".format({
+                    name: self.options.name
+                });
+            }
+        });
     }
 };
 

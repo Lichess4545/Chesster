@@ -268,5 +268,37 @@ describe('league', function() {
                 done(error);
             });
         });
+        it("test formatStarterGuideResponse", function(done) {
+            var promises = [];
+
+            // If there is a guidelines, then the response will contain it
+            _45_league = new league.League(
+                _.extend({}, _45_45_LEAGUE_CONF, {'links': { 'guide': '<guide>'}})
+            );
+            promises.push(
+                _45_league.formatStarterGuideResponse().then(function(message) {
+                    assert.equal(
+                        message,
+                        "Here is everything you need to know:\n<guide>"
+                    );
+                })
+            );
+            _45_league = new league.League(
+                _.extend({}, _45_45_LEAGUE_CONF, {'links': { 'guide': undefined}})
+            );
+            promises.push(
+                _45_league.formatStarterGuideResponse().then(function(message) {
+                    assert.equal(
+                        message,
+                        "The 45+45 league does not have a starter guide."
+                    );
+                })
+            );
+            Q.all(promises).then(function() {
+                done();
+            }, function(error) {
+                done(error);
+            });
+        });
     });
 });
