@@ -114,7 +114,7 @@ describe('league', function() {
                 done(error);
             });
         });
-        it("test formatPairingDetails", function(done) {
+        it("test formatPairingResponse", function(done) {
             var requestingPlayer = {
                 name: "lakinwecker",
                 localTime: function(d) { return d; }
@@ -127,7 +127,7 @@ describe('league', function() {
                 date: undefined
             };
             Q.all([
-                _45_league.formatPairingDetails(
+                _45_league.formatPairingResponse(
                     requestingPlayer,
                     _.extend({}, common_details)
                 ).then(function(message) {
@@ -136,7 +136,7 @@ describe('league', function() {
                         "[45+45]: lakinwecker will play as white against osskjc (1776). The game is unscheduled."
                     );
                 }),
-                _45_league.formatPairingDetails(
+                _45_league.formatPairingResponse(
                     requestingPlayer,
                     _.extend({}, common_details, {date: moment.utc("2016-04-25 17:00")})
                 ).then(function(message) {
@@ -145,7 +145,7 @@ describe('league', function() {
                         "[45+45]: lakinwecker played as white against osskjc (1776) on 04/25 at 17:00."
                     );
                 }),
-                _45_league.formatPairingDetails(
+                _45_league.formatPairingResponse(
                     requestingPlayer,
                     _.extend({}, common_details, {date: moment.utc().add(1, "day")})
                 ).then(function(message) {
@@ -172,5 +172,37 @@ describe('league', function() {
         } else {
             it.skip("test that we are getting the urls in the pairings", testPairingsHaveURLS);
         }
+        it("test formatCaptainGuidelinesResponse", function(done) {
+            var promises = [];
+
+            // If there is a guidelines, then the response will contain it
+            _45_league = new league.League(
+                _.extend({}, _45_45_LEAGUE_CONF, {'links': { 'captains': '<captain-guidelines>'}})
+            );
+            promises.push(
+                _45_league.formatCaptainGuidelinesResponse().then(function(message) {
+                    assert.equal(
+                        message,
+                        "Here are the captain's guidelines:\n<captain-guidelines>"
+                    );
+                })
+            );
+            _45_league = new league.League(
+                _.extend({}, _45_45_LEAGUE_CONF, {'links': { 'captains': undefined}})
+            );
+            promises.push(
+                _45_league.formatCaptainGuidelinesResponse().then(function(message) {
+                    assert.equal(
+                        message,
+                        "The 45+45 league does not have captains guidelines."
+                    );
+                })
+            );
+            Q.all(promises).then(function() {
+                done();
+            }, function(error) {
+                done(error);
+            });
+        });
     });
 });

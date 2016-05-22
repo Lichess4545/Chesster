@@ -117,18 +117,20 @@ controller.hears([
 
 /* captains */
 
-function prepareCaptainsGuidelines(){
-    return "Here are the captain's guidelines:\n" + config.links.captains;
-}
-
-controller.hears([
-    'captain guidelines'
-], [
-    'direct_mention',
-    'direct_message'
-], function(bot, message){
-    bot_exception_handler(bot, message, function(){
-        bot.reply(message, prepareCaptainsGuidelines());
+slack.hears(controller, {
+    middleware: [slack.requiresLeague],
+    patterns: [
+        'captain guidelines(.*)'
+    ],
+    message_types: [
+        'direct_mention',
+        'direct_message'
+    ],
+    config: config
+},
+function(bot, message){
+    message.league.formatCaptainGuidelinesResponse().then(function (response) {
+        bot.reply(message, response);
     });
 });
 
@@ -539,8 +541,8 @@ slack.hears(controller, {
             _.map(allLeagues, function(l) {
                 return l.getPairingDetails(targetPlayer).then(function(details) {
                     if (details && details.opponent) {
-                        return l.formatPairingDetails(message.player, details).then(function(message) {
-                            convo.say(message);
+                        return l.formatPairingResponse(message.player, details).then(function(response) {
+                            convo.say(response);
                         });
                     } else {
                         convo.say("[" + l.options.name + "] Unable to find pairing for " + targetPlayer.name);

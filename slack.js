@@ -109,7 +109,7 @@ function refresh(bot, delay, config) {
 
 function criticalPath(promise){
     exceptionLogger(promise).catch(function(e) {
-        console.log("An exception was caught in a critical code-path. I am going down.");
+        console.error("An exception was caught in a critical code-path. I am going down.");
         process.exit(1);
     });
     return promise;
@@ -222,12 +222,20 @@ function withLeague(bot, message, config) {
         return;
     });
 }
+function requiresLeague(bot, message, config) {
+    return withLeague(bot, message, config).then(function(l) {
+        if (!l || !message.league) {
+            bot.reply(message, "This command requires you to specify the league you are interested in. Please include that next time");
+            throw new StopControllerError("No league specified");
+        }
+    });
+}
 
 DEFAULT_OPTIONS = {
     middleware: []
 };
 function hears(controller, options, callback) {
-    var options = _.extend(DEFAULT_OPTIONS, options);
+    var options = _.extend({}, DEFAULT_OPTIONS, options);
     controller.hears(options.patterns, options.message_types, function(bot, message) {
         return botExceptionHandler(bot, message, Q.fcall(function() {
             message.player = users.getByNameOrID(message.user);
@@ -247,7 +255,7 @@ function hears(controller, options, callback) {
                 return callback(bot, message);
             }, function(error) {
                 if(error instanceof StopControllerError) {
-                    console.error("Not processing controller " + error);
+                    console.error("Middleware asked to not process controller callback: " + JSON.stringify(error));
                 } else {
                     throw error;
                 }
@@ -263,4 +271,5 @@ module.exports.refresh = refresh;
 module.exports.channels = channels;
 module.exports.withLeague = withLeague;
 module.exports.requiresModerator = requiresModerator;
+module.exports.requiresLeague = requiresLeague;
 

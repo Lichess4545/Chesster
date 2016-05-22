@@ -238,7 +238,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the pairing result for this league
     //--------------------------------------------------------------------------
-    'formatPairingDetails': function(requestingPlayer, details) {
+    'formatPairingResponse': function(requestingPlayer, details) {
         function getRatingString(rating){
             return ( rating ? " (" + rating + ")" : "" );
         }
@@ -276,6 +276,21 @@ league_attributes = {
                 schedule_phrase: schedule_phrase,
                 rating: getRatingString(details.rating),
             });
+        });
+    },
+    //--------------------------------------------------------------------------
+    // Formats the captains Guidelines
+    //--------------------------------------------------------------------------
+    'formatCaptainGuidelinesResponse': function() {
+        var self = this;
+        return Q.fcall(function() {
+            if (self.options.links && self.options.links.captains) {
+                return "Here are the captain's guidelines:\n" + self.options.links.captains;
+            } else {
+                return "The {name} league does not have captains guidelines.".format({
+                    name: self.options.name
+                });
+            }
         });
     },
 };
