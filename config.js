@@ -6,7 +6,7 @@ var private_key = require("./service_account_key.js").key;
 var config = {
     "token": token,
     "links": {
-        "source": "https://githaub.com/endrawes0/Chesster"
+        "source": "https://github.com/endrawes0/Chesster"
     },
 
     "leagues": {
@@ -79,7 +79,7 @@ var config = {
                 "results_colname": "result"
             },
             "links": {
-                "lone-wolf": "https://docs.google.com/spreadsheets/d/1p8RMKSKDryavipF5RzNOxIhonK5lOf6OkQPtpkzCRng",
+                "team": "https://docs.google.com/spreadsheets/d/1p8RMKSKDryavipF5RzNOxIhonK5lOf6OkQPtpkzCRng/",
             }
         },
     },

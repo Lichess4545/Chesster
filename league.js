@@ -293,6 +293,23 @@ league_attributes = {
             }
         });
     },
+    //--------------------------------------------------------------------------
+    // Formats the pairings sheet response
+    //--------------------------------------------------------------------------
+    'formatPairingsLinkResponse': function() {
+        var self = this;
+        return Q.fcall(function() {
+            if (self.options.links && self.options.links.team) {
+                return "Here is the pairings sheet:\n" + 
+                        self.options.links.team + 
+                        "\nAlternatively, try [ @chesster pairing [competitor] ]";
+            } else {
+                return "The {name} league does not have a pairings sheet.".format({
+                    name: self.options.name
+                });
+            }
+        });
+    },
 };
 
 function League(options) {

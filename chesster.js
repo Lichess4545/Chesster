@@ -129,7 +129,7 @@ slack.hears(controller, {
     config: config
 },
 function(bot, message){
-    message.league.formatCaptainGuidelinesResponse().then(function (response) {
+    return message.league.formatCaptainGuidelinesResponse().then(function (response) {
         bot.reply(message, response);
     });
 });
@@ -513,14 +513,18 @@ function sayPairings(convo){
     convo.say(preparePairingsMessage());
 }
 
-controller.hears([
-    'pairings'
-],[
-    'direct_mention', 
-    'direct_message'
-],function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        bot.reply(message, preparePairingsMessage());
+slack.hears(controller, {
+    middleware: [slack.requiresLeague],
+    patterns: 'pairings(.*)',
+    message_types: [
+        'direct_mention', 
+        'direct_message'
+    ],
+    config: config
+},
+function(bot, message) {
+    return message.league.formatPairingsLinkResponse().then(function(response) {
+        bot.reply(message, response);
     });
 });
 

@@ -204,5 +204,37 @@ describe('league', function() {
                 done(error);
             });
         });
+        it("test formatPairingsLinkResponse", function(done) {
+            var promises = [];
+
+            // If there is a guidelines, then the response will contain it
+            _45_league = new league.League(
+                _.extend({}, _45_45_LEAGUE_CONF, {'links': { 'team': '<pairings>'}})
+            );
+            promises.push(
+                _45_league.formatPairingsLinkResponse().then(function(message) {
+                    assert.equal(
+                        message,
+                        "Here is the pairings sheet:\n<pairings>\nAlternatively, try [ @chesster pairing [competitor] ]"
+                    );
+                })
+            );
+            _45_league = new league.League(
+                _.extend({}, _45_45_LEAGUE_CONF, {'links': { 'team': undefined}})
+            );
+            promises.push(
+                _45_league.formatPairingsLinkResponse().then(function(message) {
+                    assert.equal(
+                        message,
+                        "The 45+45 league does not have a pairings sheet."
+                    );
+                })
+            );
+            Q.all(promises).then(function() {
+                done();
+            }, function(error) {
+                done(error);
+            });
+        });
     });
 });
