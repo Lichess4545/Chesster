@@ -588,18 +588,6 @@ slack.hears(controller, {
 
 /* standings */
 
-function prepareStandingsMessage(){
-    return "Here is the standings sheet:\n" + 
-            config.links.team + 
-            "\nAlternatively, try [ @chesster result <competitor> <round> ] - coming soon...";
-    
-}
-
-
-function sayStandings(convo){
-    convo.say(prepareStandingsMessage());
-}
-
 controller.hears([
     'standings'
 ],[
