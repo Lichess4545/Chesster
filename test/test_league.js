@@ -215,7 +215,7 @@ describe('league', function() {
                 _45_league.formatPairingsLinkResponse().then(function(message) {
                     assert.equal(
                         message,
-                        "Here is the pairings sheet:\n<pairings>\nAlternatively, try [ @chesster pairing [competitor] ]"
+                        "Here is the pairings/standings sheet:\n<pairings>\nAlternatively, try [ @chesster pairing [competitor] ]"
                     );
                 })
             );
@@ -226,7 +226,7 @@ describe('league', function() {
                 _45_league.formatPairingsLinkResponse().then(function(message) {
                     assert.equal(
                         message,
-                        "The 45+45 league does not have a pairings sheet."
+                        "The 45+45 league does not have a pairings/standings sheet."
                     );
                 })
             );

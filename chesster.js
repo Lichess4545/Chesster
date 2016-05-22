@@ -503,19 +503,12 @@ controller.hears([
 
 /* pairings */
 
-function preparePairingsMessage(){
-    return "Here is the pairings sheet:\n" + 
-            config.links.team + 
-            "\nAlternatively, try [ @chesster pairing [competitor] ]";
-}
-
-function sayPairings(convo){
-    convo.say(preparePairingsMessage());
-}
-
 slack.hears(controller, {
     middleware: [slack.requiresLeague],
-    patterns: 'pairings(.*)',
+    patterns: [
+        'pairings(.*)',
+        'standings(.*)'
+    ],
     message_types: [
         'direct_mention', 
         'direct_message'

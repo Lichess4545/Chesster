@@ -161,11 +161,9 @@ league_attributes = {
     // username.
     //--------------------------------------------------------------------------
     'findPairing': function(white, black) {
-        white = white || undefined;
         if (!white) {
             throw new Error("findPairing requires at least one username.");
         }
-        black = black || undefined;
         var possibilities = this._pairings;
         function filter(playerName) {
             if (playerName) {
@@ -300,11 +298,11 @@ league_attributes = {
         var self = this;
         return Q.fcall(function() {
             if (self.options.links && self.options.links.team) {
-                return "Here is the pairings sheet:\n" + 
+                return "Here is the pairings/standings sheet:\n" + 
                         self.options.links.team + 
                         "\nAlternatively, try [ @chesster pairing [competitor] ]";
             } else {
-                return "The {name} league does not have a pairings sheet.".format({
+                return "The {name} league does not have a pairings/standings sheet.".format({
                     name: self.options.name
                 });
             }
