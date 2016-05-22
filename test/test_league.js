@@ -236,5 +236,37 @@ describe('league', function() {
                 done(error);
             });
         });
+        it("test formatRulesLinkResponse", function(done) {
+            var promises = [];
+
+            // If there is a guidelines, then the response will contain it
+            _45_league = new league.League(
+                _.extend({}, _45_45_LEAGUE_CONF, {'links': { 'rules': '<rules>'}})
+            );
+            promises.push(
+                _45_league.formatRulesLinkResponse().then(function(message) {
+                    assert.equal(
+                        message,
+                        "Here are the rules and regulations:\n<rules>"
+                    );
+                })
+            );
+            _45_league = new league.League(
+                _.extend({}, _45_45_LEAGUE_CONF, {'links': { 'rules': undefined}})
+            );
+            promises.push(
+                _45_league.formatRulesLinkResponse().then(function(message) {
+                    assert.equal(
+                        message,
+                        "The 45+45 league does not have a rules link."
+                    );
+                })
+            );
+            Q.all(promises).then(function() {
+                done();
+            }, function(error) {
+                done(error);
+            });
+        });
     });
 });

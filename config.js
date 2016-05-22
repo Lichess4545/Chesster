@@ -79,6 +79,7 @@ var config = {
                 "results_colname": "result"
             },
             "links": {
+                "rules": "https://docs.google.com/document/d/105gEd79MdUVIt4pW_T_BsX-TvSyNB1lvNJ9p73k9gFo/edit",
                 "team": "https://docs.google.com/spreadsheets/d/1p8RMKSKDryavipF5RzNOxIhonK5lOf6OkQPtpkzCRng/",
             }
         },

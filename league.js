@@ -310,6 +310,22 @@ league_attributes = {
             }
         });
     },
+    //--------------------------------------------------------------------------
+    // Formats the rules link response
+    //--------------------------------------------------------------------------
+    'formatRulesLinkResponse': function() {
+        var self = this;
+        return Q.fcall(function() {
+            if (self.options.links && self.options.links.rules) {
+                return "Here are the rules and regulations:\n" +
+                    self.options.links.rules;
+            } else {
+                return "The {name} league does not have a rules link.".format({
+                    name: self.options.name
+                });
+            }
+        });
+    }
 };
 
 function League(options) {

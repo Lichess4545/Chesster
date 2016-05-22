@@ -600,22 +600,24 @@ controller.hears([
 });
 
 /* rules */
-
-function prepareRulesMessage(){
-    return "Here are the rules and regulations:\n" + config.links.rules;
-}
-
-controller.hears([
-    'rules',
-    'regulations'
-], [
-    'direct_message',
-    'direct_mention'
-], function (bot, message){
-    bot_exception_handler(bot, message, function(){
-        bot.reply(message, prepareRulesMessage());
+slack.hears(controller, {
+    middleware: [slack.requiresLeague],
+    patterns: [
+        'rules(.*)',
+        'regulations(.*)'
+    ],
+    message_types: [
+        'direct_message',
+        'direct_mention'
+    ],
+    config: config
+},
+function (bot, message){
+    return message.league.formatRulesLinkResponse().then(function(response) {
+        bot.reply(message, response);
     });
 });
+
 /* done */
 
 function sayGoodbye(convo){
