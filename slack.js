@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
 // Bot / Slack related helpers
 //------------------------------------------------------------------------------
-var Botkit = require('botkit');
 var Q = require("q");
 var _ = require("underscore");
 var league = require("./league.js");
@@ -34,7 +33,7 @@ var channels = {
     }
 };
 
-function updateUser(bot){
+function updatesUsers(bot){
     // @ https://api.slack.com/methods/users.list
     bot.api.users.list({}, function (err, response) {
         if (err) {
@@ -96,7 +95,7 @@ function refresh(bot, delay, config) {
         console.log("doing refresh " + count++);
         bot.rtm.ping();
         
-        updateUser(bot);
+        updatesUsers(bot);
         updateChannels(bot);
         _.each(league.getAllLeagues(config), function(l) {
             l.refresh();
