@@ -1,6 +1,5 @@
 // extlibs
 var async = require("async");
-var Botkit = require('botkit');
 var fs = require('fs');
 var GoogleSpreadsheet = require("google-spreadsheet");
 var http = require('http');
@@ -17,9 +16,6 @@ var slack = require('./slack.js');
 var users = slack.users;
 var channels = slack.channels;
 var lichess = require('./lichess.js');
-
-var MILISECOND = 1;
-var SECONDS = 1000 * MILISECOND;
 
 var TEAM_NAME = 1;
 var TEAM_START_ROW = 2;
@@ -71,38 +67,30 @@ function critical_path(todo){
 
 /* static entry point */
 
-// TODO: make this come from the command line or here.
 var config_file = process.argv[2] || "./config.js"; 
-console.log("Loading config from: " + config_file);
-var config = require(config_file).config;
+var chesster = new slack.Bot({
+    config_file: config_file
+});
 
-if (!config.token) { 
-    console.log('Failed to load token from: ' + config_file);
-    process.exit(1);
+// A helper for a very common pattern
+function leagueResponse(patterns, responseName) {
+    chesster.hears({
+        middleware: [slack.requiresLeague],
+        patterns: patterns,
+        message_types: [
+            'direct_message',
+            'direct_mention'
+        ]
+    },
+    function (bot, message){
+        return message.league[responseName]().then(function(response) {
+            bot.reply(message, response);
+        });
+    });
 }
 
-var controller = Botkit.slackbot({
-    debug: false
-});
-
-
-controller.spawn({
-  token: config.token
-}).startRTM(function(err, bot) {
-
-    if (err) {
-        throw new Error(err);
-    }
-    
-    //refresh your user and channel list every 2 minutes
-    //would be nice if this was push model, not poll but oh well.
-    slack.refresh(bot, 120 * SECONDS, config);
-
-});
-
 /* stop giritime */
-
-controller.hears([
+chesster.controller.hears([
 	'giritime'
 ],[
 	'ambient'
@@ -116,25 +104,9 @@ controller.hears([
 });
 
 /* captains */
+leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
 
-slack.hears(controller, {
-    middleware: [slack.requiresLeague],
-    patterns: [
-        'captain guidelines'
-    ],
-    message_types: [
-        'direct_mention',
-        'direct_message'
-    ],
-    config: config
-},
-function(bot, message){
-    return message.league.formatCaptainGuidelinesResponse().then(function (response) {
-        bot.reply(message, response);
-    });
-});
-
-controller.hears([
+chesster.controller.hears([
     'captains', 
     'captain list'
 ],[
@@ -196,7 +168,7 @@ function prepareCaptainsMessage(teams){
 
 /* rating */
 
-controller.hears([
+chesster.controller.hears([
     players.appendPlayerRegex("rating", true)	
 ],[
 	'direct_mention', 
@@ -273,7 +245,7 @@ function sayCommands(convo){
     convo.say(prepareCommandsMessage());
 }
 
-controller.hears([
+chesster.controller.hears([
     'commands', 
 	'command list'
 ],[
@@ -320,7 +292,7 @@ function prepareLoneWolfModsMessage(){
     return "LoneWolf mods: endrawes0, lakinwecker, t\u200Bheino";
 }
 
-controller.hears([
+chesster.controller.hears([
     "^mods$",
     "^mods (.*)$",
     "^(.*) mods (.*)$",
@@ -356,7 +328,7 @@ controller.hears([
 
 /* help */
 
-controller.hears(['help'],['direct_mention', 'direct_message'],function(bot,message) {
+chesster.controller.hears(['help'],['direct_mention', 'direct_message'],function(bot,message) {
     bot_exception_handler(bot, message, function(){
         bot.startPrivateConversation(message, howMayIHelpYou);
     });
@@ -475,7 +447,7 @@ function prepareChannelDetailMessage(channel){
     return CHANNEL_DETAILS[channel] || CHANNEL_DETAILS["default"] + ": " + channel;
 }
 
-controller.hears([
+chesster.controller.hears([
 	'channels', 
 	'channel list'
 ],[
@@ -488,7 +460,7 @@ controller.hears([
     });
 });
 
-controller.hears([
+chesster.controller.hears([
 	'channel detail'
 ],[
 	'direct_mention'
@@ -501,37 +473,19 @@ controller.hears([
 
 
 /* pairings */
+leagueResponse(['pairings', 'standings'], 'formatPairingsLinkResponse');
 
-slack.hears(controller, {
-    middleware: [slack.requiresLeague],
-    patterns: [
-        'pairings',
-        'standings'
-    ],
-    message_types: [
-        'direct_mention', 
-        'direct_message'
-    ],
-    config: config
-},
-function(bot, message) {
-    return message.league.formatPairingsLinkResponse().then(function(response) {
-        bot.reply(message, response);
-    });
-});
-
-slack.hears(controller, {
+chesster.hears({
     patterns: [
         players.appendPlayerRegex("pairing", true)
     ],
     message_types: [
         'direct_mention', 'direct_message'
-    ],
-    config: config,
+    ]
 }, function(bot, message) {
     var targetPlayer = players.getSlackUser(users, message);
     var deferred = Q.defer();
-    var allLeagues = league.getAllLeagues(config);
+    var allLeagues = league.getAllLeagues(chesster.config);
     bot.startPrivateConversation(message, function (response, convo) {
         Q.all(
             _.map(allLeagues, function(l) {
@@ -557,15 +511,14 @@ slack.hears(controller, {
     return deferred.promise;
 });
 
-slack.hears(controller, {
+chesster.hears({
     middleware: [slack.withLeague, slack.requiresModerator],
     patterns: [
         'debug'
     ],
     message_types: [
         'direct_mention', 'direct_message'
-    ],
-    config: config,
+    ]
 }, function(bot, message) {
     if (message.league) {
         return message.league.debugMessage().then(function(reply) {
@@ -580,7 +533,7 @@ slack.hears(controller, {
 
 /* standings */
 
-controller.hears([
+chesster.controller.hears([
     'standings'
 ],[
     'direct_mention', 
@@ -592,23 +545,7 @@ controller.hears([
 });
 
 /* rules */
-slack.hears(controller, {
-    middleware: [slack.requiresLeague],
-    patterns: [
-        'rules',
-        'regulations'
-    ],
-    message_types: [
-        'direct_message',
-        'direct_mention'
-    ],
-    config: config
-},
-function (bot, message){
-    return message.league.formatRulesLinkResponse().then(function(response) {
-        bot.reply(message, response);
-    });
-});
+leagueResponse(['rules', 'regulations'], 'formatRulesLinkResponse');
 
 /* done */
 
@@ -635,7 +572,7 @@ function loadSheet(self, callback){
 
 /* exceptions */
 
-controller.hears([
+chesster.controller.hears([
 	"exception handle test"
 ], [
 	"ambient"
@@ -689,7 +626,7 @@ function prepareTeamCaptainMessage(team){
     }
 }
 
-controller.hears([
+chesster.controller.hears([
 	'team captain'
 ], [
 	'direct_mention', 
@@ -714,7 +651,7 @@ controller.hears([
     });
 });
 
-controller.hears([
+chesster.controller.hears([
 	'teams', 
 	'team list'
 ],[
@@ -814,7 +751,7 @@ function playerRatingAsyncJob(team_member){
     };
 }
 
-controller.hears([
+chesster.controller.hears([
 	'team members'
 ],[
 	'direct_mention', 
@@ -865,7 +802,7 @@ function getClassicalRating(opp, callback){
 
 /* welcome */
 
-controller.on('user_channel_join', function(bot, message) {
+chesster.controller.on('user_channel_join', function(bot, message) {
     bot_exception_handler(bot, message, function(){
         if(message.channel == channels.getId("general")){
             bot.reply(message, "Everyone, please welcome the newest member of the " 
@@ -889,8 +826,8 @@ controller.on('user_channel_join', function(bot, message) {
                         + "connected with the league. It is the easiest way for most "
                         + "of us to communicate and you will find that many of us "
                         + "are active in this community every day. Make yourself at home.");
-                convo.say(config["leagues"]["45+45"].links.guide);
-                convo.say(config["leagues"]["45+45"].links.rules);
+                convo.say(chesster.config["leagues"]["45+45"].links.guide);
+                convo.say(chesster.config["leagues"]["45+45"].links.rules);
                 convo.say("\tIf there is anything else I can help you with, do not hesitate to ask. " 
                         + "You can send me a direct message in this private channel. " 
                         + "Just say `commands` to see a list of ways that I can help you.\n" 
@@ -901,28 +838,11 @@ controller.on('user_channel_join', function(bot, message) {
     });
 });
 
-slack.hears(controller, {
-    middleware: [slack.requiresLeague],
-    patterns: [
-        'welcome',
-        'starter guide',
-        'player handbook'
-    ],
-    message_types: [
-        'direct_mention',
-        'direct_message'
-    ],
-    config: config,
-},
-function(bot,message) {
-    return message.league.formatStarterGuideResponse().then(function(response) {
-        bot.reply(message, response);
-    });
-});
+leagueResponse(['welcome', 'starter guide', 'player handbook'], 'formatStarterGuideResponse');
 
 /* feedback */
 
-controller.hears([
+chesster.controller.hears([
 	"feedback"
 ], [
 	"direct_mention"
@@ -942,7 +862,7 @@ controller.hears([
     });
 });
 
-controller.hears([
+chesster.controller.hears([
 	'thanks'
 ], [
 	'direct_mention', 
@@ -955,31 +875,14 @@ controller.hears([
 });
 
 /* registration */
+leagueResponse(['registration', 'register', 'sign up', 'signup'], 'formatRegistrationResponse');
 
-slack.hears(controller, {
-    middleware: [slack.requiresLeague],
-    patterns: [
-        "registration",
-        "register",
-        "sign up"
-    ],
-    message_types: [
-        'direct_message',
-        'direct_mention'
-    ],
-    config: config
-},
-function(bot, message){
-    return message.league.formatRegistrationResponse().then(function(response) {
-        bot.reply(message, response);
-    });
-});
 
 /* challenges */
 
 //http --form POST en.l.org/setup/friend?user=usernameOrId variant=1 clock=false time=60 increment=60 color=random 'Accept:application/vnd.lichess.v1+json'
 
-controller.hears([
+chesster.controller.hears([
 	'challenge'
 ], [
 	'direct_mention', 
@@ -991,14 +894,14 @@ controller.hears([
 
 /* source */
 
-controller.hears([
+chesster.controller.hears([
     "source",
 ], [
     'direct_message',
     'direct_mention'
 ], function(bot, message){
     bot_exception_handler(bot, message, function(){
-        bot.reply(message, config.links.source);
+        bot.reply(message, chesster.config.links.source);
     });
 });
 
@@ -1043,7 +946,7 @@ function prepareBoardResponse(self){
     return message;
 }
 
-controller.hears([
+chesster.controller.hears([
 	'board'
 ],[
 	'direct_mention', 
@@ -1123,13 +1026,13 @@ function scheduling_reply_cant_find_user(bot, message) {
 }
 
 // Scheduling will occur on any message
-controller.on('ambient', function(bot, message) {
+chesster.controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
         var channel = channels.byId[message.channel];
         if (!channel) {
             return;
         }
-        var scheduling_options = config.scheduling[channel.name];
+        var scheduling_options = chesster.config.scheduling[channel.name];
         if (!scheduling_options) {
             return;
         } 
@@ -1171,7 +1074,7 @@ controller.on('ambient', function(bot, message) {
 
         // Step 3. attempt to update the spreadsheet
         spreadsheets.update_schedule(
-            config.service_account_auth,
+            chesster.config.service_account_auth,
             scheduling_options.key,
             scheduling_options.colname,
             scheduling_options.format,
@@ -1224,13 +1127,13 @@ controller.on('ambient', function(bot, message) {
 /* results parsing */
 
 // results processing will occur on any message
-controller.on('ambient', function(bot, message) {
+chesster.controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
         var channel = channels.byId[message.channel];
         if (!channel) {
             return;
         }
-        var results_options = config.results[channel.name];
+        var results_options = chesster.config.results[channel.name];
         if (!results_options) {
             return;
         }
@@ -1256,7 +1159,7 @@ controller.on('ambient', function(bot, message) {
 
             //if a gamelink already exists, get it
             spreadsheets.fetch_pairing_gamelink(
-                config.service_account_auth,
+                chesster.config.service_account_auth,
                 results_options.key,
                 results_options.colname,
                 result,
@@ -1267,12 +1170,12 @@ controller.on('ambient', function(bot, message) {
                             bot, 
                             message, 
                             gamelink, 
-                            config.gamelinks[channel.name], 
+                            chesster.config.gamelinks[channel.name], 
                             result); //user specified result
                     }else{
                         //update the spreadsheet with result only
                         spreadsheets.update_result(
-                            config.service_account_auth,
+                            chesster.config.service_account_auth,
                             results_options.key,
                             results_options.colname,
                             result,
@@ -1496,7 +1399,7 @@ function process_game_details(bot, message, details, options){
 
     //update the spreadsheet with results from gamelink
     spreadsheets.update_result(
-        config.service_account_auth,
+        chesster.config.service_account_auth,
         options.key,
         options.colname,
         result,
@@ -1518,17 +1421,17 @@ function process_game_details(bot, message, details, options){
 }
 
 // gamelink processing will occur on any message
-controller.on('ambient', function(bot, message) {
+chesster.controller.on('ambient', function(bot, message) {
     bot_exception_handler(bot, message, function(){
         var channel = channels.byId[message.channel];
         if (!channel) {
             return;
         }
-        if (!config.gamelinks) {
+        if (!chesster.config.gamelinks) {
             return;
         }
         //get the configuration for the channel
-        var gamelinks_options = config.gamelinks[channel.name];
+        var gamelinks_options = chesster.config.gamelinks[channel.name];
         if (!gamelinks_options) {
             //drop messages that are not in a gamelink channel
             return;

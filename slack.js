@@ -2,12 +2,17 @@
 // Bot / Slack related helpers
 //------------------------------------------------------------------------------
 var Q = require("q");
+var Botkit = require('botkit');
 var _ = require("underscore");
 var league = require("./league.js");
 var fuzzy = require("./fuzzy_match.js");
 
 function StopControllerError () {}
 StopControllerError.prototype = new Error();
+
+//
+var MILISECOND = 1;
+var SECONDS = 1000 * MILISECOND;
 
 var users = {
     byName: {},
@@ -140,6 +145,11 @@ function botExceptionHandler(bot, message, promise){
 function localTime(datetime) {
     return datetime.utcOffset(this.tz_offset / 60);
 }
+
+
+//------------------------------------------------------------------------------
+// Various middleware
+//------------------------------------------------------------------------------
 function requiresModerator(bot, message, config) {
     return Q.fcall(function() {
         if (typeof message.league == 'undefined') {
@@ -230,12 +240,17 @@ function requiresLeague(bot, message, config) {
     });
 }
 
-DEFAULT_OPTIONS = {
+
+//------------------------------------------------------------------------------
+// A controller wrapper.
+//------------------------------------------------------------------------------
+DEFAULT_HEARS_OPTIONS = {
     middleware: []
 };
-function hears(controller, options, callback) {
-    var options = _.extend({}, DEFAULT_OPTIONS, options);
-    controller.hears(options.patterns, options.message_types, function(bot, message) {
+function hears(options, callback) {
+    var self = this;
+    var options = _.extend({}, DEFAULT_HEARS_OPTIONS, options);
+    self.controller.hears(options.patterns, options.message_types, function(bot, message) {
         return botExceptionHandler(bot, message, Q.fcall(function() {
             message.player = users.getByNameOrID(message.user);
             // This will occur if a new player uses a chesster command
@@ -248,7 +263,7 @@ function hears(controller, options, callback) {
             message.player.localTime = localTime;
             return Q.all(
                 _.map(options.middleware, function(middleware) {
-                    return middleware(bot, message, options.config);
+                    return middleware(bot, message, self.config);
                 })
             ).then(function() {
                 return callback(bot, message);
@@ -264,11 +279,44 @@ function hears(controller, options, callback) {
     });
 }
 
-module.exports.hears = hears;
+
+DEFAULT_BOT_OPTIONS = {
+    debug: false,
+    config_file: "./config.js"
+};
+
+function Bot(options) {
+    var self = this;
+    self.options = _.extend({}, DEFAULT_BOT_OPTIONS, options);
+    console.log("Loading config from: " + self.options.config_file);
+    self.config = require(self.options.config_file).config;
+    if (!self.config.token) {
+        console.error('Failed to load token from: ' + config_file);
+        throw new Error("A token must be specified in the configuration file");
+    }
+
+    self.controller = Botkit.slackbot({
+        debug: self.options.debug
+    });
+    self.controller.spawn({
+      token: self.config.token
+    }).startRTM(function(err, bot) {
+        if (err) {
+            throw new Error(err);
+        }
+
+        //refresh your user and channel list every 2 minutes
+        //would be nice if this was push model, not poll but oh well.
+        refresh(bot, 120 * SECONDS, self.config);
+
+    });
+    self.hears = hears;
+}
+
 module.exports.users = users;
-module.exports.refresh = refresh;
 module.exports.channels = channels;
 module.exports.withLeague = withLeague;
 module.exports.requiresModerator = requiresModerator;
 module.exports.requiresLeague = requiresLeague;
+module.exports.Bot = Bot;
 
