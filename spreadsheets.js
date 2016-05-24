@@ -340,31 +340,29 @@ function get_round_extrema(options) {
     };
 }
 
-// get_rows is a client side implementation of the record-type results that we
+// getRows is a client side implementation of the record-type results that we
 // got from the row based API. Instead, we now implement this in the following
 // manner:
 //   1. Query for all cells in a particular range.
 //   2. Asssume first row is a header row.
 //   3. Turn each subsequent row into an object, of key-values based on the header
 //   4. return rows.
-// TODO: This should be renamed, it's not a general get "rows" it's a
-// get_schedule_rows
-function get_rows(service_account_auth, spreadsheet_key, options, callback) {
-    var doc = new GoogleSpreadsheet(spreadsheet_key);
+function getRows(spreadsheetConfig, options, sheetPredicate, callback) {
+    var doc = new GoogleSpreadsheet(spreadsheetConfig.key);
 
-    function get_rows_implementation(err, info) {
-        var pairings_sheet = undefined;
+    function getRowImplementation(err, info) {
+        var targetSheet = undefined;
         doc.getInfo(function(err, info) {
             if (err) { return callback(err, info); }
             // Find the last spreadsheet with the word "round" in the title.
             // this ought to work for both tournaments
             info.worksheets.forEach(function(sheet) {
-                if (sheet.title.toLowerCase().indexOf("round") != -1) {
-                    pairings_sheet = sheet;
+                if (sheetPredicate(sheet)) {
+                    targetSheet = sheet;
                 }
             });
-            if (!pairings_sheet) {
-                callback("Unable to find pairings worksheet");
+            if (!targetSheet) {
+                callback("Unable to find target worksheet");
                 return;
             }
             // Query for the appropriate row.
@@ -378,7 +376,7 @@ function get_rows(service_account_auth, spreadsheet_key, options, callback) {
                 'return-empty': true
             }
             options = _.defaults(options, defaults);
-            pairings_sheet.getCells(
+            targetSheet.getCells(
                 options,
                 function(err, cells) {
                     if (err) { return callback(err, cells); }
@@ -412,16 +410,28 @@ function get_rows(service_account_auth, spreadsheet_key, options, callback) {
         });
     }
 
-    if (service_account_auth) {
-        doc.useServiceAccountAuth(service_account_auth, get_rows_implementation);
+    if (spreadsheetConfig.serviceAccountAuth) {
+        doc.useServiceAccountAuth(spreadsheetConfig.serviceAccountAuth, getRowImplementation);
     } else {
-        get_rows_implementation();
+        getRowImplementation();
     }
+}
+
+// getPairingRows returns the pairing rows from the spreadsheet
+function getPairingRows(spreadsheetConfig, options, callback) {
+    return getRows(
+        spreadsheetConfig,
+        options,
+        function(sheet) {
+            return sheet.title.toLowerCase().indexOf("round") != -1;
+        },
+        callback
+    );
 }
 
 // Finds the given pairing in one of the team spreadsheets
 // callback gets three values: error, row, whether the pairing is reversed or not.
-function find_pairing(service_account_auth, spreadsheet_key, white, black, callback) {
+function find_pairing(spreadsheetConfig, white, black, callback) {
     var options = {
         'min-col': 1,
         'max-col': 7
@@ -440,9 +450,8 @@ function find_pairing(service_account_auth, spreadsheet_key, white, black, callb
         }
         return false;
     }
-    get_rows(
-        service_account_auth,
-        spreadsheet_key,
+    getPairingRows(
+        spreadsheetConfig,
         options,
         function(err, rows) {
             var rows = _.filter(rows, row_matches_pairing);
@@ -465,11 +474,11 @@ function find_pairing(service_account_auth, spreadsheet_key, white, black, callb
 }
 
 // Update the schedule
-function update_schedule(service_account_auth, key, colname, format, schedule, callback) {
+function update_schedule(spreadsheetConfig, colname, format, schedule, callback) {
     var white = schedule.white;
     var black = schedule.black;
     var date = schedule.date;
-    find_pairing(service_account_auth, key, white, black, function(err, row, reversed) {
+    find_pairing(spreadsheetConfig, white, black, function(err, row, reversed) {
         if (err) {
             return callback(err);
         }
@@ -534,15 +543,14 @@ function filter_player_tokens(tokens){
 
 //this assumes it is being given a valid result - that is th contract
 //error handling for a bad result should happen outside this function
-function update_result(service_account_auth, key, colname, result, callback){
+function update_result(spreadsheetConfig, colname, result, callback){
     var white = result.white;
     var black = result.black;
     var result_string = result.result;
     var gamelink_id = result.gamelink_id;
 
     find_pairing(
-        service_account_auth, 
-        key, 
+        spreadsheetConfig, 
         white.name, 
         black.name, 
         function(err, row, reversed){
@@ -623,14 +631,13 @@ function parse_gamelink(message_text){
 }
 
 //given a pairing, get a game link if one already exists
-function fetch_pairing_gamelink(service_account_auth, key, colname, result, callback){
+function fetch_pairing_gamelink(spreadsheetConfig, colname, result, callback){
     var white = result.white;
     var black = result.black;
 
     //given a pairing, white and black, get the row in the spreadsheet
     find_pairing(
-        service_account_auth,
-        key, 
+        spreadsheetConfig,
         white.name,
         black.name,
         function(err, row){
@@ -670,7 +677,8 @@ function parse_hyperlink(hyperlink) {
     return results;
 }
 
-module.exports.get_rows = get_rows;
+module.exports.getRows = getRows;
+module.exports.getPairingRows = getPairingRows;
 module.exports.get_round_extrema = get_round_extrema;
 module.exports.parse_scheduling = parse_scheduling;
 module.exports.parse_result = parse_result;

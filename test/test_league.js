@@ -8,7 +8,7 @@ var _45_45_LEAGUE_CONF = {
     "name": "45+45",
     "spreadsheet": {
         "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
-        "service_account_auth": undefined,
+        "serviceAccountAuth": undefined,
         "schedule_colname": "time (mm/dd @ hh:mm*)"
     },
     "channels": [],
@@ -34,7 +34,7 @@ try {
     }
 }
 if (private_key) {
-    _45_45_LEAGUE_CONF["spreadsheet"]["service_account_auth"] = {
+    _45_45_LEAGUE_CONF["spreadsheet"]["serviceAccountAuth"] = {
         "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
         "private_key": private_key
     }
@@ -42,12 +42,14 @@ if (private_key) {
 
 describe('league', function() {
     //--------------------------------------------------------------------------
-    describe('after refreshCurrentRoundSchedules', function () {
+    describe('testing league functionality', function () {
         _45_league = new league.League(_45_45_LEAGUE_CONF);
         before(function(done) {
             this.timeout(30000);
             _45_league.refreshCurrentRoundSchedules(function(err, pairings) {
-                done();
+                _45_league.refreshRosters(function(err, teams) {
+                    done();
+                });
             });
         });
         it("Testing refreshCurrentRoundSchedules()", function() {
@@ -172,6 +174,261 @@ describe('league', function() {
         } else {
             it.skip("test that we are getting the urls in the pairings", testPairingsHaveURLS);
         }
+        it("Testing refreshRosters", function() {
+            assert.equal(_45_league._teams.length, 26);
+        });
+        it("Testing getCaptains()", function() {
+            return _45_league.getCaptains().then(function(captains) {
+                captains = _.map(captains, function(c) { return c.name; });
+                var expectedCaptains = [
+                    'alexmdaniel',
+                    'Toperoco',
+                    'elwood_',
+                    'jivey',
+                    'NonMasterAlex',
+                    'Matuiss2',
+                    'ghostologist',
+                    'cyanfish',
+                    'Sonata2',
+                    'arlberg',
+                    'iebrian',
+                    'hillrp',
+                    'Bloodyfox',
+                    'Jyr',
+                    'EsolcNeveton',
+                    'CaptNCarter',
+                    'tnan123',
+                    'riemannn',
+                    'Seb32',
+                    'Felixnl',
+                    'quirked',
+                    'thephobia',
+                    'kirschwasser',
+                    'gnarlygoat',
+                    'Mooserohde',
+                    'Dialh'
+                ];
+                assert.equal(captains.length, expectedCaptains.length);
+                var diff = _.difference(captains, expectedCaptains);
+                assert.equal(0, diff.length);
+            });
+        });
+        it("Testing getBoard(1)", function() {
+            return _45_league.getBoard(1).then(function(players) {
+                players = _.map(players, function(p) { return p.name; });
+                var expectedPlayers = [
+                    'andyquibler',
+                    'Pawnprecaution',
+                    'Atrophied',
+                    'Pitrinu',
+                    'Shammies',
+                    'Matuiss2',
+                    'SuperVJ',
+                    'cyanfish',
+                    'Sonata2',
+                    'Sjaart',
+                    'crabbypat',
+                    'Hyzer',
+                    'Bloodyfox',
+                    'Jyr',
+                    'Steiger07',
+                    'theino',
+                    'ecstaticbroccoli',
+                    'mhavgar',
+                    'sangan',
+                    'Toddle',
+                    'eamonmont',
+                    'Kobol',
+                    'resonantpillow',
+                    'gnarlygoat',
+                    'Doganof',
+                    'Pasternak'
+                ];
+                assert.equal(players.length, expectedPlayers.length);
+                var diff = _.difference(expectedPlayers, l=players);
+                assert.equal(0, diff.length);
+            });
+        });
+        it("Testing getBoard(2)", function() {
+            return _45_league.getBoard(2).then(function(players) {
+                players = _.map(players, function(p) { return p.name; });
+                var expectedPlayers = [
+                    'ventricule',
+                    'Toperoco',
+                    'elwood_',
+                    'kimaga',
+                    'brwnbr',
+                    'somethingpretentious',
+                    'Questoguy',
+                    'DannyKong',
+                    'Practicedave',
+                    'jughandle10',
+                    'ihateRBF',
+                    'MorallyGray',
+                    'Cynosure',
+                    'HoxHound',
+                    'R-Mena',
+                    'CaptNCarter',
+                    'dgees',
+                    'Knoddel',
+                    'droodjerky',
+                    'Felixnl',
+                    'quirked',
+                    'Toj',
+                    'metalpawn',
+                    'JPTriton',
+                    'Jimmyd7777',
+                    'flamehead'
+                ];
+                assert.equal(players.length, expectedPlayers.length);
+                var diff = _.difference(expectedPlayers, players);
+                assert.equal(0, diff.length);
+            });
+        });
+        it("Testing getBoard(3)", function() {
+            return _45_league.getBoard(3).then(function(players) {
+                players = _.map(players, function(p) { return p.name; });
+                var expectedPlayers = [
+                    'modakshantanu',
+                    'super_sanic',
+                    'vishysoisse',
+                    'llimllib',
+                    'NonMasterAlex',
+                    'jaivl',
+                    'AshkanJah',
+                    'ForkerofQueens',
+                    'shetoo',
+                    'arlberg',
+                    'MrIan15',
+                    'krzem',
+                    'Revoof',
+                    'kingscrusher-fan',
+                    'jmaltby',
+                    'Orgsalsa',
+                    'ebb1',
+                    'riemannn',
+                    'redhoax',
+                    'MrLegilimens',
+                    'Diamanthori',
+                    'juldiaz280992',
+                    'DurchNachtUndWind',
+                    'Unihedron',
+                    'Philgood84',
+                    'Tom_kg'
+                ];
+                assert.equal(players.length, expectedPlayers.length);
+                var diff = _.difference(expectedPlayers, players);
+                assert.equal(0, diff.length);
+            });
+        });
+        it("Testing getBoard(4)", function() {
+            return _45_league.getBoard(4).then(function(players) {
+                players = _.map(players, function(p) { return p.name; });
+                var expectedPlayers = [
+                    'alexmdaniel',
+                    'linail',
+                    'iedopadzert',
+                    'mkoga',
+                    'egocrusher',
+                    'scarff',
+                    'MRSep',
+                    'tylerc0816',
+                    'scottm91',
+                    'ctorh',
+                    'iebrian',
+                    'jagvillspelaschack',
+                    'RuizBR',
+                    'Anunzio',
+                    'EsolcNeveton',
+                    'sigvei',
+                    'bramminator',
+                    'explodingllama',
+                    'Cheesehead04',
+                    'mfink1',
+                    'infested',
+                    'narud',
+                    'kirschwasser',
+                    'dooje',
+                    'Nubas',
+                    'nacional100'
+                ];
+                assert.equal(players.length, expectedPlayers.length);
+                var diff = _.difference(expectedPlayers, players);
+                assert.equal(0, diff.length);
+            });
+        });
+        it("Testing getBoard(5)", function() {
+            return _45_league.getBoard(5).then(function(players) {
+                players = _.map(players, function(p) { return p.name; });
+                var expectedPlayers = [
+                    'CarlosMagnussen',
+                    'GreyHawk',
+                    'n4zgul',
+                    'jivey',
+                    'shafdanny',
+                    'ca7alyst81',
+                    'BamaBeeblebrox',
+                    'djcrisce',
+                    'Prune2000',
+                    'DiscoverChex',
+                    'jshholland',
+                    'hillrp',
+                    'lukhas',
+                    'agrav123',
+                    'lakinwecker',
+                    'jacobhess',
+                    'tnan123',
+                    'daveyjones01',
+                    'Seb32',
+                    'osskjc',
+                    'mbazylisk',
+                    'thephobia',
+                    'Braffin',
+                    'darobertson',
+                    'Mooserohde',
+                    'rwill128'
+                ];
+                assert.equal(players.length, expectedPlayers.length);
+                var diff = _.difference(expectedPlayers, players);
+                assert.equal(0, diff.length);
+            });
+        });
+        it("Testing getBoard(6)", function() {
+            return _45_league.getBoard(6).then(function(players) {
+                players = _.map(players, function(p) { return p.name; });
+                var expectedPlayers = [
+                    'saschlars',
+                    'festivus',
+                    'greg-butts',
+                    'amacy',
+                    'stoy',
+                    'Immortality',
+                    'ghostologist',
+                    'JuanSnow',
+                    'abdelaziz_sayed',
+                    'angborxley',
+                    'Petruchio',
+                    'adamroyd',
+                    'eljefe08',
+                    'Pawnpunter',
+                    'Hkivrak',
+                    'endrawes0',
+                    'OldTom',
+                    'Elixr',
+                    'Thetasquared',
+                    'TheKnug',
+                    'SirDore',
+                    'tworivers',
+                    'ChukoDiman',
+                    'FradtheImpaler',
+                    'tothe6thpower',
+                    'Dialh'
+                ];
+                assert.equal(players.length, expectedPlayers.length);
+                var diff = _.difference(expectedPlayers, players);
+                assert.equal(0, diff.length);
+            });
+        });
         it("test formatCaptainGuidelinesResponse", function(done) {
             var promises = [];
 

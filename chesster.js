@@ -97,7 +97,7 @@ chesster.controller.hears([
 ],function(bot,message) {
     bot_exception_handler(bot, message, function(){
         var response = "Stop... Giri Time!\n" + "Hi! Im Chesster. Ill be your new bot. " + 
-						"To interact with me, mention " + users.getIdString("chesster") + 
+						"To interact with me, mention " + slack.users.getIdString("chesster") + 
 						" in a message";
         bot.reply(message, response);
     });

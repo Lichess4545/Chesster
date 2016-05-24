@@ -48,6 +48,14 @@ league_attributes = {
     _pairings: [],
 
     //--------------------------------------------------------------------------
+    // A list of objects with the following attributes
+    //   - name
+    //   - roster - A list of the players in board order
+    //   - captain - A single player who is the captain
+    //--------------------------------------------------------------------------
+    _teams: [],
+
+    //--------------------------------------------------------------------------
     // The datetime when we were last updated
     //--------------------------------------------------------------------------
     _lastUpdated: moment.utc(),
@@ -55,7 +63,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     // Canonicalize the username
     //--------------------------------------------------------------------------
-    canonical_username: function(username) {
+    canonicalUsername: function(username) {
         username = username.split(" ")[0];
         return username.replace("*", "");
     },
@@ -65,15 +73,6 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'refresh': function() {
         var self = this;
-        self.refreshMods(function(err, mods) {
-            if (err) {
-                console.error("Unable to refresh mods: " + err);
-                throw new Error(err);
-            } else {
-                console.log("Found " + mods.length + " mods for " + self.options.name);
-            }
-            self._lastUpdated = moment.utc();
-        });
         self.refreshRosters(function(err, rosters) {
             if (err) {
                 console.error("Unable to refresh rosters: " + err);
@@ -98,12 +97,77 @@ league_attributes = {
     // Refreshes the latest roster information
     //--------------------------------------------------------------------------
     'refreshRosters': function(callback) {
-    },
+        var query_options = {
+            'min-row': 1,
+            'max-row': 100,
+            'min-col': 1,
+            'max-col': 20,
+            'return-empty': true
+        }
+        var self = this;
+        spreadsheets.getRows(
+            self.options.spreadsheet,
+            query_options,
+            function(sheet) {
+                return sheet.title.toLowerCase().indexOf('rosters') != -1;
+            },
+            function(err, rows) {
+                if (err) { return callback(err, rows); }
+                var newTeams = [];
+                rows.forEach(function(row) {
+                    if (
+                        !row['teams'].value ||
+                        !row['board 1'].value ||
+                        !row['rating 1'].value ||
+                        !row['board 2'].value ||
+                        !row['rating 2'].value ||
+                        !row['board 3'].value ||
+                        !row['rating 3'].value ||
+                        !row['board 4'].value ||
+                        !row['rating 4'].value ||
+                        !row['board 5'].value ||
+                        !row['rating 5'].value ||
+                        !row['board 6'].value ||
+                        !row['rating 6'].value
+                    ) {
+                        return;
+                    }
+                    if (row['teams'].value.toLowerCase() == 'alternates') {
+                        // TODO: eventually we'll want this data too!
+                        return;
+                    }
+                    var team = { name: row['teams'].value };
+                    var roster = [];
+                    var captain = null;
+                    function processPlayer(name, rating) {
+                        name = name.value;
+                        rating = rating.value;
+                        var player = {
+                            name: self.canonicalUsername(name),
+                            rating: rating,
+                            team: team
+                        };
+                        if (name != player['name'] && name[name.length-1] == '*') {
+                            captain = player;
+                        }
+                        return player;
+                    }
+                    roster.push(processPlayer(row['board 1'], row['rating 1']));
+                    roster.push(processPlayer(row['board 2'], row['rating 2']));
+                    roster.push(processPlayer(row['board 3'], row['rating 3']));
+                    roster.push(processPlayer(row['board 4'], row['rating 4']));
+                    roster.push(processPlayer(row['board 5'], row['rating 5']));
+                    roster.push(processPlayer(row['board 6'], row['rating 6']));
 
-    //--------------------------------------------------------------------------
-    // Refreshes the latest mods information
-    //--------------------------------------------------------------------------
-    'refreshMods': function(callback) {
+                    team['captain'] = captain;
+                    team['roster'] = roster;
+
+                    newTeams.push(team);
+                });
+                self._teams = newTeams;
+                callback(undefined, self._teams);
+            }
+        );
     },
 
     //--------------------------------------------------------------------------
@@ -118,9 +182,8 @@ league_attributes = {
             'return-empty': true
         }
         var self = this;
-        spreadsheets.get_rows(
-            self.options.spreadsheet.service_account_auth,
-            self.options.spreadsheet.key,
+        spreadsheets.getPairingRows(
+            self.options.spreadsheet,
             query_options,
             function(err, rows) {
                 if (err) { return callback(err, rows); }
@@ -143,8 +206,8 @@ league_attributes = {
                         date = undefined;
                     }
                     new_pairings.push({
-                        white: self.canonical_username(row['white'].value),
-                        black: self.canonical_username(row['black'].value),
+                        white: self.canonicalUsername(row['white'].value),
+                        black: self.canonicalUsername(row['black'].value),
                         result: link['text'],
                         url: link['href'],
                         scheduled_date: date
@@ -352,6 +415,43 @@ league_attributes = {
                     name: self.options.name
                 });
             }
+        });
+    },
+    //--------------------------------------------------------------------------
+    // Get a list of captain names
+    //--------------------------------------------------------------------------
+    'getCaptains':function() {
+        var self = this;
+        return Q.fcall(function() {
+            var captains = [];
+            _.each(self._teams, function(team) {
+                captains.push(team.captain);
+            });
+            return captains;
+        });
+    },
+    //--------------------------------------------------------------------------
+    // Get the list of teams
+    //--------------------------------------------------------------------------
+    'getTeams':function() {
+        var self = this;
+        return Q.fcall(function() {
+            return self._teams;
+        });
+    },
+    //--------------------------------------------------------------------------
+    // Get the the players from a particular board
+    //--------------------------------------------------------------------------
+    'getBoard':function(boardNumber) {
+        var self = this;
+        return Q.fcall(function() {
+            var players = [];
+            _.each(self._teams, function(team) {
+                if (boardNumber-1 < team.roster.length) {
+                    players.push(team.roster[boardNumber-1]);
+                }
+            });
+            return players;
         });
     }
 };
