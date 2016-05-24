@@ -15,24 +15,6 @@ var users = slack.users;
 var channels = slack.channels;
 var lichess = require('./lichess.js');
 
-var TEAM_NAME = 1;
-var TEAM_START_ROW = 2;
-var TEAM_END_ROW = 27;
-var BOARD_1_NAME = 2;
-var BOARD_1_RATING = 4;
-var BOARD_2_NAME = 5;
-var BOARD_2_RATING= 7;
-var BOARD_3_NAME = 8;
-var BOARD_3_RATING = 10;
-var BOARD_4_NAME = 11;
-var BOARD_4_RATING = 13;
-var BOARD_5_NAME = 14;
-var BOARD_5_RATING = 16;
-var BOARD_6_NAME = 17;
-var BOARD_6_RATING = 19;
-
-var ROUND_ROW_LIMIT = 79;
-
 /* exception handling */
 /* later this will move it its own module */
 
@@ -479,27 +461,6 @@ chesster.controller.hears([
 });
 
 /* teams */
-
-function getTeams(self, callback){
-    self.teams = [];
-    self.sheet.getCells({
-        "min-row": TEAM_START_ROW,
-        "min-col": TEAM_NAME, 
-        "max-col": TEAM_NAME,
-        "return-empty": true,
-    }, function(err, cells) {
-        var num_cells = cells.length;
-        for(var ci = 0; ci < num_cells; ++ci){
-            if(cells[ci].value == ""){
-                break;
-            }
-            self.teams.push({
-               name: cells[ci].value
-            });
-        }
-        callback();
-    });
-}
 
 chesster.hears({
     middleware: [slack.requiresLeague],
