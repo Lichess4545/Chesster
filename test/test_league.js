@@ -539,6 +539,20 @@ describe('league', function() {
                 );
             })
         });
+        it("test formatTeamMembersResponse", function() {
+            return _45_league.formatTeamMembersResponse("The Stale Maids").then(function(message) {
+                assert.equal(
+                    message,
+                    "The members of The Stale Maids are \n" +
+                    "\tBoard 1: Steiger07 (1999)\n" +
+                    "\tBoard 2: R-Mena (1832)\n" +
+                    "\tBoard 3: jmaltby (1772)\n" +
+                    "\tBoard 4: EsolcNeveton (1781)\n" +
+                    "\tBoard 5: lakinwecker (1631)\n" +
+                    "\tBoard 6: Hkivrak (1592)\n"
+                );
+            })
+        });
         it("test formatCaptainGuidelinesResponse", function(done) {
             var promises = [];
 

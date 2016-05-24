@@ -554,6 +554,34 @@ league_attributes = {
                 return message;
             });
         });
+    },
+    //--------------------------------------------------------------------------
+    // Format team members response
+    //--------------------------------------------------------------------------
+    'formatTeamMembersResponse': function(teamName) {
+        var self = this;
+        return Q.fcall(function() {
+            if (self._teams.length == 0) {
+                return "The {name} league does not have teams".format({
+                    name: self.options.name
+                });
+            }
+            teams = _.filter(self._teams, function(t) {
+                return t.name.toLowerCase() == teamName.toLowerCase()
+            });
+            if (teams.length == 0) {
+                return "No team by that name";
+            }
+            if (teams.length > 1) {
+                return "Too many teams by that name";
+            }
+            team = teams[0];
+            var message = "The members of " + team.name + " are \n";
+            team.roster.forEach(function(member, index, array){
+                message += "\tBoard " + (index+1) + ": " + member.name + " (" + member.rating + ")\n";
+            });
+            return message;
+        });
     }
 };
 

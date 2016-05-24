@@ -635,37 +635,20 @@ function playerRatingAsyncJob(team_member){
     };
 }
 
-chesster.controller.hears([
-	'team members'
-],[
-	'direct_mention', 
-	'direct_message'
-], function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        var self = this;
-        self.team_name = message.text.split(" ").slice(2).join(" ");
-        if(self.team_name && self.team_name != ""){
-	    loadSheet(self, function(){
-	        getMembers(self, function(){
-	            if(self.members.length == 6){
-                        async.series([
-                            playerRatingAsyncJob(self.members[0]),
-                            playerRatingAsyncJob(self.members[1]),
-                            playerRatingAsyncJob(self.members[2]),
-                            playerRatingAsyncJob(self.members[3]),
-                            playerRatingAsyncJob(self.members[4]),
-                            playerRatingAsyncJob(self.members[5]),
-                        ], function(err){
-                            if(!err){
-                                bot.reply(message, prepareMembersResponse(self));
-                            }else{
-                                bot.reply(message, err);
-                            }
-                        });
-                    }else{
-                        bot.reply(message, "I could not find that team.");
-                    }
-                });
+chesster.hears({
+    middleware: [slack.requiresLeague],
+	patterns: ['team members'],
+    messageTypes: [
+        'direct_mention', 
+        'direct_message'
+    ]
+},
+function(bot, message) {
+    return Q.fcall(function() {
+        var teamName = message.text.split(" ").slice(2).join(" ");
+        if(teamName && teamName != ""){
+            message.league.formatTeamMembersResponse(teamName).then(function(response) {
+                bot.reply(message, response);
             });
         }else{
             bot.reply(message, "Which team did you say? [ team members <team-name> ]. Please try again.");
