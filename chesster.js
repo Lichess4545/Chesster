@@ -105,49 +105,8 @@ chesster.controller.hears([
 
 /* captains */
 leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
-
 leagueResponse(['captains', 'captain list'], 'formatCaptainsResponse');
 
-function getCaptains(self, callback){
-    self.sheet.getCells({
-        "min-row": TEAM_START_ROW,
-        "max-row": TEAM_END_ROW,
-        "min-col": BOARD_1_NAME, 
-        "max-col": BOARD_6_NAME,
-	"return-empty": true,
-    }, function(err, cells) {
-        var num_cells = cells.length;
-        for(var ci in cells){
-            var cell = cells[ci];
-            var team_index = cell.row - TEAM_START_ROW; // number of rows before team name start
-            switch(cell.col){
-                case BOARD_1_NAME:
-                case BOARD_2_NAME:
-                case BOARD_3_NAME:
-                case BOARD_4_NAME:
-                case BOARD_5_NAME:
-                case BOARD_6_NAME:
-                if(cell.value.includes("*")){
-                    if(!self.teams[team_index]){
-                        self.teams[team_index] = {};
-                    }
-                    self.teams[team_index]["captain"] = cell.value.replace("*", "");
-                }
-                break;
-            }
-        }
-        callback();
-    });
-}
-
-function prepareCaptainsMessage(teams){
-    var message = "Team Captains:\n";
-    var teamIndex = 1;
-    teams.forEach(function(team, index, array){
-        message += "\t" + (teamIndex++) + ". " + team.name + ": " + (team.captain || "Unchosen") + "\n";
-    });
-    return message;
-}
 
 /* rating */
 
@@ -588,19 +547,6 @@ function getTeams(self, callback){
     });
 }
 
-function sayTeams(self, convo){
-    convo.say(prepareTeamsMessage(self));
-}
-
-function prepareTeamsMessage(self){
-    var message = "There are currently " + self.teams.length + " teams competing. \n";
-    var teamIndex = 1;
-    self.teams.forEach(function(team, index, array){
-        message += "\t" + (teamIndex++) + ". " + team.name + "\n";
-    });
-    return message;
-}
-
 chesster.hears({
     middleware: [slack.requiresLeague],
     patterns: 'team captain',
@@ -616,22 +562,8 @@ function(bot, message) {
     });
 });
 
-chesster.controller.hears([
-	'teams', 
-	'team list'
-],[
-	'direct_mention', 
-	'direct_message'
-], function(bot,message) {
-    bot_exception_handler(bot, message, function(){
-        var self = this;
-        loadSheet(self, function(){
-            getTeams(self, function(){
-                bot.reply(message, prepareTeamsMessage(self));
-            });
-        });
-    });
-});
+leagueResponse(['teams', 'team list'], 'formatTeamsResponse');
+
 
 /* team members */
 

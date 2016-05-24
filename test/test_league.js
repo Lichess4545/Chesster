@@ -471,6 +471,40 @@ describe('league', function() {
                 );
             })
         });
+        it("test formatTeamsResponse", function() {
+            return _45_league.formatTeamsResponse().then(function(message) {
+                assert.equal(
+                    message,
+                    "There are currently 26 teams competing. \n" +
+                    "\t1. ¡No en-pasarán!\n" +
+                    "\t2. Sac's on the Beach\n" +
+                    "\t3. Icy Tactics\n" +
+                    "\t4. The Zugzwang Clan\n" +
+                    "\t5. Magnus Opus\n" +
+                    "\t6. Sicilian Dragons\n" +
+                    "\t7. Sac' Up\n" +
+                    "\t8. No Pawn Intended\n" +
+                    "\t9. Highway Karjaking\n" +
+                    "\t10. All Knight Dance Party\n" +
+                    "\t11. Knights Who Say 'Nf3'\n" +
+                    "\t12. Legalize Caruana\n" +
+                    "\t13. Team N/A\n" +
+                    "\t14. Disco Dancers\n" +
+                    "\t15. The Stale Maids\n" +
+                    "\t16. W.I.N.N.E.R.S.\n" +
+                    "\t17. Pawnbrokers\n" +
+                    "\t18. Zugzwangers\n" +
+                    "\t19. It's a Blunderful Life\n" +
+                    "\t20. Lemons and Lines\n" +
+                    "\t21. Smack My Bishop\n" +
+                    "\t22. Catch-22\n" +
+                    "\t23. Regicide\n" +
+                    "\t24. f8/Stay Knights\n" +
+                    "\t25. Promote to Pawn\n" +
+                    "\t26. Chess Mates\n"
+                );
+            })
+        });
         it("test formatCaptainGuidelinesResponse", function(done) {
             var promises = [];
 

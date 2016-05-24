@@ -512,6 +512,25 @@ league_attributes = {
                 return team.name + " has not chosen a team captain. ";
             }
         });
+    },
+    //--------------------------------------------------------------------------
+    // Format the teams response
+    //--------------------------------------------------------------------------
+    'formatTeamsResponse':function(teamName) {
+        var self = this;
+        return Q.fcall(function() {
+            if (self._teams.length == 0) {
+                return "The {name} league does not have teams".format({
+                    name: self.options.name
+                });
+            }
+            var message = "There are currently " + self._teams.length + " teams competing. \n";
+            var teamIndex = 1;
+            self._teams.forEach(function(team, index, array){
+                message += "\t" + (teamIndex++) + ". " + team.name + "\n";
+            });
+            return message;
+        });
     }
 };
 
