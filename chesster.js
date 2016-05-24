@@ -444,14 +444,14 @@ leagueResponse(['rules', 'regulations'], 'formatRulesLinkResponse');
 
 /* exceptions */
 
-chesster.controller.hears([
-	"exception handle test"
-], [
-	"ambient"
-], function(bot, message){
-    bot_exception_handler(bot, message, function(){
-        throw new Error("an error");
-    });
+chesster.hears({
+    patterns: "exception handle test",
+    messageTypes: [
+        "ambient"
+    ]
+},
+function(bot, message){
+    throw new Error("an error");
 });
 
 /* teams */
@@ -569,16 +569,16 @@ chesster.controller.hears([
     });
 });
 
-chesster.controller.hears([
-	'thanks'
-], [
-	'direct_mention', 
-	'mention', 
-	'direct_message'
-], function(bot,message) {
-    bot_exception_handler(bot, message, function(){
-        bot.reply(message, "It is my pleasure to serve you!");
-    });
+chesster.hears({
+    patterns: ['thanks', 'thank you'],
+    messageTypes: [
+        'direct_mention', 
+        'mention', 
+        'direct_message'
+    ]
+},
+function(bot,message) {
+    bot.reply(message, "It is my pleasure to serve you!");
 });
 
 /* registration */
