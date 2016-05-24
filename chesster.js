@@ -163,19 +163,20 @@ function prepareCommandsMessage(){
         "```\n";
 }
 
-function sayCommands(convo){
-    convo.say(prepareCommandsMessage());
-}
-
-chesster.controller.hears([
-    'commands', 
-	'command list'
-],[
-	'direct_mention', 
-	'direct_message'
-], function(bot,message) {
-    bot_exception_handler(bot, message, function(){
-        bot.reply(message, prepareCommandsMessage());
+chesster.hears({
+    patterns: [
+        'commands', 
+        'command list',
+        'help',
+    ],
+    messageTypes: [
+        'direct_mention', 
+        'direct_message'
+    ]
+},
+function(bot,message) {
+    bot.startPrivateConversation(message, function (response, convo) {
+        convo.say(prepareCommandsMessage());
     });
 });
 
@@ -249,79 +250,6 @@ chesster.controller.hears([
 });
 
 /* help */
-
-chesster.controller.hears(['help'],['direct_mention', 'direct_message'],function(bot,message) {
-    bot_exception_handler(bot, message, function(){
-        bot.startPrivateConversation(message, howMayIHelpYou);
-    });
-});
-
-function askAboutHelp(convo, more){
-    convo.ask("How " + (more ? "else" : "") + " may I help you? \n" +
-        "\tI'm new here... [ starter guide ] \n" +
-        "\tI want to see [ pairings ] or [ standings ]. \n" +
-        "\tI want to see the [ rules ] and [ regulations ]. \n" +
-        "\tWho are the [ mods ]? \n" +
-        "\tWhat [ teams ] are competing? \n" +
-        "\tWhat [ channels ] should I join?\n" +
-        "\tWhat [ commands ] do you respond to?\n" +
-        "\tI have a question... [faq]\n" +
-        "\tHow do I [ sign up ] to play?\n" +
-        "\tNothing further. I am [ done ].\n" +
-        "Note: all options work as 'standalone' commands. Try: [@chesster <command>] from outside the help dialog.", 
-        function(response, convo) {
-            responses[response.text] ? responses[response.text](convo) : responses["default"](convo);
-        }
-    );
-    convo.next();
-}
-
-function howMayIHelpYou(response, convo) {
-    askAboutHelp(convo);
-};
-
-var responses = {
-    "starter guide": function(convo){
-        sayStarterGuide(convo);
-        askAboutHelp(convo, true);
-    },
-    "pairings": function(convo){
-        sayPairings(convo);
-        askAboutHelp(convo, true);
-    },
-    "standings": function(convo){
-        sayStandings(convo);
-        askAboutHelp(convo, true);
-    },
-    "mods": function(convo){
-        convo.say("The mods are ");
-        askAboutHelp(convo, true);
-    },
-    "faq": function(convo){
-        convo.say("https://docs.google.com/document/d/11c_c711YRsOKw9XrEUgJ8-fBYDAmCpSkLytwcxlmn-A");
-        askAboutHelp(convo, true);
-    },
-    "sign up": function(convo){
-        sayRegistrationMessage(convo);
-        askAboutHelp(convo, true);
-    },
-    "teams": function(convo){
-    },
-    "commands": function(convo){
-        sayCommands(convo);
-        askAboutHelp(convo, true);
-    },
-    "channels": function(convo){
-        sayChannels(convo);
-        askAboutHelp(convo, true);
-    },
-    "done": function(convo){
-    },
-    "default": function(convo){
-        convo.say("I am sorry. I didnt understand.");
-        askAboutHelp(convo);
-    }
-}
 
 /* channels */
 function prepareChannelListMessage(){
