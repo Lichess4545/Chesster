@@ -77,7 +77,7 @@ function leagueResponse(patterns, responseName) {
     chesster.hears({
         middleware: [slack.requiresLeague],
         patterns: patterns,
-        message_types: [
+        messageTypes: [
             'direct_message',
             'direct_mention'
         ]
@@ -106,24 +106,7 @@ chesster.controller.hears([
 /* captains */
 leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
 
-chesster.controller.hears([
-    'captains', 
-    'captain list'
-],[
-    'direct_mention', 
-    'direct_message'
-],function(bot,message) {
-    bot_exception_handler(bot, message, function(){
-        var self = this;
-        loadSheet(self, function(){
-            getTeams(self, function(){
-                getCaptains(self, function(){
-                    bot.reply(message, prepareCaptainsMessage(self.teams));
-                });
-            });
-        });
-    });
-});
+leagueResponse(['captains', 'captain list'], 'formatCaptainsResponse');
 
 function getCaptains(self, callback){
     self.sheet.getCells({
@@ -479,7 +462,7 @@ chesster.hears({
     patterns: [
         players.appendPlayerRegex("pairing", true)
     ],
-    message_types: [
+    messageTypes: [
         'direct_mention', 'direct_message'
     ]
 }, function(bot, message) {
@@ -516,7 +499,7 @@ chesster.hears({
     patterns: [
         'debug'
     ],
-    message_types: [
+    messageTypes: [
         'direct_mention', 'direct_message'
     ]
 }, function(bot, message) {
@@ -618,36 +601,18 @@ function prepareTeamsMessage(self){
     return message;
 }
 
-function prepareTeamCaptainMessage(team){
-    if(team && team.captain){
-    	return "Captain of " + team.name + " is " + team.captain;
-    }else{
-        return team.name + " has not chosen a team captain. ";
-    }
-}
-
-chesster.controller.hears([
-	'team captain'
-], [
-	'direct_mention', 
-	'direct_message'
-], function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        var self = this;
-        var team_name = message.text.split(" ").slice(2).join(" ");
-        loadSheet(self, function(){
-            getTeams(self, function(){
-                getCaptains(self, function(){
-                    for(var ti in self.teams){
-                        var team = self.teams[ti];
-                        if(team.name == team_name){
-                            bot.reply(message, prepareTeamCaptainMessage(team));
-                            break;
-                        }
-                    }
-                });
-            });
-        });
+chesster.hears({
+    middleware: [slack.requiresLeague],
+    patterns: 'team captain',
+    messageTypes: [
+        'direct_mention', 
+        'direct_message'
+    ]
+},
+function(bot, message) {
+    var teamName = message.text.split(" ").slice(2).join(" ");
+    return message.league.formatTeamCaptainResponse(teamName).then(function(response) {
+        bot.reply(message, response);
     });
 });
 

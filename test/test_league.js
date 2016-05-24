@@ -429,6 +429,48 @@ describe('league', function() {
                 assert.equal(0, diff.length);
             });
         });
+        it("test formatCaptainsResponse", function() {
+            return _45_league.formatCaptainsResponse().then(function(message) {
+                assert.equal(
+                    message,
+                    "Team Captains:\n" +
+                    "\t1. ¡No en-pasarán!: alexmdaniel\n" +
+                    "\t2. Sac's on the Beach: Toperoco\n" +
+                    "\t3. Icy Tactics: elwood_\n" +
+                    "\t4. The Zugzwang Clan: jivey\n" +
+                    "\t5. Magnus Opus: NonMasterAlex\n" +
+                    "\t6. Sicilian Dragons: Matuiss2\n" +
+                    "\t7. Sac' Up: ghostologist\n" +
+                    "\t8. No Pawn Intended: cyanfish\n" +
+                    "\t9. Highway Karjaking: Sonata2\n" +
+                    "\t10. All Knight Dance Party: arlberg\n" +
+                    "\t11. Knights Who Say 'Nf3': iebrian\n" +
+                    "\t12. Legalize Caruana: hillrp\n" +
+                    "\t13. Team N/A: Bloodyfox\n" +
+                    "\t14. Disco Dancers: Jyr\n" +
+                    "\t15. The Stale Maids: EsolcNeveton\n" +
+                    "\t16. W.I.N.N.E.R.S.: CaptNCarter\n" +
+                    "\t17. Pawnbrokers: tnan123\n" +
+                    "\t18. Zugzwangers: riemannn\n" +
+                    "\t19. It's a Blunderful Life: Seb32\n" +
+                    "\t20. Lemons and Lines: Felixnl\n" +
+                    "\t21. Smack My Bishop: quirked\n" +
+                    "\t22. Catch-22: thephobia\n" +
+                    "\t23. Regicide: kirschwasser\n" +
+                    "\t24. f8/Stay Knights: gnarlygoat\n" +
+                    "\t25. Promote to Pawn: Mooserohde\n" +
+                    "\t26. Chess Mates: Dialh\n"
+                );
+            })
+        });
+        it("test formatTeamCaptainResponse", function() {
+            return _45_league.formatTeamCaptainResponse("The Stale Maids").then(function(message) {
+                assert.equal(
+                    message,
+                    "Captain of The Stale Maids is EsolcNeveton"
+                );
+            })
+        });
         it("test formatCaptainGuidelinesResponse", function(done) {
             var promises = [];
 

@@ -250,7 +250,7 @@ DEFAULT_HEARS_OPTIONS = {
 function hears(options, callback) {
     var self = this;
     var options = _.extend({}, DEFAULT_HEARS_OPTIONS, options);
-    self.controller.hears(options.patterns, options.message_types, function(bot, message) {
+    self.controller.hears(options.patterns, options.messageTypes, function(bot, message) {
         return botExceptionHandler(bot, message, Q.fcall(function() {
             message.player = users.getByNameOrID(message.user);
             // This will occur if a new player uses a chesster command

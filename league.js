@@ -17,7 +17,7 @@ LEAGUE_DEFAULTS = {
     "name": "",
     "spreadsheet": {
         "key": "",
-        "service_account_auth": {
+        "serviceAccountAuth": {
             "client_email": "",
             "private_key": ""
         },
@@ -112,7 +112,13 @@ league_attributes = {
                 return sheet.title.toLowerCase().indexOf('rosters') != -1;
             },
             function(err, rows) {
-                if (err) { return callback(err, rows); }
+                if (err) {
+                    if (err != "Unable to find target worksheet") {
+                        return callback(err, rows);
+                    } else {
+                        return callback(undefined, []);
+                    }
+                }
                 var newTeams = [];
                 rows.forEach(function(row) {
                     if (
@@ -452,6 +458,59 @@ league_attributes = {
                 }
             });
             return players;
+        });
+    },
+    //--------------------------------------------------------------------------
+    // Format the response for the list of captains
+    //--------------------------------------------------------------------------
+    'formatCaptainsResponse':function(boardNumber) {
+        var self = this;
+        return Q.fcall(function() {
+            if (self._teams.length == 0) {
+                return "The {name} league does not have captains".format({
+                    name: self.options.name
+                });
+            }
+            var message = "Team Captains:\n";
+            var teamIndex = 1;
+            self._teams.forEach(function(team, index, array){
+                var captain = team.captain;
+                if (captain) {
+                    captain = captain.name;
+                } else {
+                    captain = "Unchosen";
+                }
+                message += "\t" + (teamIndex++) + ". " + team.name + ": " + captain  + "\n";
+            });
+            return message;
+        });
+    },
+    //--------------------------------------------------------------------------
+    // Format the response for the list of captains
+    //--------------------------------------------------------------------------
+    'formatTeamCaptainResponse':function(teamName) {
+        var self = this;
+        return Q.fcall(function() {
+            if (self._teams.length == 0) {
+                return "The {name} league does not have captains".format({
+                    name: self.options.name
+                });
+            }
+            teams = _.filter(self._teams, function(t) {
+                return t.name.toLowerCase() == teamName.toLowerCase()
+            });
+            if (teams.length == 0) {
+                return "No team by that name";
+            }
+            if (teams.length > 1) {
+                return "Too many teams by that name";
+            }
+            team = teams[0];
+            if(team && team.captain){
+                return "Captain of " + team.name + " is " + team.captain.name;
+            }else{
+                return team.name + " has not chosen a team captain. ";
+            }
         });
     }
 };
