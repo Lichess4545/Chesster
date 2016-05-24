@@ -1,7 +1,5 @@
 // extlibs
-var async = require("async");
 var fs = require('fs');
-var GoogleSpreadsheet = require("google-spreadsheet");
 var http = require('http');
 var moment = require('moment');
 var Q = require("q");
@@ -326,13 +324,6 @@ var responses = {
         askAboutHelp(convo, true);
     },
     "teams": function(convo){
-        var self = this;
-        loadSheet(self, function(){
-            getTeams(self, function(){
-                sayTeams(self, convo);
-                askAboutHelp(convo, true);
-            });
-        });
     },
     "commands": function(convo){
         sayCommands(convo);
@@ -343,7 +334,6 @@ var responses = {
         askAboutHelp(convo, true);
     },
     "done": function(convo){
-        sayGoodbye(convo);
     },
     "default": function(convo){
         convo.say("I am sorry. I didnt understand.");
@@ -475,29 +465,6 @@ chesster.hears({
 
 /* rules */
 leagueResponse(['rules', 'regulations'], 'formatRulesLinkResponse');
-
-/* done */
-
-function sayGoodbye(convo){
-    convo.say("Glad to help. Bye!");
-    convo.next();
-}
-
-/* sheets */
-
-function loadSheet(self, callback){
-    var doc = new GoogleSpreadsheet('1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4');
-    doc.getInfo(function(err, info) {
-        for(var wi in info.worksheets){
-            if(info.worksheets[wi].title == "Rosters"){
-                self.sheet = info.worksheets[wi];
-            }  else if (info.worksheets[wi].title.match(/Round \d/)) {
-                self.currentRound = info.worksheets[wi];
-            }
-        }
-        callback();
-    });
-}
 
 /* exceptions */
 
