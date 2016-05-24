@@ -251,7 +251,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     // Prepare a debug message for this league
     //--------------------------------------------------------------------------
-    'debugMessage': function() {
+    'formatDebugResponse': function() {
         var self = this;
 
         return Q.fcall(function() {

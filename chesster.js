@@ -426,7 +426,7 @@ chesster.hears({
 });
 
 chesster.hears({
-    middleware: [slack.withLeague, slack.requiresModerator],
+    middleware: [slack.requiresLeague, slack.requiresModerator],
     patterns: [
         'debug'
     ],
@@ -434,15 +434,9 @@ chesster.hears({
         'direct_mention', 'direct_message'
     ]
 }, function(bot, message) {
-    if (message.league) {
-        return message.league.debugMessage().then(function(reply) {
-            bot.reply(message, reply);
-        });
-    } else {
-        return Q.fcall(function() {
-            bot.reply(message, "No league to debug!");
-        });
-    }
+    return message.league.formatDebugResponse().then(function(reply) {
+        bot.reply(message, reply);
+    });
 });
 
 /* rules */
