@@ -265,10 +265,6 @@ function prepareChannelListMessage(){
         "Try: [ @chesster channel details <channel name> ] for more detail.";
 }
 
-function sayChannels(convo){
-    convo.say(prepareChannelListMessage());
-}
-
 function prepareChannelDetailMessage(channel){
     var CHANNEL_DETAILS = {
         "general": channels.getIdString("general") + " is used to communicate news to members of " + 
@@ -802,7 +798,7 @@ chesster.controller.on('ambient', function(bot, message) {
 });
 
 function reply_permission_failure(bot, message){
-    bot.reply(message, "Sorry, you do not have permissin to update that pairing.");
+    bot.reply(message, "Sorry, you do not have permission to update that pairing.");
 }
 
 function result_reply_missing_pairing(bot, message){
