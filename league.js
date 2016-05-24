@@ -363,6 +363,8 @@ league_attributes = {
                 details: details,
                 played_phrase: played_phrase,
                 schedule_phrase: schedule_phrase,
+                // TODO: Get this from our player rating cache
+                //       not from the spreadsheet!?
                 rating: getRatingString(details.rating),
             });
         });
