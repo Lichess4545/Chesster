@@ -531,6 +531,29 @@ league_attributes = {
             });
             return message;
         });
+    },
+    //--------------------------------------------------------------------------
+    // Format board response
+    //--------------------------------------------------------------------------
+    'formatBoardResponse': function(boardNumber) {
+        var self = this;
+        return Q.fcall(function() {
+            if (self._teams.length == 0) {
+                return "The {name} league does not have teams".format({
+                    name: self.options.name
+                });
+            }
+            return self.getBoard(boardNumber).then(function(players) {
+                var message = "Board " + boardNumber + " consists of... \n";
+                players.sort(function(e1, e2){
+                    return e1.rating > e2.rating ? -1 : e1.rating < e2.rating ? 1 : 0;
+                });
+                players.forEach(function(member, index, array){
+                    message += "\t" + member.name + ": (Rating: " + member.rating + "; Team: " + member.team.name + ")\n";
+                });
+                return message;
+            });
+        });
     }
 };
 

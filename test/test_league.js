@@ -505,6 +505,40 @@ describe('league', function() {
                 );
             })
         });
+        it("test formatBoardResponse", function() {
+            return _45_league.formatBoardResponse(1).then(function(message) {
+                assert.equal(
+                    message,
+                    "Board 1 consists of... \n" +
+                    "\tPawnprecaution: (Rating: 2318; Team: Sac's on the Beach)\n" +
+                    "\tandyquibler: (Rating: 2311; Team: ¡No en-pasarán!)\n" +
+                    "\tAtrophied: (Rating: 2281; Team: Icy Tactics)\n" +
+                    "\tPitrinu: (Rating: 2276; Team: The Zugzwang Clan)\n" +
+                    "\tShammies: (Rating: 2263; Team: Magnus Opus)\n" +
+                    "\tMatuiss2: (Rating: 2254; Team: Sicilian Dragons)\n" +
+                    "\tSonata2: (Rating: 2134; Team: Highway Karjaking)\n" +
+                    "\tcyanfish: (Rating: 2108; Team: No Pawn Intended)\n" +
+                    "\tcrabbypat: (Rating: 2079; Team: Knights Who Say 'Nf3')\n" +
+                    "\tSjaart: (Rating: 2078; Team: All Knight Dance Party)\n" +
+                    "\tSuperVJ: (Rating: 2078; Team: Sac' Up)\n" +
+                    "\tDoganof: (Rating: 2073; Team: Promote to Pawn)\n" +
+                    "\ttheino: (Rating: 2072; Team: W.I.N.N.E.R.S.)\n" +
+                    "\tHyzer: (Rating: 2044; Team: Legalize Caruana)\n" +
+                    "\tBloodyfox: (Rating: 2023; Team: Team N/A)\n" +
+                    "\tecstaticbroccoli: (Rating: 2021; Team: Pawnbrokers)\n" +
+                    "\tsangan: (Rating: 2005; Team: It's a Blunderful Life)\n" +
+                    "\tSteiger07: (Rating: 1999; Team: The Stale Maids)\n" +
+                    "\teamonmont: (Rating: 1994; Team: Smack My Bishop)\n" +
+                    "\tmhavgar: (Rating: 1992; Team: Zugzwangers)\n" +
+                    "\tJyr: (Rating: 1976; Team: Disco Dancers)\n" +
+                    "\tPasternak: (Rating: 1967; Team: Chess Mates)\n" +
+                    "\tToddle: (Rating: 1965; Team: Lemons and Lines)\n" +
+                    "\tresonantpillow: (Rating: 1946; Team: Regicide)\n" +
+                    "\tKobol: (Rating: 1940; Team: Catch-22)\n" +
+                    "\tgnarlygoat: (Rating: 1931; Team: f8/Stay Knights)\n"
+                );
+            })
+        });
         it("test formatCaptainGuidelinesResponse", function(done) {
             var promises = [];
 

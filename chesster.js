@@ -90,17 +90,17 @@ function leagueResponse(patterns, responseName) {
 }
 
 /* stop giritime */
-chesster.controller.hears([
-	'giritime'
-],[
-	'ambient'
-],function(bot,message) {
-    bot_exception_handler(bot, message, function(){
-        var response = "Stop... Giri Time!\n" + "Hi! Im Chesster. Ill be your new bot. " + 
-						"To interact with me, mention " + slack.users.getIdString("chesster") + 
-						" in a message";
-        bot.reply(message, response);
-    });
+chesster.hears({
+    patterns: 'giritime',
+    messageTypes: [
+        'ambient'
+    ]
+},
+function(bot,message) {
+    var response = "Stop... Giri Time!\n" + "Hi! Im Chesster. Ill be your new bot. " + 
+                    "To interact with me, mention " + slack.users.getIdString("chesster") + 
+                    " in a message";
+    bot.reply(message, response);
 });
 
 /* captains */
@@ -473,19 +473,6 @@ chesster.hears({
     }
 });
 
-/* standings */
-
-chesster.controller.hears([
-    'standings'
-],[
-    'direct_mention', 
-    'direct_message'
-],function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        bot.reply(message, prepareStandingsMessage());
-    });
-});
-
 /* rules */
 leagueResponse(['rules', 'regulations'], 'formatRulesLinkResponse');
 
@@ -746,7 +733,7 @@ chesster.controller.hears([
 ], function(bot, message){
     bot_exception_handler(bot, message, function(){
         bot.reply(message, "As a computer, I am not great at understanding tone. Whether this was positive, negative, constructive or deconstructive feedback, I cannot tell. But regardless, I am quite glad you took the time to leave it for me. \n\nWith love and admiration,\nChesster.");
-        var feedback_log = "Receieved new feedback:" + 
+        var feedback_log = "Received new feedback:" + 
                            "\nMessage: " + JSON.stringify(message) + "\n\n";
        fs.appendFile("./feedback_log", feedback_log, function(err) {
             if(err) {
@@ -843,27 +830,29 @@ function prepareBoardResponse(self){
     return message;
 }
 
-chesster.controller.hears([
-	'board'
-],[
-	'direct_mention', 
-	'direct_message'
-], function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        bot.startPrivateConversation(message, function (response, convo) {
-            var self = this;
-            self.board_number = parseInt(message.text.split(" ")[1]);
-            if(self.board_number && !isNaN(self.board_number)){
-                loadSheet(self, function(){
-                    getBoard(self, function(){
-                        convo.say(prepareBoardResponse(self));
-                    });
-                });
-            }else{
-                convo.say("Which board did you say? [ board <number> ]. Please try again.");
-            }
-        });
+chesster.hears({
+    middleware: [slack.requiresLeague],
+    patterns: ['board'],
+    messageTypes: [
+        'direct_mention', 
+        'direct_message'
+    ]
+},
+function(bot, message) {
+    var deferred = Q.defer();
+    bot.startPrivateConversation(message, function (response, convo) {
+        boardNumber = parseInt(message.text.split(" ")[1]);
+        if(boardNumber && !isNaN(boardNumber)){
+            message.league.formatBoardResponse(boardNumber).then(function(response) {
+                convo.say(response);
+                deferred.resolve();
+            });
+        }else{
+            convo.say("Which board did you say? [ board <number> ]. Please try again.");
+            deferred.resolve();
+        }
     });
+    return deferred.promise;
 });
 
 
