@@ -791,45 +791,6 @@ chesster.controller.hears([
 
 /* board */
 
-function getBoard(self, callback){
-    self.players = [];
-    var board_name = BOARD_1_NAME + ((self.board_number - 1) * 3);
-    var board_rating = BOARD_1_RATING + ((self.board_number - 1) * 3);
-    self.sheet.getCells({
-        "min-row": TEAM_START_ROW,
-        "max-row": TEAM_END_ROW, 
-        "min-col": TEAM_NAME,
-        "max-col": board_rating,
-    }, function(err, cells) {
-        var num_cells = cells.length;
-        for(var ci = 0; ci < num_cells; ++ci){
-            var cell = cells[ci];
-            var team_number = cell.row - TEAM_START_ROW;
-            var player = createOrGetMember(self.players, team_number);
-            switch(cell.col){
-                case TEAM_NAME:
-                    player.team = cell.value;
-                case board_name: 
-                    player.name = cell.value.replace("*", "");    
-                case board_rating:
-                    player.rating = cell.value;
-            }
-        }
-        callback();
-    });
-}
-
-function prepareBoardResponse(self){
-    var message = "Board " + self.board_number + " consists of... \n";
-    self.players.sort(function(e1, e2){
-        return e1.rating > e2.rating ? -1 : e1.rating < e2.rating ? 1 : 0;
-    });
-    self.players.forEach(function(member, index, array){
-        message += "\t" + member.name + ": (Rating: " + member.rating + "; Team: " + member.team + ")\n";
-    });
-    return message;
-}
-
 chesster.hears({
     middleware: [slack.requiresLeague],
     patterns: ['board'],
