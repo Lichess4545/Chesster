@@ -90,34 +90,23 @@ leagueResponse(['captains', 'captain list'], 'formatCaptainsResponse');
 
 /* rating */
 
-chesster.controller.hears([
-    players.appendPlayerRegex("rating", true)	
-],[
-	'direct_mention', 
-	'direct_message'
-],function(bot,message) {
-    bot_exception_handler(bot, message, function(){
-        var player_name = players.getSlackUser(users, message).name;
-        getRating(player_name, function(rating){
-            if(rating){
-                bot.reply(message, prepareRatingMessage(player_name, rating));
-            }else{
-                bot.reply(message, "I am sorry. I could not find that player.");
-            }
-        });
-    });
-});
-
-function getRating(player, callback){
-    getPlayerByName(player, function(error, opponent){
-        if(opponent){
-            getClassicalRating(opponent, callback);
+chesster.hears({
+    patterns: [players.appendPlayerRegex("rating", true)],
+    messageTypes: [
+        'direct_mention', 
+        'direct_message'
+    ]
+},
+function(bot,message) {
+    var playerName = players.getSlackUser(users, message).name;
+    return lichess.getPlayerRating(playerName).then(function(rating) {
+        if(rating){
+            bot.reply(message, prepareRatingMessage(playerName, rating));
         }else{
-            console.error(JSON.stringify(error));
-            callback();
+            bot.reply(message, "I am sorry. I could not find that player.");
         }
     });
-}
+});
 
 function prepareRatingMessage(player, rating, convo){
     return player + " is rated " + rating + " in classical chess";
@@ -419,17 +408,6 @@ function(bot, message) {
         }
     });
 });
-
-/* LICHESS STUFF */
-
-function getPlayerByName(name, callback){
-    var url = "http://en.lichess.org/api/user/" + name;
-    fetch_url_into_json(url, callback);
-}
-
-function getClassicalRating(opp, callback){
-  callback(opp.perfs.classical.rating);
-}
 
 /* welcome */
 

@@ -4,7 +4,7 @@
 const http = require('http');
 var Q = require("q");
 
-function fetchURLIntoJSON(url){
+function fetchURL(url){
     var deferred = Q.defer();
     http.get(url, (res) => {
         var body = "";
@@ -12,23 +12,30 @@ function fetchURLIntoJSON(url){
             body += chunk;
         });
         res.on('end', () => {
-            if(body != ""){
-                var json = JSON.parse(body);
-                if(json){
-                    deferred.resolve(json);
-                }else{
-                    deferred.reject("body was not a valid JSON object");
-                }
-            }else{
-                deferred.reject("body was empty from url: " + url);
-            }
+            deferred.resolve({'response': res, "body": body});
         });
     }).on('error', (e) => {
         console.error(JSON.stringify(e));
-        defer.reject("failed to get a response from url: " + url);
+        deferred.reject("failed to get a response from url: " + url);
+    });
+    return deferred.promise;
+}
+function fetchURLIntoJSON(url){
+    var deferred = Q.defer();
+    fetchURL(url).then(function(result) {
+        var json = JSON.parse(result['body']);
+        if (json) {
+            result['json'] = json;
+            deferred.resolve(result);
+        } else {
+            deferred.reject("body was not a valid json object: " + url);
+        }
+    }, function(error) {
+        deferred.reject(error);
     });
     return deferred.promise;
 }
 
 
+module.exports.fetchURL = fetchURL;
 module.exports.fetchURLIntoJSON = fetchURLIntoJSON;

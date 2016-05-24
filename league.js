@@ -11,6 +11,11 @@ var moment = require("moment");
 var format = require('string-format')
 format.extend(String.prototype)
 
+var MILISECOND = 1;
+var SECONDS = 1000 * MILISECOND;
+var MINUTES = 60 * SECONDS;
+var HOURS = 60 * MINUTES;
+
 var spreadsheets = require("./spreadsheets");
 var lichess = require("./lichess");
 LEAGUE_DEFAULTS = {
@@ -171,6 +176,23 @@ league_attributes = {
                     newTeams.push(team);
                 });
                 self._teams = newTeams;
+                _.each(self._teams, function(team) {
+                    _.each(team.roster, function(player) {
+                        if (player && player.name) {
+                            lichess.getPlayerRating(player.name, true).then(function(rating) {
+                                console.log("Updated {name} rating to {rating}".format({
+                                    name: player.name,
+                                    rating: rating
+                                }));
+                                player.rating = rating;
+                                self._playerRatingsLastUpdates[player.name] = moment.utc();
+                            }, function(error) {
+                                console.error("Error updating rating: " + JSON.stringify(error));
+                            });
+                        }
+                    });
+                });
+
                 callback(undefined, self._teams);
             }
         );
