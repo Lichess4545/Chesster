@@ -601,15 +601,15 @@ chesster.controller.hears([
 
 /* source */
 
-chesster.controller.hears([
-    "source",
-], [
-    'direct_message',
-    'direct_mention'
-], function(bot, message){
-    bot_exception_handler(bot, message, function(){
-        bot.reply(message, chesster.config.links.source);
-    });
+chesster.hears({
+    patterns: "source",
+    messageTypes: [
+        'direct_message',
+        'direct_mention'
+    ]
+},
+function(bot, message){
+    bot.reply(message, chesster.config.links.source);
 });
 
 /* board */
