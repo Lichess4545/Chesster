@@ -94,17 +94,36 @@ function getPlayerByName(name, isBackground){
 var getPlayerRating = (function() {
     var _playerRatings = {};
     var _playerRatingsLastUpdated = {};
+    var _playerRatingPromises = {};
     function getPlayerRating(name, isBackground){
+        // If this is a background request, then re-use an existing promise
+        if (isBackground) {
+            var promise = _playerRatingPromises[name.toLowerCase()];
+            if (promise) {
+                return promise;
+            }
+        }
+
+        // If we have updated recently, just return this rating.
         var _30MinsAgo = moment.utc().subtract(30, 'minutes');
-        var lastUpdated = _playerRatingsLastUpdated[name];
-        if (!lastUpdated || lastUpdated.isBefore(_30MinsAgo)) {
-            return getPlayerByName(name, isBackground).then(function(result) {
+        var lastUpdated = _playerRatingsLastUpdated[name.toLowerCase()];
+        if (lastUpdated && lastUpdated.isAfter(_30MinsAgo)) {
+            return Q.fcall(function() { return _playerRatings[name.toLowerCase()]; });
+        } else {
+            // Else, 
+            var background = "";
+            if (isBackground) {
+                background = " [in the background]";
+            }
+            console.log("Requesting rating update for " + name + background);
+            var promise = getPlayerByName(name, isBackground).then(function(result) {
                 var rating = result.json.perfs.classical.rating;
-                _playerRatings[name] = rating;
+                _playerRatings[name.toLowerCase()] = rating;
+                _playerRatingsLastUpdated[name.toLowerCase()] = moment.utc();
                 return rating;
             });
-        } else {
-            return _playerRatings[name];
+            _playerRatingPromises[name.toLowerCase()] = promise;
+            return promise;
         }
     }
     return getPlayerRating;
