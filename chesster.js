@@ -450,27 +450,6 @@ chesster.controller.on('user_channel_join', function(bot, message) {
 leagueResponse(['welcome', 'starter guide', 'player handbook'], 'formatStarterGuideResponse');
 
 /* feedback */
-
-chesster.controller.hears([
-	"feedback"
-], [
-	"direct_mention"
-], function(bot, message){
-    bot_exception_handler(bot, message, function(){
-        bot.reply(message, "As a computer, I am not great at understanding tone. Whether this was positive, negative, constructive or deconstructive feedback, I cannot tell. But regardless, I am quite glad you took the time to leave it for me. \n\nWith love and admiration,\nChesster.");
-        var feedback_log = "Received new feedback:" + 
-                           "\nMessage: " + JSON.stringify(message) + "\n\n";
-       fs.appendFile("./feedback_log", feedback_log, function(err) {
-            if(err) {
-                console.log("failed to write to the file...")
-                console.log(feedback_log);
-                console.log(err);
-                throw new Error("Failed to log feedback: " + feedback_log);
-            }
-        });
-    });
-});
-
 chesster.hears({
     patterns: ['thanks', 'thank you'],
     messageTypes: [
