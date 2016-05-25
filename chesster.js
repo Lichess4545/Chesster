@@ -68,6 +68,29 @@ function leagueResponse(patterns, responseName) {
         });
     });
 }
+// A helper for a very common pattern
+function leagueDMResponse(patterns, responseName) {
+    chesster.hears({
+        middleware: [slack.requiresLeague],
+        patterns: patterns,
+        messageTypes: [
+            'direct_message',
+            'direct_mention'
+        ]
+    },
+    function (bot, message){
+        var deferred = Q.defer();
+        bot.startPrivateConversation(message, function (response, convo) {
+            message.league[responseName]().then(function(response) {
+                convo.say(response);
+                deferred.resolve();
+            }, function(error) {
+                deferred.reject(error);
+            });
+        });
+        return deferred.promise;
+    });
+}
 
 /* stop giritime */
 chesster.hears({
@@ -85,7 +108,7 @@ function(bot,message) {
 
 /* captains */
 leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
-leagueResponse(['captains', 'captain list'], 'formatCaptainsResponse');
+leagueDMResponse(['captains', 'captain list'], 'formatCaptainsResponse');
 
 
 /* rating */
