@@ -95,30 +95,26 @@ var ratingFunctions = (function() {
     var _playerRatingsLastUpdated = {};
     var _playerRatingPromises = {};
     function getPlayerRating(name, isBackground){
-        // If this is a background request, then re-use an existing promise
-        if (isBackground) {
-            var promise = _playerRatingPromises[name.toLowerCase()];
-            if (promise) {
-                return promise;
-            }
-        }
-
         // If we have updated recently, just return this rating.
         var _30MinsAgo = moment.utc().subtract(30, 'minutes');
         var lastUpdated = _playerRatingsLastUpdated[name.toLowerCase()];
 
-        // If we don't have a recent rating for them, then ask for one
-        if (!lastUpdated || lastUpdated.isBefore(_30MinsAgo)) {
+        var promise = _playerRatingPromises[name.toLowerCase()];
+        // If we don't have a recent rating for them and we aren't
+        // already asking for one.
+        if ((!lastUpdated || lastUpdated.isBefore(_30MinsAgo)) && !promise) {
+
             // Else, 
             var background = "";
             if (isBackground) {
                 background = " [in the background]";
             }
             console.log("Requesting rating update for " + name + background);
-            getPlayerByName(name, isBackground).then(function(result) {
+            promise = getPlayerByName(name, isBackground).then(function(result) {
                 var rating = result.json.perfs.classical.rating;
                 _playerRatings[name.toLowerCase()] = rating;
                 _playerRatingsLastUpdated[name.toLowerCase()] = moment.utc();
+                _playerRatingPromises[name.toLowerCase()] = undefined;
                 console.log("Got updated rating for {name}: {rating}".format({
                     name: name,
                     rating: rating
