@@ -51,7 +51,6 @@ var makeRequest = (function() {
             var isJSON = request[1];
             var deferred = request[2];
             var promise = null;
-            console.log("Making lichess request: " + url);
             if (isJSON)  {
                 promise = http.fetchURLIntoJSON(url);
             } else {
@@ -91,7 +90,7 @@ function getPlayerByName(name, isBackground){
 // for people to show off their latest rating.  If they wan to do that they
 // can type it in themselves.
 //------------------------------------------------------------------------------
-var getPlayerRating = (function() {
+var ratingFunctions = (function() {
     var _playerRatings = {};
     var _playerRatingsLastUpdated = {};
     var _playerRatingPromises = {};
@@ -107,29 +106,42 @@ var getPlayerRating = (function() {
         // If we have updated recently, just return this rating.
         var _30MinsAgo = moment.utc().subtract(30, 'minutes');
         var lastUpdated = _playerRatingsLastUpdated[name.toLowerCase()];
-        if (lastUpdated && lastUpdated.isAfter(_30MinsAgo)) {
-            return Q.fcall(function() { return _playerRatings[name.toLowerCase()]; });
-        } else {
+
+        // If we don't have a recent rating for them, then ask for one
+        if (!lastUpdated || lastUpdated.isBefore(_30MinsAgo)) {
             // Else, 
             var background = "";
             if (isBackground) {
                 background = " [in the background]";
             }
             console.log("Requesting rating update for " + name + background);
-            var promise = getPlayerByName(name, isBackground).then(function(result) {
+            getPlayerByName(name, isBackground).then(function(result) {
                 var rating = result.json.perfs.classical.rating;
                 _playerRatings[name.toLowerCase()] = rating;
                 _playerRatingsLastUpdated[name.toLowerCase()] = moment.utc();
+                console.log("Got updated rating for {name}: {rating}".format({
+                    name: name,
+                    rating: rating
+                }));
                 return rating;
             });
             _playerRatingPromises[name.toLowerCase()] = promise;
-            return promise;
         }
+
+        // Always return the latest one that we already have.
+        return Q.fcall(function() { return _playerRatings[name.toLowerCase()]; });
     }
-    return getPlayerRating;
+    function setPlayerRating(name, rating) {
+        _playerRatings[name.toLowerCase()] = rating;
+    }
+    return {
+        getPlayerRating: getPlayerRating,
+        setPlayerRating: setPlayerRating
+    };
 })();
 
 
 
-module.exports.getPlayerRating = getPlayerRating
+module.exports.getPlayerRating = ratingFunctions.getPlayerRating
+module.exports.setPlayerRating = ratingFunctions.setPlayerRating
 module.exports.getPlayerByName = getPlayerByName
