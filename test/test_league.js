@@ -3,6 +3,7 @@ var Q = require("q");
 var _ = require("underscore");
 var moment = require("moment");
 var league = require('../league');
+var lichess = require('../lichess');
 
 var _45_45_LEAGUE_CONF = {
     "name": "45+45",
@@ -44,13 +45,23 @@ describe('league', function() {
     //--------------------------------------------------------------------------
     describe('testing league functionality', function () {
         _45_league = new league.League(_45_45_LEAGUE_CONF);
+        var oldGetPlayerRating = null;
         before(function(done) {
             this.timeout(30000);
+            oldGetPlayerRating = lichess.getPlayerRating;
+            lichess.getPlayerRating = function(name) {
+                return Q.fcall(function() {
+                    return 1500;
+                });
+            };
             _45_league.refreshCurrentRoundSchedules(function(err, pairings) {
                 _45_league.refreshRosters(function(err, teams) {
                     done();
                 });
             });
+        });
+        after(function() {
+            lichess.getPlayerRating = oldGetPlayerRating;
         });
         it("Testing refreshCurrentRoundSchedules()", function() {
             // Normally I would split this test out into multiples,
@@ -88,6 +99,7 @@ describe('league', function() {
             testPairings(_45_league.findPairing("lakinwecker", "osskjc"));
         });
         it("test getPairingDetails", function(done) {
+            this.timeout(5000);
             var promises = [];
             promises.push(_45_league.getPairingDetails({'name': "made-up"}).then(
                 function(details) {
@@ -510,32 +522,33 @@ describe('league', function() {
                 assert.equal(
                     message,
                     "Board 1 consists of... \n" +
-                    "\tPawnprecaution: (Rating: 2318; Team: Sac's on the Beach)\n" +
-                    "\tandyquibler: (Rating: 2311; Team: ¡No en-pasarán!)\n" +
-                    "\tAtrophied: (Rating: 2281; Team: Icy Tactics)\n" +
-                    "\tPitrinu: (Rating: 2276; Team: The Zugzwang Clan)\n" +
-                    "\tShammies: (Rating: 2263; Team: Magnus Opus)\n" +
-                    "\tMatuiss2: (Rating: 2254; Team: Sicilian Dragons)\n" +
-                    "\tSonata2: (Rating: 2134; Team: Highway Karjaking)\n" +
-                    "\tcyanfish: (Rating: 2108; Team: No Pawn Intended)\n" +
-                    "\tcrabbypat: (Rating: 2079; Team: Knights Who Say 'Nf3')\n" +
-                    "\tSjaart: (Rating: 2078; Team: All Knight Dance Party)\n" +
-                    "\tSuperVJ: (Rating: 2078; Team: Sac' Up)\n" +
-                    "\tDoganof: (Rating: 2073; Team: Promote to Pawn)\n" +
-                    "\ttheino: (Rating: 2072; Team: W.I.N.N.E.R.S.)\n" +
-                    "\tHyzer: (Rating: 2044; Team: Legalize Caruana)\n" +
-                    "\tBloodyfox: (Rating: 2023; Team: Team N/A)\n" +
-                    "\tecstaticbroccoli: (Rating: 2021; Team: Pawnbrokers)\n" +
-                    "\tsangan: (Rating: 2005; Team: It's a Blunderful Life)\n" +
-                    "\tSteiger07: (Rating: 1999; Team: The Stale Maids)\n" +
-                    "\teamonmont: (Rating: 1994; Team: Smack My Bishop)\n" +
-                    "\tmhavgar: (Rating: 1992; Team: Zugzwangers)\n" +
-                    "\tJyr: (Rating: 1976; Team: Disco Dancers)\n" +
-                    "\tPasternak: (Rating: 1967; Team: Chess Mates)\n" +
-                    "\tToddle: (Rating: 1965; Team: Lemons and Lines)\n" +
-                    "\tresonantpillow: (Rating: 1946; Team: Regicide)\n" +
-                    "\tKobol: (Rating: 1940; Team: Catch-22)\n" +
-                    "\tgnarlygoat: (Rating: 1931; Team: f8/Stay Knights)\n"
+                    "\tJyr: (Rating: 1500; Team: Disco Dancers)\n" +
+                    "\tandyquibler: (Rating: 1500; Team: ¡No en-pasarán!)\n" +
+                    "\tAtrophied: (Rating: 1500; Team: Icy Tactics)\n" +
+                    "\tPitrinu: (Rating: 1500; Team: The Zugzwang Clan)\n" +
+                    "\tShammies: (Rating: 1500; Team: Magnus Opus)\n" +
+                    "\tMatuiss2: (Rating: 1500; Team: Sicilian Dragons)\n" +
+                    "\tSuperVJ: (Rating: 1500; Team: Sac' Up)\n" +
+                    "\tcyanfish: (Rating: 1500; Team: No Pawn Intended)\n" +
+                    "\tSonata2: (Rating: 1500; Team: Highway Karjaking)\n" +
+                    "\tSjaart: (Rating: 1500; Team: All Knight Dance Party)\n" +
+                    "\tcrabbypat: (Rating: 1500; Team: Knights Who Say 'Nf3')\n" +
+                    "\tHyzer: (Rating: 1500; Team: Legalize Caruana)\n" +
+                    "\tBloodyfox: (Rating: 1500; Team: Team N/A)\n" +
+                    "\tPawnprecaution: (Rating: 1500; Team: Sac's on the Beach)\n" +
+                    "\tSteiger07: (Rating: 1500; Team: The Stale Maids)\n" +
+                    "\ttheino: (Rating: 1500; Team: W.I.N.N.E.R.S.)\n" +
+                    "\tecstaticbroccoli: (Rating: 1500; Team: Pawnbrokers)\n" +
+                    "\tmhavgar: (Rating: 1500; Team: Zugzwangers)\n" +
+                    "\tsangan: (Rating: 1500; Team: It's a Blunderful Life)\n" +
+                    "\tToddle: (Rating: 1500; Team: Lemons and Lines)\n" +
+                    "\teamonmont: (Rating: 1500; Team: Smack My Bishop)\n" +
+                    "\tKobol: (Rating: 1500; Team: Catch-22)\n" +
+                    "\tresonantpillow: (Rating: 1500; Team: Regicide)\n" +
+                    "\tgnarlygoat: (Rating: 1500; Team: f8/Stay Knights)\n" +
+                    "\tDoganof: (Rating: 1500; Team: Promote to Pawn)\n" +
+                    "\tPasternak: (Rating: 1500; Team: Chess Mates)\n"
+
                 );
             })
         });
@@ -544,12 +557,12 @@ describe('league', function() {
                 assert.equal(
                     message,
                     "The members of The Stale Maids are \n" +
-                    "\tBoard 1: Steiger07 (1999)\n" +
-                    "\tBoard 2: R-Mena (1832)\n" +
-                    "\tBoard 3: jmaltby (1772)\n" +
-                    "\tBoard 4: EsolcNeveton (1781)\n" +
-                    "\tBoard 5: lakinwecker (1631)\n" +
-                    "\tBoard 6: Hkivrak (1592)\n"
+                    "\tBoard 1: Steiger07 (1500)\n" +
+                    "\tBoard 2: R-Mena (1500)\n" +
+                    "\tBoard 3: jmaltby (1500)\n" +
+                    "\tBoard 4: EsolcNeveton (1500)\n" +
+                    "\tBoard 5: lakinwecker (1500)\n" +
+                    "\tBoard 6: Hkivrak (1500)\n"
                 );
             })
         });
