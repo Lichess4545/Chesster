@@ -66,6 +66,11 @@ league_attributes = {
     _lastUpdated: moment.utc(),
 
     //--------------------------------------------------------------------------
+    // Whether this is the first time through updating or not.
+    //--------------------------------------------------------------------------
+    _firstRosterUpdate: true,
+
+    //--------------------------------------------------------------------------
     // Canonicalize the username
     //--------------------------------------------------------------------------
     canonicalUsername: function(username) {
@@ -110,6 +115,10 @@ league_attributes = {
             'return-empty': true
         }
         var self = this;
+        var firstRosterUpdate = self._firstRosterUpdate;
+        if (self._firstRosterUpdate) {
+            self._firstRosterUpdate = false;
+        }
         spreadsheets.getRows(
             self.options.spreadsheet,
             query_options,
@@ -179,11 +188,10 @@ league_attributes = {
                 _.each(self._teams, function(team) {
                     _.each(team.roster, function(player) {
                         if (player && player.name) {
+                            if (firstRosterUpdate && player.rating) {
+                                lichess.setPlayerRating(player.name, player.rating);
+                            }
                             lichess.getPlayerRating(player.name, true).then(function(rating) {
-                                console.log("Updated {name} rating to {rating}".format({
-                                    name: player.name,
-                                    rating: rating
-                                }));
                                 player.rating = rating;
                                 self._playerRatingsLastUpdates[player.name] = moment.utc();
                             }, function(error) {
