@@ -278,6 +278,35 @@ function hears(options, callback) {
         }));
     });
 }
+DEFAULT_HEARS_OPTIONS = {
+    middleware: []
+};
+function on(options, callback) {
+    var self = this;
+    var options = _.extend({}, DEFAULT_HEARS_OPTIONS, options);
+    self.controller.hears(options.event, function(bot, message) {
+        return botExceptionHandler(bot, message, Q.fcall(function() {
+            message.player = users.getByNameOrID(message.user);
+            if (message.player) {
+                message.player.localTime = localTime;
+            }
+            return Q.all(
+                _.map(options.middleware, function(middleware) {
+                    return middleware(bot, message, self.config);
+                })
+            ).then(function() {
+                return callback(bot, message);
+            }, function(error) {
+                if(error instanceof StopControllerError) {
+                    console.error("Middleware asked to not process controller callback: " + JSON.stringify(error));
+                } else {
+                    throw error;
+                }
+            });
+
+        }));
+    });
+}
 
 
 DEFAULT_BOT_OPTIONS = {
@@ -311,6 +340,7 @@ function Bot(options) {
 
     });
     self.hears = hears;
+    self.on = on;
 }
 
 module.exports.users = users;

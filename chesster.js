@@ -434,7 +434,8 @@ function(bot, message) {
 
 /* welcome */
 
-chesster.controller.on('user_channel_join', function(bot, message) {
+chesster.on({event: 'user_channel_join'},
+function(bot, message) {
     bot_exception_handler(bot, message, function(){
         if(message.channel == channels.getId("general")){
             bot.reply(message, "Everyone, please welcome the newest member of the " 
@@ -600,7 +601,7 @@ function scheduling_reply_cant_find_user(bot, message) {
 }
 
 // Scheduling will occur on any message
-chesster.controller.on('ambient', function(bot, message) {
+chesster.on({event: 'ambient'}, function(bot, message) {
     bot_exception_handler(bot, message, function(){
         var channel = channels.byId[message.channel];
         if (!channel) {
@@ -701,7 +702,7 @@ chesster.controller.on('ambient', function(bot, message) {
 /* results parsing */
 
 // results processing will occur on any message
-chesster.controller.on('ambient', function(bot, message) {
+chesster.on({event: 'ambient'}, function(bot, message) {
     bot_exception_handler(bot, message, function(){
         var channel = channels.byId[message.channel];
         if (!channel) {
@@ -995,7 +996,7 @@ function process_game_details(bot, message, details, options){
 }
 
 // gamelink processing will occur on any message
-chesster.controller.on('ambient', function(bot, message) {
+chesster.on({event: 'ambient'}, function(bot, message) {
     bot_exception_handler(bot, message, function(){
         var channel = channels.byId[message.channel];
         if (!channel) {
