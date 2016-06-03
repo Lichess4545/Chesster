@@ -395,6 +395,9 @@ function prepareSummonModsMessage(){
         users.getIdString("mrlegilimens") + ", " +
         users.getIdString("petruchio") + ", " +
         users.getIdString("seb32") + ", " +
+        users.getIdString("angborxley") + ", " +
+        users.getIdString("tnan123") + ", " +
+        users.getIdString("prune2000") + ", " +
         users.getIdString("theino");
 }
 
@@ -414,7 +417,7 @@ function prepareSummonLoneWolfModsMessage(){
  * works fine.
  */
 function prepareModsMessage(){
-    return "Mods: endrawes0, mkoga, mrlegilimens, petruchio, seb32, t\u200Bheino";
+    return "Mods: endrawes0, mkoga, mrlegilimens, petruchio, seb32, prune2000, angborxley, tnan123, t\u200Bheino";
 }
 
 function prepareLoneWolfModsMessage(){
