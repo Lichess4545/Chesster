@@ -417,7 +417,7 @@ function prepareSummonLoneWolfModsMessage(){
  * works fine.
  */
 function prepareModsMessage(){
-    return "Mods: endrawes0, mkoga, mrlegilimens, petruchio, seb32, prune2000, angborxley, prune2000, t\u200Bheino";
+    return "Mods: endrawes0, mkoga, mrlegilimens, petruchio, seb32, prune2000, angborxley, tnan123, t\u200Bheino";
 }
 
 function prepareLoneWolfModsMessage(){
