@@ -11,9 +11,9 @@ var _45_45_LEAGUE_CONF = {
     "spreadsheet": {
         "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
         "serviceAccountAuth": undefined,
-        "schedule_colname": "time (mm/dd @ hh:mm*)"
+        "scheduleColname": "time (mm/dd @ hh:mm*)"
     },
-    "moderators": ['endrawes0', 't\u200Bheino', 'mrlegilimens'],
+    "moderators": ['endrawes0', 'theino', 'mrlegilimens'],
     "channels": [],
     "links": {
         "rules": "",
@@ -113,7 +113,7 @@ describe('league', function() {
                     assert.equal(details.opponent, "osskjc");
                     assert.equal(details.color, "white");
                     assert.equal(details.rating > 0, true);
-                    assert.equal(details.date.format("YYYY-MM-DD HH:mm"), "2016-04-25 10:30");
+                    assert.equal(details.date.format("YYYY-MM-DD HH:mm"), "2016-06-07 15:00");
                 }
             ));
             promises.push(_45_league.getPairingDetails({'name': "jughandle10"}).then(
@@ -572,7 +572,7 @@ describe('league', function() {
             return _45_league.formatModsResponse().then(function(message) {
                 assert.equal(
                     message,
-                    "45+45 mods: endrawes0, t\u200Bheino, mrlegilimens"
+                    "45+45 mods: e\u200Bndrawes0, t\u200Bheino, m\u200Brlegilimens"
                 );
             })
         });
@@ -583,7 +583,7 @@ describe('league', function() {
             return _45_league.formatSummonModsResponse().then(function(message) {
                 assert.equal(
                     message,
-                    "45+45 mods: @<endrawes0>, @<t\u200Bheino>, @<mrlegilimens>"
+                    "45+45 mods: @<endrawes0>, @<theino>, @<mrlegilimens>"
                 );
             })
         });

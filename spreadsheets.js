@@ -4,10 +4,10 @@ var GoogleSpreadsheet = require("google-spreadsheet");
 var _ = require("underscore");
 
 var EXTREMA_DEFAULTS = {
-    'iso_weekday': 2,
+    'isoWeekday': 2,
     'hour': 0,
     'minute': 0,
-    'warning_hours': 1,
+    'warningHours': 1,
 };
 var BASE_DATE_FORMATS = [
     "YYYY-MM-DD MM DD",
@@ -219,8 +219,8 @@ function get_possible_date_strings(date_string, extrema) {
 // Parameters:
 //     input_string: the string to try and parse 
 //     options: options for both this method and are passed along to 
-//         get_round_extrema options
-//     options.warning_hours: an integer specifying how many hours
+//         getRoundExtrema options
+//     options.warningHours: an integer specifying how many hours
 //         before the round end that we want to warn people about.
 function parse_scheduling(input_string, options) {
     var parts = get_tokens_scheduling(input_string);
@@ -233,7 +233,7 @@ function parse_scheduling(input_string, options) {
 
     // Now build up some possible strings and try a bunch of patterns
     // to find a date in our range.
-    var extrema = get_round_extrema(options);
+    var extrema = getRoundExtrema(options);
     var date_strings = get_possible_date_strings(parts.slice(2).join(" "), extrema);
 
     var valid_in_bounds_dates = [];
@@ -301,38 +301,38 @@ function parse_scheduling(input_string, options) {
 // and end datetime for the round.
 //
 // Options:
-//     extrema.reference_date: If this is provided it the round is guaranteed
+//     extrema.referenceDate: If this is provided it the round is guaranteed
 //       to include this date. Mostly used for tests.
-//     extrema.iso_weekday: The weekday after which games cannot be scheduled.
+//     extrema.isoWeekday: The weekday after which games cannot be scheduled.
 //     extrema.hour: The hour after which games cannot be scheduled.
 //     extrema.hour: The weekday on which the pairings are released.
-//     extrema.warning_hours: The amount of hours before the final scheduling
+//     extrema.warningHours: The amount of hours before the final scheduling
 //       cutoff during which we will warn users they are cutting it close.
-function get_round_extrema(options) {
+function getRoundExtrema(options) {
     options = options || {};
     extrema = {};
     _.extend(extrema, EXTREMA_DEFAULTS, options.extrema);
 
-    // Get the reference date, which is either today or the reference_date
+    // Get the reference date, which is either today or the referenceDate
     // from the options
-    if (!extrema.reference_date) {
+    if (!extrema.referenceDate) {
         round_start = moment.utc();
     } else {
-        round_start = moment(extrema.reference_date).clone();
+        round_start = moment(extrema.referenceDate).clone();
     }
-    reference_date = round_start.clone()
+    referenceDate = round_start.clone()
     // Make it the right time of day.
     round_start.hour(extrema.hour).minute(extrema.minute).second(0);
 
     // Find the first day that comes before our reference date
     // which is on th same weekday as the round starts.
-    while (round_start.isoWeekday() != extrema.iso_weekday || round_start.isAfter(reference_date)) {
+    while (round_start.isoWeekday() != extrema.isoWeekday || round_start.isAfter(referenceDate)) {
         round_start.subtract(1, 'days');
     }
 
     // The end is always 7 days in advance
     var round_end = round_start.clone().add(7, 'days');
-    var warning_end = round_end.clone().subtract(extrema.warning_hours, 'hours');
+    var warning_end = round_end.clone().subtract(extrema.warningHours, 'hours');
     return {
         'start': round_start,
         'end': round_end,
@@ -431,7 +431,7 @@ function getPairingRows(spreadsheetConfig, options, callback) {
 
 // Finds the given pairing in one of the team spreadsheets
 // callback gets three values: error, row, whether the pairing is reversed or not.
-function find_pairing(spreadsheetConfig, white, black, callback) {
+function findPairing(spreadsheetConfig, white, black, callback) {
     var options = {
         'min-col': 1,
         'max-col': 7
@@ -474,17 +474,17 @@ function find_pairing(spreadsheetConfig, white, black, callback) {
 }
 
 // Update the schedule
-function update_schedule(spreadsheetConfig, colname, format, schedule, callback) {
+function updateSchedule(spreadsheetConfig, schedulingConfig, schedule, callback) {
     var white = schedule.white;
     var black = schedule.black;
     var date = schedule.date;
-    find_pairing(spreadsheetConfig, white, black, function(err, row, reversed) {
+    findPairing(spreadsheetConfig, white, black, function(err, row, reversed) {
         if (err) {
             return callback(err);
         }
         // This portion is specific to the team tournament
-        var schedule_cell = row[colname];
-        schedule_cell.value = date.format(format);
+        var schedule_cell = row[spreadsheetConfig.scheduleColname];
+        schedule_cell.value = date.format(schedulingConfig.format);
 
         schedule_cell.save(function(err) {
             return callback(err, reversed);
@@ -549,7 +549,7 @@ function update_result(spreadsheetConfig, colname, result, callback){
     var result_string = result.result;
     var gamelink_id = result.gamelink_id;
 
-    find_pairing(
+    findPairing(
         spreadsheetConfig, 
         white.name, 
         black.name, 
@@ -636,7 +636,7 @@ function fetch_pairing_gamelink(spreadsheetConfig, colname, result, callback){
     var black = result.black;
 
     //given a pairing, white and black, get the row in the spreadsheet
-    find_pairing(
+    findPairing(
         spreadsheetConfig,
         white.name,
         black.name,
@@ -679,12 +679,12 @@ function parse_hyperlink(hyperlink) {
 
 module.exports.getRows = getRows;
 module.exports.getPairingRows = getPairingRows;
-module.exports.get_round_extrema = get_round_extrema;
+module.exports.getRoundExtrema = getRoundExtrema;
 module.exports.parse_scheduling = parse_scheduling;
 module.exports.parse_result = parse_result;
 module.exports.parse_gamelink = parse_gamelink;
 module.exports.parse_hyperlink = parse_hyperlink;
-module.exports.update_schedule = update_schedule;
+module.exports.updateSchedule = updateSchedule;
 module.exports.update_result = update_result;
 module.exports.fetch_pairing_gamelink = fetch_pairing_gamelink;
 module.exports.ScheduleParsingError = ScheduleParsingError;

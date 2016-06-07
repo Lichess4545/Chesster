@@ -28,7 +28,7 @@ LEAGUE_DEFAULTS = {
             "client_email": "",
             "private_key": ""
         },
-        "schedule_colname": ""
+        "scheduleColname": ""
     },
     "channels": [],
     "links": {
@@ -233,7 +233,7 @@ league_attributes = {
                     } else {
                         var link = {'text': row['result'].value};
                     }
-                    var date_string = row[self.options.spreadsheet.schedule_colname].value || '';
+                    var date_string = row[self.options.spreadsheet.scheduleColname].value || '';
                     date_string = date_string.trim()
                     var date = moment.utc(
                         moment.utc().year() + "/" + date_string,
@@ -632,7 +632,7 @@ league_attributes = {
     'formatModsResponse': function() {
         var self = this;
         moderators = _.map(self.options.moderators, function(name) {
-            return name;
+            return name[0] + "\u200B" + name.slice(1);
         });
         return Q.fcall(function() {
             return ("{0} mods: " + moderators.join(", ")).format(self.options.name);

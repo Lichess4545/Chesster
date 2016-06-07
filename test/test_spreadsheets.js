@@ -8,21 +8,21 @@ var fmt = "YYYY-MM-DDTHH:mm:ssZZ";
 
 describe('scheduling', function() {
     //--------------------------------------------------------------------------
-    describe('#get_round_extrema()', function () {
+    describe('#getRoundExtrema()', function () {
         var options = {
             "extrema": {
-                "iso_weekday": 1,
+                "isoWeekday": 1,
                 "hour": 11,
                 "minute": 0,
             }
         };
         it(".isoWeekday() of the bounds should always return the value passed in", function() {
-            var bounds = spreadsheets.get_round_extrema(options);
+            var bounds = spreadsheets.getRoundExtrema(options);
             assert.equal(1, bounds.start.isoWeekday());
             assert.equal(1, bounds.end.isoWeekday());
 
-            options.extrema.iso_weekday = 2;
-            bounds = spreadsheets.get_round_extrema(options);
+            options.extrema.isoWeekday = 2;
+            bounds = spreadsheets.getRoundExtrema(options);
             assert.equal(2, bounds.start.isoWeekday());
             assert.equal(2, bounds.end.isoWeekday());
             var now = moment.utc();
@@ -30,40 +30,40 @@ describe('scheduling', function() {
             assert.equal(true, now.isBefore(bounds.end));
         });
         it("The bounds respects the passed in extrema and reference date", function() {
-            options.extrema.iso_weekday = 1;
-            options.extrema.reference_date = moment.utc("2016-04-07");
-            var bounds = spreadsheets.get_round_extrema(options);
+            options.extrema.isoWeekday = 1;
+            options.extrema.referenceDate = moment.utc("2016-04-07");
+            var bounds = spreadsheets.getRoundExtrema(options);
             assert.equal(bounds.start.format(fmt), "2016-04-04T11:00:00+0000")
             assert.equal(bounds.end.format(fmt), "2016-04-11T11:00:00+0000")
         });
         it("The round extrema works on day when the rounds change, durng the period leading up to the cutoff", function() {
-            options.extrema.iso_weekday = 1;
-            options.extrema.reference_date = moment.utc("2016-05-02T03:55:00");
-            var bounds = spreadsheets.get_round_extrema(options);
+            options.extrema.isoWeekday = 1;
+            options.extrema.referenceDate = moment.utc("2016-05-02T03:55:00");
+            var bounds = spreadsheets.getRoundExtrema(options);
             assert.equal(bounds.start.format(fmt), "2016-04-25T11:00:00+0000")
             assert.equal(bounds.end.format(fmt), "2016-05-02T11:00:00+0000")
-            options.extrema.reference_date = moment.utc("2016-05-02T10:59:59");
-            bounds = spreadsheets.get_round_extrema(options);
+            options.extrema.referenceDate = moment.utc("2016-05-02T10:59:59");
+            bounds = spreadsheets.getRoundExtrema(options);
             assert.equal(bounds.start.format(fmt), "2016-04-25T11:00:00+0000")
             assert.equal(bounds.end.format(fmt), "2016-05-02T11:00:00+0000")
         });
         it("The round extrema works on day when the rounds change, during the period after up to the cutoff", function() {
-            options.extrema.iso_weekday = 1;
-            options.extrema.reference_date = moment.utc("2016-05-02T12:55:00");
-            var bounds = spreadsheets.get_round_extrema(options);
+            options.extrema.isoWeekday = 1;
+            options.extrema.referenceDate = moment.utc("2016-05-02T12:55:00");
+            var bounds = spreadsheets.getRoundExtrema(options);
             assert.equal(bounds.start.format(fmt), "2016-05-02T11:00:00+0000")
             assert.equal(bounds.end.format(fmt), "2016-05-09T11:00:00+0000")
 
-            options.extrema.reference_date = moment.utc("2016-05-02T11:00:00");
-            bounds = spreadsheets.get_round_extrema(options);
+            options.extrema.referenceDate = moment.utc("2016-05-02T11:00:00");
+            bounds = spreadsheets.getRoundExtrema(options);
             assert.equal(bounds.start.format(fmt), "2016-05-02T11:00:00+0000")
             assert.equal(bounds.end.format(fmt), "2016-05-09T11:00:00+0000")
         });
-        it("Test warning_hours", function() {
-            options.extrema.iso_weekday = 1;
-            options.extrema.reference_date = moment.utc("2016-04-07");
-            options.extrema.warning_hours = 1;
-            var bounds = spreadsheets.get_round_extrema(options);
+        it("Test warningHours", function() {
+            options.extrema.isoWeekday = 1;
+            options.extrema.referenceDate = moment.utc("2016-04-07");
+            options.extrema.warningHours = 1;
+            var bounds = spreadsheets.getRoundExtrema(options);
             assert.equal(bounds.start.format(fmt), "2016-04-04T11:00:00+0000");
             assert.equal(bounds.end.format(fmt), "2016-04-11T11:00:00+0000");
             assert.equal(bounds.warning.format(fmt), "2016-04-11T10:00:00+0000");
@@ -73,10 +73,10 @@ describe('scheduling', function() {
     describe('#parse_scheduling()', function () {
         var options = {
             "extrema": {
-                "iso_weekday": 1,
+                "isoWeekday": 1,
                 "hour": 22,
                 "minute": 0,
-                "warning_hours": 1
+                "warningHours": 1
             }
         };
         function test_parse_scheduling(string, expected)  {
@@ -86,13 +86,13 @@ describe('scheduling', function() {
             assert.equal(results.black, expected.black);
         }
         it("Test team-scheduling messages", function() {
-            options.extrema.reference_date = moment.utc("2016-04-15");
+            options.extrema.referenceDate = moment.utc("2016-04-15");
 
             // TODO: put a bunch of the team scheduling message in here.
         });
         it("Test lonewolf-scheduling messages", function() {
             this.timeout(3000);
-            //options.extrema.reference_date = moment.utc("2016-04-15");
+            //options.extrema.referenceDate = moment.utc("2016-04-15");
             test_parse_scheduling(
                 "@autotelic v @explodingllama 4/16 @ 0900 GMT", {
                     white: "autotelic",
@@ -382,7 +382,7 @@ describe('scheduling', function() {
             );
         });
         it("Test lonewolf-scheduling messages #2", function() {
-            options.extrema.reference_date = moment.utc("2016-04-28");
+            options.extrema.referenceDate = moment.utc("2016-04-28");
             test_parse_scheduling(
                 "steiger07 vs matuiss2 Sun 01.05.2016 @ 16:00 GMT",
                 {
@@ -435,8 +435,8 @@ describe('scheduling', function() {
         it("Test lonewolf-scheduling messages that are out of bounds", function() {
             var options = {
                 "extrema": {
-                    reference_date: moment.utc("2016-04-15"),
-                    "iso_weekday": 1,
+                    referenceDate: moment.utc("2016-04-15"),
+                    "isoWeekday": 1,
                     "hour": 22,
                     "minute": 0,
                 }
@@ -450,8 +450,8 @@ describe('scheduling', function() {
         it("Test lonewolf-scheduling messages that are out of bounds", function() {
             var options = {
                 "extrema": {
-                    "reference_date": moment.utc("2016-04-15"),
-                    "iso_weekday": 1,
+                    "referenceDate": moment.utc("2016-04-15"),
+                    "isoWeekday": 1,
                     "hour": 22,
                     "minute": 0,
                 }
@@ -471,11 +471,11 @@ describe('scheduling', function() {
         it("Test lonewolf-scheduling messages that are in the warning time-period", function() {
             var options = {
                 "extrema": {
-                    "reference_date": moment.utc("2016-04-15"),
-                    "iso_weekday": 1,
+                    "referenceDate": moment.utc("2016-04-15"),
+                    "isoWeekday": 1,
                     "hour": 22,
                     "minute": 0,
-                    "warning_hours": 1
+                    "warningHours": 1
                 }
             };
             var results = spreadsheets.parse_scheduling(
@@ -559,7 +559,7 @@ describe('gamelinks', function(){
 describe('results', function(){
     describe('#parse_result', function(){
         it("Test result format parsing.", function() {
-            //options.extrema.reference_date = moment.utc("2016-04-15");
+            //options.extrema.referenceDate = moment.utc("2016-04-15");
             function test_parse_result(string, expected)  {
                 var result = spreadsheets.parse_result(string);
                 assert.equal(result.result, expected.result);

@@ -23,7 +23,7 @@ var config = {
                 "mrlegilimens",
                 "petruchio",
                 "seb32",
-                "t\u200Bheino",
+                "theino",
                 "tnan123",
                 "angborxley",
                 "prune2000",
@@ -34,19 +34,20 @@ var config = {
                     "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
                     "private_key": private_key,
                 },
-                "schedule_colname": "time (mm/dd @ hh:mm*)",
-                "results_colname": "result"
+                "scheduleColname": "time (mm/dd @ hh:mm*)",
+                "resultsColname": "result"
             },
             "scheduling": {
                 "extrema": {
-                    "iso_weekday": 1,
+                    "isoWeekday": 1,
                     "hour": 11,
                     "minute": 0,
-                    "warning_hours": 1
+                    "warningHours": 1
                 },
-                "warning_message": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
-                "late_message": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 12:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
-                "format": "MM/DD @ HH:mm"
+                "warningMessage": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
+                "lateMessage": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 12:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
+                "format": "MM/DD @ HH:mm",
+                "channel": "unstable_bot"
             },
             "links": {
                 "rules": "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations",
@@ -78,8 +79,20 @@ var config = {
                     "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
                     "private_key": private_key,
                 },
-                "schedule_colname": "game scheduled (in gmt)",
-                "results_colname": "result"
+                "scheduleColname": "game scheduled (in gmt)",
+                "resultsColname": "result"
+            },
+            "scheduling": {
+                "extrema": {
+                    "isoWeekday": 1,
+                    "hour": 22,
+                    "minute": 0,
+                    "warningHours": 1
+                },
+                "warningMessage": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
+                "lateMessage": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
+                "format": "MM/DD HH:mm",
+                "channel": "unstable_bot-lonewolf"
             },
             "links": {
                 "rules": "https://docs.google.com/document/d/105gEd79MdUVIt4pW_T_BsX-TvSyNB1lvNJ9p73k9gFo/edit",
@@ -103,14 +116,15 @@ var config = {
             "key": "1xBofd1bFIB4OBUOErWqFWTjTc0dFuTf6WlHxZf3FbIU",
             "colname": "game scheduled (in gmt)",
             "extrema": {
-                "iso_weekday": 1,
+                "isoWeekday": 1,
                 "hour": 22,
                 "minute": 0,
-                "warning_hours": 1
+                "warningHours": 1
             },
-            "warning_message": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
-            "late_message": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
-            "format": "MM/DD HH:mm"
+            "warningMessage": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
+            "lateMessage": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
+            "format": "MM/DD HH:mm",
+            "channel": "unstable_bot-lonewolf"
         },
     },
     "results": {
