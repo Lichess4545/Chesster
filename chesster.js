@@ -211,55 +211,7 @@ function prepareSummonLoneWolfModsMessage(){
         users.getIdString("theino");
 }
 
-/*
- * The funky character in theinos name is a zero-width-space:
- * https://en.wikipedia.org/wiki/Zero-width_space
- *
- * It prevents slack from notifying him, but actually doesn't get
- * copy/pasted so if someone copies his name and then pastes it, it
- * works fine.
- */
-function prepareModsMessage(){
-    return "Mods: endrawes0, mkoga, mrlegilimens, petruchio, seb32, t\u200Bheino";
-}
-
-function prepareLoneWolfModsMessage(){
-    return "LoneWolf mods: endrawes0, lakinwecker, t\u200Bheino";
-}
-
-chesster.controller.hears([
-    "^mods$",
-    "^mods (.*)$",
-    "^(.*) mods (.*)$",
-    "^(.*) mods$"
-], [
-    'direct_mention', 
-    'direct_message'
-], function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        var args = message.match.slice(1).join(" ");
-        var results = fuzzy.match(message, ["list", "summon"], channels.byId, args);
-        var command = results.command;
-        var target = results.target;
-        if (!target) {
-            console.log("Error determining which tournament to target for mods command");
-        } else if (target == "team") {
-            if (command == "list") {
-                bot.reply(message, prepareModsMessage());
-            } else if (command == "summon") {
-                bot.reply(message, prepareSummonModsMessage());
-            }
-        } else if (target == "lonewolf") {
-            if (command == "list") {
-                bot.reply(message, prepareLoneWolfModsMessage());
-            } else if (command == "summon") {
-                bot.reply(message, prepareSummonLoneWolfModsMessage());
-            }
-        } else {
-            console.log("Unable to determine target");
-        }
-    });
-});
+leagueResponse(['mods'], 'formatModsResponse');
 
 /* help */
 

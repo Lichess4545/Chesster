@@ -12,6 +12,7 @@ var _45_45_LEAGUE_CONF = {
         "serviceAccountAuth": undefined,
         "schedule_colname": "time (mm/dd @ hh:mm*)"
     },
+    "moderators": ['endrawes0', 'theino', 'mrlegilimens'],
     "channels": [],
     "links": {
         "rules": "",
@@ -563,6 +564,14 @@ describe('league', function() {
                     "\tBoard 4: EsolcNeveton (1500)\n" +
                     "\tBoard 5: lakinwecker (1500)\n" +
                     "\tBoard 6: Hkivrak (1500)\n"
+                );
+            })
+        });
+        it("test formatModsResponse", function() {
+            return _45_league.formatModsResponse().then(function(message) {
+                assert.equal(
+                    message,
+                    "45+45 mods: endrawes0, theino, mrlegilimens"
                 );
             })
         });

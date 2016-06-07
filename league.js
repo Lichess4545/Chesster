@@ -11,6 +11,8 @@ var moment = require("moment");
 var format = require('string-format')
 format.extend(String.prototype)
 
+var slack = require('./slack.js')
+
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
 var MINUTES = 60 * SECONDS;
@@ -611,6 +613,16 @@ league_attributes = {
                 message += "\tBoard " + (index+1) + ": " + member.name + " (" + member.rating + ")\n";
             });
             return message;
+        });
+    },
+    //--------------------------------------------------------------------------
+    // Format the mods message
+    //--------------------------------------------------------------------------
+    'formatModsResponse': function() {
+        // TODO: figure out how to ensure that theino doesn't get pinged everytime
+        var self = this;
+        return Q.fcall(function() {
+            return ("{0} mods: " + self.options.moderators.join(", ")).format(self.options.name);
         });
     }
 };
