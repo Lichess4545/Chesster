@@ -146,6 +146,18 @@ function localTime(datetime) {
     return datetime.utcOffset(this.tz_offset / 60);
 }
 
+//------------------------------------------------------------------------------
+// A helper to determine if the user is a moderator
+//------------------------------------------------------------------------------
+function isModerator(message) {
+    return function() {
+        if (!message.league) {
+            throw new Error("isModerator requires a league to be attached to the message. Use the withLeague middleware");
+        }
+        return message.league.isModerator(this.name);
+    }
+}
+
 
 //------------------------------------------------------------------------------
 // Various middleware
@@ -158,10 +170,7 @@ function requiresModerator(bot, message, config) {
         if (!message.league) {
             throw new Error("Not in a league context");
         }
-        var item = _.find(message.league.options.moderators, function(moderator) {
-            return message.player.name == moderator;
-        });
-        if (typeof item == 'undefined') {
+        if (!message.player.isModerator()) {
             bot.reply(message, "You are not a moderator of the {name} league. Your temerity has been logged.".format({
                 name: message.league.options.name
             }));
@@ -261,6 +270,7 @@ function hears(options, callback) {
                 throw new Error("Couldn't find a valid user??");
             }
             message.player.localTime = localTime;
+            message.player.isModerator = isModerator(message);
             return Q.all(
                 _.map(options.middleware, function(middleware) {
                     return middleware(bot, message, self.config);
@@ -289,6 +299,7 @@ function on(options, callback) {
             message.player = users.getByNameOrID(message.user);
             if (message.player) {
                 message.player.localTime = localTime;
+                message.player.isModerator = isModerator(message);
             }
             return Q.all(
                 _.map(options.middleware, function(middleware) {

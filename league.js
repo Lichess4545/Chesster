@@ -281,6 +281,17 @@ league_attributes = {
         return possibilities;
     },
     //--------------------------------------------------------------------------
+    // Returns whether someone is a moderator or not.
+    //--------------------------------------------------------------------------
+    'isModerator': function(name) {
+        var self = this;
+        console.log(name);
+        return _.some(self.options.moderators, function(moderator) {
+            console.log(moderator);
+            return name == moderator;
+        });
+    },
+    //--------------------------------------------------------------------------
     // Prepare a debug message for this league
     //--------------------------------------------------------------------------
     'formatDebugResponse': function() {
