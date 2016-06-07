@@ -571,7 +571,7 @@ describe('league', function() {
             return _45_league.formatModsResponse().then(function(message) {
                 assert.equal(
                     message,
-                    "45+45 mods: endrawes0, theino, mrlegilimens"
+                    "45+45 mods: e\u200Bndrawes0, t\u200Bheino, m\u200Brlegilimens"
                 );
             })
         });

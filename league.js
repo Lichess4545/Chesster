@@ -621,8 +621,11 @@ league_attributes = {
     'formatModsResponse': function() {
         // TODO: figure out how to ensure that theino doesn't get pinged everytime
         var self = this;
+        moderators = _.map(self.options.moderators, function(name) {
+            return name[0] + "\u200B" + name.slice(1);
+        });
         return Q.fcall(function() {
-            return ("{0} mods: " + self.options.moderators.join(", ")).format(self.options.name);
+            return ("{0} mods: " + moderators.join(", ")).format(self.options.name);
         });
     }
 };
