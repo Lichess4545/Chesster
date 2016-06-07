@@ -285,9 +285,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'isModerator': function(name) {
         var self = this;
-        console.log(name);
         return _.some(self.options.moderators, function(moderator) {
-            console.log(moderator);
             return name == moderator;
         });
     },

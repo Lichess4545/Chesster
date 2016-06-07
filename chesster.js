@@ -521,7 +521,6 @@ function schedulingReplyScheduled(bot, message, results, white, black) {
 // Your game is out of bounds
 function schedulingReplyTooLate(bot, message, schedulingOptions) {
     var user = "<@"+message.user+">";
-    console.log(schedulingOptions);
     bot.reply(message, ":x: " + user + " " + schedulingOptions.lateMessage);
 }
 
@@ -595,7 +594,6 @@ function(bot, message) {
         references_slack_users = true;
     }
 
-    console.log(results);
     // Step 3. attempt to update the spreadsheet
     spreadsheets.updateSchedule(
         spreadsheetOptions,

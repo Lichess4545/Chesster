@@ -47,7 +47,7 @@ var config = {
                 "warningMessage": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
                 "lateMessage": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 12:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
                 "format": "MM/DD @ HH:mm",
-                "channel": "unstable_bot"
+                "channel": "team-scheduling"
             },
             "links": {
                 "rules": "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations",
@@ -92,7 +92,7 @@ var config = {
                 "warningMessage": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
                 "lateMessage": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
                 "format": "MM/DD HH:mm",
-                "channel": "unstable_bot-lonewolf"
+                "channel": "lonewolf-scheduling"
             },
             "links": {
                 "rules": "https://docs.google.com/document/d/105gEd79MdUVIt4pW_T_BsX-TvSyNB1lvNJ9p73k9gFo/edit",
