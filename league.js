@@ -619,10 +619,21 @@ league_attributes = {
     // Format the mods message
     //--------------------------------------------------------------------------
     'formatModsResponse': function() {
-        // TODO: figure out how to ensure that theino doesn't get pinged everytime
         var self = this;
         moderators = _.map(self.options.moderators, function(name) {
-            return name[0] + "\u200B" + name.slice(1);
+            return name;
+        });
+        return Q.fcall(function() {
+            return ("{0} mods: " + moderators.join(", ")).format(self.options.name);
+        });
+    },
+    //--------------------------------------------------------------------------
+    // Format the summon mods message
+    //--------------------------------------------------------------------------
+    'formatSummonModsResponse': function() {
+        var self = this;
+        moderators = _.map(self.options.moderators, function(name) {
+            return slack.users.getIdString(name);
         });
         return Q.fcall(function() {
             return ("{0} mods: " + moderators.join(", ")).format(self.options.name);

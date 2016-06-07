@@ -194,23 +194,7 @@ function(bot,message) {
 
 /* mods */
 
-function prepareSummonModsMessage(){
-    return "Summoning mods:" + 
-        users.getIdString("endrawes0") + ", " +
-        users.getIdString("mkoga") + ", " +
-        users.getIdString("mrlegilimens") + ", " +
-        users.getIdString("petruchio") + ", " +
-        users.getIdString("seb32") + ", " +
-        users.getIdString("theino");
-}
-
-function prepareSummonLoneWolfModsMessage(){
-    return "Summoning LoneWolf mods:" + 
-        users.getIdString("endrawes0") + ", " +
-        users.getIdString("lakinwecker") + ", " +
-        users.getIdString("theino");
-}
-
+leagueResponse(['summon mods'], 'formatSummonModsResponse');
 leagueResponse(['mods'], 'formatModsResponse');
 
 /* help */

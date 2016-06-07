@@ -4,6 +4,7 @@ var _ = require("underscore");
 var moment = require("moment");
 var league = require('../league');
 var lichess = require('../lichess');
+var slack = require('../slack');
 
 var _45_45_LEAGUE_CONF = {
     "name": "45+45",
@@ -12,7 +13,7 @@ var _45_45_LEAGUE_CONF = {
         "serviceAccountAuth": undefined,
         "schedule_colname": "time (mm/dd @ hh:mm*)"
     },
-    "moderators": ['endrawes0', 'theino', 'mrlegilimens'],
+    "moderators": ['endrawes0', 't\u200Bheino', 'mrlegilimens'],
     "channels": [],
     "links": {
         "rules": "",
@@ -571,7 +572,18 @@ describe('league', function() {
             return _45_league.formatModsResponse().then(function(message) {
                 assert.equal(
                     message,
-                    "45+45 mods: e\u200Bndrawes0, t\u200Bheino, m\u200Brlegilimens"
+                    "45+45 mods: endrawes0, t\u200Bheino, mrlegilimens"
+                );
+            })
+        });
+        it("test formatSummonModsResponse", function() {
+            slack.users.getIdString = function(name) {
+                return "@<" + name + ">";
+            }
+            return _45_league.formatSummonModsResponse().then(function(message) {
+                assert.equal(
+                    message,
+                    "45+45 mods: @<endrawes0>, @<t\u200Bheino>, @<mrlegilimens>"
                 );
             })
         });

@@ -23,9 +23,10 @@ var config = {
                 "mrlegilimens",
                 "petruchio",
                 "seb32",
-                "theino",
+                "t\u200Bheino",
                 "tnan123",
                 "angborxley",
+                "prune2000",
             ],
             "spreadsheet": {
                 "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
