@@ -69,6 +69,7 @@ function rank_choices(searchString, targets, includeDistance) {
     return findBestMatches(results, includeDistance);
 }
 
+// TODO: I don't believe this is used anymore, if so rip it out
 function match(message, commands, channels, arg_string) {
     var command = commands[0];
     var target = "general";
