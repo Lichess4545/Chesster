@@ -808,10 +808,10 @@ function validateGameDetails(details, options){
         //the link is too old or too new
         var extrema = spreadsheets.getRoundExtrema(options);
         var game_start = moment.utc(details.timestamp);
-        /*if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
+        if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
             result.valid = false;
             result.reason = "the game was not played in the current round.";
-        }*/
+        }
     }
     return result;
 }
