@@ -37,6 +37,24 @@ var config = {
                 "scheduleColname": "time (mm/dd @ hh:mm*)",
                 "resultsColname": "result"
             },
+            "results": {
+                "channel": "team-results"
+            },
+            "gamelinks": {
+                "channel": "team-gamelinks",
+                "clock": {
+                    "initial": 45,
+                    "increment": 45
+                },
+                "rated": true,
+                "variant" : "standard",
+                "extrema": {
+                    "iso_weekday": 1,
+                    "hour": 11,
+                    "minute": 0,
+                    "warning_hours": 1
+                }
+            },
             "scheduling": {
                 "extrema": {
                     "isoWeekday": 1,
@@ -81,6 +99,25 @@ var config = {
                 },
                 "scheduleColname": "game scheduled (in gmt)",
                 "resultsColname": "result"
+            },
+            "results": {
+                "channel": "lonewolf-results"
+            },
+            "gamelinks": {
+                "channel": "lonewolf-gamelinks",
+                "clock": {
+                    "initial": 30,
+                    "increment": 30
+                },
+                "rated": true,
+                "variant" : "standard",
+                "extrema": {
+                    "iso_weekday": 1,
+                    "hour": 22,
+                    "minute": 0,
+                    "warning_hours": 1
+                }
+
             },
             "scheduling": {
                 "extrema": {

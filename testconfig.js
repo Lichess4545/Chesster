@@ -13,5 +13,9 @@ config["leagues"]["lonewolf"]["spreadsheet"]["serviceAccountAuth"] = {
     "private_key": private_key,
 };
 config["leagues"]["45+45"]["scheduling"]["channel"] = "unstable_bot";
+config["leagues"]["45+45"]["results"]["channel"] = "unstable_bot";
+config["leagues"]["45+45"]["gamelinks"]["channel"] = "unstable_bot";
 config["leagues"]["lonewolf"]["scheduling"]["channel"] = "unstable_bot-lonewolf";
+config["leagues"]["lonewolf"]["results"]["channel"] = "unstable_bot-lonewolf";
+config["leagues"]["lonewolf"]["gamelinks"]["channel"] = "unstable_bot-lonewolf";
 module.exports.config = config;

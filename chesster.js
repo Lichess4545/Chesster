@@ -560,9 +560,9 @@ function(bot, message) {
         return;
     }
 
-    var is_potential_schedule = false;
-    var references_slack_users = false;
-    var has_pairing = false;
+    var isPotentialSchedule = false;
+    var referencesSlackUsers = false;
+    var hasPairing = false;
 
     var results = {
         white: '',
@@ -571,8 +571,8 @@ function(bot, message) {
 
     // Step 1. See if we can parse the dates
     try {
-        results = spreadsheets.parse_scheduling(message.text, schedulingOptions);
-        is_potential_schedule = true;
+        results = spreadsheets.parseScheduling(message.text, schedulingOptions);
+        isPotentialSchedule = true;
     } catch (e) {
         if (e instanceof (spreadsheets.ScheduleParsingError)) {
         } else {
@@ -581,7 +581,7 @@ function(bot, message) {
     }
 
     // Unless they included a date we can parse, ignore this message.
-    if (!is_potential_schedule) {
+    if (!isPotentialSchedule) {
         return;
     }
 
@@ -591,7 +591,7 @@ function(bot, message) {
     if (white && black) {
         results.white = white.name;
         results.black = black.name;
-        references_slack_users = true;
+        referencesSlackUsers = true;
     }
 
     // Step 3. attempt to update the spreadsheet
@@ -602,13 +602,13 @@ function(bot, message) {
         function(err, reversed) {
             if (err) {
                 if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
-                    has_pairing = false;
+                    hasPairing = false;
                 } else {
                     bot.reply(message, "Something went wrong. Notify @lakinwecker");
                     throw new Error("Error updating scheduling sheet: " + err);
                 }
             } else {
-                has_pairing = true;
+                hasPairing = true;
             }
             if (reversed) {
                 var tmp = white;
@@ -616,7 +616,7 @@ function(bot, message) {
                 black = tmp;
             }
 
-            if (!references_slack_users) {
+            if (!referencesSlackUsers) {
                 schedulingReplyCantFindUser(bot, message);
                 return;
             }
@@ -629,7 +629,7 @@ function(bot, message) {
                 schedulingReplyCantScheduleOthers(bot, message);
                 return;
             }
-            if (!has_pairing) {
+            if (!hasPairing) {
                 schedulingReplyMissingPairing(bot, message);
                 return;
             }
@@ -650,91 +650,99 @@ function(bot, message) {
 /* results parsing */
 
 // results processing will occur on any message
-chesster.on({event: 'ambient'}, function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        var channel = channels.byId[message.channel];
-        if (!channel) {
+chesster.on({
+    event: 'ambient',
+    middleware: [slack.requiresLeague]
+},
+function(bot, message) {
+    var channel = channels.byId[message.channel];
+    if (!channel) {
+        return;
+    }
+    var spreadsheetOptions = message.league.options.spreadsheet;
+    if (!spreadsheetOptions) {
+        console.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
+        return;
+    } 
+    var resultsOptions = message.league.options.results;
+    if (!resultsOptions || channel.name != resultsOptions.channel) {
+        return;
+    }
+
+    try{
+        var result = spreadsheets.parseResult(message.text);
+ 
+        if(!result.white || !result.black || !result.result){
             return;
         }
-        var results_options = chesster.config.results[channel.name];
-        if (!results_options) {
+
+        result.white = users.getByNameOrID(result.white.replace(/[\<\@\>]/g, ''));
+        result.black = users.getByNameOrID(result.black.replace(/[\<\@\>]/g, ''));
+        
+        if(
+            result.white.id != message.user &&
+            result.black.id != message.user &&
+            !message.player.isModerator()
+        ){
+            replyPermissionFailure(bot, message);
             return;
         }
-        try{
-            var result = spreadsheets.parse_result(message.text);
-     
-            if(!result.white || !result.black || !result.result){
-		return;
-            }
 
-            result.white = users.getByNameOrID(result.white.replace(/[\<\@\>]/g, ''));
-            result.black = users.getByNameOrID(result.black.replace(/[\<\@\>]/g, ''));
-            
-            if(result.white.id != message.user && result.black.id != message.user){
-                reply_permission_failure(bot, message);
-                return;
-            }
+        //this could and probably should be improved at some point
+        //this will require two requests to the spread sheet and
+        //it can be done in one, but I am trying to reuse what 
+        //I wrote before as simply as possibe for now
 
-            //this could and probably should be improved at some point
-            //this will require two requests to the spread sheet and
-            //it can be done in one, but I am trying to reuse what 
-            //I wrote before as simply as possibe for now
-
-            //if a gamelink already exists, get it
-            spreadsheets.fetch_pairing_gamelink(
-                chesster.config.service_account_auth,
-                results_options.key,
-                results_options.colname,
-                result,
-                function(err, gamelink){
-                    //if a gamelink is found, use it to acquire details and process them
-                    if(!err && gamelink){
-                        process_gamelink(
-                            bot, 
-                            message, 
-                            gamelink, 
-                            chesster.config.gamelinks[channel.name], 
-                            result); //user specified result
-                    }else{
-                        //update the spreadsheet with result only
-                        spreadsheets.update_result(
-                            chesster.config.service_account_auth,
-                            results_options.key,
-                            results_options.colname,
-                            result,
-                            function(err, reversed){
-                                if (err) {
-                                    if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
-                                        result_reply_missing_pairing(bot, message);
-                                    } else {
-                                        bot.reply(message, "Something went wrong. Notify @endrawes0");
-                                        throw new Error("Error updating scheduling sheet: " + err);
-                                    }
+        //if a gamelink already exists, get it
+        spreadsheets.fetchPairingGameLink(
+            spreadsheetOptions,
+            result,
+            function(err, gamelink){
+                //if a gamelink is found, use it to acquire details and process them
+                if(!err && gamelink){
+                    processGamelink(
+                        bot, 
+                        message, 
+                        gamelink, 
+                        message.league.options.gamelinks, 
+                        result); //user specified result
+                }else{
+                    //update the spreadsheet with result only
+                    spreadsheets.updateResult(
+                        spreadsheetOptions,
+                        result,
+                        function(err, reversed){
+                            if (err) {
+                                if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                                    resultReplyMissingPairing(bot, message);
                                 } else {
-                                    result_reply_updated(bot, message, result);
+                                    bot.reply(message, "Something went wrong. Notify @endrawes0");
+                                    throw new Error("Error updating scheduling sheet: " + err);
                                 }
+                            } else {
+                                resultReplyUpdated(bot, message, result);
                             }
-                        );
-                    }
+                        }
+                    );
                 }
-            );
+            }
+        );
 
-        }catch(e){
-            //at the moment, we do not throw from inside the api - rethrow
-            throw e;
-        }
-    });
+    }catch(e){
+        //at the moment, we do not throw from inside the api - rethrow
+        throw e;
+    }
 });
 
-function reply_permission_failure(bot, message){
+function replyPermissionFailure(bot, message){
     bot.reply(message, "Sorry, you do not have permission to update that pairing.");
 }
 
-function result_reply_missing_pairing(bot, message){
+function resultReplyMissingPairing(bot, message){
     bot.reply(message, "Sorry, I could not find that pairing.");
 }
 
-function result_reply_updated(bot, message, result){
+function resultReplyUpdated(bot, message, result){
     bot.reply(message, "Got it. @" + result.white.name + " " + result.result + " @" + result.black.name);
 }
 
@@ -742,13 +750,13 @@ function result_reply_updated(bot, message, result){
 
 /* game link parsing */
 
-//given a gamelink_id, use the lichess api to get the game details
+//given a gamelinkID, use the lichess api to get the game details
 //pass the details to the callback as a JSON object
-function fetch_game_details(gamelink_id, callback){
-    fetch_url_into_json("http://en.lichess.org/api/game/" + gamelink_id, callback);
+function fetchGameDetails(gamelinkID, callback){
+    fetchURLIntoJSON("http://en.lichess.org/api/game/" + gamelinkID, callback);
 }
 
-function fetch_url_into_json(url, callback){
+function fetchURLIntoJSON(url, callback){
     const http = require('http');
     http.get(url, (res) => {
         var body = "";
@@ -774,7 +782,7 @@ function fetch_url_into_json(url, callback){
 }
 
 //verify the game meets the specified parameters in options
-function validate_game_details(details, options){
+function validateGameDetails(details, options){
     var result = {
         valid: true,
         reason: "",
@@ -800,15 +808,15 @@ function validate_game_details(details, options){
         //the link is too old or too new
         var extrema = spreadsheets.getRoundExtrema(options);
         var game_start = moment.utc(details.timestamp);
-        if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
+        /*if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
             result.valid = false;
             result.reason = "the game was not played in the current round.";
-        }
+        }*/
     }
     return result;
 }
 
-function gamelink_reply_invalid(bot, message, reason){
+function gamelinkReplyInvalid(bot, message, reason){
     bot.reply(message, "I am sorry, <@" + message.user + ">,  "
                      + "your post is *not valid* because "
                      + "*" + reason + "*");
@@ -817,15 +825,15 @@ function gamelink_reply_invalid(bot, message, reason){
                      + "of the moderators for review. Thank you.");
 }
 
-function reply_generic_failure(bot, message, contact){
+function replyGenericFailure(bot, message, contact){
     bot.reply(message, "Something went wrong. Notify " + contact);
 }
 
-function gamelink_reply_unknown(bot, message){
+function gamelinkReplyUnknown(bot, message){
     bot.reply(message, "Sorry, I could not find that game. Please verify your gamelink.");
 }
 
-function validate_user_result(details, result){
+function validateUserResult(details, result){
     //if colors are reversed, in the game link, we will catch that later
     //we know the players are correct or we would not already be here
     //the only way we can validate the result is if the order is 100% correct.
@@ -857,25 +865,25 @@ function validate_user_result(details, result){
     return validity;
 }
 
-function process_gamelink(bot, message, gamelink, options, user_result){
+function processGamelink(bot, message, gamelink, options, userResult){
     //get the gamelink id if one is in the message
-    var result = spreadsheets.parse_gamelink(gamelink);
-    if(!result.gamelink_id){
+    var result = spreadsheets.parseGamelink(gamelink);
+    if(!result.gamelinkID){
         //no gamelink found. we can ignore this message
         return;
     }
     //get the game details
-    fetch_game_details(result.gamelink_id, function(error, details){
+    fetchGameDetails(result.gamelinkID, function(error, details){
         //validate the game details vs the user specified result
         if(details){
-            if(user_result){
-                var validity = validate_user_result(details, user_result);
+            if(userResult){
+                var validity = validateUserResult(details, userResult);
                 if(!validity.valid){
-                    gamelink_reply_invalid(bot, message, validity.reason);
+                    gamelinkReplyInvalid(bot, message, validity.reason);
                     return;
                 }
             }
-            process_game_details(bot, message, details, options);
+            processGameDetails(bot, message, details, options);
         }else{
             console.error(JSON.stringify(error));
             bot.reply(message, "Sorry, I failed to get game details for " + gamelink + ". Try again later or reach out to a moderator to make the update manually.");
@@ -883,18 +891,18 @@ function process_gamelink(bot, message, gamelink, options, user_result){
     });
 }
 
-function process_game_details(bot, message, details, options){
+function processGameDetails(bot, message, details, options){
     //if no details were found the link was no good
     if(!details){
-        gamelink_reply_unknown(bot, message);
+        gamelinkReplyUnknown(bot, message);
         return;
     }
 
     //verify the game meets the requirements of the channel we are in
-    var validity = validate_game_details(details, options);
+    var validity = validateGameDetails(details, options);
     if(!validity.valid){
         //game was not valid
-        gamelink_reply_invalid(bot, message, validity.reason);
+        gamelinkReplyInvalid(bot, message, validity.reason);
         return;
     }
     var result = {};
@@ -904,7 +912,7 @@ function process_game_details(bot, message, details, options){
     var black = details.players.black;
     result.white = users.getByNameOrID(white.userId);
     result.black = users.getByNameOrID(black.userId);
-    result.gamelink_id = details.id;
+    result.gamelinkID = details.id;
  
     //get the result in the correct format
     if(details.status == "draw" || details.winner){
@@ -921,50 +929,51 @@ function process_game_details(bot, message, details, options){
     //gamelinks only come from played games, so ignoring forfeit result types
 
     //update the spreadsheet with results from gamelink
-    spreadsheets.update_result(
-        chesster.config.service_account_auth,
-        options.key,
-        options.colname,
+    spreadsheets.updateResult(
+        message.league.options.spreadsheet,
         result,
         function(err, reversed){
             if (err) {
                 if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
-                    result_reply_missing_pairing(bot, message);
+                    resultReplyMissingPairing(bot, message);
                 }else if(reversed){
-                    gamelink_reply_invalid(bot, message, err);
+                    gamelinkReplyInvalid(bot, message, err);
                 }else{
-                    reply_generic_failure(bot, message, "@endrawes0");
+                    replyGenericFailure(bot, message, "@endrawes0");
                     throw new Error("Error updating scheduling sheet: " + err);
                 }
             } else {
-                result_reply_updated(bot, message, result);
+                resultReplyUpdated(bot, message, result);
             }
         }
     );
 }
 
 // gamelink processing will occur on any message
-chesster.on({event: 'ambient'}, function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        var channel = channels.byId[message.channel];
-        if (!channel) {
-            return;
-        }
-        if (!chesster.config.gamelinks) {
-            return;
-        }
-        //get the configuration for the channel
-        var gamelinks_options = chesster.config.gamelinks[channel.name];
-        if (!gamelinks_options) {
-            //drop messages that are not in a gamelink channel
-            return;
-        }
-        try{
-            process_gamelink(bot, message, message.text, gamelinks_options);
-        }catch(e){
-            //at the moment, we do not throw from inside the api - rethrow
-            throw e;
-        }
-    });
+chesster.on({
+    event: 'ambient',
+    middleware: [slack.requiresLeague]
+},
+function(bot, message) {
+    var channel = channels.byId[message.channel];
+    if (!channel) {
+        return;
+    }
+    var spreadsheetOptions = message.league.options.spreadsheet;
+    if (!spreadsheetOptions) {
+        console.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
+        return;
+    } 
+    var gamelinkOptions = message.league.options.gamelinks;
+    if (!gamelinkOptions || channel.name != gamelinkOptions.channel) {
+        return;
+    }
+
+    try{
+        processGamelink(bot, message, message.text, gamelinkOptions);
+    }catch(e){
+        //at the moment, we do not throw from inside the api - rethrow
+        throw e;
+    }
 });
 

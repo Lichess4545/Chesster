@@ -229,7 +229,7 @@ league_attributes = {
                 rows.forEach(function(row) {
                     if (!row['white'].value || !row['black'].value) { return; }
                     if (row['result'].formula) {
-                        var link = spreadsheets.parse_hyperlink(row['result'].formula || "");
+                        var link = spreadsheets.parseHyperlink(row['result'].formula || "");
                     } else {
                         var link = {'text': row['result'].value};
                     }
