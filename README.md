@@ -25,7 +25,7 @@ ps. I will add more detail here later. I just want to get some bare bones instru
 8. Install moment. ` > npm install --save moment `
 9. Install underscore. ` > npm install --save underscore `
 10. Install q. ` > npm install --save q `
-11. Install q. ` > npm install --save string-format `
+11. Install string-format. ` > npm install --save string-format `
 
 ## Start Chesster
 1. Generate a bot token in your Slack Team's Services and Customization.
