@@ -140,7 +140,6 @@ function prepareRatingMessage(player, rating, convo){
 function prepareCommandsMessage(){
     return "I will respond to the following commands when they are spoken to " + 
 									  users.getIdString("chesster") + ": \n```" +
-        "    [ help ]                       ! display an interactive guide\n" +
         "    [ starter guide ]              ! get the starter guide link; thanks GnarlyGoat!\n" +
         "    [ rules | regulations ]        ! get the rules and regulations.\n" + 
         "    [ pairings | standings ]       ! get pairings/standings spreadsheet link\n" +
@@ -196,8 +195,6 @@ function(bot,message) {
 
 leagueResponse(['summon mods'], 'formatSummonModsResponse');
 leagueResponse(['mods'], 'formatModsResponse');
-
-/* help */
 
 /* channels */
 function prepareChannelListMessage(){
