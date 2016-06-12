@@ -346,7 +346,7 @@ leagueResponse(['teams', 'team list'], 'formatTeamsResponse');
 /* team members */
 chesster.hears({
     middleware: [slack.requiresLeague],
-	patterns: ['team members'],
+    patterns: ['team members'],
     messageTypes: [
         'direct_mention', 
         'direct_message'
