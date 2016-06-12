@@ -601,7 +601,7 @@ function(bot, message) {
                 if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
                     hasPairing = false;
                 } else {
-                    bot.reply(message, "Something went wrong. Notify @lakinwecker");
+                    bot.reply(message, "Something went wrong. Notify a mod");
                     throw new Error("Error updating scheduling sheet: " + err);
                 }
             } else {
