@@ -76,7 +76,6 @@ var config = {
             }
         },
         "lonewolf": {
-            // TODO:
             "name": "Lone Wolf",
             "also_known_as": [
                 "lonewolf",
