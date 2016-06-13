@@ -288,12 +288,12 @@ function hears(options, callback) {
         }));
     });
 }
-DEFAULT_HEARS_OPTIONS = {
+DEFAULT_ON_OPTIONS = {
     middleware: []
 };
 function on(options, callback) {
     var self = this;
-    var options = _.extend({}, DEFAULT_HEARS_OPTIONS, options);
+    var options = _.extend({}, DEFAULT_ON_OPTIONS, options);
     self.controller.on(options.event, function(bot, message) {
         return botExceptionHandler(bot, message, Q.fcall(function() {
             message.player = users.getByNameOrID(message.user);
