@@ -77,7 +77,6 @@ var makeRequest = (function() {
     return makeRequest;
 })();
 
-// TODO: eventually cache these results.
 function getPlayerByName(name, isBackground){
     var url = "http://en.lichess.org/api/user/" + name;
     return makeRequest(url, true, isBackground);
