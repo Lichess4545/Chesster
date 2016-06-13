@@ -221,7 +221,7 @@ league_attributes = {
             self.options.spreadsheet,
             query_options,
             function(err, rows) {
-                if (err) { return callback(err, rows); }
+                if (err) { return callback(err, undefined); }
                 var new_pairings = [];
                 rows.forEach(function(row) {
                     if (!row['white'].value || !row['black'].value) { return; }
