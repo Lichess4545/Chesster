@@ -137,10 +137,13 @@ var config = {
         },
     },
     "channel_map": {
+        "lonewolf-general": "lonewolf",
         "lonewolf-results": "lonewolf",
         "lonewolf-gamelinks": "lonewolf",
         "lonewolf-scheduling": "lonewolf",
         "unstable_bot-lonewolf": "lonewolf",
+        "general": "45+45",
+        "team-general": "45+45",
         "team-results": "45+45",
         "team-gamelinks": "45+45",
         "team-scheduling": "45+45",
