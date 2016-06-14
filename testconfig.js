@@ -4,10 +4,12 @@ var token = require("./slack_token.js").token;
 var private_key = require("./test_service_account_key.js").key;
 
 var config = require("./config.js").config;
+config["leagues"]["45+45"]["spreadsheet"]["key"] = "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA";
 config["leagues"]["45+45"]["spreadsheet"]["serviceAccountAuth"] = {
     "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
     "private_key": private_key,
 };
+config["leagues"]["lonewolf"]["spreadsheet"]["key"] = "1xBofd1bFIB4OBUOErWqFWTjTc0dFuTf6WlHxZf3FbIU";
 config["leagues"]["lonewolf"]["spreadsheet"]["serviceAccountAuth"] = {
     "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
     "private_key": private_key,
