@@ -633,7 +633,7 @@ function(bot, message) {
                 schedulingReplyMissingPairing(bot, message);
                 return;
             }
-            if (results.out_of_bounds) {
+            if (results.outOfBounds) {
                 schedulingReplyTooLate(bot, message, schedulingOptions);
                 return;
             }
