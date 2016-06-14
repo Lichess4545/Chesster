@@ -536,9 +536,12 @@ function schedulingReplyCantFindUser(bot, message) {
 // Scheduling will occur on any message
 chesster.on({
     event: 'ambient',
-    middleware: [slack.requiresLeague]
+    middleware: [slack.withLeague]
 },
 function(bot, message) {
+    if (!message.league) {
+        return;
+    }
     var channel = channels.byId[message.channel];
     if (!channel) {
         return;
@@ -649,9 +652,12 @@ function(bot, message) {
 // results processing will occur on any message
 chesster.on({
     event: 'ambient',
-    middleware: [slack.requiresLeague]
+    middleware: [slack.withLeague]
 },
 function(bot, message) {
+    if (!message.league) {
+        return;
+    }
     var channel = channels.byId[message.channel];
     if (!channel) {
         return;
@@ -949,9 +955,12 @@ function processGameDetails(bot, message, details, options){
 // gamelink processing will occur on any message
 chesster.on({
     event: 'ambient',
-    middleware: [slack.requiresLeague]
+    middleware: [slack.withLeague]
 },
 function(bot, message) {
+    if (!message.league) {
+        return;
+    }
     var channel = channels.byId[message.channel];
     if (!channel) {
         return;
