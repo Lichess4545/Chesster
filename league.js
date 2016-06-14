@@ -677,7 +677,6 @@ var getLeague = (function() {
                 league = new League(this_league_config);
                 _league_cache[league_name] = league;
             } else {
-                console.log("Couldn't find options for " + league_name + " league. Not creating object.");
                 return undefined;
             }
         }
