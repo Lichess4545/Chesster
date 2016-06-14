@@ -29,7 +29,7 @@ var config = {
                 "prune2000",
             ],
             "spreadsheet": {
-                "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
+                "key": "1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4",
                 "serviceAccountAuth": {
                     "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
                     "private_key": private_key,
@@ -91,7 +91,7 @@ var config = {
                 "theino"
             ],
             "spreadsheet": {
-                "key": "1xBofd1bFIB4OBUOErWqFWTjTc0dFuTf6WlHxZf3FbIU",
+                "key": "1WI4H9DWKSI-q6Omeqh28w1lKaqB0AAFV01wDiOeW6Ho",
                 "serviceAccountAuth": {
                     "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
                     "private_key": private_key,
@@ -148,30 +148,6 @@ var config = {
         "team-gamelinks": "45+45",
         "team-scheduling": "45+45",
         "unstable_bot": "45+45"
-    },
-
-    "scheduling": {
-        "lonewolf-scheduling": {
-            "key": "1xBofd1bFIB4OBUOErWqFWTjTc0dFuTf6WlHxZf3FbIU",
-            "colname": "game scheduled (in gmt)",
-            "extrema": {
-                "isoWeekday": 1,
-                "hour": 22,
-                "minute": 0,
-                "warningHours": 1
-            },
-            "warningMessage": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
-            "lateMessage": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
-            "format": "MM/DD HH:mm",
-            "channel": "unstable_bot-lonewolf"
-        },
-    },
-    "results": {
-        "lonewolf-results": {
-            "key": "1xBofd1bFIB4OBUOErWqFWTjTc0dFuTf6WlHxZf3FbIU",
-            "colname": "result"
-        }	
-
     },
 }
 module.exports.config = config;
