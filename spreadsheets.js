@@ -4,10 +4,10 @@ var GoogleSpreadsheet = require("google-spreadsheet");
 var _ = require("underscore");
 
 var EXTREMA_DEFAULTS = {
-    'iso_weekday': 2,
+    'isoWeekday': 2,
     'hour': 0,
     'minute': 0,
-    'warning_hours': 1,
+    'warningHours': 1,
 };
 var BASE_DATE_FORMATS = [
     "YYYY-MM-DD MM DD",
@@ -70,10 +70,10 @@ var BASE_TIME_FORMATS = [
 ];
 var DATE_FORMATS = [
 ];
-BASE_DATE_FORMATS.forEach(function(date_format) {
-    BASE_TIME_FORMATS.forEach(function(time_format) {
-        DATE_FORMATS.push(date_format + " " + time_format);
-        DATE_FORMATS.push(time_format + " " + date_format);
+BASE_DATE_FORMATS.forEach(function(dateFormat) {
+    BASE_TIME_FORMATS.forEach(function(timeFormat) {
+        DATE_FORMATS.push(dateFormat + " " + timeFormat);
+        DATE_FORMATS.push(timeFormat + " " + dateFormat);
     });
 });
 var WORDS_TO_IGNORE = [
@@ -120,13 +120,13 @@ function PairingError () {}
 PairingError.prototype = new Error();
 
 // Get an appropriate set of base tokens for the scheduling messages
-function get_tokens_scheduling(input_string){
+function getTokensScheduling(inputString){
     // Do some basic preprocessing
     // Replace non-date punctuation/symbols with spaces
-    input_string = input_string.replace(/[@,\(\)]/g, ' ');
-    input_string = input_string.replace(/[<\>]/g, '');
+    inputString = inputString.replace(/[@,\(\)]/g, ' ');
+    inputString = inputString.replace(/[<\>]/g, '');
 
-    var parts = _.map(input_string.split(" "), function(item) {
+    var parts = _.map(inputString.split(" "), function(item) {
         // Remove . and / and : and - from the beginning and end of the word
         item = item.replace(/^[:\.\/-]/g, '');
         item = item.replace(/[:\.\/-]$/g, '');
@@ -147,107 +147,107 @@ function get_tokens_scheduling(input_string){
 // removing gmt/utc
 // Adding the current-year
 // replacing day of the week tokens with the appropriate date format
-function get_possible_date_strings(date_string, extrema) {
-    var date_strings = [];
+function getPossibleDateStrings(dateString, extrema) {
+    var dateStrings = [];
 
     // Unify some common stuff first.
     //
     // Change /.: to -
-    date_string = date_string.replace(/[\/:\.]/g, '-');
-    date_string = date_string.toLowerCase();
-    date_string = date_string.replace(/gmt/g, "");
-    date_string = date_string.replace(/utc/g, "");
+    dateString = dateString.replace(/[\/:\.]/g, '-');
+    dateString = dateString.toLowerCase();
+    dateString = dateString.replace(/gmt/g, "");
+    dateString = dateString.replace(/utc/g, "");
 
-    var date_name_mappings = {};
+    var dateNameMappings = {};
 
     var cur = extrema.start.clone();
     var now = moment.utc();
     while (!cur.isAfter(extrema.end)) {
-        var month_day = cur.format("MM-DD");
+        var monthDay = cur.format("MM-DD");
         // Deal with a couple of formats that moment doesn't produce but are used.
         if (cur.format("dddd") == "Thursday") {
-            date_name_mappings["thurs"] = month_day;
+            dateNameMappings["thurs"] = monthDay;
         } if (cur.format("dddd") == "Wednesday") {
-            date_name_mappings["weds"] = month_day;
+            dateNameMappings["weds"] = monthDay;
         }
-        date_name_mappings[cur.format("dd").toLowerCase()] = month_day;
-        date_name_mappings[cur.format("ddd").toLowerCase()] = month_day;
-        date_name_mappings[cur.format("dddd").toLowerCase()] = month_day;
-        date_name_mappings[cur.format("Do").toLowerCase()] = cur.format("DD");
+        dateNameMappings[cur.format("dd").toLowerCase()] = monthDay;
+        dateNameMappings[cur.format("ddd").toLowerCase()] = monthDay;
+        dateNameMappings[cur.format("dddd").toLowerCase()] = monthDay;
+        dateNameMappings[cur.format("Do").toLowerCase()] = cur.format("DD");
         var month = cur.format("MM");
-        date_name_mappings[cur.format("MMM").toLowerCase()] = month;
-        date_name_mappings[cur.format("MMMM").toLowerCase()] = month;
+        dateNameMappings[cur.format("MMM").toLowerCase()] = month;
+        dateNameMappings[cur.format("MMMM").toLowerCase()] = month;
         cur.add(1, 'days');
     }
 
     // Now make one where we map date names to their date
-    var tokens = date_string.split(" ");
+    var tokens = dateString.split(" ");
     tokens = _.map(tokens, function(part) {
-        if (date_name_mappings[part.toLowerCase()]) {
-            return date_name_mappings[part.toLowerCase()];
+        if (dateNameMappings[part.toLowerCase()]) {
+            return dateNameMappings[part.toLowerCase()];
         } else {
             return part;
         }
     });
-    date_strings.push(tokens.join(" "));
+    dateStrings.push(tokens.join(" "));
 
     // now make one wher we remove date names completely.
-    tokens = date_string.split(" ");
+    tokens = dateString.split(" ");
     tokens = _.map(tokens, function(part) {
-        if (date_name_mappings[part.toLowerCase()]) {
+        if (dateNameMappings[part.toLowerCase()]) {
             return "";
         } else {
             return part;
         }
     });
     tokens = _.filter(tokens, function(i) { return i.length > 0; });
-    date_strings.push(tokens.join(" "));
+    dateStrings.push(tokens.join(" "));
 
     // Now make some where we inject the year at the beginning
     var now = moment.utc();
     year = now.format("YYYY");
     month = now.format("MM");
-    date_strings.slice().forEach(function(date_string) {
-        date_strings.push("" + year + "-" + date_string);
-        date_strings.push(date_string + "-" + year);
+    dateStrings.slice().forEach(function(dateString) {
+        dateStrings.push("" + year + "-" + dateString);
+        dateStrings.push(dateString + "-" + year);
     });
-    return date_strings;
+    return dateStrings;
 }
 
 // Make an attempt to parse a scheduling string. 
 //
 // Parameters:
-//     input_string: the string to try and parse 
+//     inputString: the string to try and parse 
 //     options: options for both this method and are passed along to 
-//         get_round_extrema options
-//     options.warning_hours: an integer specifying how many hours
+//         getRoundExtrema options
+//     options.warningHours: an integer specifying how many hours
 //         before the round end that we want to warn people about.
-function parse_scheduling(input_string, options) {
-    var parts = get_tokens_scheduling(input_string);
+function parseScheduling(inputString, options) {
+    var parts = getTokensScheduling(inputString);
 
     // Filter out word that we know we want to ignore.
     if (parts.length < 3) {
-        console.log("Unable to parse date: " + input_string);
+        console.log("Unable to parse date: " + inputString);
         throw new ScheduleParsingError();
     }
 
     // Now build up some possible strings and try a bunch of patterns
     // to find a date in our range.
-    var extrema = get_round_extrema(options);
-    var date_strings = get_possible_date_strings(parts.slice(2).join(" "), extrema);
+    var extrema = getRoundExtrema(options);
+    var dateStrings = getPossibleDateStrings(parts.slice(2).join(" "), extrema);
 
-    var valid_in_bounds_dates = [];
-    var valid_out_of_bounds_dates = [];
+    var validInBoundsDate = [];
+    var validOutOfBoundsDate = [];
     // Using _.every and returning false to break out of loops
     // checking every possible date format even after we have found
     // a valid one is wasteful, so this allows us to short circuit that process.
-    _.every(date_strings, function(date_string) {
+    _.every(dateStrings, function(dateString) {
         _.every(DATE_FORMATS, function(format) {
-            var date = moment.utc(date_string, format, true);
+            var date = moment.utc(dateString, format, true);
             if (!date.isValid()) {
                 return true;
             }
-            valid_out_of_bounds_dates.push(date);
+            validOutOfBoundsDate.push(date);
             // TODO: This check will prevent us from publishing pairings
             //       early AND having people announce their schedule early.
             //       Which is unfortunate, but I haven't thought of an elegant
@@ -255,16 +255,16 @@ function parse_scheduling(input_string, options) {
             if (date.isBefore(extrema.start) || date.isAfter(extrema.end)) {
                 return true;
             }
-            valid_in_bounds_dates.push(date);
+            validInBoundsDate.push(date);
             return false;
         });
-        if (valid_in_bounds_dates.length > 0) {
+        if (validInBoundsDate.length > 0) {
             return false;
         }
         return true;
     });
-    if (valid_in_bounds_dates.length == 0 && valid_out_of_bounds_dates.length == 0) {
-        console.log("Unable to parse date: [" + input_string + "]");
+    if (validInBoundsDate.length == 0 && validOutOfBoundsDate.length == 0) {
+        console.log("Unable to parse date: [" + inputString + "]");
         throw new ScheduleParsingError();
     }
 
@@ -273,14 +273,14 @@ function parse_scheduling(input_string, options) {
     var black = parts[1].replace(/[@\.,\(\):]/g, '');
 
     var date;
-    var out_of_bounds = false;
+    var outOfBounds = false;
     var warn = false;
 
-    if (valid_in_bounds_dates.length == 0 && valid_out_of_bounds_dates.length > 0) {
-        date = valid_out_of_bounds_dates[0];
-        out_of_bounds = true;
+    if (validInBoundsDate.length == 0 && validOutOfBoundsDate.length > 0) {
+        date = validOutOfBoundsDate[0];
+        outOfBounds = true;
     } else {
-        var date = valid_in_bounds_dates[0];
+        var date = validInBoundsDate[0];
         if (date.isAfter(extrema.warning)) {
             warn = true;
         }
@@ -290,7 +290,7 @@ function parse_scheduling(input_string, options) {
         black: black,
         date: date,
         warn: warn,
-        out_of_bounds: out_of_bounds
+        outOfBounds: outOfBounds
     };
 }
 
@@ -301,67 +301,68 @@ function parse_scheduling(input_string, options) {
 // and end datetime for the round.
 //
 // Options:
-//     extrema.reference_date: If this is provided it the round is guaranteed
+//     extrema.referenceDate: If this is provided it the round is guaranteed
 //       to include this date. Mostly used for tests.
-//     extrema.iso_weekday: The weekday after which games cannot be scheduled.
+//     extrema.isoWeekday: The weekday after which games cannot be scheduled.
 //     extrema.hour: The hour after which games cannot be scheduled.
 //     extrema.hour: The weekday on which the pairings are released.
-//     extrema.warning_hours: The amount of hours before the final scheduling
+//     extrema.warningHours: The amount of hours before the final scheduling
 //       cutoff during which we will warn users they are cutting it close.
-function get_round_extrema(options) {
+function getRoundExtrema(options) {
     options = options || {};
     extrema = {};
     _.extend(extrema, EXTREMA_DEFAULTS, options.extrema);
 
-    // Get the reference date, which is either today or the reference_date
+    // Get the reference date, which is either today or the referenceDate
     // from the options
-    if (!extrema.reference_date) {
-        round_start = moment.utc();
+    if (!extrema.referenceDate) {
+        roundStart = moment.utc();
     } else {
-        round_start = moment(extrema.reference_date).clone();
+        roundStart = moment(extrema.referenceDate).clone();
     }
-    reference_date = round_start.clone()
+    referenceDate = roundStart.clone()
     // Make it the right time of day.
-    round_start.hour(extrema.hour).minute(extrema.minute).second(0);
+    roundStart.hour(extrema.hour).minute(extrema.minute).second(0);
 
     // Find the first day that comes before our reference date
     // which is on th same weekday as the round starts.
-    while (round_start.isoWeekday() != extrema.iso_weekday || round_start.isAfter(reference_date)) {
-        round_start.subtract(1, 'days');
+    while (roundStart.isoWeekday() != extrema.isoWeekday || roundStart.isAfter(referenceDate)) {
+        roundStart.subtract(1, 'days');
     }
 
     // The end is always 7 days in advance
-    var round_end = round_start.clone().add(7, 'days');
-    var warning_end = round_end.clone().subtract(extrema.warning_hours, 'hours');
+    var roundEnd = roundStart.clone().add(7, 'days');
+    var warningEnd = roundEnd.clone().subtract(extrema.warningHours, 'hours');
     return {
-        'start': round_start,
-        'end': round_end,
-        'warning': warning_end
+        'start': roundStart,
+        'end': roundEnd,
+        'warning': warningEnd
     };
 }
 
-// get_rows is a client side implementation of the record-type results that we
+// getRows is a client side implementation of the record-type results that we
 // got from the row based API. Instead, we now implement this in the following
 // manner:
 //   1. Query for all cells in a particular range.
 //   2. Asssume first row is a header row.
 //   3. Turn each subsequent row into an object, of key-values based on the header
 //   4. return rows.
-function get_rows(service_account_auth, spreadsheet_key, options, callback) {
-    var doc = new GoogleSpreadsheet(spreadsheet_key);
-    doc.useServiceAccountAuth(service_account_auth, function(err, info) {
-        var pairings_sheet = undefined;
+function getRows(spreadsheetConfig, options, sheetPredicate, callback) {
+    var doc = new GoogleSpreadsheet(spreadsheetConfig.key);
+
+    function getRowImplementation(err, info) {
+        var targetSheet = undefined;
         doc.getInfo(function(err, info) {
             if (err) { return callback(err, info); }
             // Find the last spreadsheet with the word "round" in the title.
             // this ought to work for both tournaments
             info.worksheets.forEach(function(sheet) {
-                if (sheet.title.toLowerCase().indexOf("round") != -1) {
-                    pairings_sheet = sheet;
+                if (sheetPredicate(sheet)) {
+                    targetSheet = sheet;
                 }
             });
-            if (!pairings_sheet) {
-                callback("Unable to find pairings worksheet");
+            if (!targetSheet) {
+                callback("Unable to find target worksheet");
                 return;
             }
             // Query for the appropriate row.
@@ -375,7 +376,7 @@ function get_rows(service_account_auth, spreadsheet_key, options, callback) {
                 'return-empty': true
             }
             options = _.defaults(options, defaults);
-            pairings_sheet.getCells(
+            targetSheet.getCells(
                 options,
                 function(err, cells) {
                     if (err) { return callback(err, cells); }
@@ -391,52 +392,69 @@ function get_rows(service_account_auth, spreadsheet_key, options, callback) {
                     });
 
                     // Convert each row into a record with keys
-                    var header_row = rows[1];
-                    header_row = _.map(header_row, function(item, i) {
+                    var headerRow = rows[1];
+                    headerRow = _.map(headerRow, function(item, i) {
                         if (item) {
                             return item.value.toLowerCase();
                         } else {
                             return i;
                         }
                     });
-                    var record_rows = [];
+                    var recordRows = [];
                     rows.slice(2).forEach(function(row) {
-                        record_rows.push(_.object(_.zip(header_row, row)));
+                        recordRows.push(_.object(_.zip(headerRow, row)));
                     });
-                    callback(undefined, record_rows);
+                    callback(undefined, recordRows);
                 }
             );
         });
-    });
+    }
+
+    if (spreadsheetConfig.serviceAccountAuth) {
+        doc.useServiceAccountAuth(spreadsheetConfig.serviceAccountAuth, getRowImplementation);
+    } else {
+        getRowImplementation();
+    }
+}
+
+// getPairingRows returns the pairing rows from the spreadsheet
+function getPairingRows(spreadsheetConfig, options, callback) {
+    return getRows(
+        spreadsheetConfig,
+        options,
+        function(sheet) {
+            return sheet.title.toLowerCase().indexOf("round") != -1;
+        },
+        callback
+    );
 }
 
 // Finds the given pairing in one of the team spreadsheets
 // callback gets three values: error, row, whether the pairing is reversed or not.
-function find_pairing(service_account_auth, spreadsheet_key, white, black, callback) {
+function findPairing(spreadsheetConfig, white, black, callback) {
     var options = {
         'min-col': 1,
         'max-col': 7
     };
-    function row_matches_pairing(row) {
-        var row_black = row.black.value.toLowerCase();
-        var row_white = row.white.value.toLowerCase();
+    function rowMatchesPairing(row) {
+        var rowBlack = row.black.value.toLowerCase();
+        var rowWhite = row.white.value.toLowerCase();
         if (
-            (row_black.indexOf(black) != -1 && row_white.indexOf(white) != -1)
+            (rowBlack.indexOf(black) != -1 && rowWhite.indexOf(white) != -1)
         ) {
             return true;
         } else if (
-            (row_white.indexOf(black) != -1 && row_black.indexOf(white) != -1)
+            (rowWhite.indexOf(black) != -1 && rowBlack.indexOf(white) != -1)
         ) {
             return true;
         }
         return false;
     }
-    get_rows(
-        service_account_auth,
-        spreadsheet_key,
+    getPairingRows(
+        spreadsheetConfig,
         options,
         function(err, rows) {
-            var rows = _.filter(rows, row_matches_pairing);
+            var rows = _.filter(rows, rowMatchesPairing);
             // Only update it if we found an exact match
             if (rows.length > 1) {
                 return callback("Unable to find pairing. More than one row was returned!");
@@ -444,10 +462,10 @@ function find_pairing(service_account_auth, spreadsheet_key, white, black, callb
                 return callback("Unable to find pairing. No rows were returned!");
             }
             var row = rows[0];
-            var row_black = row.black.value.toLowerCase();
-            var row_white = row.white.value.toLowerCase();
+            var rowBlack = row.black.value.toLowerCase();
+            var rowWhite = row.white.value.toLowerCase();
             var reversed = false;
-            if (row_white.indexOf(black) != -1) {
+            if (rowWhite.indexOf(black) != -1) {
                 reversed = true
             }
             callback(undefined, row, reversed);
@@ -456,29 +474,29 @@ function find_pairing(service_account_auth, spreadsheet_key, white, black, callb
 }
 
 // Update the schedule
-function update_schedule(service_account_auth, key, colname, format, schedule, callback) {
+function updateSchedule(spreadsheetConfig, schedulingConfig, schedule, callback) {
     var white = schedule.white;
     var black = schedule.black;
     var date = schedule.date;
-    find_pairing(service_account_auth, key, white, black, function(err, row, reversed) {
+    findPairing(spreadsheetConfig, white, black, function(err, row, reversed) {
         if (err) {
             return callback(err);
         }
         // This portion is specific to the team tournament
-        var schedule_cell = row[colname];
-        schedule_cell.value = date.format(format);
+        var scheduleCell = row[spreadsheetConfig.scheduleColname];
+        scheduleCell.value = date.format(schedulingConfig.format);
 
-        schedule_cell.save(function(err) {
+        scheduleCell.save(function(err) {
             return callback(err, reversed);
         });
     });
 }
 
 // parse the input string for a results update
-function parse_result(input_string){
-    var tokens = get_tokens_result(input_string);   
-    var result = find_result(tokens);
-    var players = find_players(tokens);
+function parseResult(inputString){
+    var tokens = getTokensResult(inputString);   
+    var result = findResult(tokens);
+    var players = findPlayers(tokens);
     
     return {
         "white": players.white,
@@ -487,11 +505,11 @@ function parse_result(input_string){
     };
 }
 
-function get_tokens_result(input_string){
-    return input_string.split(" ");
+function getTokensResult(inputString){
+    return inputString.split(" ");
 }
 
-function find_result(tokens){
+function findResult(tokens){
     var result;
     _.some(tokens, function(token){
         return (result = VALID_RESULTS[token.toUpperCase()]) ? true : false;
@@ -499,24 +517,24 @@ function find_result(tokens){
     return result;
 }
 
-function find_players(tokens){
+function findPlayers(tokens){
     // in reality, the order is arbitrary.
     // just assuming first I find is white, the second is black
     var players = {};
-    var player_tokens = filter_player_tokens(tokens);
+    var playerTokens = filterPlayerTokens(tokens);
 
     //assuming we found 2 tokens, we should convert them to player names
-    if(player_tokens.length == 2){
+    if(playerTokens.length == 2){
         //remove punctuation and store. this fixes losts of stuff.
         //most frequent issue is the : added after a name by slack
-        players.white = player_tokens[0].replace(/[:,.-]/, "");
-        players.black = player_tokens[1].replace(/[:,.-]/, "");
+        players.white = playerTokens[0].replace(/[:,.-]/, "");
+        players.black = playerTokens[1].replace(/[:,.-]/, "");
     }
 
     return players;
 }
 
-function filter_player_tokens(tokens){
+function filterPlayerTokens(tokens){
     return _.filter(tokens, function(token){
         //matches slack uer ids: <@[A-Z0-9]>[:]*
         return /^\<@[A-Z0-9]+\>[:,.-]*$/.test(token);
@@ -525,62 +543,61 @@ function filter_player_tokens(tokens){
 
 //this assumes it is being given a valid result - that is th contract
 //error handling for a bad result should happen outside this function
-function update_result(service_account_auth, key, colname, result, callback){
+function updateResult(spreadsheetConfig, result, callback){
     var white = result.white;
     var black = result.black;
-    var result_string = result.result;
-    var gamelink_id = result.gamelink_id;
+    var resultString = result.result;
+    var gamelinkID = result.gamelinkID;
 
-    find_pairing(
-        service_account_auth, 
-        key, 
+    findPairing(
+        spreadsheetConfig, 
         white.name, 
         black.name, 
         function(err, row, reversed){
             if(err){
                 return callback(err);
             }
-            var result_cell = row[colname];
+            var resultCell = row[spreadsheetConfig.resultsColname];
 
             //a gamelink was passed in and the names were reversed
-            if(gamelink_id && reversed){
+            if(gamelinkID && reversed){
                 //this is an error - games must be played by proper colors
                 return callback("the colors are reversed.", true);
             }
-            if(result_string != "-"){
+            if(resultString != "-"){
                 //this is just the addition of a result
                 //we will use the gamelink to verify the result if we have it
                 if(reversed){
                     //switch the result
-                    var lhs = result_string.split('-')[0];
-                    var rhs = result_string.split('-')[1];
-                    result_string = rhs + '-' + lhs;
+                    var lhs = resultString.split('-')[0];
+                    var rhs = resultString.split('-')[1];
+                    resultString = rhs + '-' + lhs;
                 }
             }
 
             //get the formula, if there is one
-            var formula = result_cell.formula;
+            var formula = resultCell.formula;
             
             var gamelink;
-            if(!gamelink_id && formula && formula.toUpperCase().includes("HYPERLINK")){
+            if(!gamelinkID && formula && formula.toUpperCase().includes("HYPERLINK")){
                 //there is no gamelink, fill from the formula
                 gamelink = formula.split("\"")[1];
-            }else if(!result.gamelink_id){
+            }else if(!result.gamelinkID){
                 //no gamelink and no formula
                 gamelink = '';
             }else{
-                gamelink =  "http://en.lichess.org/" + result.gamelink_id;
+                gamelink =  "http://en.lichess.org/" + result.gamelinkID;
             }
 
             //if no game link is found, just post the result
             if(gamelink == ''){
-                result_cell.value = result_string;
+                resultCell.value = resultString;
             }else{
-                result_cell.formula = '=HYPERLINK("' + gamelink + '","' + result_string + '")';
+                resultCell.formula = '=HYPERLINK("' + gamelink + '","' + resultString + '")';
             }
 
             //save the cell in the spreadsheet
-            result_cell.save(function(err){
+            resultCell.save(function(err){
                 return callback(err, reversed);
             });
         }
@@ -588,48 +605,47 @@ function update_result(service_account_auth, key, colname, result, callback){
 }
 
 //given the input text from a essage
-function parse_gamelink(message_text){
+function parseGamelink(messageText){
     //split it into tokens separated by white space and slashes
-    var tokens = message_text.split(/[\<\>\|\/\s]/);
-    var found_base_url = false;
-    var gamelink_id;
+    var tokens = messageText.split(/[\<\>\|\/\s]/);
+    var foundBaseURL = false;
+    var gamelinkID;
 
     //for each token, walk the list looking for a lichess url
     tokens.some(function(token){
         //if previously token was a lichess url
-        //this token should be the gamelink_id
-        if(found_base_url){
-            gamelink_id = token.replace('>', '');
+        //this token should be the gamelinkID
+        if(foundBaseURL){
+            gamelinkID = token.replace('>', '');
             //some tokens will have a > if its the last token
             //return true to stop iterating
             return true;
         }
         //current token is the base of the lichess url
         if(token.includes("lichess.org")){
-            found_base_url = true;
+            foundBaseURL = true;
         }
         return false;
     });
-    return { gamelink_id: gamelink_id };
+    return { gamelinkID: gamelinkID };
 }
 
 //given a pairing, get a game link if one already exists
-function fetch_pairing_gamelink(service_account_auth, key, colname, result, callback){
+function fetchPairingGameLink(spreadsheetConfig, result, callback){
     var white = result.white;
     var black = result.black;
 
     //given a pairing, white and black, get the row in the spreadsheet
-    find_pairing(
-        service_account_auth,
-        key, 
+    findPairing(
+        spreadsheetConfig,
         white.name,
         black.name,
         function(err, row){
             if(err){
                 callback(err);
             }
-            result_cell = row[colname];
-            var formula = result_cell.formula;
+            resultCell = row[spreadsheetConfig.resultsColname];
+            var formula = resultCell.formula;
             if(formula && formula.toUpperCase().includes("HYPERLINK")){
                 callback(err, formula.split("\"")[1]);
             }else{
@@ -639,12 +655,37 @@ function fetch_pairing_gamelink(service_account_auth, key, colname, result, call
     );
 }
 
-module.exports.get_round_extrema = get_round_extrema;
-module.exports.parse_scheduling = parse_scheduling;
-module.exports.parse_result = parse_result;
-module.exports.parse_gamelink = parse_gamelink;
-module.exports.update_schedule = update_schedule;
-module.exports.update_result = update_result;
-module.exports.fetch_pairing_gamelink = fetch_pairing_gamelink;
+// Given '=HYPERLINK("http://en.lichess.org/FwYcks48","1-0")'
+// return {'text': '1-0', 'url': 'http://en.lichess.org/FwYcks48'}
+function parseHyperlink(hyperlink) {
+    var results = {
+        'text': '',
+        'href': ''
+    };
+    if(!hyperlink.toUpperCase().includes("HYPERLINK")) {
+        return results;
+    }
+    var parts = hyperlink.split("\"");
+    if (parts.length != 5) {
+        return results;
+    }
+    if (parts[0].toUpperCase() != "=HYPERLINK(") {
+        return results;
+    }
+    results['href'] = parts[1];
+    results['text'] = parts[3];
+    return results;
+}
+
+module.exports.getRows = getRows;
+module.exports.getPairingRows = getPairingRows;
+module.exports.getRoundExtrema = getRoundExtrema;
+module.exports.parseScheduling = parseScheduling;
+module.exports.parseResult = parseResult;
+module.exports.parseGamelink = parseGamelink;
+module.exports.parseHyperlink = parseHyperlink;
+module.exports.updateSchedule = updateSchedule;
+module.exports.updateResult = updateResult;
+module.exports.fetchPairingGameLink = fetchPairingGameLink;
 module.exports.ScheduleParsingError = ScheduleParsingError;
 module.exports.PairingError = PairingError;

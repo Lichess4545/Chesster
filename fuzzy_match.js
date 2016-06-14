@@ -29,15 +29,10 @@ var TEAM_TARGETS = TEAM_CHANNEL_NAMES.concat([
     "4545",
 ]);
 
-function rank_choices(search_string, targets) {
-    if (!targets) {
-        throw new Error("rank_choices: No targets provided");
+function findBestMatches(results, includeDistance) {
+    if (results.length == 0) {
+        return results;
     }
-    var results = [];
-    targets.forEach(function(item) {
-        var distance = levenshtein.get(search_string, item);
-        results.push([distance, item]);
-    });
     results.sort(function(a,b) {
         return a[0] - b[0];
     });
@@ -47,13 +42,34 @@ function rank_choices(search_string, targets) {
         var distance = item[0];
         var match = item[1];
         if (distance == min_distance) {
-            choices.push(match);
+            if (includeDistance) {
+                choices.push(item);
+            } else {
+                choices.push(match);
+            }
         }
     });
 
     return choices;
 }
 
+function rank_choices(searchString, targets, includeDistance) {
+    if (!targets) {
+        throw new Error("rank_choices: No targets provided");
+    }
+    var results = [];
+    targets.forEach(function(item) {
+        var distance = levenshtein.get(searchString, item);
+
+        // You have to get it at least half right
+        if (distance < searchString.length/2) {
+            results.push([distance, item]);
+        }
+    });
+    return findBestMatches(results, includeDistance);
+}
+
+// TODO: I don't believe this is used anymore, if so rip it out
 function match(message, commands, channels, arg_string) {
     var command = commands[0];
     var target = "general";
@@ -84,7 +100,7 @@ function match(message, commands, channels, arg_string) {
     command = rank_choices(command, commands);
     target = rank_choices(target, LONEWOLF_TARGETS.concat(TEAM_TARGETS));
     if (command.length > 1) {
-        console.log("Ambiguous command: ", command, target);
+        console.error("Ambiguous command: ", command, target);
         return {
             command: null,
             target: null
@@ -104,7 +120,7 @@ function match(message, commands, channels, arg_string) {
         target: null,
     };
     if (team_votes == wolf_votes) {
-        console.log("Ambiguous target!");
+        console.error("Ambiguous target!");
     } else if (team_votes > wolf_votes) {
         retval.target = "team";
     } else if (wolf_votes > team_votes) {
@@ -115,3 +131,4 @@ function match(message, commands, channels, arg_string) {
 
 module.exports.match = match;
 module.exports.rank_choices = rank_choices;
+module.exports.findBestMatches = findBestMatches;
