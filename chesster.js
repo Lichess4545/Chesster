@@ -92,20 +92,6 @@ function leagueDMResponse(patterns, responseName) {
     });
 }
 
-/* stop giritime */
-chesster.hears({
-    patterns: 'giritime',
-    messageTypes: [
-        'ambient'
-    ]
-},
-function(bot,message) {
-    var response = "Stop... Giri Time!\n" + "Hi! Im Chesster. Ill be your new bot. " + 
-                    "To interact with me, mention " + slack.users.getIdString("chesster") + 
-                    " in a message";
-    bot.reply(message, response);
-});
-
 /* captains */
 leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
 leagueDMResponse(['captains', 'captain list'], 'formatCaptainsResponse');
