@@ -74,10 +74,10 @@ describe('league', function() {
 
             // Ensure that the first pairing is what we expect
             var first_pairing = _45_league._pairings[0];
-            assert.equal(first_pairing.white.toLowerCase(), "steiger07");
-            assert.equal(first_pairing.black.toLowerCase(), "toddle");
+            assert.equal(first_pairing.white.toLowerCase(), "thephobia");
+            assert.equal(first_pairing.black.toLowerCase(), "sirdore");
             assert.equal(first_pairing.scheduled_date.format("MM/DD @ HH:mm"), "04/14 @ 16:00");
-            assert.equal(first_pairing.result, "1-0");
+            assert.equal(first_pairing.result, "1/2-1/2");
 
             // Ensure that the second pairing is what we expect.
             var second_pairing = _45_league._pairings[1];
