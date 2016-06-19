@@ -1,6 +1,7 @@
 // NOTE: Neither of these files are committed and for good reason.
 //       You must provide your own.
 var token = require("./slack_token.js").token;
+debugger;
 var private_key = require("./service_account_key.js").key;
 
 var config = {

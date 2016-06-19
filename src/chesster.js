@@ -47,7 +47,7 @@ function critical_path(todo){
 
 /* static entry point */
 
-var config_file = process.argv[2] || "./config.js"; 
+var config_file = process.argv[2] || "../config/config.js"; 
 var chesster = new slack.Bot({
     config_file: config_file
 });
