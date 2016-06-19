@@ -904,7 +904,7 @@ function processGameDetails(bot, message, details, options){
     result.gamelinkID = details.id;
  
     //get the result in the correct format
-    if(details.status == "draw" || details.winner){
+    if(details.status == "draw" || details.status == "stalemate" || details.winner){
         if(details.winner == "black"){
             result.result = "0-1";
         }else if(details.winner == "white"){
