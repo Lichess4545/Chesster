@@ -1,6 +1,6 @@
 var assert = require('chai').assert;
 var moment = require("moment");
-var spreadsheets = require('../spreadsheets');
+var spreadsheets = require('../src/spreadsheets');
 
 
 
