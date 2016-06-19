@@ -2,9 +2,9 @@ var assert = require('chai').assert;
 var Q = require("q");
 var _ = require("underscore");
 var moment = require("moment");
-var league = require('../league');
-var lichess = require('../lichess');
-var slack = require('../slack');
+var league = require('../src/league');
+var lichess = require('../src/lichess');
+var slack = require('../src/slack');
 
 var _45_45_LEAGUE_CONF = {
     "name": "45+45",
@@ -33,7 +33,7 @@ var _45_45_LEAGUE_CONF = {
 // NOTE: this key is required for the write tests, but not provided in the repository.
 var private_key = null
 try {
-    private_key = require("../test_service_account_key.js").key;
+    private_key = require("../config/test_service_account_key.js").key;
 } catch (e) {
     if (process.env.TEST_SERVICE_ACCOUNT_KEY) {
         private_key = process.env.TEST_SERVICE_ACCOUNT_KEY.split("\\n").join("\n");

@@ -1,5 +1,5 @@
 var assert = require('chai').assert;
-var fuzzy_match = require('../fuzzy_match');
+var fuzzy_match = require('../src/fuzzy_match');
 
 describe('fuzzy_match', function() {
     describe('#rank_choices()', function () {
