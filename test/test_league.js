@@ -183,8 +183,8 @@ describe('league', function() {
         });
         function testPairingsHaveURLS() {
             var first_pairing = _45_league._pairings[0];
-            assert.equal(first_pairing.result, "1-0");
-            assert.equal(first_pairing.url, "http://en.lichess.org/FwYcks48");
+            assert.equal(first_pairing.result, "1/2-1/2");
+            assert.equal(first_pairing.url, "http://en.lichess.org/rBrDnjTn");
         };
         if (private_key) {
             it("test that we are getting the urls in the pairings", testPairingsHaveURLS);
