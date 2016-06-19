@@ -33,7 +33,7 @@ ps. I will add more detail here later. I just want to get some bare bones instru
 ## Start Chesster
 1. Generate a bot token in your Slack Team's Services and Customization.
 2. Install your bot's token in the start script, start_chesster.
-3. Start the bot. ` > ./bin./start ./config/config.js`
+3. Start the bot. ` > ./bin./start ../config/config.js`
 
 ## Spreadsheet account
 The bot needs a service account for the spreadsheets, you can obtain one of these from google and the google-spreadsheet module documentation has instructions on how to do so. These credentials are sensitive, keep them secret.
