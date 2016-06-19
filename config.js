@@ -68,11 +68,11 @@ var config = {
                 "channel": "team-scheduling"
             },
             "links": {
-                "rules": "https://lichess4545.slack.com/files/parrotz/F0D7RD88L/lichess4545leaguerulesregulations",
+                "rules": "https://lichess4545.slack.com/files/endrawes0/F1ARYEKT3/lichess4545leaguerulesregulations",
                 "team": "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs",
                 "guide": "http://bit.ly/1MW9YJ4",
                 "captains": "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc",
-                "registration": "https://docs.google.com/a/georgetown.edu/forms/d/1u-fjOm1Mouz8J7WAsPhB1CJpB3k10FSp4-fZ-bwvykY/viewform"
+                "registration": "https://docs.google.com/forms/d/1Fx5XL4NZBK-8ADxndWDuH-XLuJDI90ZVKR4GhKs9Ols/viewform"
             }
         },
         "lonewolf": {
