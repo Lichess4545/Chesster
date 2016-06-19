@@ -5,4 +5,5 @@ node_modules
 .vagrant
 service_account_key.js
 slack_token.js
+coverage
 test_service_account_key.js
