@@ -23,6 +23,9 @@ var _45_45_LEAGUE_CONF = {
         "captains": "",
         "registration": "",
         "source": ""
+    },
+    "scheduling": {
+        "format": "MM/DD @ HH:mm"
     }
 };
 
@@ -76,14 +79,14 @@ describe('league', function() {
             var first_pairing = _45_league._pairings[0];
             assert.equal(first_pairing.white.toLowerCase(), "steiger07");
             assert.equal(first_pairing.black.toLowerCase(), "toddle");
-            assert.equal(first_pairing.scheduled_date.format("MM/DD @ HH:mm"), "04/14 @ 16:00");
+            assert.equal(first_pairing.scheduled_date.format(_45_league.options.scheduling.format), "04/14 @ 16:00");
             assert.equal(first_pairing.result, "1-0");
 
             // Ensure that the second pairing is what we expect.
             var second_pairing = _45_league._pairings[1];
             assert.equal(second_pairing.white.toLowerCase(), "felixnl");
             assert.equal(second_pairing.black.toLowerCase(), "r-mena");
-            assert.equal(second_pairing.scheduled_date.format("MM/DD @ HH:mm"), "04/17 @ 21:00");
+            assert.equal(second_pairing.scheduled_date.format(_45_league.options.scheduling.format), "04/17 @ 21:00");
             assert.equal(second_pairing.result, "");
 
         });

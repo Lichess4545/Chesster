@@ -233,8 +233,8 @@ league_attributes = {
                     var date_string = row[self.options.spreadsheet.scheduleColname].value || '';
                     date_string = date_string.trim()
                     var date = moment.utc(
-                        moment.utc().year() + "/" + date_string,
-                        "YYYY/MM/DD @ HH:mm",
+                        date_string,
+                        self.options.scheduling.format,
                         true
                     );
                     if (!date.isValid()) {
