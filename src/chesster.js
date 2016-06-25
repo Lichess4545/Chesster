@@ -27,7 +27,9 @@ function exception_handler(todo, on_error){
             "\nError: " + JSON.stringify(e) +
             "\nStack: " + e.stack;
         console.error(error_log);
-        on_error && on_error();
+        if (on_error) {
+            on_error();
+        }
     }
 }
 
@@ -164,7 +166,7 @@ chesster.hears({
     patterns: [
         'commands', 
         'command list',
-        'help',
+        'help'
     ],
     messageTypes: [
         'direct_mention', 
@@ -209,7 +211,7 @@ function prepareChannelDetailMessage(channel){
 			+ "\n\tFormat: \"@white v @black, <result>\", where <result> in {1-0, 1/2-1/2, 0-1}",
         "random": "Anything can be discussed here. " + 
 			"And if it is not league related, it belongs in here.",
-        "default": "I am sorry. I do not recognize that channel.",
+        "default": "I am sorry. I do not recognize that channel."
     };
 
     channel = channel.replace("#", ""); //remove channel special character
@@ -341,7 +343,7 @@ chesster.hears({
 function(bot, message) {
     return Q.fcall(function() {
         var teamName = message.text.split(" ").slice(2).join(" ");
-        if(teamName && teamName != ""){
+        if(teamName && teamName !== ""){
             message.league.formatTeamMembersResponse(teamName).then(function(response) {
                 bot.reply(message, response);
             });
@@ -356,7 +358,7 @@ function(bot, message) {
 chesster.on({event: 'user_channel_join'},
 function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        if(message.channel == channels.getId("general")){
+        if(message.channel === channels.getId("general")){
             bot.reply(message, "Everyone, please welcome the newest member of the " 
                              + "Lichess 45+45 League, <@" + message.user + ">!");
             
@@ -449,7 +451,7 @@ chesster.hears({
 function(bot, message) {
     var deferred = Q.defer();
     bot.startPrivateConversation(message, function (response, convo) {
-        boardNumber = parseInt(message.text.split(" ")[1]);
+        boardNumber = parseInt(message.text.split(" ")[1], 10);
         if(boardNumber && !isNaN(boardNumber)){
             message.league.formatBoardResponse(boardNumber).then(function(response) {
                 convo.say(response);
@@ -478,7 +480,7 @@ function schedulingReplyMissingPairing(bot, message) {
 // you are very close to the cutoff
 function schedulingReplyTooCloseToCutoff(bot, message, schedulingOptions, white, black) {
     bot.reply(message, 
-        ":heavy_exclamation_mark: @" + white.name + " " + "@" + black.name + " " + schedulingOptions.warningMessage
+        ":heavy_exclamation_mark: @" + white.name + " @" + black.name + " " + schedulingOptions.warningMessage
     );
 }
 
@@ -491,12 +493,12 @@ function schedulingReplyScheduled(bot, message, results, white, black) {
     var dates = [
         results.date.format(format) + " ",
         whiteDate.format(friendly_format) + " for " + white.name,
-        blackDate.format(friendly_format) + " for " + black.name,
+        blackDate.format(friendly_format) + " for " + black.name
     ];
     date_formats  = dates.join("\n\t");
 
     bot.reply(message, 
-        ":heavy_check_mark: @" + white.name + " (_white pieces_) vs " + "@" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats
+        ":heavy_check_mark: @" + white.name + " (_white pieces_) vs @" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats
     );
 }
 
@@ -542,7 +544,7 @@ function(bot, message) {
         console.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
         return;
     } 
-    if (channel.name != schedulingOptions.channel) {
+    if (channel.name !== schedulingOptions.channel) {
         return;
     }
 
@@ -560,8 +562,7 @@ function(bot, message) {
         results = spreadsheets.parseScheduling(message.text, schedulingOptions);
         isPotentialSchedule = true;
     } catch (e) {
-        if (e instanceof (spreadsheets.ScheduleParsingError)) {
-        } else {
+        if (!(e instanceof (spreadsheets.ScheduleParsingError))) {
             throw e; // let others bubble up
         }
     }
@@ -587,7 +588,7 @@ function(bot, message) {
         results,
         function(err, reversed) {
             if (err) {
-                if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                if (err.indexOf && err.indexOf("Unable to find pairing.") === 0) {
                     hasPairing = false;
                 } else {
                     bot.reply(message, "Something went wrong. Notify a mod");
@@ -608,8 +609,8 @@ function(bot, message) {
             }
             var speaker = users.getByNameOrID(message.user);
             if (
-                white.id != speaker.id &&
-                black.id != speaker.id &&
+                white.id !== speaker.id &&
+                black.id !== speaker.id &&
                 !message.player.isModerator()
             ) {
                 schedulingReplyCantScheduleOthers(bot, message);
@@ -654,7 +655,7 @@ function(bot, message) {
         return;
     } 
     var resultsOptions = message.league.options.results;
-    if (!resultsOptions || channel.name != resultsOptions.channel) {
+    if (!resultsOptions || channel.name !== resultsOptions.channel) {
         return;
     }
 
@@ -669,8 +670,8 @@ function(bot, message) {
         result.black = users.getByNameOrID(result.black.replace(/[\<\@\>]/g, ''));
         
         if(
-            result.white.id != message.user &&
-            result.black.id != message.user &&
+            result.white.id !== message.user &&
+            result.black.id !== message.user &&
             !message.player.isModerator()
         ){
             replyPermissionFailure(bot, message);
@@ -702,7 +703,7 @@ function(bot, message) {
                         result,
                         function(err, reversed){
                             if (err) {
-                                if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                                if (err.indexOf && err.indexOf("Unable to find pairing.") === 0) {
                                     resultReplyMissingPairing(bot, message);
                                 } else {
                                     bot.reply(message, "Something went wrong. Notify @endrawes0");
@@ -753,7 +754,7 @@ function fetchURLIntoJSON(url, callback){
             body += chunk;
         });
         res.on('end', () => {
-            if(body != ""){
+            if(body !== ""){
                 var json = JSON.parse(body);
                 if(json){
                    callback(undefined, json);
@@ -774,22 +775,22 @@ function fetchURLIntoJSON(url, callback){
 function validateGameDetails(details, options){
     var result = {
         valid: true,
-        reason: "",
+        reason: ""
     };
-    if(details.rated != options.rated){
+    if(details.rated !== options.rated){
         //the game is not rated correctly
         result.valid = false;
         result.reason = "the game is " + ( options.rated ? "unrated." : "rated." );
     }else if( !details.clock || ( // no clock - unlimited or coorespondence
         details.clock && ( //clock
-            details.clock.initial != options.clock.initial * 60 || // initial time
-            details.clock.increment != options.clock.increment ) // increment
+            details.clock.initial !== options.clock.initial * 60 || // initial time
+            details.clock.increment !== options.clock.increment ) // increment
         ) 
     ){
         //the time control does not match options
         result.valid = false;
         result.reason = "the time control is incorrect."
-    }else if(details.variant != options.variant){
+    }else if(details.variant !== options.variant){
         //the variant does not match
         result.valid = false;
         result.reason = "the variant should be standard."
@@ -830,22 +831,22 @@ function validateUserResult(details, result){
         valid: true,
         reason: ""
     };
-    if( details.winner && result.result == "1/2-1/2" ){
+    if( details.winner && result.result === "1/2-1/2" ){
         //the details gave a winner but the user claimed draw
         validity.reason = "the user claimed a draw " 
                         + "but the gamelink specifies " + details.winner + " as the winner.";
         validity.valid = false;
-   }else if( details.winner == "black" && result.result == "1-0"){
+   }else if( details.winner === "black" && result.result === "1-0"){
         //the details gave the winner as black but the user claimed white
         validity.reason = "the user claimed a win for white " 
                         + "but the gamelink specifies black as the winner.";
         validity.valid = false;
-    }else if( details.winner == "white" && result.result == "0-1"){
+    }else if( details.winner === "white" && result.result === "0-1"){
         //the details gave the winner as white but the user claimed black
         validity.reason = "the user claimed a win for black " 
                         + "but the gamelink specifies white as the winner.";
         validity.valid = false;
-    }else if( details.status == "draw" && result.result != "1/2-1/2" ){
+    }else if( details.status === "draw" && result.result !== "1/2-1/2" ){
         //the details gave a draw but the user did not claim a draw
         validity.reason = "the user claimed a decisive result " 
                         + "but the gamelink specifies a draw.";
@@ -904,10 +905,10 @@ function processGameDetails(bot, message, details, options){
     result.gamelinkID = details.id;
  
     //get the result in the correct format
-    if(details.status == "draw" || details.status == "stalemate" || details.winner){
-        if(details.winner == "black"){
+    if(details.status === "draw" || details.status === "stalemate" || details.winner){
+        if(details.winner === "black"){
             result.result = "0-1";
-        }else if(details.winner == "white"){
+        }else if(details.winner === "white"){
             result.result = "1-0";
         }else{
             result.result = "1/2-1/2";
@@ -923,7 +924,7 @@ function processGameDetails(bot, message, details, options){
         result,
         function(err, reversed){
             if (err) {
-                if (err.indexOf && err.indexOf("Unable to find pairing.") == 0) {
+                if (err.indexOf && err.indexOf("Unable to find pairing.") === 0) {
                     resultReplyMissingPairing(bot, message);
                 }else if(reversed){
                     gamelinkReplyInvalid(bot, message, err);
@@ -957,7 +958,7 @@ function(bot, message) {
         return;
     } 
     var gamelinkOptions = message.league.options.gamelinks;
-    if (!gamelinkOptions || channel.name != gamelinkOptions.channel) {
+    if (!gamelinkOptions || channel.name !== gamelinkOptions.channel) {
         return;
     }
 

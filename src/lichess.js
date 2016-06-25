@@ -57,7 +57,7 @@ var makeRequest = (function() {
                 promise = http.fetchURL(url);
             }
             promise.then(function(result) {
-                if (result.response.statusCode == 429) {
+                if (result.response.statusCode === 429) {
                     requestDelay = 60 * SECONDS;
                     console.log("Last request status was a 429 - we will wait 60 seconds before our next request");
                 }
@@ -75,7 +75,7 @@ var makeRequest = (function() {
     }
     processRequest();
     return makeRequest;
-})();
+}());
 
 function getPlayerByName(name, isBackground){
     var url = "http://en.lichess.org/api/user/" + name;
@@ -133,7 +133,7 @@ var ratingFunctions = (function() {
         getPlayerRating: getPlayerRating,
         setPlayerRating: setPlayerRating
     };
-})();
+}());
 
 
 
