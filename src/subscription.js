@@ -183,6 +183,72 @@ function processTellCommand(config, message) {
     });
 }
 
+//------------------------------------------------------------------------------
+// Processes the subscriptions command
+//
+// subscriptions (by itself) simply lists your subscriptions with ID #s
+//------------------------------------------------------------------------------
+function processSubscriptionsCommand(config, message) {
+    return Q.fcall(function() {
+        var requester = player.getSlackUserFromNameOrID(slack.users, message.user);
+        // TODO: Once we enable WAL - we can remove this lock for this command
+        return db.lock().then(function(unlock) {
+            return db.Subscription.findAll({
+                where: {
+                    requester: requester.name.toLowerCase()
+                },
+                order: [
+                    ['id', 'ASC']
+                ]
+			}).then(function(subscriptions) {
+                var response = "";
+                _.each(subscriptions, function(subscription) {
+                    response += "\nID {id} -> tell {target} when {event} for {source} in {league}".format(subscription.get());
+                });
+
+                unlock.resolve();
+                return response;
+            });
+        });
+    });
+}
+
+//------------------------------------------------------------------------------
+// Processes the remove subscription command
+//
+// subscriptions (by itself) simply lists your subscriptions with ID #s
+//------------------------------------------------------------------------------
+function processRemoveSubscriptionCommand(config, message, id) {
+    return Q.fcall(function() {
+        var requester = player.getSlackUserFromNameOrID(slack.users, message.user);
+        // TODO: Once we enable WAL - we can remove this lock for this command
+        return db.lock().then(function(unlock) {
+            return db.Subscription.findAll({
+                where: {
+                    requester: requester.name.toLowerCase(),
+                    id: id
+                }
+			}).then(function(subscriptions) {
+                if (subscriptions.length == 0) {
+                    unlock.resolve();
+                    return "That is not a valid subscription id";
+                } else if (subscriptions.length == 1) {
+                    return subscriptions[0].destroy().then(function() {
+                        unlock.resolve();
+                        return "Subscription deleted";
+                    });
+                } else {
+                    // This should never happen
+                    unlock.resolve();
+                    throw Error("This should never occur");
+                }
+            });
+        });
+    });
+}
+
 
 module.exports.emitter = emitter;
 module.exports.processTellCommand = processTellCommand;
+module.exports.processSubscriptionsCommand = processSubscriptionsCommand;
+module.exports.processRemoveSubscriptionCommand = processRemoveSubscriptionCommand;

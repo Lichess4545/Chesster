@@ -982,7 +982,44 @@ function(bot, message) {
     var deferred = Q.defer();
     bot.startPrivateConversation(message, function (response, convo) {
         subscription.processTellCommand(chesster.config, message).then(function(response) {
-            console.log(response);
+            convo.say(response);
+            deferred.resolve();
+        }).catch(function(error) {
+            convo.say("I'm sorry, but an error occurred processing this subscription command");
+            deferred.reject(error);
+        });
+    });
+    return deferred.promise;
+});
+
+chesster.hears({
+    middleware: [],
+    patterns: ['^subscriptions$'],
+    messageTypes: ['direct_message']
+},
+function(bot, message) {
+    var deferred = Q.defer();
+    bot.startPrivateConversation(message, function (response, convo) {
+        subscription.processSubscriptionsCommand(chesster.config, message).then(function(response) {
+            convo.say(response);
+            deferred.resolve();
+        }).catch(function(error) {
+            convo.say("I'm sorry, but an error occurred processing this subscription command");
+            deferred.reject(error);
+        });
+    });
+    return deferred.promise;
+});
+
+chesster.hears({
+    middleware: [],
+    patterns: [/^remove subscription (\d+)$/],
+    messageTypes: ['direct_message']
+},
+function(bot, message) {
+    var deferred = Q.defer();
+    bot.startPrivateConversation(message, function (response, convo) {
+        subscription.processRemoveSubscriptionCommand(chesster.config, message, message.match[1]).then(function(response) {
             convo.say(response);
             deferred.resolve();
         }).catch(function(error) {
