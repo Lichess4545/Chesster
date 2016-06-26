@@ -187,14 +187,8 @@ league_attributes = {
                 _.each(self._teams, function(team) {
                     _.each(team.roster, function(player) {
                         if (player && player.name) {
-                            if (firstRosterUpdate && player.rating) {
-                                lichess.setPlayerRating(player.name, player.rating);
-                            }
-                            lichess.getPlayerRating(player.name, true).then(function(rating) {
+                            lichess.getPlayerRating(player.name).then(function(rating) {
                                 player.rating = rating;
-                                self._playerRatingsLastUpdates[player.name] = moment.utc();
-                            }, function(error) {
-                                console.error("Error updating rating: " + JSON.stringify(error));
                             });
                         }
                     });

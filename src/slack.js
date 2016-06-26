@@ -6,6 +6,7 @@ var Botkit = require('botkit');
 var _ = require("underscore");
 var league = require("./league.js");
 var fuzzy = require("./fuzzy_match.js");
+var models = require("./models.js");
 
 function StopControllerError () {}
 StopControllerError.prototype = new Error();
@@ -261,6 +262,7 @@ function hears(options, callback) {
     var options = _.extend({}, DEFAULT_HEARS_OPTIONS, options);
     self.controller.hears(options.patterns, options.messageTypes, function(bot, message) {
         return botExceptionHandler(bot, message, Q.fcall(function() {
+            message.controller = self;
             message.player = users.getByNameOrID(message.user);
             // This will occur if a new player uses a chesster command
             // within their first 2 minutes of having joined. :)
@@ -296,6 +298,7 @@ function on(options, callback) {
     var options = _.extend({}, DEFAULT_ON_OPTIONS, options);
     self.controller.on(options.event, function(bot, message) {
         return botExceptionHandler(bot, message, Q.fcall(function() {
+            message.controller = self;
             message.player = users.getByNameOrID(message.user);
             if (message.player) {
                 message.player.localTime = localTime;
@@ -329,26 +332,29 @@ function Bot(options) {
     var self = this;
     self.options = _.extend({}, DEFAULT_BOT_OPTIONS, options);
     console.log("Loading config from: " + self.options.config_file);
-    self.config = require(self.options.config_file).config;
+    self.config = require(self.options.config_file);
     if (!self.config.token) {
         console.error('Failed to load token from: ' + config_file);
         throw new Error("A token must be specified in the configuration file");
     }
 
-    self.controller = Botkit.slackbot({
+    var bot_options = {
         debug: self.options.debug
-    });
+    };
+    self.controller = Botkit.slackbot(bot_options);
     self.controller.spawn({
       token: self.config.token
     }).startRTM(function(err, bot) {
         if (err) {
             throw new Error(err);
         }
-
-        //refresh your user and channel list every 2 minutes
-        //would be nice if this was push model, not poll but oh well.
-        refresh(bot, 120 * SECONDS, self.config);
-
+        // connect to the database
+        models.connect(self.config).then(function() {
+            //console.log(bot === self);
+            //refresh your user and channel list every 2 minutes
+            //would be nice if this was push model, not poll but oh well.
+            refresh(bot, 120 * SECONDS, self.config);
+        });
     });
     self.hears = hears;
     self.on = on;

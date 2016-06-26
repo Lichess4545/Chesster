@@ -4,6 +4,10 @@
 var http = require("./http.js");
 var moment = require("moment");
 var Q = require("q");
+// TODO: sequelize-cli requires us to call this models.js or models/index.js
+//       this name conflicts with the parameter that we pass in after getting
+//       the lock, so I'd like to (by convention) always refer to this as db.
+var db = require("./models.js");
 
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
@@ -91,52 +95,95 @@ function getPlayerByName(name, isBackground){
 //------------------------------------------------------------------------------
 var ratingFunctions = (function() {
     var _playerRatings = {};
-    var _playerRatingsLastUpdated = {};
-    var _playerRatingPromises = {};
-    function getPlayerRating(name, isBackground){
-        // If we have updated recently, just return this rating.
-        var _30MinsAgo = moment.utc().subtract(30, 'minutes');
-        var lastUpdated = _playerRatingsLastUpdated[name.toLowerCase()];
+    var _playerIsInQueue = {};
 
-        var promise = _playerRatingPromises[name.toLowerCase()];
-        // If we don't have a recent rating for them and we aren't
-        // already asking for one.
-        if ((!lastUpdated || lastUpdated.isBefore(_30MinsAgo)) && !promise) {
-
-            // Else, 
-            var background = "";
-            if (isBackground) {
-                background = " [in the background]";
-            }
-            console.log("Requesting rating update for " + name + background);
-            promise = getPlayerByName(name, isBackground).then(function(result) {
-                var rating = result.json.perfs.classical.rating;
-                _playerRatings[name.toLowerCase()] = rating;
-                _playerRatingsLastUpdated[name.toLowerCase()] = moment.utc();
-                _playerRatingPromises[name.toLowerCase()] = undefined;
-                console.log("Got updated rating for {name}: {rating}".format({
-                    name: name,
-                    rating: rating
-                }));
-                return rating;
+    //--------------------------------------------------------------------------
+    // Update the rating from lichess - storing it in the database.
+    //--------------------------------------------------------------------------
+    function _updateRating(name, isBackground) {
+        _playerIsInQueue[name] = true;
+        return getPlayerByName(name, isBackground).then(function(result) {
+            _playerIsInQueue[name] = undefined;
+            var rating = result.json.perfs.classical.rating;
+            var doneWithDB = Q.defer();
+            // Get the writable lock for the database.
+            return db.lock(doneWithDB.promise).then(function(models) {
+                return models.LichessRating.findOrCreate({
+                    where: { lichessUserName: name }
+                }).then(function(lichessRatings) {
+                    lichessRating = lichessRatings[0];
+                    lichessRating.set('rating', rating);
+                    lichessRating.set('lastCheckedAt', moment.utc().format());
+                    lichessRating.save().then(function() {
+                        console.log("Got updated rating for {name}: {rating}".format({
+                            name: name,
+                            rating: rating
+                        }));
+                        doneWithDB.resolve();
+                    }).catch(function(error) {
+                        doneWithDB.reject();
+                    });
+                    return rating;
+                });
             });
-            _playerRatingPromises[name.toLowerCase()] = promise;
-        }
-
-        // Always return the latest one that we already have.
-        return Q.fcall(function() { return _playerRatings[name.toLowerCase()]; });
+        }).catch(function(error) {
+            doneWithDB.reject();
+        });
     }
-    function setPlayerRating(name, rating) {
-        _playerRatings[name.toLowerCase()] = rating;
+
+    //--------------------------------------------------------------------------
+    // Get the player rating. Always return the most recent rating from the
+    // database, unless they don't have it. Then go get it and return it.
+    //--------------------------------------------------------------------------
+    function getPlayerRating(name){
+        var name = name.toLowerCase();
+
+        var doneWithDB = Q.defer();
+        // Get the writable lock for the database.
+        return db.lock(doneWithDB.promise).then(function(models) {
+            // Ensure we have a record.
+            return models.LichessRating.findOrCreate({
+                where: { lichessUserName: name }
+            }).then(function(lichessRating) {
+                doneWithDB.resolve();
+                lichessRating = lichessRating[0];
+
+                var _30MinsAgo = moment.utc().subtract(30, 'minutes');
+                var lastCheckedAt = lichessRating.get('lastCheckedAt');
+                if (lastCheckedAt) {
+                    lastCheckedAt = moment.utc(lastCheckedAt);
+                }
+                var promise;
+                var isInQueue = _playerIsInQueue[name];
+                var rating = lichessRating.get('rating');
+
+                // Only update the rating if it's older than 30 minutes
+                // or if we don't have one a rating
+                // TODO: Replace this with _.isInteger
+                if (rating === null || typeof rating === 'undefined')  {
+                    // If we don't have a rating, use the foreground queue
+                    promise = _updateRating(name, false);
+                } else if (!isInQueue && (!lastCheckedAt || lastCheckedAt.isBefore(_30MinsAgo))) {
+                    // If the rating is just out of date, use the background queue
+                    promise = _updateRating(name, true);
+                }
+
+                if (rating !== null && typeof rating !== 'undefined')  {
+                    // Return the cached rating if we have it.
+                    return lichessRating.get('rating');
+                } else {
+                    // Otherwise wait until we get it
+                    return promise;
+                }
+            }).catch(function(error) {
+                console.error("Error querying for rating: " + error);
+            });
+        });
     }
     return {
         getPlayerRating: getPlayerRating,
-        setPlayerRating: setPlayerRating
     };
 })();
 
-
-
 module.exports.getPlayerRating = ratingFunctions.getPlayerRating
-module.exports.setPlayerRating = ratingFunctions.setPlayerRating
 module.exports.getPlayerByName = getPlayerByName
