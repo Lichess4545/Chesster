@@ -262,7 +262,6 @@ function hears(options, callback) {
     var options = _.extend({}, DEFAULT_HEARS_OPTIONS, options);
     self.controller.hears(options.patterns, options.messageTypes, function(bot, message) {
         return botExceptionHandler(bot, message, Q.fcall(function() {
-            message.controller = self;
             message.player = users.getByNameOrID(message.user);
             // This will occur if a new player uses a chesster command
             // within their first 2 minutes of having joined. :)
@@ -298,7 +297,6 @@ function on(options, callback) {
     var options = _.extend({}, DEFAULT_ON_OPTIONS, options);
     self.controller.on(options.event, function(bot, message) {
         return botExceptionHandler(bot, message, Q.fcall(function() {
-            message.controller = self;
             message.player = users.getByNameOrID(message.user);
             if (message.player) {
                 message.player.localTime = localTime;
