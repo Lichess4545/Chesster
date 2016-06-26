@@ -166,7 +166,7 @@ league_attributes = {
                             rating: rating,
                             team: team
                         };
-                        if (name !== player['name'] && name[name.length-1] === '*') {
+                        if (!_.isEqual(name, player['name']) && name[name.length-1] === '*') {
                             captain = player;
                         }
                         return player;
@@ -318,7 +318,7 @@ league_attributes = {
                 "opponent":  pairing.black,
                 "date": pairing.scheduled_date
             }
-            if (pairing.white.toLowerCase() !== targetPlayer.name.toLowerCase()) {
+            if (!_.isEqual(pairing.white.toLowerCase(), targetPlayer.name.toLowerCase())) {
                 details.color = "black";
                 details.opponent = pairing.white;
             }
@@ -604,7 +604,7 @@ league_attributes = {
                 });
             }
             teams = _.filter(self._teams, function(t) {
-                return t.name.toLowerCase() === teamName.toLowerCase()
+                return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase())
             });
             if (teams.length === 0) {
                 return "No team by that name";

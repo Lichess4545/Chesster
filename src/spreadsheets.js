@@ -352,6 +352,11 @@ function getRows(spreadsheetConfig, options, sheetPredicate, callback) {
 
     function getRowImplementation(err, info) {
         var targetSheet;
+
+        if (err) {
+            callback(err, undefined);
+        }
+
         doc.getInfo(function(err, info) {
             if (err) { return callback(err, info); }
             // Find the last spreadsheet with the word "round" in the title.
@@ -590,7 +595,7 @@ function updateResult(spreadsheetConfig, result, callback){
             }
 
             //if no game link is found, just post the result
-            if(gamelink === ''){
+            if(_.isEqual(gamelink, "")){
                 resultCell.value = resultString;
             }else{
                 resultCell.formula = '=HYPERLINK("' + gamelink + '","' + resultString + '")';
