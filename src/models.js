@@ -46,6 +46,22 @@ var exports = (function() {
                 type: Sequelize.DATE, allowNull: true
             }
         });
+        var Subscription = sequelize.define('Subscription', {
+            id: {
+                type: Sequelize.INTEGER,
+                autoIncrement: true,
+                primaryKey: true
+            },
+            source: {
+                type: Sequelize.STRING, unique: "sourceEventTargetIndex"
+            },
+            event: {
+                type: Sequelize.String, unique: "sourceEventTargetIndex"
+            },
+            target: {
+                type: Sequelize.String, unique: "sourceEventTargetIndex"
+            },
+        });
         return {
             LichessRating: LichessRating
         };

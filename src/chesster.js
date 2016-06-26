@@ -14,6 +14,7 @@ var slack = require('./slack.js');
 var users = slack.users;
 var channels = slack.channels;
 var lichess = require('./lichess.js');
+var subscription = require('./subscription.js');
 
 /* exception handling */
 /* later this will move it its own module */
@@ -969,3 +970,23 @@ function(bot, message) {
     }
 });
 
+/* subscriptions */
+
+chesster.hears({
+    middleware: [],
+    patterns: ['^tell'],
+    messageTypes: ['direct_message']
+},
+function(bot, message) {
+    var deferred = Q.defer();
+    bot.startPrivateConversation(message, function (response, convo) {
+        subscription.processTellCommand(chesster.config, message.text).then(function(message) {
+            convo.say(message);
+            deferred.resolve();
+        }).catch(function(error) {
+            convo.say("I'm sorry, but an error occurred processing this subscription command");
+            deferred.reject(error);
+        });
+    });
+    return deferred.promise;
+});
