@@ -4,10 +4,13 @@
 
 var Q = require("q");
 var _ = require("underscore");
+var format = require('string-format')
+format.extend(String.prototype)
 
 var league = require("./league.js");
 var slack = require("./slack.js");
 var player = require("./player.js");
+var db = require("./models.js");
 
 // The emitter we will use.
 const EventEmitter = require('events');
@@ -102,6 +105,7 @@ function formatInvalidSourceResponse(config, source) {
 //------------------------------------------------------------------------------
 function processTellCommand(config, message) {
     return Q.fcall(function() {
+        var requester = player.getSlackUserFromNameOrID(slack.users, message.user);
         var components = message.text.split(" ");
         var args = components.slice(0, 7);
         var sourceName = components.splice(7).join(" ");
@@ -142,6 +146,10 @@ function processTellCommand(config, message) {
             return formatInvalidListenerResponse(config, listener);
         }
 
+        if (_.isEqual(listener, "me")) {
+            listener = requester.name;
+        }
+
         // Ensure the event is valid
         if (!_.includes(events, event)) {
             return formatInvalidEventResponse(config, event);
@@ -153,8 +161,25 @@ function processTellCommand(config, message) {
         if (_.isUndefined(source)) {
             return formatInvalidSourceResponse(config, sourceName);
         }
-        var requester = player.getSlackUserFromNameOrID(slack.users, message.user);
-        return "Args: [" + args + "] Source: [" + source.name + "] [" + requester.name + "]";
+        return db.lock().then(function(unlock) {
+            return db.Subscription.findOrCreate({
+                where: {
+                    requester: requester.name.toLowerCase(),
+                    source: source.name.toLowerCase(),
+                    event: event.toLowerCase(),
+                    league: l.options.name.toLowerCase(),
+                    target: listener.toLowerCase()
+                }
+			}).then(function(subscription) {
+                unlock.resolve();
+                return "Great! I will tell {target} when {event} for {source} in {league}".format({
+                    source: source.name,
+                    event: event,
+                    league: l.options.name,
+                    target: listener
+                });
+            });
+        });
     });
 }
 

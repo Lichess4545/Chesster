@@ -53,17 +53,20 @@ var exports = (function() {
                 primaryKey: true
             },
             requester: {
-                type: Sequelize.STRING, unique: "sourceEventTargetIndex"
+                type: Sequelize.STRING, unique: "eventUnique"
             },
             source: {
-                type: Sequelize.STRING, unique: "sourceEventTargetIndex"
+                type: Sequelize.STRING, unique: "eventUnique"
             },
             event: {
-                type: Sequelize.String, unique: "sourceEventTargetIndex"
+                type: Sequelize.STRING, unique: "eventUnique"
             },
             target: {
-                type: Sequelize.String, unique: "sourceEventTargetIndex"
+                type: Sequelize.STRING, unique: "eventUnique"
             },
+            league: {
+                type: Sequelize.STRING, unique: "eventUnique"
+            }
         });
     }
 

@@ -981,8 +981,9 @@ chesster.hears({
 function(bot, message) {
     var deferred = Q.defer();
     bot.startPrivateConversation(message, function (response, convo) {
-        subscription.processTellCommand(chesster.config, message).then(function(message) {
-            convo.say(message);
+        subscription.processTellCommand(chesster.config, message).then(function(response) {
+            console.log(response);
+            convo.say(response);
             deferred.resolve();
         }).catch(function(error) {
             convo.say("I'm sorry, but an error occurred processing this subscription command");
