@@ -358,7 +358,7 @@ function(bot, message) {
 chesster.on({event: 'user_channel_join'},
 function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        if(message.channel === channels.getId("general")){
+        if(_.isEqual(message.channel, channels.getId("general"))){
             bot.reply(message, "Everyone, please welcome the newest member of the " 
                              + "Lichess 45+45 League, <@" + message.user + ">!");
             
@@ -777,14 +777,14 @@ function validateGameDetails(details, options){
         valid: true,
         reason: ""
     };
-    if(details.rated !== options.rated){
+    if(!_.isEqual(details.rated, options.rated)){
         //the game is not rated correctly
         result.valid = false;
         result.reason = "the game is " + ( options.rated ? "unrated." : "rated." );
     }else if( !details.clock || ( // no clock - unlimited or coorespondence
         details.clock && ( //clock
-            details.clock.initial !== options.clock.initial * 60 || // initial time
-            details.clock.increment !== options.clock.increment ) // increment
+            !_.isEqual(details.clock.initial, options.clock.initial * 60) || // initial time
+            !._isEqual(details.clock.increment, options.clock.increment) ) // increment
         ) 
     ){
         //the time control does not match options
@@ -831,22 +831,22 @@ function validateUserResult(details, result){
         valid: true,
         reason: ""
     };
-    if( details.winner && result.result === "1/2-1/2" ){
+    if( details.winner && _.isEqual(result.result, "1/2-1/2")){
         //the details gave a winner but the user claimed draw
         validity.reason = "the user claimed a draw " 
                         + "but the gamelink specifies " + details.winner + " as the winner.";
         validity.valid = false;
-   }else if( details.winner === "black" && result.result === "1-0"){
+   }else if(_.isEqual(details.winner, "black") && _.isEqual(result.result, "1-0")){
         //the details gave the winner as black but the user claimed white
         validity.reason = "the user claimed a win for white " 
                         + "but the gamelink specifies black as the winner.";
         validity.valid = false;
-    }else if( details.winner === "white" && result.result === "0-1"){
+    }else if(_.isEqual(details.winner, "white") && _.isEqual(result.result, "0-1")){
         //the details gave the winner as white but the user claimed black
         validity.reason = "the user claimed a win for black " 
                         + "but the gamelink specifies white as the winner.";
         validity.valid = false;
-    }else if( details.status === "draw" && result.result !== "1/2-1/2" ){
+    }else if(_.isEqual(details.status, "draw") && !_.isEqual(result.result, "1/2-1/2")){
         //the details gave a draw but the user did not claim a draw
         validity.reason = "the user claimed a decisive result " 
                         + "but the gamelink specifies a draw.";
@@ -905,10 +905,10 @@ function processGameDetails(bot, message, details, options){
     result.gamelinkID = details.id;
  
     //get the result in the correct format
-    if(details.status === "draw" || details.status === "stalemate" || details.winner){
-        if(details.winner === "black"){
+    if(_.isEqual(details.status, "draw") || _.isEqual(details.status, "stalemate") || details.winner){
+        if(_.isEqual(details.winner, "black")){
             result.result = "0-1";
-        }else if(details.winner === "white"){
+        }else if(_.isEqual(details.winner, "white")){
             result.result = "1-0";
         }else{
             result.result = "1/2-1/2";

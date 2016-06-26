@@ -126,7 +126,7 @@ league_attributes = {
             },
             function(err, rows) {
                 if (err) {
-                    if (err !== "Unable to find target worksheet") {
+                    if (!_.isEqual(err, "Unable to find target worksheet")) {
                         return callback(err, rows);
                     } else {
                         return callback(undefined, []);
@@ -151,7 +151,7 @@ league_attributes = {
                     ) {
                         return;
                     }
-                    if (row['teams'].value.toLowerCase() === 'alternates') {
+                    if (_.isEqual(row['teams'].value.toLowerCase(), 'alternates')) {
                         // TODO: eventually we'll want this data too!
                         return;
                     }
@@ -166,7 +166,7 @@ league_attributes = {
                             rating: rating,
                             team: team
                         };
-                        if (!_.isEqual(name, player['name']) && name[name.length-1] === '*') {
+                        if (!_.isEqual(name, player['name']) && _.isEqual(name[name.length-1], '*')) {
                             captain = player;
                         }
                         return player;
@@ -534,7 +534,7 @@ league_attributes = {
                 });
             }
             teams = _.filter(self._teams, function(t) {
-                return t.name.toLowerCase() === teamName.toLowerCase()
+                return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase());
             });
             if (teams.length === 0) {
                 return "No team by that name";

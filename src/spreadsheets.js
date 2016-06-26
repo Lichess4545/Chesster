@@ -165,9 +165,9 @@ function getPossibleDateStrings(dateString, extrema) {
     while (!cur.isAfter(extrema.end)) {
         var monthDay = cur.format("MM-DD");
         // Deal with a couple of formats that moment doesn't produce but are used.
-        if (cur.format("dddd") === "Thursday") {
+        if (_.isEqual(cur.format("dddd"), "Thursday")) {
             dateNameMappings["thurs"] = monthDay;
-        } if (cur.format("dddd") === "Wednesday") {
+        } if (_.isEqual(cur.format("dddd"), "Wednesday")) {
             dateNameMappings["weds"] = monthDay;
         }
         dateNameMappings[cur.format("dd").toLowerCase()] = monthDay;
@@ -569,7 +569,7 @@ function updateResult(spreadsheetConfig, result, callback){
                 //this is an error - games must be played by proper colors
                 return callback("the colors are reversed.", true);
             }
-            if(resultString !== "-"){
+            if(!_.isEqual(resultString, "-")){
                 //this is just the addition of a result
                 //we will use the gamelink to verify the result if we have it
                 if(reversed){
@@ -674,7 +674,7 @@ function parseHyperlink(hyperlink) {
     if (parts.length !== 5) {
         return results;
     }
-    if (parts[0].toUpperCase() !== "=HYPERLINK(") {
+    if (_.isEqual(parts[0].toUpperCase(), "=HYPERLINK(")) {
         return results;
     }
     results['href'] = parts[1];
