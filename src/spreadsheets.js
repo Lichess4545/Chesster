@@ -674,7 +674,7 @@ function parseHyperlink(hyperlink) {
     if (parts.length !== 5) {
         return results;
     }
-    if (_.isEqual(parts[0].toUpperCase(), "=HYPERLINK(")) {
+    if (!_.isEqual(parts[0].toUpperCase(), "=HYPERLINK(")) {
         return results;
     }
     results['href'] = parts[1];
