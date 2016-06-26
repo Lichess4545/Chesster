@@ -981,7 +981,7 @@ chesster.hears({
 function(bot, message) {
     var deferred = Q.defer();
     bot.startPrivateConversation(message, function (response, convo) {
-        subscription.processTellCommand(chesster.config, message.text).then(function(message) {
+        subscription.processTellCommand(chesster.config, message).then(function(message) {
             convo.say(message);
             deferred.resolve();
         }).catch(function(error) {
