@@ -21,16 +21,16 @@ var LONEWOLF_TARGETS = LONEWOLF_CHANNEL_NAMES.concat([
     "wolf",
     "lw",
     "30",
-    "3030",
+    "3030"
 ]);
 var TEAM_TARGETS = TEAM_CHANNEL_NAMES.concat([
     "team",
     "45",
-    "4545",
+    "4545"
 ]);
 
 function findBestMatches(results, includeDistance) {
-    if (results.length == 0) {
+    if (results.length === 0) {
         return results;
     }
     results.sort(function(a,b) {
@@ -41,7 +41,7 @@ function findBestMatches(results, includeDistance) {
     results.forEach(function(item) {
         var distance = item[0];
         var match = item[1];
-        if (distance == min_distance) {
+        if (distance === min_distance) {
             if (includeDistance) {
                 choices.push(item);
             } else {

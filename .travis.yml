@@ -3,4 +3,5 @@ node_js: "5"
 install: npm install
 script:
   - istanbul cover node_modules/mocha/bin/_mocha
+  - node_modules/.bin/eslint .
   - npm run send-coverage
