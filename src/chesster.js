@@ -784,7 +784,7 @@ function validateGameDetails(details, options){
     }else if( !details.clock || ( // no clock - unlimited or coorespondence
         details.clock && ( //clock
             !_.isEqual(details.clock.initial, options.clock.initial * 60) || // initial time
-            !._isEqual(details.clock.increment, options.clock.increment) ) // increment
+            !_.isEqual(details.clock.increment, options.clock.increment) ) // increment
         ) 
     ){
         //the time control does not match options
