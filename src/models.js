@@ -17,22 +17,22 @@ var exports = (function() {
     // A lock that we can use to ensure that any writing to the database is 
     // finished before another writer starts.
     //
-    // Parameters: donePromise - the promise object that will be resolved when
-    //             the querying is done such that the next person may start their
-    //             query.
+    // A donePromise will be passed into the deferred, this donePromise should
+    // always be resolved when you are done with the database.
     //--------------------------------------------------------------------------
-    function lock(donePromise) {
+    function lock() {
         var lockDeferred = Q.defer();
         _lock.acquire("chesster", function() {
-            lockDeferred.resolve(_models);
-            return donePromise;
+            var unlock = Q.defer();
+            lockDeferred.resolve(unlock);
+            return unlock.promise;
         });
         return lockDeferred.promise;
     }
 
     //--------------------------------------------------------------------------
     function defineModels(sequelize) {
-        var LichessRating = sequelize.define('LichessRating', {
+        module.exports.LichessRating = sequelize.define('LichessRating', {
             id: {
                 type: Sequelize.INTEGER,
                 autoIncrement: true,
@@ -46,11 +46,14 @@ var exports = (function() {
                 type: Sequelize.DATE, allowNull: true
             }
         });
-        var Subscription = sequelize.define('Subscription', {
+        module.exports.Subscription = sequelize.define('Subscription', {
             id: {
                 type: Sequelize.INTEGER,
                 autoIncrement: true,
                 primaryKey: true
+            },
+            requester: {
+                type: Sequelize.STRING, unique: "sourceEventTargetIndex"
             },
             source: {
                 type: Sequelize.STRING, unique: "sourceEventTargetIndex"
@@ -62,9 +65,6 @@ var exports = (function() {
                 type: Sequelize.String, unique: "sourceEventTargetIndex"
             },
         });
-        return {
-            LichessRating: LichessRating
-        };
     }
 
     //--------------------------------------------------------------------------
@@ -78,8 +78,8 @@ var exports = (function() {
         var sequelize = new Sequelize(config.database, config.username, config.password, config);
         var deferred = Q.defer();
         return sequelize.authenticate().then(function() {
-            _models = defineModels(sequelize);
-            deferred.resolve(_models);
+            defineModels(sequelize);
+            deferred.resolve();
         }).catch(function(error) {
             console.error("Unable to connect to database: " + error);
             deferred.reject(error);

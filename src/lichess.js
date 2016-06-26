@@ -61,7 +61,7 @@ var makeRequest = (function() {
                 promise = http.fetchURL(url);
             }
             promise.then(function(result) {
-                if (result.response.statusCode == 429) {
+                if (result.response.statusCode === 429) {
                     requestDelay = 60 * SECONDS;
                     console.log("Last request status was a 429 - we will wait 60 seconds before our next request");
                 }
@@ -79,7 +79,7 @@ var makeRequest = (function() {
     }
     processRequest();
     return makeRequest;
-})();
+}());
 
 function getPlayerByName(name, isBackground){
     var url = "http://en.lichess.org/api/user/" + name;
@@ -105,10 +105,9 @@ var ratingFunctions = (function() {
         return getPlayerByName(name, isBackground).then(function(result) {
             _playerIsInQueue[name] = undefined;
             var rating = result.json.perfs.classical.rating;
-            var doneWithDB = Q.defer();
             // Get the writable lock for the database.
-            return db.lock(doneWithDB.promise).then(function(models) {
-                return models.LichessRating.findOrCreate({
+            return db.lock().then(function(unlock) {
+                return db.LichessRating.findOrCreate({
                     where: { lichessUserName: name }
                 }).then(function(lichessRatings) {
                     lichessRating = lichessRatings[0];
@@ -119,15 +118,15 @@ var ratingFunctions = (function() {
                             name: name,
                             rating: rating
                         }));
-                        doneWithDB.resolve();
+                        unlock.resolve();
                     }).catch(function(error) {
-                        doneWithDB.reject();
+                        unlock.resolve();
                     });
                     return rating;
                 });
             });
         }).catch(function(error) {
-            doneWithDB.reject();
+            console.error("Error getting player by name: " + error);
         });
     }
 
@@ -138,14 +137,13 @@ var ratingFunctions = (function() {
     function getPlayerRating(name){
         var name = name.toLowerCase();
 
-        var doneWithDB = Q.defer();
         // Get the writable lock for the database.
-        return db.lock(doneWithDB.promise).then(function(models) {
+        return db.lock().then(function(unlock) {
             // Ensure we have a record.
-            return models.LichessRating.findOrCreate({
+            return db.LichessRating.findOrCreate({
                 where: { lichessUserName: name }
             }).then(function(lichessRating) {
-                doneWithDB.resolve();
+                unlock.resolve();
                 lichessRating = lichessRating[0];
 
                 var _30MinsAgo = moment.utc().subtract(30, 'minutes');
@@ -183,7 +181,7 @@ var ratingFunctions = (function() {
     return {
         getPlayerRating: getPlayerRating,
     };
-})();
+}());
 
 module.exports.getPlayerRating = ratingFunctions.getPlayerRating
 module.exports.getPlayerByName = getPlayerByName
