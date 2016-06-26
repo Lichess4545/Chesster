@@ -35,7 +35,7 @@ LEAGUE_DEFAULTS = {
         "guide": "",
         "captains": "",
         "registration": "",
-        "source": "",
+        "source": ""
     }
 };
 
@@ -122,11 +122,11 @@ league_attributes = {
             self.options.spreadsheet,
             query_options,
             function(sheet) {
-                return sheet.title.toLowerCase().indexOf('rosters') != -1;
+                return sheet.title.toLowerCase().indexOf('rosters') !== -1;
             },
             function(err, rows) {
                 if (err) {
-                    if (err != "Unable to find target worksheet") {
+                    if (!_.isEqual(err, "Unable to find target worksheet")) {
                         return callback(err, rows);
                     } else {
                         return callback(undefined, []);
@@ -151,7 +151,7 @@ league_attributes = {
                     ) {
                         return;
                     }
-                    if (row['teams'].value.toLowerCase() == 'alternates') {
+                    if (_.isEqual(row['teams'].value.toLowerCase(), 'alternates')) {
                         // TODO: eventually we'll want this data too!
                         return;
                     }
@@ -166,7 +166,7 @@ league_attributes = {
                             rating: rating,
                             team: team
                         };
-                        if (name != player['name'] && name[name.length-1] == '*') {
+                        if (!_.isEqual(name, player['name']) && _.isEqual(name[name.length-1], '*')) {
                             captain = player;
                         }
                         return player;
@@ -224,11 +224,13 @@ league_attributes = {
                 if (err) { return callback(err, undefined); }
                 var new_pairings = [];
                 rows.forEach(function(row) {
+                    var link;
+
                     if (!row['white'].value || !row['black'].value) { return; }
                     if (row['result'].formula) {
-                        var link = spreadsheets.parseHyperlink(row['result'].formula || "");
+                        link = spreadsheets.parseHyperlink(row['result'].formula || "");
                     } else {
-                        var link = {'text': row['result'].value};
+                        link = {'text': row['result'].value};
                     }
                     var date_string = row[self.options.spreadsheet.scheduleColname].value || '';
                     date_string = date_string.trim()
@@ -272,7 +274,7 @@ league_attributes = {
                     );
                 });
             }
-        };
+        }
         filter(white);
         filter(black);
         return possibilities;
@@ -281,10 +283,7 @@ league_attributes = {
     // Returns whether someone is a moderator or not.
     //--------------------------------------------------------------------------
     'isModerator': function(name) {
-        var self = this;
-        return _.some(self.options.moderators, function(moderator) {
-            return name == moderator;
-        });
+        return _.includes(this.options.moderator, name);
     },
     //--------------------------------------------------------------------------
     // Prepare a debug message for this league
@@ -319,7 +318,7 @@ league_attributes = {
                 "opponent":  pairing.black,
                 "date": pairing.scheduled_date
             }
-            if (pairing.white.toLowerCase() != targetPlayer.name.toLowerCase()) {
+            if (!_.isEqual(pairing.white.toLowerCase(), targetPlayer.name.toLowerCase())) {
                 details.color = "black";
                 details.opponent = pairing.white;
             }
@@ -379,7 +378,7 @@ league_attributes = {
                 details: details,
                 played_phrase: played_phrase,
                 schedule_phrase: schedule_phrase,
-                rating: getRatingString(details.rating),
+                rating: getRatingString(details.rating)
             });
         });
     },
@@ -504,7 +503,7 @@ league_attributes = {
     'formatCaptainsResponse':function(boardNumber) {
         var self = this;
         return Q.fcall(function() {
-            if (self._teams.length == 0) {
+            if (self._teams.length === 0) {
                 return "The {name} league does not have captains".format({
                     name: self.options.name
                 });
@@ -529,15 +528,15 @@ league_attributes = {
     'formatTeamCaptainResponse':function(teamName) {
         var self = this;
         return Q.fcall(function() {
-            if (self._teams.length == 0) {
+            if (self._teams.length === 0) {
                 return "The {name} league does not have captains".format({
                     name: self.options.name
                 });
             }
             teams = _.filter(self._teams, function(t) {
-                return t.name.toLowerCase() == teamName.toLowerCase()
+                return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase());
             });
-            if (teams.length == 0) {
+            if (teams.length === 0) {
                 return "No team by that name";
             }
             if (teams.length > 1) {
@@ -557,7 +556,7 @@ league_attributes = {
     'formatTeamsResponse':function(teamName) {
         var self = this;
         return Q.fcall(function() {
-            if (self._teams.length == 0) {
+            if (self._teams.length === 0) {
                 return "The {name} league does not have teams".format({
                     name: self.options.name
                 });
@@ -576,7 +575,7 @@ league_attributes = {
     'formatBoardResponse': function(boardNumber) {
         var self = this;
         return Q.fcall(function() {
-            if (self._teams.length == 0) {
+            if (self._teams.length === 0) {
                 return "The {name} league does not have teams".format({
                     name: self.options.name
                 });
@@ -599,15 +598,15 @@ league_attributes = {
     'formatTeamMembersResponse': function(teamName) {
         var self = this;
         return Q.fcall(function() {
-            if (self._teams.length == 0) {
+            if (self._teams.length === 0) {
                 return "The {name} league does not have teams".format({
                     name: self.options.name
                 });
             }
             teams = _.filter(self._teams, function(t) {
-                return t.name.toLowerCase() == teamName.toLowerCase()
+                return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase())
             });
-            if (teams.length == 0) {
+            if (teams.length === 0) {
                 return "No team by that name";
             }
             if (teams.length > 1) {
@@ -651,7 +650,7 @@ function League(options) {
     this.options = {};
     _.extend(this.options, LEAGUE_DEFAULTS, options || {});
     _.extend(this, league_attributes);
-};
+}
 
 function getAllLeagues(config) {
     var leagues = [];
@@ -682,7 +681,7 @@ var getLeague = (function() {
         }
         return _league_cache[league_name];
     }
-})();
+}());
 
 module.exports.League = League;
 module.exports.getLeague = getLeague;
