@@ -24,6 +24,7 @@
     "async-lock": "0.3.8"
   },
   "devDependencies": {
+    "eslint": "^2.13.1",
     "mocha": "2.4.5"
   },
   "scripts": {

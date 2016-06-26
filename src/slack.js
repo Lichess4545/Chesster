@@ -165,7 +165,7 @@ function isModerator(message) {
 //------------------------------------------------------------------------------
 function requiresModerator(bot, message, config) {
     return Q.fcall(function() {
-        if (typeof message.league == 'undefined') {
+        if (_.isUndefined(message.league)) {
             throw new Error("requiresModerator MUST be called after withLeague.");
         }
         if (!message.league) {
@@ -220,7 +220,7 @@ function withLeague(bot, message, config) {
         if (matchingLeagueNames.length > 1) {
             throw new Error("Ambiguous leagues.");
         }
-        if (matchingLeagueNames.length == 1) {
+        if (matchingLeagueNames.length === 1) {
             l = _.values(possibleLeagues)[0];
             message.league = l;
             return l;
@@ -259,7 +259,7 @@ DEFAULT_HEARS_OPTIONS = {
 };
 function hears(options, callback) {
     var self = this;
-    var options = _.extend({}, DEFAULT_HEARS_OPTIONS, options);
+    options = _.extend({}, DEFAULT_HEARS_OPTIONS, options);
     self.controller.hears(options.patterns, options.messageTypes, function(bot, message) {
         return botExceptionHandler(bot, message, Q.fcall(function() {
             message.player = users.getByNameOrID(message.user);
@@ -294,7 +294,7 @@ DEFAULT_ON_OPTIONS = {
 };
 function on(options, callback) {
     var self = this;
-    var options = _.extend({}, DEFAULT_ON_OPTIONS, options);
+    options = _.extend({}, DEFAULT_ON_OPTIONS, options);
     self.controller.on(options.event, function(bot, message) {
         return botExceptionHandler(bot, message, Q.fcall(function() {
             message.player = users.getByNameOrID(message.user);

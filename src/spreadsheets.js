@@ -7,7 +7,7 @@ var EXTREMA_DEFAULTS = {
     'isoWeekday': 2,
     'hour': 0,
     'minute': 0,
-    'warningHours': 1,
+    'warningHours': 1
 };
 var BASE_DATE_FORMATS = [
     "YYYY-MM-DD MM DD",
@@ -59,7 +59,7 @@ var BASE_DATE_FORMATS = [
     "YYYY-D MMMM",
     "YY-D MMMM",
     "D MMMM YYYY",
-    "D MMMM YY",
+    "D MMMM YY"
 ];
 var BASE_TIME_FORMATS = [
     "HHmm",
@@ -135,7 +135,7 @@ function getTokensScheduling(inputString){
     });
     parts = _.filter(parts, function(i) { return i.length > 0; });
     parts = _.filter(parts, function(i) {
-        return WORDS_TO_IGNORE.indexOf(i.toLowerCase()) == -1;
+        return WORDS_TO_IGNORE.indexOf(i.toLowerCase()) === -1;
     });
     return parts;
 }
@@ -165,9 +165,9 @@ function getPossibleDateStrings(dateString, extrema) {
     while (!cur.isAfter(extrema.end)) {
         var monthDay = cur.format("MM-DD");
         // Deal with a couple of formats that moment doesn't produce but are used.
-        if (cur.format("dddd") == "Thursday") {
+        if (_.isEqual(cur.format("dddd"), "Thursday")) {
             dateNameMappings["thurs"] = monthDay;
-        } if (cur.format("dddd") == "Wednesday") {
+        } if (_.isEqual(cur.format("dddd"), "Wednesday")) {
             dateNameMappings["weds"] = monthDay;
         }
         dateNameMappings[cur.format("dd").toLowerCase()] = monthDay;
@@ -204,7 +204,7 @@ function getPossibleDateStrings(dateString, extrema) {
     dateStrings.push(tokens.join(" "));
 
     // Now make some where we inject the year at the beginning
-    var now = moment.utc();
+    now = moment.utc();
     year = now.format("YYYY");
     month = now.format("MM");
     dateStrings.slice().forEach(function(dateString) {
@@ -263,7 +263,7 @@ function parseScheduling(inputString, options) {
         }
         return true;
     });
-    if (validInBoundsDate.length == 0 && validOutOfBoundsDate.length == 0) {
+    if (validInBoundsDate.length === 0 && validOutOfBoundsDate.length === 0) {
         console.log("Unable to parse date: [" + inputString + "]");
         throw new ScheduleParsingError();
     }
@@ -276,11 +276,11 @@ function parseScheduling(inputString, options) {
     var outOfBounds = false;
     var warn = false;
 
-    if (validInBoundsDate.length == 0 && validOutOfBoundsDate.length > 0) {
+    if (validInBoundsDate.length === 0 && validOutOfBoundsDate.length > 0) {
         date = validOutOfBoundsDate[0];
         outOfBounds = true;
     } else {
-        var date = validInBoundsDate[0];
+        date = validInBoundsDate[0];
         if (date.isAfter(extrema.warning)) {
             warn = true;
         }
@@ -326,7 +326,7 @@ function getRoundExtrema(options) {
 
     // Find the first day that comes before our reference date
     // which is on th same weekday as the round starts.
-    while (roundStart.isoWeekday() != extrema.isoWeekday || roundStart.isAfter(referenceDate)) {
+    while (roundStart.isoWeekday() !== extrema.isoWeekday || roundStart.isAfter(referenceDate)) {
         roundStart.subtract(1, 'days');
     }
 
@@ -351,7 +351,12 @@ function getRows(spreadsheetConfig, options, sheetPredicate, callback) {
     var doc = new GoogleSpreadsheet(spreadsheetConfig.key);
 
     function getRowImplementation(err, info) {
-        var targetSheet = undefined;
+        var targetSheet;
+
+        if (err) {
+            callback(err, undefined);
+        }
+
         doc.getInfo(function(err, info) {
             if (err) { return callback(err, info); }
             // Find the last spreadsheet with the word "round" in the title.
@@ -423,7 +428,7 @@ function getPairingRows(spreadsheetConfig, options, callback) {
         spreadsheetConfig,
         options,
         function(sheet) {
-            return sheet.title.toLowerCase().indexOf("round") != -1;
+            return sheet.title.toLowerCase().indexOf("round") !== -1;
         },
         callback
     );
@@ -440,11 +445,11 @@ function findPairing(spreadsheetConfig, white, black, callback) {
         var rowBlack = row.black.value.toLowerCase();
         var rowWhite = row.white.value.toLowerCase();
         if (
-            (rowBlack.indexOf(black) != -1 && rowWhite.indexOf(white) != -1)
+            (rowBlack.indexOf(black) !== -1 && rowWhite.indexOf(white) !== -1)
         ) {
             return true;
         } else if (
-            (rowWhite.indexOf(black) != -1 && rowBlack.indexOf(white) != -1)
+            (rowWhite.indexOf(black) !== -1 && rowBlack.indexOf(white) !== -1)
         ) {
             return true;
         }
@@ -454,18 +459,18 @@ function findPairing(spreadsheetConfig, white, black, callback) {
         spreadsheetConfig,
         options,
         function(err, rows) {
-            var rows = _.filter(rows, rowMatchesPairing);
+            var filteredRows = _.filter(rows, rowMatchesPairing);
             // Only update it if we found an exact match
-            if (rows.length > 1) {
+            if (filteredRows.length > 1) {
                 return callback("Unable to find pairing. More than one row was returned!");
-            } else if(rows.length < 1) {
+            } else if(filteredRows.length < 1) {
                 return callback("Unable to find pairing. No rows were returned!");
             }
-            var row = rows[0];
+            var row = filteredRows[0];
             var rowBlack = row.black.value.toLowerCase();
             var rowWhite = row.white.value.toLowerCase();
             var reversed = false;
-            if (rowWhite.indexOf(black) != -1) {
+            if (rowWhite.indexOf(black) !== -1) {
                 reversed = true
             }
             callback(undefined, row, reversed);
@@ -501,7 +506,7 @@ function parseResult(inputString){
     return {
         "white": players.white,
         "black": players.black,
-        "result": result,
+        "result": result
     };
 }
 
@@ -524,7 +529,7 @@ function findPlayers(tokens){
     var playerTokens = filterPlayerTokens(tokens);
 
     //assuming we found 2 tokens, we should convert them to player names
-    if(playerTokens.length == 2){
+    if(playerTokens.length === 2){
         //remove punctuation and store. this fixes losts of stuff.
         //most frequent issue is the : added after a name by slack
         players.white = playerTokens[0].replace(/[:,.-]/, "");
@@ -564,7 +569,7 @@ function updateResult(spreadsheetConfig, result, callback){
                 //this is an error - games must be played by proper colors
                 return callback("the colors are reversed.", true);
             }
-            if(resultString != "-"){
+            if(!_.isEqual(resultString, "-")){
                 //this is just the addition of a result
                 //we will use the gamelink to verify the result if we have it
                 if(reversed){
@@ -590,7 +595,7 @@ function updateResult(spreadsheetConfig, result, callback){
             }
 
             //if no game link is found, just post the result
-            if(gamelink == ''){
+            if(_.isEqual(gamelink, "")){
                 resultCell.value = resultString;
             }else{
                 resultCell.formula = '=HYPERLINK("' + gamelink + '","' + resultString + '")';
@@ -666,10 +671,10 @@ function parseHyperlink(hyperlink) {
         return results;
     }
     var parts = hyperlink.split("\"");
-    if (parts.length != 5) {
+    if (parts.length !== 5) {
         return results;
     }
-    if (parts[0].toUpperCase() != "=HYPERLINK(") {
+    if (!_.isEqual(parts[0].toUpperCase(), "=HYPERLINK(")) {
         return results;
     }
     results['href'] = parts[1];
