@@ -1040,16 +1040,11 @@ subscription.emitter.on('a-game-is-scheduled', function(bot, message, l, results
                 target = player.getSlackUserFromNameOrID(slack.users, target);
                 if (!_.isUndefined(target)) {
                     bot.startPrivateConversation({user: target.id}, function(err, convo) {
-                        var opponent;
-                        if (source == black.name) {
-                            opponent = white.name;
-                        } else {
-                            opponent = black.name;
-                        }
                         // TODO: this could be a much better message!
-                        convo.say("{source} just scheduled their game with {opponent}.".format({
-                            source: source,
-                            opponent: opponent
+                        convo.say("{white} vs {black} has been scheduled for {date}.".format({
+                            white: white.name,
+                            black: black.name,
+                            date: "TODO",
                         }));
                     });
                 } else {
