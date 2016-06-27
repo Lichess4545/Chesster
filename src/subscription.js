@@ -134,7 +134,6 @@ function processTellCommand(config, message) {
 
         // TODO: Allow captains some amount of flexibility of who they can subscribe
         if (!_.isEqual(listener, "me") && !message.player.isModerator()) {
-            console.log(message.player.isModerator());
             return formatCanOnlyListenForYouResponse(config, listener);
         }
 
@@ -221,7 +220,6 @@ function processSubscriptionsCommand(config, message) {
 function processRemoveSubscriptionCommand(config, message, id) {
     return Q.fcall(function() {
         var requester = player.getSlackUserFromNameOrID(slack.users, message.user);
-        // TODO: Once we enable WAL - we can remove this lock for this command
         return db.lock().then(function(unlock) {
             return db.Subscription.findAll({
                 where: {
@@ -247,8 +245,31 @@ function processRemoveSubscriptionCommand(config, message, id) {
     });
 }
 
+//------------------------------------------------------------------------------
+// Get listeners for are a given event and source
+//------------------------------------------------------------------------------
+function getListeners(leagueName, source, event) {
+    // TODO: when we get WAL enabled, we won't need to lock this query any more.
+    return db.lock().then(function(unlock) {
+        return db.Subscription.findAll({
+            where: {
+                league: leagueName.toLowerCase(),
+                source: source.toLowerCase(),
+                event: event.toLowerCase()
+            }
+        }).then(function(subscriptions) {
+            unlock.resolve();
+            var listeners = [];
+            _.each(subscriptions, function(subscription) {
+                listeners.push(subscription.target);
+            });
+            return _.uniq(listeners);
+        });
+    });
+}
 
 module.exports.emitter = emitter;
 module.exports.processTellCommand = processTellCommand;
 module.exports.processSubscriptionsCommand = processSubscriptionsCommand;
 module.exports.processRemoveSubscriptionCommand = processRemoveSubscriptionCommand;
+module.exports.getListeners = getListeners;

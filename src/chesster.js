@@ -8,7 +8,7 @@ var _ = require("underscore");
 // Our stuff
 var fuzzy = require('./fuzzy_match.js');
 var league = require("./league.js");
-var players = require("./player.js");
+var player = require("./player.js");
 var spreadsheets = require('./spreadsheets.js');
 var slack = require('./slack.js');
 var users = slack.users;
@@ -103,14 +103,14 @@ leagueDMResponse(['captains', 'captain list'], 'formatCaptainsResponse');
 /* rating */
 
 chesster.hears({
-    patterns: [players.appendPlayerRegex("rating", true)],
+    patterns: [player.appendPlayerRegex("rating", true)],
     messageTypes: [
         'direct_mention', 
         'direct_message'
     ]
 },
 function(bot,message) {
-    var playerName = players.getSlackUser(users, message).name;
+    var playerName = player.getSlackUser(users, message).name;
     return lichess.getPlayerRating(playerName).then(function(rating) {
         if(rating){
             bot.reply(message, prepareRatingMessage(playerName, rating));
@@ -120,8 +120,8 @@ function(bot,message) {
     });
 });
 
-function prepareRatingMessage(player, rating, convo){
-    return player + " is rated " + rating + " in classical chess";
+function prepareRatingMessage(_player, rating, convo){
+    return _player + " is rated " + rating + " in classical chess";
 }
 
 /* commands */
@@ -249,13 +249,13 @@ leagueResponse(['pairings', 'standings'], 'formatPairingsLinkResponse');
 
 chesster.hears({
     patterns: [
-        players.appendPlayerRegex("pairing", true)
+        player.appendPlayerRegex("pairing", true)
     ],
     messageTypes: [
         'direct_mention', 'direct_message'
     ]
 }, function(bot, message) {
-    var targetPlayer = players.getSlackUser(users, message);
+    var targetPlayer = player.getSlackUser(users, message);
     var deferred = Q.defer();
     var allLeagues = league.getAllLeagues(chesster.config);
     bot.startPrivateConversation(message, function (response, convo) {
@@ -270,7 +270,7 @@ chesster.hears({
                         convo.say("[" + l.options.name + "] Unable to find pairing for " + targetPlayer.name);
                     }
                 }, function(error) {
-                    console.log("error");
+                    console.error("error");
                     console.error(JSON.stringify(error));
                 });
             })
@@ -629,6 +629,7 @@ function(bot, message) {
                 schedulingReplyTooCloseToCutoff(bot, message, schedulingOptions, white, black);
             }
             schedulingReplyScheduled(bot, message, results, white, black);
+            subscription.emitter.emit('a-game-is-scheduled', bot, message, message.league, results, white, black);
         }
     );
 });
@@ -1028,4 +1029,35 @@ function(bot, message) {
         });
     });
     return deferred.promise;
+});
+
+subscription.emitter.on('a-game-is-scheduled', function(bot, message, l, results, white, black) {
+    // TODO: encase this in a exception Handler
+    _.each([white.name, black.name], function(source) {
+        // TODO: this will also need to deal with channels at some point
+        subscription.getListeners(l.options.name, source, 'a-game-is-scheduled').then(function(targets) {
+            _.each(targets, function(target) {
+                target = player.getSlackUserFromNameOrID(slack.users, target);
+                if (!_.isUndefined(target)) {
+                    bot.startPrivateConversation({user: target.id}, function(err, convo) {
+                        var opponent;
+                        if (source == black.name) {
+                            opponent = white.name;
+                        } else {
+                            opponent = black.name;
+                        }
+                        // TODO: this could be a much better message!
+                        convo.say("{source} just scheduled their game with {opponent}.".format({
+                            source: source,
+                            opponent: opponent
+                        }));
+                    });
+                } else {
+                    // TODO: probably delete the subscription at this point.
+                }
+            });
+        }).catch(function(error) {
+            console.error("ERROR: " + error);
+        });
+    });
 });
