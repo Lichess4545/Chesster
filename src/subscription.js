@@ -230,10 +230,10 @@ function processRemoveSubscriptionCommand(config, message, id) {
                     id: id
                 }
 			}).then(function(subscriptions) {
-                if (subscriptions.length == 0) {
+                if (subscriptions.length === 0) {
                     unlock.resolve();
                     return "That is not a valid subscription id";
-                } else if (subscriptions.length == 1) {
+                } else if (subscriptions.length === 1) {
                     return subscriptions[0].destroy().then(function() {
                         unlock.resolve();
                         return "Subscription deleted";

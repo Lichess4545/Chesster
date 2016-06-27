@@ -1031,11 +1031,11 @@ function(bot, message) {
     return deferred.promise;
 });
 
-subscription.emitter.on('a-game-is-scheduled', function(bot, message, l, results, white, black) {
+subscription.emitter.on('a-game-is-scheduled', function(bot, message, league, results, white, black) {
     // TODO: encase this in a exception Handler
     _.each([white.name, black.name], function(source) {
         // TODO: this will also need to deal with channels at some point
-        subscription.getListeners(l.options.name, source, 'a-game-is-scheduled').then(function(targets) {
+        subscription.getListeners(league.options.name, source, 'a-game-is-scheduled').then(function(targets) {
             _.each(targets, function(target) {
                 target = player.getSlackUserFromNameOrID(slack.users, target);
                 if (!_.isUndefined(target)) {
@@ -1044,7 +1044,7 @@ subscription.emitter.on('a-game-is-scheduled', function(bot, message, l, results
                         convo.say("{white} vs {black} has been scheduled for {date}.".format({
                             white: white.name,
                             black: black.name,
-                            date: "TODO",
+                            date: "TODO"
                         }));
                     });
                 } else {

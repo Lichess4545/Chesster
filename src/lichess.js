@@ -135,7 +135,7 @@ var ratingFunctions = (function() {
     // database, unless they don't have it. Then go get it and return it.
     //--------------------------------------------------------------------------
     function getPlayerRating(name){
-        var name = name.toLowerCase();
+        name = name.toLowerCase();
 
         // Get the writable lock for the database.
         return db.lock().then(function(unlock) {
@@ -179,7 +179,7 @@ var ratingFunctions = (function() {
         });
     }
     return {
-        getPlayerRating: getPlayerRating,
+        getPlayerRating: getPlayerRating
     };
 }());
 

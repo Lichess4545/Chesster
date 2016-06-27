@@ -79,20 +79,16 @@ var exports = (function() {
     //--------------------------------------------------------------------------
     function connect(config) {
         var sequelize = new Sequelize(config.database, config.username, config.password, config);
-        var deferred = Q.defer();
         return sequelize.authenticate().then(function() {
             defineModels(sequelize);
-            deferred.resolve();
         }).catch(function(error) {
             console.error("Unable to connect to database: " + error);
-            deferred.reject(error);
         });
-        return deferred.promise;
     }
     return {
         connect: connect,
         lock: lock
     };
-})();
+}());
 
 module.exports = exports
