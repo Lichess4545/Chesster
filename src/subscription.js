@@ -130,6 +130,9 @@ function processTellCommand(config, message) {
             return formatInvalidLeagueResponse(config);
         }
         // TODO: this is hacky, but required at the moment. :(
+        //       otherwise message.player.isModerator won't work.
+        //       this is usually set by the requiresLeague middleware,
+        //       but we are in a DM, not a league specific channel
         message.league = l;
 
         // TODO: Allow captains some amount of flexibility of who they can subscribe
