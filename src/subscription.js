@@ -249,7 +249,7 @@ function processRemoveSubscriptionCommand(config, message, id) {
 }
 
 //------------------------------------------------------------------------------
-// Get listeners for are a given event and source
+// Get listeners for a given event and source
 //------------------------------------------------------------------------------
 function getListeners(leagueName, source, event) {
     // TODO: when we get WAL enabled, we won't need to lock this query any more.
