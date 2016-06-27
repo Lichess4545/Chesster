@@ -14,7 +14,7 @@ var db = require("./models.js");
 
 // The emitter we will use.
 const EventEmitter = require('events');
-function ChessLeagueEmitter() {};
+function ChessLeagueEmitter() {}
 ChessLeagueEmitter.prototype  = new EventEmitter();
 const emitter = new ChessLeagueEmitter();
 
