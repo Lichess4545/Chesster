@@ -277,8 +277,6 @@ league_attributes = {
     // Returns whether someone is a moderator or not.
     //--------------------------------------------------------------------------
     'isModerator': function(name) {
-        console.log(this.options.moderators);
-        console.log(name);
         return _.includes(this.options.moderators, name);
     },
     //--------------------------------------------------------------------------

@@ -8,7 +8,7 @@ var league = require("./league.js");
 var fuzzy = require("./fuzzy_match.js");
 var models = require("./models.js");
 
-function StopControllerError () {}
+function StopControllerError (error) { this.error = error; }
 StopControllerError.prototype = new Error();
 
 //
@@ -218,7 +218,7 @@ function withLeague(bot, message, config) {
         });
         var matchingLeagueNames = _.keys(possibleLeagues);
         if (matchingLeagueNames.length > 1) {
-            throw new Error("Ambiguous leagues.");
+            throw new StopControllerError("Ambiguous leagues.");
         }
         if (matchingLeagueNames.length === 1) {
             l = _.values(possibleLeagues)[0];
@@ -237,7 +237,6 @@ function withLeague(bot, message, config) {
                 return l;
             }
         }
-
         return;
     });
 }

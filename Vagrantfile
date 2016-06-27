@@ -38,5 +38,5 @@ Vagrant.configure(2) do |config|
 
 
   config.vm.provision :shell, :path => "./setup/vagrant/vagrant-dependencies.sh"
-
+  config.vm.provision :shell, :path => "./sysadmin/vagrant/startup.sh", run: "always"
 end
