@@ -12,27 +12,27 @@ module.exports = {
             return queryInterface.createTable('users', { id: Sequelize.INTEGER });
         */
         return Q.all([
-			queryInterface.createTable('Subscriptions', {
-				id: {
-					type: Sequelize.INTEGER,
-					autoIncrement: true,
-					primaryKey: true
-				},
-				requester: {
-					type: Sequelize.STRING
-				},
-				source: {
-					type: Sequelize.STRING
-				},
-				event: {
-					type: Sequelize.STRING
-				},
-				target: {
-					type: Sequelize.STRING
-				},
-				league: {
-					type: Sequelize.STRING
-				},
+            queryInterface.createTable('Subscriptions', {
+                id: {
+                    type: Sequelize.INTEGER,
+                    autoIncrement: true,
+                    primaryKey: true
+                },
+                requester: {
+                    type: Sequelize.STRING
+                },
+                source: {
+                    type: Sequelize.STRING
+                },
+                event: {
+                    type: Sequelize.STRING
+                },
+                target: {
+                    type: Sequelize.STRING
+                },
+                league: {
+                    type: Sequelize.STRING
+                },
                 // These two are automatically added to a model by sequelize
                 createdAt: {
                     type: Sequelize.DATE, allowNull: true
@@ -40,16 +40,16 @@ module.exports = {
                 updatedAt: {
                     type: Sequelize.DATE, allowNull: true
                 }
-			}),
-			queryInterface.addIndex(
-				'Subscriptions',
-				['requester', 'source', 'event', 'target', 'league'],
-				{
-					indexName: 'eventUnique',
-					indicesType: 'UNIQUE'
-				}
-			)
-		]);
+            }),
+            queryInterface.addIndex(
+                'Subscriptions',
+                ['requester', 'source', 'event', 'target', 'league'],
+                {
+                    indexName: 'eventUnique',
+                    indicesType: 'UNIQUE'
+                }
+            )
+        ]);
     },
 
     down: function (queryInterface, Sequelize) {
@@ -61,11 +61,11 @@ module.exports = {
             return queryInterface.dropTable('users');
         */
         return Q.all([
-			queryInterface.dropTable('Subscriptions'),
-			queryInterface.removeIndex(
-				'Subscriptions',
-				['requester', 'source', 'event', 'target']
-			)
-		]);
+            queryInterface.dropTable('Subscriptions'),
+            queryInterface.removeIndex(
+                'Subscriptions',
+                ['requester', 'source', 'event', 'target']
+            )
+        ]);
     }
 };
