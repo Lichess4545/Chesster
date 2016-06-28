@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 var Q = require("q");
 var Botkit = require('botkit');
-var _ = require("underscore");
+var _ = require("lodash");
 var league = require("./league.js");
 var fuzzy = require("./fuzzy_match.js");
 var models = require("./models.js");
@@ -206,9 +206,7 @@ function withLeague(bot, message, config) {
         var args = message.text.split(" ");
         _.each(args, function(arg) {
             var results = fuzzy.rank_choices(arg.toLowerCase(), leagueTargets, true);
-            _.each(results, function(match) {
-                matches.push(match);
-            });
+            matches.push.apply(matches, results)
         });
         var bestMatches = fuzzy.findBestMatches(matches, true);
         var possibleLeagues = {};

@@ -44,7 +44,7 @@ var config = {
             "spreadsheet": {
                 "key": "1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4",
                 "serviceAccountAuth": {
-                    "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
+                    "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
                     "private_key": private_key,
                 },
                 "scheduleColname": "time (mm/dd @ hh:mm*)",
@@ -106,7 +106,7 @@ var config = {
             "spreadsheet": {
                 "key": "1WI4H9DWKSI-q6Omeqh28w1lKaqB0AAFV01wDiOeW6Ho",
                 "serviceAccountAuth": {
-                    "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
+                    "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
                     "private_key": private_key,
                 },
                 "scheduleColname": "game scheduled (in gmt)",

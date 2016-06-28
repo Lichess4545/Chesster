@@ -9,6 +9,12 @@ env:
   jquery: true
   node: true
 
+plugins:
+    ["lodash"]
+
+extends:
+    ["plugin:lodash/recommended"]
+
 # http://eslint.org/docs/rules/
 rules:
   # Possible Errors
@@ -209,3 +215,9 @@ rules:
   prefer-spread: 0
   prefer-template: 0
   require-yield: 0
+
+  #Lodash lint
+  lodash/prefer-lodash-method: 0
+  lodash/prefer-includes: 0
+  lodash/preferred-alias: 0
+  lodash/collection-method-value: 0

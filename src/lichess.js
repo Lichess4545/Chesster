@@ -158,7 +158,7 @@ var ratingFunctions = (function() {
                 // Only update the rating if it's older than 30 minutes
                 // or if we don't have one a rating
                 // TODO: Replace this with _.isInteger
-                if (rating === null || typeof rating === 'undefined')  {
+                if (_.isNil(rating))  {
                     // If we don't have a rating, use the foreground queue
                     promise = _updateRating(name, false);
                 } else if (!isInQueue && (!lastCheckedAt || lastCheckedAt.isBefore(_30MinsAgo))) {
@@ -166,7 +166,7 @@ var ratingFunctions = (function() {
                     promise = _updateRating(name, true);
                 }
 
-                if (rating !== null && typeof rating !== 'undefined')  {
+                if (!_.isNil(rating))  {
                     // Return the cached rating if we have it.
                     return lichessRating.get('rating');
                 } else {

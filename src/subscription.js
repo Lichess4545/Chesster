@@ -31,10 +31,8 @@ var events = [
 //------------------------------------------------------------------------------
 function formatHelpResponse(config) {
     return Q.fcall(function() {
-        var leagueNames = [];
-        _.each(league.getAllLeagues(config), function(l) {
-            leagueNames.push(l.options.name);
-        });
+        var leagueNames = _.map(league.getAllLeagues(config), "options.name");
+
         return "The subscription system supports the following commands: \n" +
             "`tell me when <event> in <league> for <target-user-or-team>`\n" +
             "Where `<event>` is one of:```" + events.join("\n") + "```" +
@@ -49,10 +47,8 @@ function formatHelpResponse(config) {
 //------------------------------------------------------------------------------
 function formatInvalidLeagueResponse(config) {
     return Q.fcall(function() {
-        var leagueNames = [];
-        _.each(league.getAllLeagues(config), function(l) {
-            leagueNames.push(l.options.name);
-        });
+        var leagueNames = _.map(league.getAllLeagues(config), "options.name");
+
         return "You didn't specify a valid league. These are your options:\n" +
             "```" + leagueNames.join("\n") + "```";
     });
@@ -262,11 +258,7 @@ function getListeners(leagueName, source, event) {
             }
         }).then(function(subscriptions) {
             unlock.resolve();
-            var listeners = [];
-            _.each(subscriptions, function(subscription) {
-                listeners.push(subscription.target);
-            });
-            return _.uniq(listeners);
+            return _(subscriptions).map("target").uniq().value();
         });
     });
 }
