@@ -3,7 +3,7 @@
 var token = require("./slack_token.js").token;
 var private_key = require("./test_service_account_key.js").key;
 
-var config = require("./config.js").config;
+var config = require("./config.js");
 config["leagues"]["45+45"]["spreadsheet"]["key"] = "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA";
 config["leagues"]["45+45"]["spreadsheet"]["serviceAccountAuth"] = {
     "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
@@ -20,4 +20,4 @@ config["leagues"]["45+45"]["gamelinks"]["channel"] = "unstable_bot";
 config["leagues"]["lonewolf"]["scheduling"]["channel"] = "unstable_bot-lonewolf";
 config["leagues"]["lonewolf"]["results"]["channel"] = "unstable_bot-lonewolf";
 config["leagues"]["lonewolf"]["gamelinks"]["channel"] = "unstable_bot-lonewolf";
-module.exports.config = config;
+module.exports = config;

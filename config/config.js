@@ -4,6 +4,19 @@ var token = require("./slack_token.js").token;
 var private_key = require("./service_account_key.js").key;
 
 var config = {
+    // Unfortunately this all has to be at the top level due to sequelize-cli
+    "database": "",
+    "username": "",
+    "password": "",
+    "dialect": "sqlite",
+    "logging": false,
+	"pool": {
+		"max": 5,
+		"min": 0,
+		"idle": 10000
+	},
+    "storage": "./db/database.sqlite",
+
     "token": token,
     "links": {
         "source": "https://github.com/endrawes0/Chesster"
@@ -150,4 +163,4 @@ var config = {
         "unstable_bot": "45+45"
     },
 }
-module.exports.config = config;
+module.exports = config;

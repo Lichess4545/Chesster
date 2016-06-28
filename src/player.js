@@ -1,6 +1,8 @@
+var slackIDRegex = module.exports.slackIDRegex = /<@([^\s]+)>/;
+
 module.exports.appendPlayerRegex = function(command, optional) {
     /*
-     * regex explination
+     * regex explanation
      * (?:           non capturing group, don't care about the space and @ part
      * @?            @ is optional (accepts "@user" or "user")
      * ([^\\s]+)     match one more more non-whitespace characters and capture it.  This
@@ -25,6 +27,16 @@ module.exports.getSlackUser = function(users, message) {
     if (message.match[1]) {
         nameOrId = message.match[1];
     }
+    var player = getSlackUserFromNameOrID(users, nameOrId);
+
+    if (!player) {
+        player = users.getByNameOrID(message.user); 
+    }
+
+    return player;
+};
+
+var getSlackUserFromNameOrID = function(users, nameOrId) {
 
     // The name or Id was provided, so parse it out
     var player = users.getByNameOrID(nameOrId);
@@ -34,17 +46,13 @@ module.exports.getSlackUser = function(users, message) {
         // Slack user ids are tranlated in messages to something like <@U17832>.  This
         // regex will capture the U17832 part so we can send it through the getByNameOrId
         // function
-        var userIdExtraction = nameOrId.match(/<@([^\s]+)>/);
+        var userIdExtraction = nameOrId.match(slackIDRegex);
         if (userIdExtraction) {
             player = users.getByNameOrID(userIdExtraction[1]);
         } else {
             player = users.getByNameOrID(nameOrId.toLowerCase());
         }
     }
-
-    if (!player) {
-        player = users.getByNameOrID(message.user); 
-    }
-
     return player;
 };
+module.exports.getSlackUserFromNameOrID = getSlackUserFromNameOrID;
