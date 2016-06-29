@@ -187,7 +187,7 @@ league_attributes = {
                 _.each(self._teams, function(team) {
                     _.each(team.roster, function(player) {
                         if (player && player.name) {
-                            lichess.getPlayerRating(player.name).then(function(rating) {
+                            lichess.getPlayerRating(player.name, true).then(function(rating) {
                                 player.rating = rating;
                             });
                         }

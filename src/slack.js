@@ -67,7 +67,7 @@ function getSlackUser(message) {
     if (message.match[1]) {
         nameOrId = message.match[1];
     }
-    var player = getSlackUserFromNameOrID(users, nameOrId);
+    var player = getSlackUserFromNameOrID(nameOrId);
 
     if (!player) {
         player = users.getByNameOrID(message.user); 

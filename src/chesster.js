@@ -109,7 +109,7 @@ chesster.hears({
     ]
 },
 function(bot,message) {
-    var playerName = slack.getSlackUser(users, message).name;
+    var playerName = slack.getSlackUser(message).name;
     return lichess.getPlayerRating(playerName).then(function(rating) {
         if(rating){
             bot.reply(message, prepareRatingMessage(playerName, rating));
@@ -254,7 +254,7 @@ chesster.hears({
         'direct_mention', 'direct_message'
     ]
 }, function(bot, message) {
-    var targetPlayer = slack.getSlackUser(users, message);
+    var targetPlayer = slack.getSlackUser(message);
     var deferred = Q.defer();
     var allLeagues = league.getAllLeagues(chesster.config);
     bot.startPrivateConversation(message, function (response, convo) {
@@ -1038,7 +1038,5 @@ subscription.register(chesster, 'a-game-is-scheduled', function(target, context)
     var friendlyFormat = "ddd @ HH:mm";
     var targetDate = context.results.date.clone().utcOffset(target.tz_offset/60);
     context['date'] = targetDate.format(friendlyFormat);
-    console.log(target, context);
-    console.log("{white.name} vs {black.name} has been scheduled for {date}".format(context));
     return "{white.name} vs {black.name} has been scheduled for {date}".format(context);
 });
