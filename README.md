@@ -26,7 +26,7 @@ ps. I will add more detail here later. I just want to get some bare bones instru
 5. Install mocha. ` > npm install --save mocha `
 6. Install chai. ` > npm install --save chai `
 7. Install moment. ` > npm install --save moment `
-8. Install underscore. ` > npm install --save underscore `
+8. Install lodash. ` > npm install --save lodash `
 9. Install q. ` > npm install --save q `
 10. Install string-format. ` > npm install --save string-format `
 

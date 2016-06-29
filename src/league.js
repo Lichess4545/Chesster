@@ -2,7 +2,7 @@
 // Defines a league object which can be used to interact with the spreadsheet
 // for the given league
 //------------------------------------------------------------------------------
-var _ = require("underscore");
+var _ = require("lodash");
 var Q = require("q");
 var moment = require("moment");
 var format = require('string-format')
@@ -460,11 +460,7 @@ league_attributes = {
     'getCaptains':function() {
         var self = this;
         return Q.fcall(function() {
-            var captains = [];
-            _.each(self._teams, function(team) {
-                captains.push(team.captain);
-            });
-            return captains;
+            return _.map(self._teams, "captain");
         });
     },
     //--------------------------------------------------------------------------
@@ -647,12 +643,13 @@ function League(options) {
 }
 
 function getAllLeagues(config) {
-    var leagues = [];
     var all_league_configs = config['leagues'] || {};
-    _.each(_.keys(all_league_configs), function(key) {
-        leagues.push(getLeague(key, config));
-    });
-    return leagues;
+    return _(all_league_configs)
+        .keys()
+        .map(function(key) {
+            return getLeague(key, config);
+        })
+        .value();
 }
 
 var getLeague = (function() {

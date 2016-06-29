@@ -1,6 +1,6 @@
 var assert = require('chai').assert;
 var Q = require("q");
-var _ = require("underscore");
+var _ = require("lodash");
 var moment = require("moment");
 var league = require('../src/league');
 var lichess = require('../src/lichess');

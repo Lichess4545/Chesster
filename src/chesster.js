@@ -3,7 +3,7 @@ var fs = require('fs');
 var http = require('http');
 var moment = require('moment');
 var Q = require("q");
-var _ = require("underscore");
+var _ = require("lodash");
 
 // Our stuff
 var fuzzy = require('./fuzzy_match.js');
@@ -421,8 +421,7 @@ chesster.controller.hears([
 	'direct_mention', 
 	'direct_message'
 ], function(bot,message) {
-    bot_exception_handler(bot, message, function(){
-    });
+    bot_exception_handler(bot, message, _.noop) 
 });
 
 /* source */
