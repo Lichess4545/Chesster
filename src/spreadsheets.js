@@ -405,13 +405,9 @@ function getRows(spreadsheetConfig, options, sheetPredicate, callback) {
                             return i;
                         }
                     });
-                    var recordRows = [];
-                    rows.slice(2).forEach(function(row) {
-                        var asObject = _.transform(_.zip(headerRow, row), function(result, pair) {
-                            result[pair[0]] = pair[1];
-                        }, {});
-                        recordRows.push(asObject);
-                    });
+                    var recordRows = _.map(rows.slice(2), function(row) {
+                        return _.zipObject(headerRow, row);
+                    })
                     callback(undefined, recordRows);
                 }
             );
