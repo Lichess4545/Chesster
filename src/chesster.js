@@ -627,7 +627,11 @@ function(bot, message) {
                 schedulingReplyTooCloseToCutoff(bot, message, schedulingOptions, white, black);
             }
             schedulingReplyScheduled(bot, message, results, white, black);
-            subscription.emitter.emit('a-game-is-scheduled', bot, message, message.league, results, white, black);
+            subscription.emitter.emit('a-game-is-scheduled',
+                message.league,
+                [white.name, black.name], {
+                results, white, black
+            });
         }
     );
 });
@@ -1029,28 +1033,12 @@ function(bot, message) {
     return deferred.promise;
 });
 
-subscription.emitter.on('a-game-is-scheduled', function(bot, message, league, results, white, black) {
-    // TODO: encase this in a exception Handler
-    _.each([white.name, black.name], function(source) {
-        // TODO: this will also need to deal with channels at some point
-        subscription.getListeners(league.options.name, source, 'a-game-is-scheduled').then(function(targets) {
-            _.each(targets, function(target) {
-                target = slack.getSlackUserFromNameOrID(slack.users, target);
-                if (!_.isUndefined(target)) {
-                    bot.startPrivateConversation({user: target.id}, function(err, convo) {
-                        // TODO: this could be a much better message!
-                        convo.say("{white} vs {black} has been scheduled for {date}.".format({
-                            white: white.name,
-                            black: black.name,
-                            date: "TODO"
-                        }));
-                    });
-                } else {
-                    // TODO: probably delete the subscription at this point.
-                }
-            });
-        }).catch(function(error) {
-            console.error("ERROR: " + error);
-        });
-    });
+subscription.register(chesster, 'a-game-is-scheduled', function(target, context) {
+    // TODO: put this somewhere, probably config?
+    var friendlyFormat = "ddd @ HH:mm";
+    var targetDate = context.results.date.clone().utcOffset(target.tz_offset/60);
+    context['date'] = targetDate.format(friendlyFormat);
+    console.log(target, context);
+    console.log("{white.name} vs {black.name} has been scheduled for {date}".format(context));
+    return "{white.name} vs {black.name} has been scheduled for {date}".format(context);
 });

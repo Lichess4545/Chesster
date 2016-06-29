@@ -76,7 +76,7 @@ function getSlackUser(message) {
     return player;
 };
 
-function getSlackUserFromNameOrID(users, nameOrId) {
+function getSlackUserFromNameOrID(nameOrId) {
 
     // The name or Id was provided, so parse it out
     var player = users.getByNameOrID(nameOrId);
@@ -381,11 +381,11 @@ function on(options, callback) {
 //------------------------------------------------------------------------------
 function startPrivateConversation(nameOrId) {
     var deferred = Q.defer();
-    target = player.getSlackUserFromNameOrID(slack.users, target);
+    target = getSlackUserFromNameOrID(nameOrId);
     if (_.isNil(target)) {
         deferred.reject("Unable to find user");
     } else {
-        bot.startPrivateConversation({user: target.id}, function(err, convo) {
+        this.bot.startPrivateConversation({user: target.id}, function(err, convo) {
             if (err) {
                 deferred.reject(err);
             }

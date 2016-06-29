@@ -4,6 +4,7 @@
 var http = require("./http.js");
 var moment = require("moment");
 var Q = require("q");
+var _ = require("lodash");
 // TODO: sequelize-cli requires us to call this models.js or models/index.js
 //       this name conflicts with the parameter that we pass in after getting
 //       the lock, so I'd like to (by convention) always refer to this as db.

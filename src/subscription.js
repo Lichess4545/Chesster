@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 
 var Q = require("q");
-var _ = require("underscore");
+var _ = require("lodash");
 var format = require('string-format')
 format.extend(String.prototype)
 
@@ -20,7 +20,7 @@ const emitter = new ChessLeagueEmitter();
 
 var events = [
     //"a-game-starts",
-    "a-game-is-scheduled",
+    //"a-game-is-scheduled",
     //"a-game-is-over",
     //"a-pairing-is-released"
 ];
@@ -247,32 +247,35 @@ function processRemoveSubscriptionCommand(config, message, id) {
 // Register an event + message handler
 //------------------------------------------------------------------------------
 function register(bot, event_name, cb) {
-    var deferred = Q.defer();
+    // Ensure this is a known event.
     events.push(event_name);
-    emitter.on(event_name, function(sources, context) {
-        subscription.getListeners(league.options.name, sources, 'a-game-is-scheduled').then(function(sources) {
-            _.each(function(targets) {
+    
+    // Handle the event when it happens
+    emitter.on(event_name, function(league, sources, context) {
+        return getListeners(league.options.name, sources, 'a-game-is-scheduled').then(function(targets) {
+            _.each(targets, function(target) {
                 message = cb(target, context);
                 bot.startPrivateConversation(target).then(function(convo) {
-                    convo.say(mssage);
+                    convo.say(message);
                 });
             });
         });
-        promise.resolve(arguments);
     });
-    return deferred.promise;
 }
 
 //------------------------------------------------------------------------------
 // Get listeners for a given event and source
 //------------------------------------------------------------------------------
-function getListeners(leagueName, source, event) {
+function getListeners(leagueName, sources, event) {
+    sources = _.map(sources, _.toLower);
     // TODO: when we get WAL enabled, we won't need to lock this query any more.
     return db.lock().then(function(unlock) {
         return db.Subscription.findAll({
             where: {
                 league: leagueName.toLowerCase(),
-                source: source.toLowerCase(),
+                source: {
+                    $in: sources,
+                },
                 event: event.toLowerCase()
             }
         }).then(function(subscriptions) {
@@ -287,3 +290,4 @@ module.exports.processTellCommand = processTellCommand;
 module.exports.processSubscriptionsCommand = processSubscriptionsCommand;
 module.exports.processRemoveSubscriptionCommand = processRemoveSubscriptionCommand;
 module.exports.getListeners = getListeners;
+module.exports.register = register;
