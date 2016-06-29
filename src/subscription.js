@@ -9,7 +9,6 @@ format.extend(String.prototype)
 
 var league = require("./league.js");
 var slack = require("./slack.js");
-var player = require("./player.js");
 var db = require("./models.js");
 
 // The emitter we will use.
@@ -20,10 +19,10 @@ const emitter = new ChessLeagueEmitter();
 
 
 var events = [
-    "a-game-starts",
+    //"a-game-starts",
     "a-game-is-scheduled",
-    "a-game-is-over",
-    "a-pairing-is-released"
+    //"a-game-is-over",
+    //"a-pairing-is-released"
 ];
 
 //------------------------------------------------------------------------------
@@ -105,7 +104,7 @@ function formatInvalidSourceResponse(config, source) {
 //------------------------------------------------------------------------------
 function processTellCommand(config, message) {
     return Q.fcall(function() {
-        var requester = player.getSlackUserFromNameOrID(slack.users, message.user);
+        var requester = slack.getSlackUserFromNameOrID(slack.users, message.user);
         var components = message.text.split(" ");
         var args = components.slice(0, 7);
         var sourceName = components.splice(7).join(" ");
@@ -159,7 +158,7 @@ function processTellCommand(config, message) {
 
         // Ensure the source is a valid user within slack
         // TODO: Allow teams as a source, not just users.
-        var source = player.getSlackUserFromNameOrID(slack.users, sourceName);
+        var source = slack.getSlackUserFromNameOrID(slack.users, sourceName);
         if (_.isUndefined(source)) {
             return formatInvalidSourceResponse(config, sourceName);
         }
@@ -192,7 +191,7 @@ function processTellCommand(config, message) {
 //------------------------------------------------------------------------------
 function processSubscriptionsCommand(config, message) {
     return Q.fcall(function() {
-        var requester = player.getSlackUserFromNameOrID(slack.users, message.user);
+        var requester = slack.getSlackUserFromNameOrID(slack.users, message.user);
         // TODO: Once we enable WAL - we can remove this lock for this command
         return db.lock().then(function(unlock) {
             return db.Subscription.findAll({
@@ -222,7 +221,7 @@ function processSubscriptionsCommand(config, message) {
 //------------------------------------------------------------------------------
 function processRemoveSubscriptionCommand(config, message, id) {
     return Q.fcall(function() {
-        var requester = player.getSlackUserFromNameOrID(slack.users, message.user);
+        var requester = slack.getSlackUserFromNameOrID(slack.users, message.user);
         return db.lock().then(function(unlock) {
             return db.Subscription.findAll({
                 where: {
@@ -246,6 +245,26 @@ function processRemoveSubscriptionCommand(config, message, id) {
             });
         });
     });
+}
+
+//------------------------------------------------------------------------------
+// Register an event + message handler
+//------------------------------------------------------------------------------
+function register(bot, event_name, cb) {
+    var deferred = Q.defer();
+    events.push(event_name);
+    emitter.on(event_name, function(sources, context) {
+        subscription.getListeners(league.options.name, sources, 'a-game-is-scheduled').then(function(sources) {
+            _.each(function(targets) {
+                message = cb(target, context);
+                bot.startPrivateConversation(target).then(function(convo) {
+                    convo.say(mssage);
+                });
+            });
+        });
+        promise.resolve(arguments);
+    });
+    return deferred.promise;
 }
 
 //------------------------------------------------------------------------------

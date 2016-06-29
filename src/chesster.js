@@ -8,7 +8,6 @@ var _ = require("underscore");
 // Our stuff
 var fuzzy = require('./fuzzy_match.js');
 var league = require("./league.js");
-var player = require("./player.js");
 var spreadsheets = require('./spreadsheets.js');
 var slack = require('./slack.js');
 var users = slack.users;
@@ -103,14 +102,14 @@ leagueDMResponse(['captains', 'captain list'], 'formatCaptainsResponse');
 /* rating */
 
 chesster.hears({
-    patterns: [player.appendPlayerRegex("rating", true)],
+    patterns: [slack.appendPlayerRegex("rating", true)],
     messageTypes: [
         'direct_mention', 
         'direct_message'
     ]
 },
 function(bot,message) {
-    var playerName = player.getSlackUser(users, message).name;
+    var playerName = slack.getSlackUser(users, message).name;
     return lichess.getPlayerRating(playerName).then(function(rating) {
         if(rating){
             bot.reply(message, prepareRatingMessage(playerName, rating));
@@ -249,13 +248,13 @@ leagueResponse(['pairings', 'standings'], 'formatPairingsLinkResponse');
 
 chesster.hears({
     patterns: [
-        player.appendPlayerRegex("pairing", true)
+        slack.appendPlayerRegex("pairing", true)
     ],
     messageTypes: [
         'direct_mention', 'direct_message'
     ]
 }, function(bot, message) {
-    var targetPlayer = player.getSlackUser(users, message);
+    var targetPlayer = slack.getSlackUser(users, message);
     var deferred = Q.defer();
     var allLeagues = league.getAllLeagues(chesster.config);
     bot.startPrivateConversation(message, function (response, convo) {
@@ -1037,7 +1036,7 @@ subscription.emitter.on('a-game-is-scheduled', function(bot, message, league, re
         // TODO: this will also need to deal with channels at some point
         subscription.getListeners(league.options.name, source, 'a-game-is-scheduled').then(function(targets) {
             _.each(targets, function(target) {
-                target = player.getSlackUserFromNameOrID(slack.users, target);
+                target = slack.getSlackUserFromNameOrID(slack.users, target);
                 if (!_.isUndefined(target)) {
                     bot.startPrivateConversation({user: target.id}, function(err, convo) {
                         // TODO: this could be a much better message!
