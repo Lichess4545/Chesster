@@ -137,7 +137,6 @@ var ratingFunctions = (function() {
     //--------------------------------------------------------------------------
     function getPlayerRating(name, isBackground){
         name = name.toLowerCase();
-        console.log("getting rating for {name}".format({name: name}));
 
         // Get the writable lock for the database.
         return db.lock().then(function(unlock) {

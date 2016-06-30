@@ -58,7 +58,7 @@ function appendPlayerRegex(command, optional) {
     }
 
     return new RegExp(playerRegex);
-};
+}
 
 function getSlackUser(message) {
     // The user is either a string or an id
@@ -74,7 +74,7 @@ function getSlackUser(message) {
     }
 
     return player;
-};
+}
 
 function getSlackUserFromNameOrID(nameOrId) {
 
@@ -94,7 +94,7 @@ function getSlackUserFromNameOrID(nameOrId) {
         }
     }
     return player;
-};
+}
 
 function updatesUsers(bot){
     // @ https://api.slack.com/methods/users.list

@@ -274,7 +274,7 @@ function getListeners(leagueName, sources, event) {
             where: {
                 league: leagueName.toLowerCase(),
                 source: {
-                    $in: sources,
+                    $in: sources
                 },
                 event: event.toLowerCase()
             }
