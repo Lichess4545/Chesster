@@ -159,7 +159,6 @@ var ratingFunctions = (function() {
 
                 // Only update the rating if it's older than 30 minutes
                 // or if we don't have one a rating
-                // TODO: Replace this with _.isInteger
                 if (_.isNil(rating))  {
                     // If we don't have a rating, use whatever queue they asked for.
                     promise = _updateRating(name, isBackground);
