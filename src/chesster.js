@@ -1034,9 +1034,12 @@ function(bot, message) {
 });
 
 subscription.register(chesster, 'a-game-is-scheduled', function(target, context) {
-    // TODO: put this somewhere, probably config?
+    // TODO: put these date formats somewhere, probably config?
     var friendlyFormat = "ddd @ HH:mm";
+    target = slack.getSlackUserFromNameOrID(target);
     var targetDate = context.results.date.clone().utcOffset(target.tz_offset/60);
-    context['date'] = targetDate.format(friendlyFormat);
-    return "{white.name} vs {black.name} has been scheduled for {date}".format(context);
+    context['yourDate'] = targetDate.format(friendlyFormat);
+    var fullFormat = "YYYY-MM-DD @ HH:mm UTC";
+    context['realDate'] = context.results.date.format(fullFormat);
+    return "{white.name} vs {black.name} has been scheduled for {realDate}, which is {yourDate} for you.".format(context);
 });
