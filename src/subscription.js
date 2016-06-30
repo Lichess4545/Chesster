@@ -100,7 +100,7 @@ function formatInvalidSourceResponse(config, source) {
 //------------------------------------------------------------------------------
 function processTellCommand(config, message) {
     return Q.fcall(function() {
-        var requester = slack.getSlackUserFromNameOrID(slack.users, message.user);
+        var requester = slack.getSlackUserFromNameOrID(message.user);
         var components = message.text.split(" ");
         var args = components.slice(0, 7);
         var sourceName = components.splice(7).join(" ");
@@ -154,7 +154,7 @@ function processTellCommand(config, message) {
 
         // Ensure the source is a valid user within slack
         // TODO: Allow teams as a source, not just users.
-        var source = slack.getSlackUserFromNameOrID(slack.users, sourceName);
+        var source = slack.getSlackUserFromNameOrID(sourceName);
         if (_.isUndefined(source)) {
             return formatInvalidSourceResponse(config, sourceName);
         }
@@ -187,7 +187,7 @@ function processTellCommand(config, message) {
 //------------------------------------------------------------------------------
 function processSubscriptionsCommand(config, message) {
     return Q.fcall(function() {
-        var requester = slack.getSlackUserFromNameOrID(slack.users, message.user);
+        var requester = slack.getSlackUserFromNameOrID(message.user);
         // TODO: Once we enable WAL - we can remove this lock for this command
         return db.lock().then(function(unlock) {
             return db.Subscription.findAll({
@@ -217,7 +217,7 @@ function processSubscriptionsCommand(config, message) {
 //------------------------------------------------------------------------------
 function processRemoveSubscriptionCommand(config, message, id) {
     return Q.fcall(function() {
-        var requester = slack.getSlackUserFromNameOrID(slack.users, message.user);
+        var requester = slack.getSlackUserFromNameOrID(message.user);
         return db.lock().then(function(unlock) {
             return db.Subscription.findAll({
                 where: {
