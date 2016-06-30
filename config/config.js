@@ -82,7 +82,7 @@ var config = {
             },
             "links": {
                 "rules": "https://lichess4545.slack.com/files/endrawes0/F1ARYEKT3/lichess4545leaguerulesregulations",
-                "team": "https://lichess4545.slack.com/files/mrlegilimens/F0VNACY64/lichess4545season3-graphs",
+                "team": "https://lichess4545.slack.com/files/mrlegilimens/F1J8DMUHJ/lichess4545season4-formresponses1",
                 "guide": "http://bit.ly/1MW9YJ4",
                 "captains": "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc",
                 "registration": "https://docs.google.com/forms/d/1Fx5XL4NZBK-8ADxndWDuH-XLuJDI90ZVKR4GhKs9Ols/viewform"
