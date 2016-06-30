@@ -246,13 +246,13 @@ function processRemoveSubscriptionCommand(config, message, id) {
 //------------------------------------------------------------------------------
 // Register an event + message handler
 //------------------------------------------------------------------------------
-function register(bot, event_name, cb) {
+function register(bot, eventName, cb) {
     // Ensure this is a known event.
-    events.push(event_name);
+    events.push(eventName);
     
     // Handle the event when it happens
-    emitter.on(event_name, function(league, sources, context) {
-        return getListeners(league.options.name, sources, 'a-game-is-scheduled').then(function(targets) {
+    emitter.on(eventName, function(league, sources, context) {
+        return getListeners(league.options.name, sources, eventName).then(function(targets) {
             _.each(targets, function(target) {
                 message = cb(target, context);
                 bot.startPrivateConversation(target).then(function(convo) {
