@@ -4,6 +4,7 @@
 var http = require("./http.js");
 var moment = require("moment");
 var Q = require("q");
+var _ = require("lodash");
 // TODO: sequelize-cli requires us to call this models.js or models/index.js
 //       this name conflicts with the parameter that we pass in after getting
 //       the lock, so I'd like to (by convention) always refer to this as db.
@@ -134,7 +135,7 @@ var ratingFunctions = (function() {
     // Get the player rating. Always return the most recent rating from the
     // database, unless they don't have it. Then go get it and return it.
     //--------------------------------------------------------------------------
-    function getPlayerRating(name){
+    function getPlayerRating(name, isBackground){
         name = name.toLowerCase();
 
         // Get the writable lock for the database.
@@ -157,10 +158,9 @@ var ratingFunctions = (function() {
 
                 // Only update the rating if it's older than 30 minutes
                 // or if we don't have one a rating
-                // TODO: Replace this with _.isInteger
                 if (_.isNil(rating))  {
-                    // If we don't have a rating, use the foreground queue
-                    promise = _updateRating(name, false);
+                    // If we don't have a rating, use whatever queue they asked for.
+                    promise = _updateRating(name, isBackground);
                 } else if (!isInQueue && (!lastCheckedAt || lastCheckedAt.isBefore(_30MinsAgo))) {
                     // If the rating is just out of date, use the background queue
                     promise = _updateRating(name, true);

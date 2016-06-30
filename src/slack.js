@@ -8,6 +8,8 @@ var league = require("./league.js");
 var fuzzy = require("./fuzzy_match.js");
 var models = require("./models.js");
 
+var slackIDRegex = module.exports.slackIDRegex = /<@([^\s]+)>/;
+
 function StopControllerError (error) { this.error = error; }
 StopControllerError.prototype = new Error();
 
@@ -38,6 +40,61 @@ var channels = {
         return "<#"+this.getId(name)+">";
     }
 };
+function appendPlayerRegex(command, optional) {
+    /*
+     * regex explanation
+     * (?:           non capturing group, don't care about the space and @ part
+     * @?            @ is optional (accepts "@user" or "user")
+     * ([^\\s]+)     match one more more non-whitespace characters and capture it.  This
+     *               is what will show up in the match[1] place.
+     * )
+     */
+    var playerRegex = command + "(?: @?([^\\s]+))";
+
+    if (optional) {
+        // If the username is optional (as in the "rating" command), append
+        // a ? to the whole player matching regex.
+        return new RegExp(playerRegex + "?");
+    }
+
+    return new RegExp(playerRegex);
+}
+
+function getSlackUser(message) {
+    // The user is either a string or an id
+    var nameOrId = message.user;
+
+    if (message.match[1]) {
+        nameOrId = message.match[1];
+    }
+    var player = getSlackUserFromNameOrID(nameOrId);
+
+    if (!player) {
+        player = users.getByNameOrID(message.user); 
+    }
+
+    return player;
+}
+
+function getSlackUserFromNameOrID(nameOrId) {
+
+    // The name or Id was provided, so parse it out
+    var player = users.getByNameOrID(nameOrId);
+
+    // If the player didn't exist that way, then it could be the @notation
+    if (!player && nameOrId) {
+        // Slack user ids are tranlated in messages to something like <@U17832>.  This
+        // regex will capture the U17832 part so we can send it through the getByNameOrId
+        // function
+        var userIdExtraction = nameOrId.match(slackIDRegex);
+        if (userIdExtraction) {
+            player = users.getByNameOrID(userIdExtraction[1]);
+        } else {
+            player = users.getByNameOrID(nameOrId.toLowerCase());
+        }
+    }
+    return player;
+}
 
 function updatesUsers(bot){
     // @ https://api.slack.com/methods/users.list
@@ -316,6 +373,27 @@ function on(options, callback) {
         }));
     });
 }
+//------------------------------------------------------------------------------
+// A helper method to workaround a bug in botkit. 
+//
+// We store a reference to 'bot' in the startRTM method and then use it here
+// to start a new dm. This also turns it into a promised based API
+//------------------------------------------------------------------------------
+function startPrivateConversation(nameOrId) {
+    var deferred = Q.defer();
+    target = getSlackUserFromNameOrID(nameOrId);
+    if (_.isNil(target)) {
+        deferred.reject("Unable to find user");
+    } else {
+        this.bot.startPrivateConversation({user: target.id}, function(err, convo) {
+            if (err) {
+                deferred.reject(err);
+            }
+            deferred.resolve(convo);
+        });
+    }
+    return deferred.promise;
+}
 
 
 DEFAULT_BOT_OPTIONS = {
@@ -340,6 +418,8 @@ function Bot(options) {
     self.controller.spawn({
       token: self.config.token
     }).startRTM(function(err, bot) {
+        // Store a reference to the bot so that we can use it later.
+        self.bot = bot;
         if (err) {
             throw new Error(err);
         }
@@ -353,6 +433,7 @@ function Bot(options) {
     });
     self.hears = hears;
     self.on = on;
+    self.startPrivateConversation = startPrivateConversation;
 }
 
 module.exports.users = users;
@@ -360,5 +441,8 @@ module.exports.channels = channels;
 module.exports.withLeague = withLeague;
 module.exports.requiresModerator = requiresModerator;
 module.exports.requiresLeague = requiresLeague;
+module.exports.appendPlayerRegex = appendPlayerRegex;
+module.exports.getSlackUser = getSlackUser;
+module.exports.getSlackUserFromNameOrID = getSlackUserFromNameOrID;
 module.exports.Bot = Bot;
 
