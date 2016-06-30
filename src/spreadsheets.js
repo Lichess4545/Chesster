@@ -1,7 +1,7 @@
 var moment = require("moment");
 var fuzzy_match = require("./fuzzy_match");
 var GoogleSpreadsheet = require("google-spreadsheet");
-var _ = require("underscore");
+var _ = require("lodash");
 
 var EXTREMA_DEFAULTS = {
     'isoWeekday': 2,
@@ -405,10 +405,9 @@ function getRows(spreadsheetConfig, options, sheetPredicate, callback) {
                             return i;
                         }
                     });
-                    var recordRows = [];
-                    rows.slice(2).forEach(function(row) {
-                        recordRows.push(_.object(_.zip(headerRow, row)));
-                    });
+                    var recordRows = _.map(rows.slice(2), function(row) {
+                        return _.zipObject(headerRow, row);
+                    })
                     callback(undefined, recordRows);
                 }
             );
