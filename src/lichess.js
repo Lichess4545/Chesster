@@ -46,6 +46,10 @@ var makeRequest = (function() {
         var request = null;
         // The default delay between requests is 2 seconds
         var requestDelay = 2 * SECONDS;
+        console.log("[LICHESS] {} requests in mainQueue {} requests in backgroundQueue".format(
+            mainQueue.length,
+            backgroundQueue.length
+        ));
         if (mainQueue.length > 0) {
             request = mainQueue.shift();
         } else if (backgroundQueue.length > 0) {
@@ -64,13 +68,13 @@ var makeRequest = (function() {
             promise.then(function(result) {
                 if (result.response.statusCode === 429) {
                     requestDelay = 60 * SECONDS;
-                    console.log("Last request status was a 429 - we will wait 60 seconds before our next request");
+                    console.error("[LICHESS] Last request status was a 429 - we will wait 60 seconds before our next request");
                 }
                 deferred.resolve(result);
 
                 setTimeout(processRequest, requestDelay);
             }, function(error) {
-                console.error("Request failed: " + JSON.stringify(error));
+                console.error("[LICHESS] Request failed: " + JSON.stringify(error));
                 setTimeout(processRequest, requestDelay);
                 deferred.reject(error);
             });
