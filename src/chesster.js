@@ -166,7 +166,7 @@ chesster.hears({
     patterns: [
         'commands', 
         'command list',
-        'help'
+        '^help$'
     ],
     messageTypes: [
         'direct_mention', 
@@ -997,13 +997,13 @@ function(bot, message) {
 
 chesster.hears({
     middleware: [],
-    patterns: ['^subscriptions$'],
+    patterns: ['^subscription help$'],
     messageTypes: ['direct_message']
 },
 function(bot, message) {
     var deferred = Q.defer();
     bot.startPrivateConversation(message, function (response, convo) {
-        subscription.processSubscriptionsCommand(chesster.config, message).then(function(response) {
+        subscription.formatHelpResponse(chesster.config).then(function(response) {
             convo.say(response);
             deferred.resolve();
         }).catch(function(error) {
@@ -1016,13 +1016,32 @@ function(bot, message) {
 
 chesster.hears({
     middleware: [],
-    patterns: [/^remove subscription (\d+)$/],
+    patterns: ['^subscription list$'],
     messageTypes: ['direct_message']
 },
 function(bot, message) {
     var deferred = Q.defer();
     bot.startPrivateConversation(message, function (response, convo) {
-        subscription.processRemoveSubscriptionCommand(chesster.config, message, message.match[1]).then(function(response) {
+        subscription.processSubscriptionListCommand(chesster.config, message).then(function(response) {
+            convo.say(response);
+            deferred.resolve();
+        }).catch(function(error) {
+            convo.say("I'm sorry, but an error occurred processing this subscription command");
+            deferred.reject(error);
+        });
+    });
+    return deferred.promise;
+});
+
+chesster.hears({
+    middleware: [],
+    patterns: [/^subscription remove (\d+)$/],
+    messageTypes: ['direct_message']
+},
+function(bot, message) {
+    var deferred = Q.defer();
+    bot.startPrivateConversation(message, function (response, convo) {
+        subscription.processSubscriptionRemoveCommand(chesster.config, message, message.match[1]).then(function(response) {
             convo.say(response);
             deferred.resolve();
         }).catch(function(error) {

@@ -35,8 +35,13 @@ function formatHelpResponse(config) {
         return "The subscription system supports the following commands: \n" +
             "`tell me when <event> in <league> for <target-user-or-team>`\n" +
             "Where `<event>` is one of:```" + events.join("\n") + "```" +
-            "and `<target-user-or-team>` is the target user or team that you are " +
-            "subscribing to. <league> is one of:```" + leagueNames.join("\n") +
+            " and `<target-user-or-team>` is the target user or team that you are " +
+            "subscribing to. <league> is one of:```" + leagueNames.join("\n") + "``` " +
+            "\n" +
+            "`subscription list` to list your current subscriptions\n" +
+            "\n" +
+            "`subscription remove <id>` to list remove a specific subscription\n" +
+            "\n" +
             "```";
     });
 }
@@ -185,7 +190,7 @@ function processTellCommand(config, message) {
 //
 // subscriptions (by itself) simply lists your subscriptions with ID #s
 //------------------------------------------------------------------------------
-function processSubscriptionsCommand(config, message) {
+function processSubscriptionListCommand(config, message) {
     return Q.fcall(function() {
         var requester = slack.getSlackUserFromNameOrID(message.user);
         // TODO: Once we enable WAL - we can remove this lock for this command
@@ -202,6 +207,9 @@ function processSubscriptionsCommand(config, message) {
                 _.each(subscriptions, function(subscription) {
                     response += "\nID {id} -> tell {target} when {event} for {source} in {league}".format(subscription.get());
                 });
+                if (response.length == 0) {
+                    response = "You have no subscriptions";
+                }
 
                 unlock.resolve();
                 return response;
@@ -215,7 +223,7 @@ function processSubscriptionsCommand(config, message) {
 //
 // subscriptions (by itself) simply lists your subscriptions with ID #s
 //------------------------------------------------------------------------------
-function processRemoveSubscriptionCommand(config, message, id) {
+function processSubscriptionRemoveCommand(config, message, id) {
     return Q.fcall(function() {
         var requester = slack.getSlackUserFromNameOrID(message.user);
         return db.lock().then(function(unlock) {
@@ -286,8 +294,9 @@ function getListeners(leagueName, sources, event) {
 }
 
 module.exports.emitter = emitter;
+module.exports.formatHelpResponse = formatHelpResponse;
 module.exports.processTellCommand = processTellCommand;
-module.exports.processSubscriptionsCommand = processSubscriptionsCommand;
-module.exports.processRemoveSubscriptionCommand = processRemoveSubscriptionCommand;
+module.exports.processSubscriptionListCommand = processSubscriptionListCommand;
+module.exports.processSubscriptionRemoveCommand = processSubscriptionRemoveCommand;
 module.exports.getListeners = getListeners;
 module.exports.register = register;
