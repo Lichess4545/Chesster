@@ -50,10 +50,21 @@ Slack.prototype.log = function (level, msg, meta, callback) {
     if (!this.bot) {
         return;
     }
+    var icon_emoji = undefined;
+    if (level == "info") {
+        icon_emoji = ":information_source:";
+    } else if (level == "debug") {
+        icon_emoji = ":grey_question:";
+    } else if (level == "warning") {
+        icon_emoji = ":warning:";
+    } else if (level == "error") {
+        icon_emoji = ":interrobang:";
+    }
     //- Use custom formatter for message if set
-    var message = { text: "[" + level + "] " + msg,
+    var message = { text: icon_emoji + " [" + level + "] " + msg,
             channel: this.channel,
-            username: this.username
+            username: this.username,
+            icon_emoji: icon_emoji
         };
     this.bot.say(message);
 
