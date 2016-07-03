@@ -2,6 +2,7 @@
  * Based off of work by andy.batchelor on 2/26/14.
  */
 
+var _ = require("lodash");
 var Botkit = require('botkit');
 var util = require('util'),
     winston = require('winston');
@@ -50,14 +51,14 @@ Slack.prototype.log = function (level, msg, meta, callback) {
     if (!this.bot) {
         return;
     }
-    var icon_emoji = undefined;
-    if (level == "info") {
+    var icon_emoji;
+    if (_.isEqual(level, "info")) {
         icon_emoji = ":information_source:";
-    } else if (level == "debug") {
+    } else if (_.isEqual(level, "debug")) {
         icon_emoji = ":grey_question:";
-    } else if (level == "warning") {
+    } else if (_.isEqual(level, "warning")) {
         icon_emoji = ":warning:";
-    } else if (level == "error") {
+    } else if (_.isEqual(level, "error")) {
         icon_emoji = ":interrobang:";
     }
     //- Use custom formatter for message if set
