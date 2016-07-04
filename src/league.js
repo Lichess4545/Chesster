@@ -111,7 +111,7 @@ league_attributes = {
             'min-row': 1,
             'max-row': 100,
             'min-col': 1,
-            'max-col': 20,
+            'max-col': 26,
             'return-empty': true
         }
         var self = this;
