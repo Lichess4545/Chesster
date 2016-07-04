@@ -4,6 +4,7 @@ var http = require('http');
 var moment = require('moment');
 var Q = require("q");
 var _ = require("lodash");
+var winston = require("winston");
 
 // Our stuff
 var fuzzy = require('./fuzzy_match.js');
@@ -26,7 +27,7 @@ function exception_handler(todo, on_error){
             "\nDatetime: " + new Date() +
             "\nError: " + JSON.stringify(e) +
             "\nStack: " + e.stack;
-        console.error(error_log);
+        winston.error(error_log);
         if (on_error) {
             on_error();
         }
@@ -35,14 +36,14 @@ function exception_handler(todo, on_error){
 
 function bot_exception_handler(bot, message, todo){
     exception_handler(todo, function(){
-        console.log("Message: " + JSON.stringify(message));
+        winston.log("Message: " + JSON.stringify(message));
         bot.reply(message, "Something has gone terribly terribly wrong. Please forgive me.");
     });
 }
 
 function critical_path(todo){
     exception_handler(todo, function(){
-        console.log("An exception was caught in a critical code-path. I am going down.");
+        winston.log("An exception was caught in a critical code-path. I am going down.");
         process.exit(1);
     });
 }
@@ -269,8 +270,8 @@ chesster.hears({
                         convo.say("[" + l.options.name + "] Unable to find pairing for " + targetPlayer.name);
                     }
                 }, function(error) {
-                    console.error("error");
-                    console.error(JSON.stringify(error));
+                    winston.error("error");
+                    winston.error(JSON.stringify(error));
                 });
             })
         ).then(function(results) {
@@ -535,12 +536,12 @@ function(bot, message) {
     }
     var schedulingOptions = message.league.options.scheduling;
     if (!schedulingOptions) {
-        console.error("{} league doesn't have scheduling options!?".format(message.league.options.name));
+        winston.error("{} league doesn't have scheduling options!?".format(message.league.options.name));
         return;
     } 
     var spreadsheetOptions = message.league.options.spreadsheet;
     if (!spreadsheetOptions) {
-        console.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
+        winston.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
         return;
     } 
     if (!_.isEqual(channel.name, schedulingOptions.channel)) {
@@ -655,7 +656,7 @@ function(bot, message) {
     }
     var spreadsheetOptions = message.league.options.spreadsheet;
     if (!spreadsheetOptions) {
-        console.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
+        winston.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
         return;
     } 
     var resultsOptions = message.league.options.results;
@@ -770,7 +771,7 @@ function fetchURLIntoJSON(url, callback){
             }
         });
     }).on('error', (e) => {
-        console.error(JSON.stringify(e));
+        winston.error(JSON.stringify(e));
         callback("failed to get a response from url: " + url);
     });
 }
@@ -879,7 +880,7 @@ function processGamelink(bot, message, gamelink, options, userResult){
             }
             processGameDetails(bot, message, details, options);
         }else{
-            console.error(JSON.stringify(error));
+            winston.error(JSON.stringify(error));
             bot.reply(message, "Sorry, I failed to get game details for " + gamelink + ". Try again later or reach out to a moderator to make the update manually.");
         }
     });
@@ -958,7 +959,7 @@ function(bot, message) {
     }
     var spreadsheetOptions = message.league.options.spreadsheet;
     if (!spreadsheetOptions) {
-        console.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
+        winston.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
         return;
     } 
     var gamelinkOptions = message.league.options.gamelinks;

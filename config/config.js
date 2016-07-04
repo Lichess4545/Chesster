@@ -3,6 +3,12 @@
 var token = require("./slack_token.js").token;
 var private_key = require("./service_account_key.js").key;
 
+try {
+    var logging_token = require("./logging_token.js").token;
+} catch (e) {
+    var logging_token = null;
+}
+
 var config = {
     // Unfortunately this all has to be at the top level due to sequelize-cli
     "database": "",
@@ -18,6 +24,14 @@ var config = {
     "storage": "./db/database.sqlite",
 
     "token": token,
+    "winston": {
+        domain: "chesster",
+        channel: "#lichess4545-logging",
+        token: logging_token,
+        username: "chesster",
+        level: "info",
+        handleExceptions: true
+    },
     "links": {
         "source": "https://github.com/endrawes0/Chesster"
     },

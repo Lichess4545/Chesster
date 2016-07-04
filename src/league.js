@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 var _ = require("lodash");
 var Q = require("q");
+var winston = require("winston");
 var moment = require("moment");
 var format = require('string-format')
 format.extend(String.prototype)
@@ -84,19 +85,19 @@ league_attributes = {
         var self = this;
         self.refreshRosters(function(err, rosters) {
             if (err) {
-                console.error("Unable to refresh rosters: " + err);
+                winston.error("Unable to refresh rosters: " + err);
                 throw new Error(err);
             } else {
-                console.log("Found " + rosters.length + " teams for " + self.options.name);
+                winston.info("Found " + rosters.length + " teams for " + self.options.name);
             }
             self._lastUpdated = moment.utc();
         });
         self.refreshCurrentRoundSchedules(function(err, pairings) {
             if (err) {
-                console.error("Unable to refresh schedule: " + err);
+                winston.error("Unable to refresh schedule: " + err);
                 throw new Error(err);
             } else {
-                console.log("Found " + pairings.length + " pairings for " + self.options.name);
+                winston.info("Found " + pairings.length + " pairings for " + self.options.name);
             }
             self._lastUpdated = moment.utc();
         });
@@ -324,7 +325,7 @@ league_attributes = {
                     details['rating'] = rating;
                     deferred.resolve(details);
                 }, function(error) {
-                    console.error(JSON.stringify(error));
+                    winston.error(JSON.stringify(error));
                     deferred.resolve(details);
                 });
             } else {
@@ -661,7 +662,7 @@ var getLeague = (function() {
             var all_league_configs = config['leagues'] || {};
             var this_league_config = all_league_configs[league_name] || undefined;
             if (this_league_config) {
-                console.log("Creating new league for " + league_name);
+                winston.info("Creating new league for " + league_name);
                 this_league_config = _.clone(this_league_config);
                 this_league_config.name = league_name;
                 league = new League(this_league_config);

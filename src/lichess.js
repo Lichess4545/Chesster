@@ -5,6 +5,7 @@ var http = require("./http.js");
 var moment = require("moment");
 var Q = require("q");
 var _ = require("lodash");
+var winston = require("winston");
 // TODO: sequelize-cli requires us to call this models.js or models/index.js
 //       this name conflicts with the parameter that we pass in after getting
 //       the lock, so I'd like to (by convention) always refer to this as db.
@@ -46,6 +47,12 @@ var makeRequest = (function() {
         var request = null;
         // The default delay between requests is 2 seconds
         var requestDelay = 2 * SECONDS;
+        if (mainQueue.length > 0 || backgroundQueue.length > 0) {
+            winston.info("[LICHESS] {} requests in mainQueue {} requests in backgroundQueue".format(
+                mainQueue.length,
+                backgroundQueue.length
+            ));
+        }
         if (mainQueue.length > 0) {
             request = mainQueue.shift();
         } else if (backgroundQueue.length > 0) {
@@ -64,13 +71,13 @@ var makeRequest = (function() {
             promise.then(function(result) {
                 if (result.response.statusCode === 429) {
                     requestDelay = 60 * SECONDS;
-                    console.log("Last request status was a 429 - we will wait 60 seconds before our next request");
+                    winston.info("[LICHESS] Last request status was a 429 - we will wait 60 seconds before our next request");
                 }
                 deferred.resolve(result);
 
                 setTimeout(processRequest, requestDelay);
             }, function(error) {
-                console.error("Request failed: " + JSON.stringify(error));
+                winston.error("[LICHESS] Request failed: " + JSON.stringify(error));
                 setTimeout(processRequest, requestDelay);
                 deferred.reject(error);
             });
@@ -115,7 +122,7 @@ var ratingFunctions = (function() {
                     lichessRating.set('rating', rating);
                     lichessRating.set('lastCheckedAt', moment.utc().format());
                     lichessRating.save().then(function() {
-                        console.log("Got updated rating for {name}: {rating}".format({
+                        winston.info("Got updated rating for {name}: {rating}".format({
                             name: name,
                             rating: rating
                         }));
@@ -127,7 +134,7 @@ var ratingFunctions = (function() {
                 });
             });
         }).catch(function(error) {
-            console.error("Error getting player by name: " + error);
+            winston.error("Error getting player by name: " + error);
         });
     }
 
@@ -174,7 +181,7 @@ var ratingFunctions = (function() {
                     return promise;
                 }
             }).catch(function(error) {
-                console.error("Error querying for rating: " + error);
+                winston.error("Error querying for rating: " + error);
             });
         });
     }
