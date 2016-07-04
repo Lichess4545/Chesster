@@ -16,6 +16,8 @@ var channels = slack.channels;
 var lichess = require('./lichess.js');
 var subscription = require('./subscription.js');
 
+var SWORDS = "\u2694";
+
 /* exception handling */
 /* later this will move it its own module */
 
@@ -647,7 +649,7 @@ chesster.on({
     middleware: [slack.withLeague]
 },
 function(bot, message) {
-   if (!message.league) {
+    if (!message.league) {
         return;
     }
     var channel = channels.byId[message.channel];
@@ -715,7 +717,7 @@ function(bot, message) {
                                     throw new Error("Error updating scheduling sheet: " + err);
                                 }
                             } else {
-                                if(resultChanged && !_.isEqual(result.result, "\u2694")){
+                                if(resultChanged && !_.isEqual(result.result, SWORDS)){
                                     subscription.emitter.emit('a-game-is-over',
                                         message.league,
                                         [white.name, black.name], {
@@ -809,13 +811,12 @@ function validateGameDetails(details, options){
         result.reason = "the variant should be standard."
     }else{
         //the link is too old or too new
-        /*
         var extrema = spreadsheets.getRoundExtrema(options);
         var game_start = moment.utc(details.timestamp);
         if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
             result.valid = false;
             result.reason = "the game was not played in the current round.";
-        }*/
+        }
     }
     return result;
 }
@@ -928,7 +929,7 @@ function processGameDetails(bot, message, details, options){
             result.result = "1/2-1/2";
         }
     }else{
-        result.result = "\u2694";
+        result.result = SWORDS;
     }
     //gamelinks only come from played games, so ignoring forfeit result types
 
@@ -951,7 +952,7 @@ function processGameDetails(bot, message, details, options){
                 var white = result.white;
                 var black = result.black;
 
-                if(resultChanged && !_.isEqual(result.result, "\u2694")){
+                if(resultChanged && !_.isEqual(result.result, SWORDS)){
                     subscription.emitter.emit('a-game-is-over',
                         message.league,
                         [white.name, black.name], {

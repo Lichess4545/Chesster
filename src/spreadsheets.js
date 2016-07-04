@@ -601,7 +601,7 @@ function updateResult(spreadsheetConfig, result, callback){
             var gamelinkChanged = false;
             if(!gamelinkID && isHyperlink){
                 //there is no gamelink, fill from the formula
-                gamelink = parseHYPERLINK(formula).gamelink;
+                gamelink = hyperlink.gamelink;
             }else if(!result.gamelinkID){
                 //no gamelink and no formula
                 gamelink = '';
