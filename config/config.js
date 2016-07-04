@@ -56,7 +56,7 @@ var config = {
                 "prune2000",
             ],
             "spreadsheet": {
-                "key": "1FJZursRrWBmV7o3xQd_JzYEoB310ZJA79r8fGQUL1S4",
+                "key": "1cTBOQNrbUw9-RWmrC9b6Yyi3i2MtIvUWuXNxzQmGfSs",
                 "serviceAccountAuth": {
                     "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
                     "private_key": private_key,
