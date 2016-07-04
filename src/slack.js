@@ -7,6 +7,8 @@ var _ = require("lodash");
 var league = require("./league.js");
 var fuzzy = require("./fuzzy_match.js");
 var models = require("./models.js");
+var winston = require('winston');
+var logging = require('./logging.js');
 
 var slackIDRegex = module.exports.slackIDRegex = /<@([^\s]+)>/;
 
@@ -115,7 +117,7 @@ function updatesUsers(bot){
             users.byName = byName;
             users.byId = byId;
         }
-        console.log("info: got users");
+        winston.info("info: got users");
     });
 }
 
@@ -138,7 +140,7 @@ function updateChannels(bot){
             channels.byName = byName;
             channels.byId = byId;
         }
-        console.log("info: got channels");
+        winston.info("info: got channels");
     });
 
 }
@@ -155,7 +157,7 @@ function updateChannels(bot){
 var count = 0;
 function refresh(bot, delay, config) {
     return criticalPath(Q.fcall(function(){
-        console.log("doing refresh " + count++);
+        winston.info("doing refresh " + count++);
         bot.rtm.ping();
         
         updatesUsers(bot);
@@ -171,7 +173,7 @@ function refresh(bot, delay, config) {
 
 function criticalPath(promise){
     exceptionLogger(promise).catch(function(e) {
-        console.error("An exception was caught in a critical code-path. I am going down.");
+        winston.error("An exception was caught in a critical code-path. I am going down.");
         process.exit(1);
     });
     return promise;
@@ -185,7 +187,7 @@ function exceptionLogger(promise){
             "\nDatetime: " + new Date() +
             "\nError: " + JSON.stringify(e) +
             "\nStack: " + e.stack;
-        console.error(error_log);
+        winston.error(error_log);
         deferred.reject(e);
     });
     return deferred.promise;
@@ -193,7 +195,7 @@ function exceptionLogger(promise){
 
 function botExceptionHandler(bot, message, promise){
     exceptionLogger(promise).catch(function(e){
-        console.error("Message: " + JSON.stringify(message));
+        winston.error("Message: " + JSON.stringify(message));
         bot.reply(message, "Something has gone terribly terribly wrong. Please forgive me.");
         
     });
@@ -334,7 +336,7 @@ function hears(options, callback) {
                 return callback(bot, message);
             }, function(error) {
                 if(error instanceof StopControllerError) {
-                    console.error("Middleware asked to not process controller callback: " + JSON.stringify(error));
+                    winston.error("Middleware asked to not process controller callback: " + JSON.stringify(error));
                 } else {
                     throw error;
                 }
@@ -364,7 +366,7 @@ function on(options, callback) {
                 return callback(bot, message);
             }, function(error) {
                 if(error instanceof StopControllerError) {
-                    console.error("Middleware asked to not process controller callback: " + JSON.stringify(error));
+                    winston.error("Middleware asked to not process controller callback: " + JSON.stringify(error));
                 } else {
                     throw error;
                 }
@@ -404,10 +406,10 @@ DEFAULT_BOT_OPTIONS = {
 function Bot(options) {
     var self = this;
     self.options = _.extend({}, DEFAULT_BOT_OPTIONS, options);
-    console.log("Loading config from: " + self.options.config_file);
+    winston.info("Loading config from: " + self.options.config_file);
     self.config = require(self.options.config_file);
     if (!self.config.token) {
-        console.error('Failed to load token from: ' + config_file);
+        winston.error('Failed to load token from: ' + config_file);
         throw new Error("A token must be specified in the configuration file");
     }
 
@@ -425,12 +427,17 @@ function Bot(options) {
         }
         // connect to the database
         models.connect(self.config).then(function() {
-            //console.log(bot === self);
+            //winston.debug(bot === self);
             //refresh your user and channel list every 2 minutes
             //would be nice if this was push model, not poll but oh well.
             refresh(bot, 120 * SECONDS, self.config);
         });
     });
+
+
+    // setup logging
+    winston.add(logging.Slack, self.config.winston);
+
     self.hears = hears;
     self.on = on;
     self.startPrivateConversation = startPrivateConversation;

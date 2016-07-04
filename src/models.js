@@ -6,6 +6,7 @@
 var Sequelize = require('sequelize');
 var Q = require('q');
 var AsyncLock = require('async-lock');
+var winston = require("winston");
 
 
 var exports = (function() {
@@ -82,7 +83,7 @@ var exports = (function() {
         return sequelize.authenticate().then(function() {
             defineModels(sequelize);
         }).catch(function(error) {
-            console.error("Unable to connect to database: " + error);
+            winston.error("Unable to connect to database: " + error);
         });
     }
     return {

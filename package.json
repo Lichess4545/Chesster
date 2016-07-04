@@ -22,7 +22,8 @@
     "sequelize": "3.23.4",
     "sequelize-cli": "2.4.0",
     "sqlite3": "3.1.4",
-    "string-format": "0.5.0"
+    "string-format": "0.5.0",
+    "winston": "2.2.0"
   },
   "devDependencies": {
     "eslint": "^2.13.1",

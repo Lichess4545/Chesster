@@ -2,8 +2,15 @@
 //       You must provide your own.
 var token = require("./slack_token.js").token;
 var private_key = require("./test_service_account_key.js").key;
+try {
+    var logging_token = require("./test_logging_token.js").token;
+} catch (e) {
+    var logging_token = null;
+}
 
 var config = require("./config.js");
+config['winston']['token'] = logging_token;
+config['winston']['channel'] = "#modster-logging";
 config["leagues"]["45+45"]["spreadsheet"]["key"] = "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA";
 config["leagues"]["45+45"]["spreadsheet"]["serviceAccountAuth"] = {
     "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",

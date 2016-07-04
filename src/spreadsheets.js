@@ -2,6 +2,7 @@ var moment = require("moment");
 var fuzzy_match = require("./fuzzy_match");
 var GoogleSpreadsheet = require("google-spreadsheet");
 var _ = require("lodash");
+var winston = require("winston");
 
 var EXTREMA_DEFAULTS = {
     'isoWeekday': 2,
@@ -227,7 +228,7 @@ function parseScheduling(inputString, options) {
 
     // Filter out word that we know we want to ignore.
     if (parts.length < 3) {
-        console.log("Unable to parse date: " + inputString);
+        winston.error("Unable to parse date: " + inputString);
         throw new ScheduleParsingError();
     }
 
@@ -264,7 +265,7 @@ function parseScheduling(inputString, options) {
         return true;
     });
     if (validInBoundsDate.length === 0 && validOutOfBoundsDate.length === 0) {
-        console.log("Unable to parse date: [" + inputString + "]");
+        winston.error("Unable to parse date: [" + inputString + "]");
         throw new ScheduleParsingError();
     }
 
