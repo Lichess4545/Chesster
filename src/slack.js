@@ -436,7 +436,10 @@ function Bot(options) {
 
 
     // setup logging
-    winston.add(logging.Slack, self.config.winston);
+    // Only log to slack if the token is set.
+    if (self.config.winston.token) {
+        winston.add(logging.Slack, self.config.winston);
+    }
 
     self.hears = hears;
     self.on = on;

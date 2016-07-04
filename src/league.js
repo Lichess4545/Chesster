@@ -61,6 +61,11 @@ league_attributes = {
     _teams: [],
 
     //--------------------------------------------------------------------------
+    // A lookup from a player name to their team.
+    //--------------------------------------------------------------------------
+    _teamLookup: {},
+
+    //--------------------------------------------------------------------------
     // The datetime when we were last updated
     //--------------------------------------------------------------------------
     _lastUpdated: moment.utc(),
@@ -134,6 +139,7 @@ league_attributes = {
                     }
                 }
                 var newTeams = [];
+                var newLookup = {};
                 rows.forEach(function(row) {
                     if (
                         !row['teams'].value ||
@@ -170,6 +176,7 @@ league_attributes = {
                         if (!_.isEqual(name, player['name']) && _.isEqual(name[name.length-1], '*')) {
                             captain = player;
                         }
+                        newLookup[player.name.toLowerCase()] = team;
                         return player;
                     }
                     roster.push(processPlayer(row['board 1'], row['rating 1']));
@@ -185,6 +192,7 @@ league_attributes = {
                     newTeams.push(team);
                 });
                 self._teams = newTeams;
+                self._teamLookup = newLookup;
                 _.each(self._teams, function(team) {
                     _.each(team.roster, function(player) {
                         if (player && player.name) {
@@ -472,6 +480,13 @@ league_attributes = {
         return Q.fcall(function() {
             return self._teams;
         });
+    },
+    //--------------------------------------------------------------------------
+    // Get the team for a given player
+    //--------------------------------------------------------------------------
+    'getTeam':function(playerName) {
+        var self = this;
+        return self._teamLookup[playerName.toLowerCase()];
     },
     //--------------------------------------------------------------------------
     // Get the the players from a particular board
