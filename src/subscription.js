@@ -93,7 +93,7 @@ function formatInvalidEventResponse(config, event) {
 //------------------------------------------------------------------------------
 function formatInvalidSourceResponse(config, source) {
     return Q.fcall(function() {
-        return "`" + source + "` is not a valid source of that event. Please target a valid user.";
+        return "`" + source + "` is not a valid source of that event. Please target a valid user or team.";
     });
 }
 
@@ -125,15 +125,15 @@ function processTellCommand(config, message) {
         }
 
         // Ensure they chose a valid league.
-        var l = league.getLeague(targetLeague, config);
-        if (_.isUndefined(l)) {
+        var _league = league.getLeague(targetLeague, config);
+        if (_.isUndefined(_league)) {
             return formatInvalidLeagueResponse(config);
         }
         // TODO: this is hacky, but required at the moment. :(
         //       otherwise message.player.isModerator won't work.
         //       this is usually set by the requiresLeague middleware,
         //       but we are in a DM, not a league specific channel
-        message.league = l;
+        message.league = _league;
 
         // TODO: Allow captains some amount of flexibility of who they can subscribe
         if (!_.isEqual(listener, "me") && !message.player.isModerator()) {
@@ -157,28 +157,35 @@ function processTellCommand(config, message) {
             return formatInvalidEventResponse(config, event);
         }
 
-        // Ensure the source is a valid user within slack
-        // TODO: Allow teams as a source, not just users.
+        // Ensure the source is a valid user or team within slack
         var source = slack.getSlackUserFromNameOrID(sourceName);
-        if (_.isUndefined(source)) {
-            return formatInvalidSourceResponse(config, sourceName);
-        }
-        return db.lock().then(function(unlock) {
-            return db.Subscription.findOrCreate({
-                where: {
-                    requester: requester.name.toLowerCase(),
-                    source: source.name.toLowerCase(),
-                    event: event.toLowerCase(),
-                    league: l.options.name.toLowerCase(),
-                    target: listener.toLowerCase()
-                }
-			}).then(function(subscription) {
-                unlock.resolve();
-                return "Great! I will tell {target} when {event} for {source} in {league}".format({
-                    source: source.name,
-                    event: event,
-                    league: l.options.name,
-                    target: listener
+        return _league.getTeams().then(function(teams) {
+            var team = _.find(teams, function(team) { return team.name.toLowerCase() === sourceName.toLowerCase()});
+            if (_.isUndefined(source) && _.isUndefined(team)) {
+                return formatInvalidSourceResponse(config, sourceName);
+            }
+            if (!_.isUndefined(source)) {
+                sourceName = source.name;
+            } else if (!_.isUndefined(team)) {
+                sourceName = team.name;
+            }
+            return db.lock().then(function(unlock) {
+                return db.Subscription.findOrCreate({
+                    where: {
+                        requester: requester.name.toLowerCase(),
+                        source: sourceName.toLowerCase(),
+                        event: event.toLowerCase(),
+                        league: _league.options.name.toLowerCase(),
+                        target: listener.toLowerCase()
+                    }
+                }).then(function(subscription) {
+                    unlock.resolve();
+                    return "Great! I will tell {target} when {event} for {source} in {league}".format({
+                        source: sourceName,
+                        event: event,
+                        league: _league.options.name,
+                        target: listener
+                    });
                 });
             });
         });
@@ -278,11 +285,17 @@ function getListeners(leagueName, sources, event) {
     sources = _.map(sources, _.toLower);
     // TODO: when we get WAL enabled, we won't need to lock this query any more.
     return db.lock().then(function(unlock) {
+        // These are names of users, not users. So we have to go get the real
+        // user and teams. This is somewhat wasteful - but I'm not sure whether
+        // this is the right design or if we should pass in users to this point. 
+        var _league = league.getLeague(leagueName);
+        var teamNames = _(sources).map(function(n) { return _league.getTeam(n); }).filter(_.isObject).map("name").map(_.toLower).value();
+        var possibleSources = _.concat(sources, teamNames);
         return db.Subscription.findAll({
             where: {
                 league: leagueName.toLowerCase(),
                 source: {
-                    $in: sources
+                    $in: possibleSources
                 },
                 event: event.toLowerCase()
             }
