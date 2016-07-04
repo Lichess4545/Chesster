@@ -16,6 +16,8 @@ var channels = slack.channels;
 var lichess = require('./lichess.js');
 var subscription = require('./subscription.js');
 
+var SWORDS = "\u2694";
+
 /* exception handling */
 /* later this will move it its own module */
 
@@ -706,7 +708,7 @@ function(bot, message) {
                     spreadsheets.updateResult(
                         spreadsheetOptions,
                         result,
-                        function(err, reversed){
+                        function(err, reversed, gamelinkChanged, resultChanged){
                             if (err) {
                                 if (_.includes(err, "Unable to find pairing.")) {
                                     resultReplyMissingPairing(bot, message);
@@ -715,6 +717,14 @@ function(bot, message) {
                                     throw new Error("Error updating scheduling sheet: " + err);
                                 }
                             } else {
+                                if(resultChanged && !_.isEqual(result.result, SWORDS)){
+                                    subscription.emitter.emit('a-game-is-over',
+                                        message.league,
+                                        [white.name, black.name], {
+                                        result, white, black
+                                    });
+                                }
+
                                 resultReplyUpdated(bot, message, result);
                             }
                         }
@@ -919,7 +929,7 @@ function processGameDetails(bot, message, details, options){
             result.result = "1/2-1/2";
         }
     }else{
-        result.result = "\u2694";
+        result.result = SWORDS;
     }
     //gamelinks only come from played games, so ignoring forfeit result types
 
@@ -927,7 +937,7 @@ function processGameDetails(bot, message, details, options){
     spreadsheets.updateResult(
         message.league.options.spreadsheet,
         result,
-        function(err, reversed){
+        function(err, reversed, gamelinkChanged, resultChanged){
             if (err) {
                 if (_.includes(err, "Unable to find pairing.")) {
                     resultReplyMissingPairing(bot, message);
@@ -939,6 +949,22 @@ function processGameDetails(bot, message, details, options){
                 }
             } else {
                 resultReplyUpdated(bot, message, result);
+                var white = result.white;
+                var black = result.black;
+
+                if(resultChanged && !_.isEqual(result.result, SWORDS)){
+                    subscription.emitter.emit('a-game-is-over',
+                        message.league,
+                        [white.name, black.name], {
+                        result, white, black
+                    });
+                }else if(gamelinkChanged){
+                    subscription.emitter.emit('a-game-starts',
+                        message.league,
+                        [white.name, black.name], {
+                        result, white, black
+                    });
+                }
             }
         }
     );
@@ -1044,3 +1070,12 @@ subscription.register(chesster, 'a-game-is-scheduled', function(target, context)
     context['realDate'] = context.results.date.format(fullFormat);
     return "{white.name} vs {black.name} has been scheduled for {realDate}, which is {yourDate} for you.".format(context);
 });
+
+subscription.register(chesster, 'a-game-starts', function (target, context) {
+    return "{white.name} vs {black.name} has started: https://en.lichess.org/{result.gamelinkID}".format(context);
+});
+
+subscription.register(chesster, 'a-game-is-over', function(target, context) {
+    return "{white.name} vs {black.name} is over. The result is {result.result}.".format(context);
+});
+

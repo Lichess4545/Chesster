@@ -7,4 +7,5 @@ service_account_key.js
 slack_token.js
 coverage
 test_service_account_key.js
+test_logging_token.js
 db/database.sqlite
