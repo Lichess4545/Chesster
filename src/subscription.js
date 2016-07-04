@@ -214,7 +214,7 @@ function processSubscriptionListCommand(config, message) {
                 _.each(subscriptions, function(subscription) {
                     response += "\nID {id} -> tell {target} when {event} for {source} in {league}".format(subscription.get());
                 });
-                if (response.length == 0) {
+                if (response.length === 0) {
                     response = "You have no subscriptions";
                 }
 
