@@ -546,6 +546,18 @@ function filterPlayerTokens(tokens){
     });
 }
 
+function isHYPERLINK(string){
+    return string && string.toUpperCase().includes("HYPERLINK");
+}
+
+//assumes formula is a valid HYPERLINK formula
+function parseHYPERLINK(formula){
+   return { 
+        gamelink: formula.split("\"")[1],
+        result: formula.split("\"")[3]
+    };
+}
+
 //this assumes it is being given a valid result - that is th contract
 //error handling for a bad result should happen outside this function
 function updateResult(spreadsheetConfig, result, callback){
@@ -580,30 +592,43 @@ function updateResult(spreadsheetConfig, result, callback){
                 }
             }
 
-            //get the formula, if there is one
+            //get the formula and parse it, if there is one
             var formula = resultCell.formula;
-            
+            var isHyperlink = isHYPERLINK(formula);
+            var hyperlink = isHyperlink && parseHYPERLINK(formula);
+
             var gamelink;
-            if(!gamelinkID && formula && formula.toUpperCase().includes("HYPERLINK")){
+            var gamelinkChanged = false;
+            if(!gamelinkID && isHyperlink){
                 //there is no gamelink, fill from the formula
-                gamelink = formula.split("\"")[1];
+                gamelink = parseHYPERLINK(formula).gamelink;
             }else if(!result.gamelinkID){
                 //no gamelink and no formula
                 gamelink = '';
             }else{
                 gamelink =  "http://en.lichess.org/" + result.gamelinkID;
+                gamelinkChanged = true;
             }
 
             //if no game link is found, just post the result
+            var resultChanged = false;
             if(_.isEqual(gamelink, "")){
-                resultCell.value = resultString;
+                if(!_.isEqual(resultCell.value, resultString)){
+                    resultCell.value = resultString;
+                    resultChanged = true;
+                }
             }else{
+                if(isHyperlink && !_.isEqual(hyperlink.result, resultString)){
+                    resultChanged = true;
+                }else if(!isHyperlink && !_.isEqual(resultCell.value, resultString)){
+                    resultChanged = true;
+                }
                 resultCell.formula = '=HYPERLINK("' + gamelink + '","' + resultString + '")';
             }
 
             //save the cell in the spreadsheet
             resultCell.save(function(err){
-                return callback(err, reversed);
+                return callback(err, reversed, gamelinkChanged, resultChanged);
             });
         }
     );

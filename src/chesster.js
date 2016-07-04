@@ -647,7 +647,7 @@ chesster.on({
     middleware: [slack.withLeague]
 },
 function(bot, message) {
-    if (!message.league) {
+   if (!message.league) {
         return;
     }
     var channel = channels.byId[message.channel];
@@ -706,7 +706,7 @@ function(bot, message) {
                     spreadsheets.updateResult(
                         spreadsheetOptions,
                         result,
-                        function(err, reversed){
+                        function(err, reversed, gamelinkChanged, resultChanged){
                             if (err) {
                                 if (_.includes(err, "Unable to find pairing.")) {
                                     resultReplyMissingPairing(bot, message);
@@ -715,6 +715,14 @@ function(bot, message) {
                                     throw new Error("Error updating scheduling sheet: " + err);
                                 }
                             } else {
+                                if(resultChanged && !_.isEqual(result.result, "\u2694")){
+                                    subscription.emitter.emit('a-game-is-over',
+                                        message.league,
+                                        [white.name, black.name], {
+                                        result, white, black
+                                    });
+                                }
+
                                 resultReplyUpdated(bot, message, result);
                             }
                         }
@@ -801,12 +809,13 @@ function validateGameDetails(details, options){
         result.reason = "the variant should be standard."
     }else{
         //the link is too old or too new
+        /*
         var extrema = spreadsheets.getRoundExtrema(options);
         var game_start = moment.utc(details.timestamp);
         if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
             result.valid = false;
             result.reason = "the game was not played in the current round.";
-        }
+        }*/
     }
     return result;
 }
@@ -927,7 +936,7 @@ function processGameDetails(bot, message, details, options){
     spreadsheets.updateResult(
         message.league.options.spreadsheet,
         result,
-        function(err, reversed){
+        function(err, reversed, gamelinkChanged, resultChanged){
             if (err) {
                 if (_.includes(err, "Unable to find pairing.")) {
                     resultReplyMissingPairing(bot, message);
@@ -939,6 +948,22 @@ function processGameDetails(bot, message, details, options){
                 }
             } else {
                 resultReplyUpdated(bot, message, result);
+                var white = result.white;
+                var black = result.black;
+
+                if(resultChanged && !_.isEqual(result.result, "\u2694")){
+                    subscription.emitter.emit('a-game-is-over',
+                        message.league,
+                        [white.name, black.name], {
+                        result, white, black
+                    });
+                }else if(gamelinkChanged){
+                    subscription.emitter.emit('a-game-starts',
+                        message.league,
+                        [white.name, black.name], {
+                        result, white, black
+                    });
+                }
             }
         }
     );
@@ -1044,3 +1069,12 @@ subscription.register(chesster, 'a-game-is-scheduled', function(target, context)
     context['realDate'] = context.results.date.format(fullFormat);
     return "{white.name} vs {black.name} has been scheduled for {realDate}, which is {yourDate} for you.".format(context);
 });
+
+subscription.register(chesster, 'a-game-starts', function (target, context) {
+    return "{white.name} vs {black.name} has started: https://en.lichess.org/{result.gamelinkID}".format(context);
+});
+
+subscription.register(chesster, 'a-game-is-over', function(target, context) {
+    return "{white.name} vs {black.name} is over. The result is {result.result}.".format(context);
+});
+
