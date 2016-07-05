@@ -268,12 +268,17 @@ function register(bot, eventName, cb) {
     // Handle the event when it happens
     emitter.on(eventName, function(league, sources, context) {
         return getListeners(league.options.name, sources, eventName).then(function(targets) {
+            var allDeferreds = [];
             _.each(targets, function(target) {
-                message = cb(target, context);
+                var deferred = Q.defer();
                 bot.startPrivateConversation(target).then(function(convo) {
+                    message = cb(target, _.clone(context));
                     convo.say(message);
+                    deferred.resolve();
                 });
+                allDeferreds.push(deferred.promise);
             });
+            return Q.all(allDeferreds);
         });
     });
 }
