@@ -63,24 +63,53 @@ var makeRequest = (function() {
             var isJSON = request[1];
             var deferred = request[2];
             var promise = null;
-            if (isJSON)  {
-                promise = http.fetchURLIntoJSON(url);
-            } else {
+            try {
                 promise = http.fetchURL(url);
+                promise.then(function(result) {
+                    try {
+                        if (result.response.statusCode === 429) {
+                            requestDelay = 60 * SECONDS;
+                            winston.info("[LICHESS] Last request status was a 429 - we will wait 60 seconds before our next request");
+                        } else {
+                            if (mainQueue.length > 0) {
+                                requestDelay = 2 * SECONDS;
+                            } else {
+                                // Back off a bit if we only have background requests.
+                                requestDelay = 4 * SECONDS;
+                            }
+                            if (isJSON)  {
+                                var json = JSON.parse(result['body']);
+                                if (json) {
+                                    result['json'] = json;
+                                    deferred.resolve(result);
+                                } else {
+                                    winston.error("[LICHESS] Asked for JSON - but didn't get it");
+                                    winston.error("[LICHESS] " + JSON.stringify(result));
+                                    deferred.reject("Not JSON");
+                                }
+                            } else {
+                                deferred.resolve(result);
+                            }
+                        }
+                        setTimeout(processRequest, requestDelay);
+                    } catch (e) {
+                        winston.error("[LICHESS] Exception: " + e);
+                        winston.error("[LICHESS] Stack: " + e.stack);
+                        winston.error("[LICHESS] URL: " + url);
+                        deferred.reject(e);
+                        setTimeout(processRequest, requestDelay);
+                    }
+                }, function(error) {
+                    winston.error("[LICHESS] Request failed: " + JSON.stringify(error));
+                    setTimeout(processRequest, requestDelay);
+                    deferred.reject(error);
+                });
+            } catch (e) {
+                winston.error("[LICHESS] Exception: " + e);
+                winston.error("[LICHESS] Stack: " + e.stack);
+                deferred.reject(e);
+                setTimeout(processRequest, requestDelay);
             }
-            promise.then(function(result) {
-                if (result.response.statusCode === 429) {
-                    requestDelay = 60 * SECONDS;
-                    winston.info("[LICHESS] Last request status was a 429 - we will wait 60 seconds before our next request");
-                }
-                deferred.resolve(result);
-
-                setTimeout(processRequest, requestDelay);
-            }, function(error) {
-                winston.error("[LICHESS] Request failed: " + JSON.stringify(error));
-                setTimeout(processRequest, requestDelay);
-                deferred.reject(error);
-            });
         } else {
             setTimeout(processRequest, requestDelay);
         }

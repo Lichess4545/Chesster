@@ -24,12 +24,19 @@ function fetchURL(url){
 function fetchURLIntoJSON(url){
     var deferred = Q.defer();
     fetchURL(url).then(function(result) {
-        var json = JSON.parse(result['body']);
-        if (json) {
-            result['json'] = json;
-            deferred.resolve(result);
-        } else {
-            deferred.reject("body was not a valid json object: " + url);
+        try {
+            var json = JSON.parse(result['body']);
+            if (json) {
+                result['json'] = json;
+                deferred.resolve(result);
+            } else {
+                deferred.reject("body was not a valid json object: " + url);
+            }
+        } catch (e) {
+            winston.error("[HTTP] Exception: " + e);
+            winston.error("[HTTP] Stack: " + e.stack);
+            winston.error("[HTTP] Body: " + result['body']);
+            deferred.reject(e);
         }
     }, function(error) {
         deferred.reject(error);
