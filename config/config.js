@@ -114,6 +114,7 @@ var config = {
             ],
             "moderators": [
                 "endrawes0",
+                "jptriton",
                 "lakinwecker",
                 "theino"
             ],

@@ -107,7 +107,7 @@ function processTellCommand(config, message) {
     return Q.fcall(function() {
         var requester = slack.getSlackUserFromNameOrID(message.user);
         var components = message.text.split(" ");
-        var args = components.slice(0, 7);
+        var args = _.map(components.slice(0, 7), _.toLower);
         var sourceName = components.splice(7).join(" ");
         var tell = args[0],
             listener = args[1],
