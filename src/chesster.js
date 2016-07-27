@@ -529,25 +529,31 @@ chesster.on({
     middleware: [slack.withLeague]
 },
 function(bot, message) {
+    var deferred = Q.defer();
     if (!message.league) {
-        return;
+        deferred.resolve();
+        return deferred.promise;
     }
     var channel = channels.byId[message.channel];
     if (!channel) {
-        return;
+        deferred.resolve();
+        return deferred.promise;
     }
     var schedulingOptions = message.league.options.scheduling;
     if (!schedulingOptions) {
         winston.error("[SCHEDULING] {} league doesn't have scheduling options!?".format(message.league.options.name));
-        return;
+        deferred.resolve();
+        return deferred.promise;
     } 
     var spreadsheetOptions = message.league.options.spreadsheet;
     if (!spreadsheetOptions) {
         winston.error("[SCHEDULING] {} league doesn't have spreadsheet options!?".format(message.league.options.name));
-        return;
+        deferred.resolve();
+        return deferred.promise;
     } 
     if (!_.isEqual(channel.name, schedulingOptions.channel)) {
-        return;
+        deferred.resolve();
+        return deferred.promise;
     }
 
     winston.log("[SCHEDULING] Message received in scheduling channel, and ready to parse: {}".format(message.text));
@@ -602,7 +608,7 @@ function(bot, message) {
                     hasPairing = false;
                 } else {
                     bot.reply(message, "Something went wrong. Notify a mod");
-                    throw new Error("Error updating scheduling sheet: " + err);
+                    deferred.reject("Error updating scheduling sheet: " + err);
                 }
             } else {
                 hasPairing = true;
@@ -643,8 +649,10 @@ function(bot, message) {
                 [white.name, black.name], {
                 results, white, black
             });
+            deferred.resolve();
         }
     );
+    return deferred.promise;
 });
 
 
