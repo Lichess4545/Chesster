@@ -432,6 +432,17 @@ describe('scheduling', function() {
                 }
             );
         });
+        it("Test lonewolf-scheduling messages #3", function() {
+            options.extrema.referenceDate = moment.utc("2016-07-27");
+            testParseScheduling(
+                "joecupojoe vs carbon752 7/28 23:30",
+                {
+                    white: "joecupojoe",
+                    black: "carbon752",
+                    date: "2016-07-28T23:30:00+0000"
+                }
+            );
+        });
         it("Test lonewolf-scheduling messages that are out of bounds", function() {
             var options = {
                 "extrema": {

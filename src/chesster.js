@@ -529,26 +529,34 @@ chesster.on({
     middleware: [slack.withLeague]
 },
 function(bot, message) {
+    var deferred = Q.defer();
     if (!message.league) {
-        return;
+        deferred.resolve();
+        return deferred.promise;
     }
     var channel = channels.byId[message.channel];
     if (!channel) {
-        return;
+        deferred.resolve();
+        return deferred.promise;
     }
     var schedulingOptions = message.league.options.scheduling;
     if (!schedulingOptions) {
-        winston.error("{} league doesn't have scheduling options!?".format(message.league.options.name));
-        return;
+        winston.error("[SCHEDULING] {} league doesn't have scheduling options!?".format(message.league.options.name));
+        deferred.resolve();
+        return deferred.promise;
     } 
     var spreadsheetOptions = message.league.options.spreadsheet;
     if (!spreadsheetOptions) {
-        winston.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
-        return;
+        winston.error("[SCHEDULING] {} league doesn't have spreadsheet options!?".format(message.league.options.name));
+        deferred.resolve();
+        return deferred.promise;
     } 
     if (!_.isEqual(channel.name, schedulingOptions.channel)) {
-        return;
+        deferred.resolve();
+        return deferred.promise;
     }
+
+    winston.log("[SCHEDULING] Message received in scheduling channel, and ready to parse: {}".format(message.text));
 
     var isPotentialSchedule = false;
     var referencesSlackUsers = false;
@@ -566,6 +574,9 @@ function(bot, message) {
     } catch (e) {
         if (!(e instanceof (spreadsheets.ScheduleParsingError))) {
             throw e; // let others bubble up
+        } else {
+            winston.log("[SCHEDULING] Received an exception: {}".format(JSON.stringify(e)));
+            winston.log("[SCHEDULING] Stack: {}".format(e.stack));
         }
     }
 
@@ -574,6 +585,7 @@ function(bot, message) {
         return;
     }
 
+    winston.log("[SCHEDULING] Checking to see if they are valid named players");
     // Step 2. See if we have valid named players
     var white = users.getByNameOrID(results.white);
     var black = users.getByNameOrID(results.black);
@@ -583,18 +595,20 @@ function(bot, message) {
         referencesSlackUsers = true;
     }
 
+    winston.log("[SCHEDULING] Attempting to update the spreadsheet.");
     // Step 3. attempt to update the spreadsheet
     spreadsheets.updateSchedule(
         spreadsheetOptions,
         schedulingOptions,
         results,
         function(err, reversed) {
+            winston.log("[SCHEDULING] Spreadsheet callback invoked: {} / {}.".format(err, reversed));
             if (err) {
                 if (_.includes(err, "Unable to find pairing.")) {
                     hasPairing = false;
                 } else {
                     bot.reply(message, "Something went wrong. Notify a mod");
-                    throw new Error("Error updating scheduling sheet: " + err);
+                    deferred.reject("Error updating scheduling sheet: " + err);
                 }
             } else {
                 hasPairing = true;
@@ -635,8 +649,10 @@ function(bot, message) {
                 [white.name, black.name], {
                 results, white, black
             });
+            deferred.resolve();
         }
     );
+    return deferred.promise;
 });
 
 
