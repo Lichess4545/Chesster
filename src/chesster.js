@@ -38,14 +38,14 @@ function exception_handler(todo, on_error){
 
 function bot_exception_handler(bot, message, todo){
     exception_handler(todo, function(){
-        winston.log("Message: " + JSON.stringify(message));
+        winston.error("Message: " + JSON.stringify(message));
         bot.reply(message, "Something has gone terribly terribly wrong. Please forgive me.");
     });
 }
 
 function critical_path(todo){
     exception_handler(todo, function(){
-        winston.log("An exception was caught in a critical code-path. I am going down.");
+        winston.error("An exception was caught in a critical code-path. I am going down.");
         process.exit(1);
     });
 }
@@ -556,7 +556,7 @@ function(bot, message) {
         return deferred.promise;
     }
 
-    winston.log("[SCHEDULING] Message received in scheduling channel, and ready to parse: {}".format(message.text));
+    winston.debug("[SCHEDULING] Message received in scheduling channel, and ready to parse: {}".format(message.text));
 
     var isPotentialSchedule = false;
     var referencesSlackUsers = false;
@@ -575,8 +575,8 @@ function(bot, message) {
         if (!(e instanceof (spreadsheets.ScheduleParsingError))) {
             throw e; // let others bubble up
         } else {
-            winston.log("[SCHEDULING] Received an exception: {}".format(JSON.stringify(e)));
-            winston.log("[SCHEDULING] Stack: {}".format(e.stack));
+            winston.debug("[SCHEDULING] Received an exception: {}".format(JSON.stringify(e)));
+            winston.debug("[SCHEDULING] Stack: {}".format(e.stack));
         }
     }
 
@@ -585,7 +585,7 @@ function(bot, message) {
         return;
     }
 
-    winston.log("[SCHEDULING] Checking to see if they are valid named players");
+    winston.debug("[SCHEDULING] Checking to see if they are valid named players");
     // Step 2. See if we have valid named players
     var white = users.getByNameOrID(results.white);
     var black = users.getByNameOrID(results.black);
@@ -595,14 +595,14 @@ function(bot, message) {
         referencesSlackUsers = true;
     }
 
-    winston.log("[SCHEDULING] Attempting to update the spreadsheet.");
+    winston.debug("[SCHEDULING] Attempting to update the spreadsheet.");
     // Step 3. attempt to update the spreadsheet
     spreadsheets.updateSchedule(
         spreadsheetOptions,
         schedulingOptions,
         results,
         function(err, reversed) {
-            winston.log("[SCHEDULING] Spreadsheet callback invoked: {} / {}.".format(err, reversed));
+            winston.debug("[SCHEDULING] Spreadsheet callback invoked: {} / {}.".format(err, reversed));
             if (err) {
                 if (_.includes(err, "Unable to find pairing.")) {
                     hasPairing = false;
