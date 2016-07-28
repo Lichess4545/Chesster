@@ -29,7 +29,7 @@ var config = {
         channel: "#lichess4545-logging",
         token: logging_token,
         username: "chesster",
-        level: "info",
+        level: "debug",
         handleExceptions: true
     },
     "links": {
