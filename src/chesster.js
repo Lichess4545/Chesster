@@ -529,34 +529,47 @@ chesster.on({
     middleware: [slack.withLeague]
 },
 function(bot, message) {
+    var channel = channels.byId[message.channel];
+    var schedule_trace = _.noop;
+    if (channel.name === "unstable_bot-lonewolf" || channel.name === "unstable_bot" || channel.name === "team-scheduling" || channel.name === "lonewolf-scheduling") {
+        schedule_trace = function(trace_message) {
+            winston.debug("[Scheduling][Message: {}]: {}".format(message.text, trace_message));
+        }
+    }
+    schedule_trace("1. Detecting Scheduling message");
     var deferred = Q.defer();
     if (!message.league) {
+        schedule_trace("2. No League");
         deferred.resolve();
         return deferred.promise;
     }
-    var channel = channels.byId[message.channel];
+    schedule_trace("3. Checking Channel");
     if (!channel) {
+        schedule_trace("4. no channel");
         deferred.resolve();
         return deferred.promise;
     }
+    schedule_trace("5. Checking Scheduling Options");
     var schedulingOptions = message.league.options.scheduling;
     if (!schedulingOptions) {
         winston.error("[SCHEDULING] {} league doesn't have scheduling options!?".format(message.league.options.name));
         deferred.resolve();
         return deferred.promise;
     } 
+    schedule_trace("6. Checking Spreadsheet Options");
     var spreadsheetOptions = message.league.options.spreadsheet;
     if (!spreadsheetOptions) {
         winston.error("[SCHEDULING] {} league doesn't have spreadsheet options!?".format(message.league.options.name));
         deferred.resolve();
         return deferred.promise;
     } 
+    schedule_trace("7. Checking if channel is in schedulingOptions");
     if (!_.isEqual(channel.name, schedulingOptions.channel)) {
         deferred.resolve();
         return deferred.promise;
     }
 
-    winston.debug("[SCHEDULING] Message received in scheduling channel, and ready to parse: {}".format(message.text));
+    schedule_trace("7. Ready to parse message");
 
     var isPotentialSchedule = false;
     var referencesSlackUsers = false;
@@ -572,6 +585,7 @@ function(bot, message) {
         results = spreadsheets.parseScheduling(message.text, schedulingOptions);
         isPotentialSchedule = true;
     } catch (e) {
+        schedule_trace("8. Caught Exception: " + e);
         if (!(e instanceof (spreadsheets.ScheduleParsingError))) {
             throw e; // let others bubble up
         } else {
@@ -580,12 +594,13 @@ function(bot, message) {
         }
     }
 
+    schedule_trace("9. Checking if it is a potential scheduling message");
     // Unless they included a date we can parse, ignore this message.
     if (!isPotentialSchedule) {
+        schedule_trace("10. nope");
         return;
     }
-
-    winston.debug("[SCHEDULING] Checking to see if they are valid named players");
+    schedule_trace("12. Checking to see if valid named players");
     // Step 2. See if we have valid named players
     var white = users.getByNameOrID(results.white);
     var black = users.getByNameOrID(results.black);
@@ -595,6 +610,7 @@ function(bot, message) {
         referencesSlackUsers = true;
     }
 
+    schedule_trace("13. Attempting to update players");
     winston.debug("[SCHEDULING] Attempting to update the spreadsheet.");
     // Step 3. attempt to update the spreadsheet
     spreadsheets.updateSchedule(
@@ -602,7 +618,7 @@ function(bot, message) {
         schedulingOptions,
         results,
         function(err, reversed) {
-            winston.debug("[SCHEDULING] Spreadsheet callback invoked: {} / {}.".format(err, reversed));
+            schedule_trace("14. Spreadsheet callback invoked: {} / {}.".format(err, reversed));
             if (err) {
                 if (_.includes(err, "Unable to find pairing.")) {
                     hasPairing = false;
@@ -652,6 +668,7 @@ function(bot, message) {
             deferred.resolve();
         }
     );
+    schedule_trace("15. At end of scheduling callback, waiting for promises.");
     return deferred.promise;
 });
 
