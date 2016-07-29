@@ -531,9 +531,11 @@ chesster.on({
 function(bot, message) {
     var channel = channels.byId[message.channel];
     var schedule_trace = _.noop;
-    if (channel && channel.name === "unstable_bot-lonewolf" || channel.name === "unstable_bot" || channel.name === "team-scheduling" || channel.name === "lonewolf-scheduling") {
-        schedule_trace = function(trace_message) {
-            winston.debug("[Scheduling][Message: {}]: {}".format(message.text, trace_message));
+    if (channel) {
+        if (channel.name === "unstable_bot-lonewolf" || channel.name === "unstable_bot" || channel.name === "team-scheduling" || channel.name === "lonewolf-scheduling") {
+            schedule_trace = function(trace_message) {
+                winston.debug("[Scheduling][Message: {}]: {}".format(message.text, trace_message));
+            }
         }
     }
     schedule_trace("1. Detecting Scheduling message");
