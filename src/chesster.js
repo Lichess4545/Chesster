@@ -1040,27 +1040,43 @@ chesster.on({
     middleware: [slack.withLeague]
 },
 function(bot, message) {
+    var channel = channels.byId[message.channel];
+    var gamelink_trace = _.noop;
+    if (channel) {
+        if (channel.name === "unstable_bot-lonewolf" || channel.name === "unstable_bot" || channel.name === "team-scheduling" || channel.name === "lonewolf-scheduling") {
+            gamelink_trace = function(trace_message) {
+                winston.debug("[GAMELINK][Message: {}]: {}".format(message.text, trace_message));
+            }
+        }
+    }
+    gamelink_trace("1. Detecting gamelink");
     if (!message.league) {
         return;
     }
+    gamelink_trace("2. checking for appropriate channel");
     var channel = channels.byId[message.channel];
     if (!channel) {
         return;
     }
+    gamelink_trace("3. checking for spreadsheetOptions");
     var spreadsheetOptions = message.league.options.spreadsheet;
     if (!spreadsheetOptions) {
         winston.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
         return;
     } 
+    gamelink_trace("4. checking for gamelinkOptions");
     var gamelinkOptions = message.league.options.gamelinks;
     if (!gamelinkOptions || !_.isEqual(channel.name, gamelinkOptions.channel)) {
         return;
     }
 
     try{
+        gamelink_trace("5. Processing Gamelink");
         processGamelink(bot, message, message.text, gamelinkOptions);
     }catch(e){
         //at the moment, we do not throw from inside the api - rethrow
+        gamelink_trace("6. ERROR: {}".format(JSON.stringify(e)));
+        gamelink_trace("7. STACK: {}".format(e.stack));
         throw e;
     }
 });
