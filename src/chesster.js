@@ -532,7 +532,7 @@ function(bot, message) {
     var channel = channels.byId[message.channel];
     var schedule_trace = _.noop;
     if (channel) {
-        if (channel.name === "unstable_bot-lonewolf" || channel.name === "unstable_bot" || channel.name === "team-scheduling" || channel.name === "lonewolf-scheduling") {
+        if (channel.name === "unstable_bot-lonewolf" || channel.name === "unstable_bot" || channel.name === "team-scheduling" || channel.name === "lonewolf-scheduling" || channel.name === "team-results" || channel.name === "team-gamelinks" || channel.name === "lonewolf-results" || channel.name === "lonewolf-gamelinks") {
             schedule_trace = function(trace_message) {
                 winston.debug("[Scheduling][Message: {}]: {}".format(message.text, trace_message));
             }
@@ -687,7 +687,7 @@ function(bot, message) {
     var channel = channels.byId[message.channel];
     var results_trace = _.noop;
     if (channel) {
-        if (channel.name === "unstable_bot-lonewolf" || channel.name === "unstable_bot" || channel.name === "team-scheduling" || channel.name === "lonewolf-scheduling") {
+        if (channel.name === "unstable_bot-lonewolf" || channel.name === "unstable_bot" || channel.name === "team-scheduling" || channel.name === "lonewolf-scheduling" || channel.name === "team-results" || channel.name === "team-gamelinks" || channel.name === "lonewolf-results" || channel.name === "lonewolf-gamelinks") {
             results_trace = function(trace_message) {
                 winston.debug("[RESULTS][Message: {}]: {}".format(message.text, trace_message));
             }
@@ -1043,7 +1043,7 @@ function(bot, message) {
     var channel = channels.byId[message.channel];
     var gamelink_trace = _.noop;
     if (channel) {
-        if (channel.name === "unstable_bot-lonewolf" || channel.name === "unstable_bot" || channel.name === "team-scheduling" || channel.name === "lonewolf-scheduling") {
+        if (channel.name === "unstable_bot-lonewolf" || channel.name === "unstable_bot" || channel.name === "team-scheduling" || channel.name === "lonewolf-scheduling" || channel.name === "team-results" || channel.name === "team-gamelinks" || channel.name === "lonewolf-results" || channel.name === "lonewolf-gamelinks") {
             gamelink_trace = function(trace_message) {
                 winston.debug("[GAMELINK][Message: {}]: {}".format(message.text, trace_message));
             }
