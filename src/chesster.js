@@ -661,11 +661,13 @@ function(bot, message) {
             if (results.warn) {
                 schedulingReplyTooCloseToCutoff(bot, message, schedulingOptions, white, black);
             }
+            
+            var leagueName = message.league.options.name;
             schedulingReplyScheduled(bot, message, results, white, black);
             subscription.emitter.emit('a-game-is-scheduled',
                 message.league,
                 [white.name, black.name], {
-                results, white, black
+                results, white, black, leagueName
             });
             deferred.resolve();
         }
@@ -778,11 +780,14 @@ function(bot, message) {
                                 }
                             } else {
                                 if(resultChanged && !_.isEqual(result.result, SWORDS)){
+                                    var white = result.white;
+                                    var black = result.black;
                                     results_trace("18. Game is over, notify people");
+                                    var leagueName = message.league.options.name;
                                     subscription.emitter.emit('a-game-is-over',
                                         message.league,
                                         [white.name, black.name], {
-                                        result, white, black
+                                        result, white, black, leagueName
                                     });
                                 }
 
@@ -1016,17 +1021,18 @@ function processGameDetails(bot, message, details, options){
                 var white = result.white;
                 var black = result.black;
 
+                var leagueName = message.league.options.name;
                 if(resultChanged && !_.isEqual(result.result, SWORDS)){
                     subscription.emitter.emit('a-game-is-over',
                         message.league,
                         [white.name, black.name], {
-                        result, white, black
+                        result, white, black, leagueName
                     });
                 }else if(gamelinkChanged){
                     subscription.emitter.emit('a-game-starts',
                         message.league,
                         [white.name, black.name], {
-                        result, white, black
+                        result, white, black, leagueName
                     });
                 }
             }
@@ -1166,14 +1172,14 @@ subscription.register(chesster, 'a-game-is-scheduled', function(target, context)
     context['yourDate'] = targetDate.format(friendlyFormat);
     var fullFormat = "YYYY-MM-DD @ HH:mm UTC";
     context['realDate'] = context.results.date.format(fullFormat);
-    return "{white.name} vs {black.name} has been scheduled for {realDate}, which is {yourDate} for you.".format(context);
+    return "{white.name} vs {black.name} in {leagueName} has been scheduled for {realDate}, which is {yourDate} for you.".format(context);
 });
 
 subscription.register(chesster, 'a-game-starts', function (target, context) {
-    return "{white.name} vs {black.name} has started: https://en.lichess.org/{result.gamelinkID}".format(context);
+    return "{white.name} vs {black.name} in {leagueName} has started: https://en.lichess.org/{result.gamelinkID}".format(context);
 });
 
 subscription.register(chesster, 'a-game-is-over', function(target, context) {
-    return "{white.name} vs {black.name} is over. The result is {result.result}.".format(context);
+    return "{white.name} vs {black.name} in {leagueName} is over. The result is {result.result}.".format(context);
 });
 
