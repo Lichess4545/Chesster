@@ -435,6 +435,7 @@ function Bot(options) {
     });
 
 
+    winston.level = 'silly';
     // setup logging
     // Only log to slack if the token is set.
     if (self.config.winston.token) {
