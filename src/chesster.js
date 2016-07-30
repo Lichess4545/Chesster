@@ -1054,7 +1054,6 @@ function(bot, message) {
         return;
     }
     gamelink_trace("2. checking for appropriate channel");
-    var channel = channels.byId[message.channel];
     if (!channel) {
         return;
     }
