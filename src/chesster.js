@@ -571,7 +571,7 @@ function(bot, message) {
         return deferred.promise;
     }
 
-    schedule_trace("7. Ready to parse message");
+    schedule_trace("8. Ready to parse message");
 
     var isPotentialSchedule = false;
     var referencesSlackUsers = false;
@@ -587,7 +587,7 @@ function(bot, message) {
         results = spreadsheets.parseScheduling(message.text, schedulingOptions);
         isPotentialSchedule = true;
     } catch (e) {
-        schedule_trace("8. Caught Exception: " + e);
+        schedule_trace("9. Caught Exception: " + e);
         if (!(e instanceof (spreadsheets.ScheduleParsingError))) {
             throw e; // let others bubble up
         } else {
@@ -596,13 +596,13 @@ function(bot, message) {
         }
     }
 
-    schedule_trace("9. Checking if it is a potential scheduling message");
+    schedule_trace("10. Checking if it is a potential scheduling message");
     // Unless they included a date we can parse, ignore this message.
     if (!isPotentialSchedule) {
-        schedule_trace("10. nope");
+        schedule_trace("11. nope");
         return;
     }
-    schedule_trace("12. Checking to see if valid named players");
+    schedule_trace("13. Checking to see if valid named players");
     // Step 2. See if we have valid named players
     var white = users.getByNameOrID(results.white);
     var black = users.getByNameOrID(results.black);
@@ -612,7 +612,7 @@ function(bot, message) {
         referencesSlackUsers = true;
     }
 
-    schedule_trace("13. Attempting to update players");
+    schedule_trace("14. Attempting to update players");
     winston.debug("[SCHEDULING] Attempting to update the spreadsheet.");
     // Step 3. attempt to update the spreadsheet
     spreadsheets.updateSchedule(
@@ -620,7 +620,7 @@ function(bot, message) {
         schedulingOptions,
         results,
         function(err, reversed) {
-            schedule_trace("14. Spreadsheet callback invoked: {} / {}.".format(err, reversed));
+            schedule_trace("15. Spreadsheet callback invoked: {} / {}.".format(err, reversed));
             if (err) {
                 if (_.includes(err, "Unable to find pairing.")) {
                     hasPairing = false;
@@ -670,7 +670,7 @@ function(bot, message) {
             deferred.resolve();
         }
     );
-    schedule_trace("15. At end of scheduling callback, waiting for promises.");
+    schedule_trace("16. At end of scheduling callback, waiting for promises.");
     return deferred.promise;
 });
 
@@ -684,38 +684,56 @@ chesster.on({
     middleware: [slack.withLeague]
 },
 function(bot, message) {
+    var channel = channels.byId[message.channel];
+    var results_trace = _.noop;
+    if (channel) {
+        if (channel.name === "unstable_bot-lonewolf" || channel.name === "unstable_bot" || channel.name === "team-scheduling" || channel.name === "lonewolf-scheduling") {
+            results_trace = function(trace_message) {
+                winston.debug("[RESULTS][Message: {}]: {}".format(message.text, trace_message));
+            }
+        }
+    }
+    results_trace("1. Checking for League");
     if (!message.league) {
         return;
     }
-    var channel = channels.byId[message.channel];
+    results_trace("2. Checking for channel");
     if (!channel) {
         return;
     }
+    results_trace("3. Checking for spreadsheetOptions");
     var spreadsheetOptions = message.league.options.spreadsheet;
     if (!spreadsheetOptions) {
         winston.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
         return;
     } 
+    results_trace("4. Checking for resultsOptions");
     var resultsOptions = message.league.options.results;
     if (!resultsOptions || !_.isEqual(channel.name, resultsOptions.channel)) {
         return;
     }
 
     try{
+        results_trace("5. Trying to parse result");
         var result = spreadsheets.parseResult(message.text);
  
+        results_trace("6. After parsing Result");
         if(!result.white || !result.black || !result.result){
+            results_trace("7. No good result");
             return;
         }
 
+        results_trace("8. Parsing usernames");
         result.white = users.getByNameOrID(result.white.replace(/[\<\@\>]/g, ''));
         result.black = users.getByNameOrID(result.black.replace(/[\<\@\>]/g, ''));
         
+        results_trace("9. checking that they are a moderator or one of the players");
         if(
             !_.isEqual(result.white.id, message.user) &&
             !_.isEqual(result.black.id, message.user) &&
             !message.player.isModerator()
         ){
+            results_trace("10. No permissions");
             replyPermissionFailure(bot, message);
             return;
         }
@@ -726,12 +744,15 @@ function(bot, message) {
         //I wrote before as simply as possibe for now
 
         //if a gamelink already exists, get it
+        results_trace("11. Find Game link");
         spreadsheets.fetchPairingGameLink(
             spreadsheetOptions,
             result,
             function(err, gamelink){
+                results_trace("12. Found Game Link: Err: {} / Gamelink: {}".format(err, gamelink));
                 //if a gamelink is found, use it to acquire details and process them
                 if(!err && gamelink){
+                    results_trace("13. processing game link");
                     processGamelink(
                         bot, 
                         message, 
@@ -739,20 +760,25 @@ function(bot, message) {
                         message.league.options.gamelinks, 
                         result); //user specified result
                 }else{
+                    results_trace("14. Updating with result only");
                     //update the spreadsheet with result only
                     spreadsheets.updateResult(
                         spreadsheetOptions,
                         result,
                         function(err, reversed, gamelinkChanged, resultChanged){
+                            results_trace("15. updateResults callback, err: {}".format(err));
                             if (err) {
                                 if (_.includes(err, "Unable to find pairing.")) {
+                                    results_trace("16. Missing Pairing");
                                     resultReplyMissingPairing(bot, message);
                                 } else {
+                                    results_trace("17. Something is wrong");
                                     bot.reply(message, "Something went wrong. Notify @endrawes0");
                                     throw new Error("Error updating scheduling sheet: " + err);
                                 }
                             } else {
                                 if(resultChanged && !_.isEqual(result.result, SWORDS)){
+                                    results_trace("18. Game is over, notify people");
                                     subscription.emitter.emit('a-game-is-over',
                                         message.league,
                                         [white.name, black.name], {
@@ -760,6 +786,7 @@ function(bot, message) {
                                     });
                                 }
 
+                                results_trace("19. Result updated");
                                 resultReplyUpdated(bot, message, result);
                             }
                         }
@@ -769,6 +796,8 @@ function(bot, message) {
         );
 
     }catch(e){
+        results_trace("20. ERROR: {}".format(JSON.stringify(e)));
+        results_trace("21. STACK: {}".format(e.stack));
         //at the moment, we do not throw from inside the api - rethrow
         throw e;
     }
