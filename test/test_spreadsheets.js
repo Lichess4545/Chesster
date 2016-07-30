@@ -435,11 +435,43 @@ describe('scheduling', function() {
         it("Test lonewolf-scheduling messages #3", function() {
             options.extrema.referenceDate = moment.utc("2016-07-27");
             testParseScheduling(
+                "joecupojoe vs carbon752 7/30 @ 13:30 GMT",
+                {
+                    white: "joecupojoe",
+                    black: "carbon752",
+                    date: "2016-07-30T13:30:00+0000"
+                }
+            );
+            testParseScheduling(
+                "joecupojoe carbon752 7/30 @ 13:30 GMT",
+                {
+                    white: "joecupojoe",
+                    black: "carbon752",
+                    date: "2016-07-30T13:30:00+0000"
+                }
+            );
+            testParseScheduling(
+                "joecupojoe vs carbon752 7/30 13:30",
+                {
+                    white: "joecupojoe",
+                    black: "carbon752",
+                    date: "2016-07-30T13:30:00+0000"
+                }
+            );
+            testParseScheduling(
                 "joecupojoe vs carbon752 7/28 23:30",
                 {
                     white: "joecupojoe",
                     black: "carbon752",
                     date: "2016-07-28T23:30:00+0000"
+                }
+            );
+            testParseScheduling(
+                "heidman vs icendoan 7/30 @ 10:30",
+                {
+                    white: "heidman",
+                    black: "icendoan",
+                    date: "2016-07-30T10:30:00+0000"
                 }
             );
         });
