@@ -164,10 +164,10 @@ league_attributes = {
                         'alt is taken/unresponsive',
                         'alt needs to reach 20 classical games'
                     ];
-                    var teamName = row['teams'].value.toLowerCase();
+                    var potentialTeamName = row['teams'].value.toLowerCase();
                     var isAlternateRow = _.includes(
                         _.map(alternateRowSentinels, function(sentinel) {
-                            return _.isEqual(teamName, sentinel);
+                            return _.isEqual(potentialTeamName, sentinel);
                         }),
                         true
                     );
