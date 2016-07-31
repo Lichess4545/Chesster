@@ -162,6 +162,7 @@ function prepareCommandsMessage(){
         "    [ faq ]                        ! a document of frequently asked questions\n" + 
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
         "    [ source ]                     ! github repo for Chesster \n" +
+        "    [ subscription help ]          ! help for chesster's subscription system\n" +
         "```\n";
 }
 
@@ -1109,7 +1110,7 @@ function(bot, message) {
 
 chesster.hears({
     middleware: [],
-    patterns: ['^subscription help$'],
+    patterns: ['^subscription help$', '^unsubscribe$'],
     messageTypes: ['direct_message']
 },
 function(bot, message) {
