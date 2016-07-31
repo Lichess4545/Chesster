@@ -158,7 +158,20 @@ league_attributes = {
                     ) {
                         return;
                     }
-                    if (_.isEqual(row['teams'].value.toLowerCase(), 'alternates')) {
+                    // TODO: this could be put into the config.
+                    var alternateRowSentinels = [
+                        'alternates',
+                        'alt is taken/unresponsive',
+                        'alt needs to reach 20 classical games'
+                    ];
+                    var potentialTeamName = row['teams'].value.toLowerCase();
+                    var isAlternateRow = _.includes(
+                        _.map(alternateRowSentinels, function(sentinel) {
+                            return _.isEqual(potentialTeamName, sentinel);
+                        }),
+                        true
+                    );
+                    if (isAlternateRow) {
                         // TODO: eventually we'll want this data too!
                         return;
                     }
