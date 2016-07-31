@@ -132,15 +132,21 @@ function getPlayerByName(name, isBackground){
 //------------------------------------------------------------------------------
 var ratingFunctions = (function() {
     var _playerRatings = {};
-    var _playerIsInQueue = {};
-
+    
+    //promises are added and replaced with each new call
+    //promises may be used more than once because multiple requests may be out
+    //for a single rating request
+    //for each request of a player rating that is already in the queue,
+    //we return the existing promise
+    var _playerPromises = {};
+    
     //--------------------------------------------------------------------------
     // Update the rating from lichess - storing it in the database.
     //--------------------------------------------------------------------------
     function _updateRating(name, isBackground) {
-        _playerIsInQueue[name] = true;
-        return getPlayerByName(name, isBackground).then(function(result) {
-            _playerIsInQueue[name] = undefined;
+        //store the promise for reuse
+        _playerPromises[name] = getPlayerByName(name, isBackground).then(function(result) {
+            _playerPromises[name] = undefined;
             var rating = result.json.perfs.classical.rating;
             // Get the writable lock for the database.
             return db.lock().then(function(unlock) {
@@ -165,6 +171,7 @@ var ratingFunctions = (function() {
         }).catch(function(error) {
             winston.error("Error getting player by name: " + error);
         });
+        return _playerPromises[name];
     }
 
     //--------------------------------------------------------------------------
@@ -189,7 +196,9 @@ var ratingFunctions = (function() {
                     lastCheckedAt = moment.utc(lastCheckedAt);
                 }
                 var promise;
-                var isInQueue = _playerIsInQueue[name];
+
+                //if a promise exists, then the player is already queued
+                var isInQueue = !_.isNil(_playerPromises[name]);
                 var rating = lichessRating.get('rating');
 
                 // Only update the rating if it's older than 30 minutes
@@ -200,6 +209,9 @@ var ratingFunctions = (function() {
                 } else if (!isInQueue && (!lastCheckedAt || lastCheckedAt.isBefore(_30MinsAgo))) {
                     // If the rating is just out of date, use the background queue
                     promise = _updateRating(name, true);
+                }else if(isInQueue){
+                    // player rating is already incoming. wait for it.
+                    promise = _playerPromises[name];
                 }
 
                 if (!_.isNil(rating))  {
