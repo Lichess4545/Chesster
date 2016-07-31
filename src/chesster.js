@@ -1110,7 +1110,7 @@ function(bot, message) {
 
 chesster.hears({
     middleware: [],
-    patterns: ['^subscription help$'],
+    patterns: ['^subscription help$', '^unsubscribe$'],
     messageTypes: ['direct_message']
 },
 function(bot, message) {
