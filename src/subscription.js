@@ -36,13 +36,13 @@ function formatHelpResponse(config) {
             "`tell me when <event> in <league> for <target-user-or-team>`\n" +
             "Where `<event>` is one of:```" + events.join("\n") + "```" +
             " and `<target-user-or-team>` is the target user or team that you are " +
-            "subscribing to. <league> is one of:```" + leagueNames.join("\n") + "``` " +
+            "subscribing to.\n" +
+            "`<league>` is one of:```" + leagueNames.join("\n") + "``` " +
             "\n" +
             "`subscription list` to list your current subscriptions\n" +
             "\n" +
             "`subscription remove <id>` to list remove a specific subscription\n" +
-            "\n" +
-            "```";
+            "\n";
     });
 }
 
