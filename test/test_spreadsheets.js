@@ -475,6 +475,25 @@ describe('scheduling', function() {
                 }
             );
         });
+        it("Test lonewolf-scheduling messages #3", function() {
+            options.extrema.referenceDate = moment.utc("2016-07-17");
+            testParseScheduling(
+                "p_implies_q vs hairbert 7/17 13:30",
+                {
+                    white: "p_implies_q",
+                    black: "hairbert",
+                    date: "2016-07-17T13:30:00+0000"
+                }
+            );
+            testParseScheduling(
+                "p_implies_q vs hairbert 07/17 @13:30",
+                {
+                    white: "p_implies_q",
+                    black: "hairbert",
+                    date: "2016-07-17T13:30:00+0000"
+                }
+            );
+        });
         it("Test lonewolf-scheduling messages that are out of bounds", function() {
             var options = {
                 "extrema": {
