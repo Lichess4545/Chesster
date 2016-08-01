@@ -133,6 +133,7 @@ function prepareCommandsMessage(){
 									  users.getIdString("chesster") + ": \n```" +
         "    [ starter guide ]              ! get the starter guide link; thanks GnarlyGoat!\n" +
         "    [ rules | regulations ]        ! get the rules and regulations.\n" + 
+        "    [ pairing | pairing <player> ] ! get your (or given <player>) latest pairings with scheduled time\n" +
         "    [ pairings | standings ]       ! get pairings/standings spreadsheet link\n" +
         "    [ channels | \n" +
         "        channel list |             ! list the important channels\n" +
