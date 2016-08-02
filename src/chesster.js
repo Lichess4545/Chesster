@@ -567,7 +567,7 @@ function(bot, message) {
         deferred.resolve();
         return deferred.promise;
     } 
-    schedule_trace("7. Checking if channel is in schedulingOptions");
+    schedule_trace("7. Checking if channel is in schedulingOptions: {} vs {}".format(channel.name, schedulingOptions.channel));
     if (!_.isEqual(channel.name, schedulingOptions.channel)) {
         deferred.resolve();
         return deferred.promise;
