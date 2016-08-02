@@ -139,7 +139,8 @@ league_attributes = {
                     }
                 }
                 var newTeams = [];
-                var newLookup = {};
+                var newTeamLookup = {};
+                var newPlayerLookup = {};
                 rows.forEach(function(row) {
                     if (
                         !row['teams'].value ||
@@ -178,26 +179,28 @@ league_attributes = {
                     var team = { name: row['teams'].value };
                     var roster = [];
                     var captain = null;
-                    function processPlayer(name, rating) {
+                    function processPlayer(name, rating, board) {
                         name = name.value;
                         rating = rating.value;
                         var player = {
                             name: self.canonicalUsername(name),
                             rating: rating,
+                            board: board,
                             team: team
                         };
                         if (!_.isEqual(name, player['name']) && _.isEqual(name[name.length-1], '*')) {
                             captain = player;
                         }
-                        newLookup[player.name.toLowerCase()] = team;
+                        newTeamLookup[player.name.toLowerCase()] = team;
+                        newPlayerLookup[player.name.toLowerCase()] = player;
                         return player;
                     }
-                    roster.push(processPlayer(row['board 1'], row['rating 1']));
-                    roster.push(processPlayer(row['board 2'], row['rating 2']));
-                    roster.push(processPlayer(row['board 3'], row['rating 3']));
-                    roster.push(processPlayer(row['board 4'], row['rating 4']));
-                    roster.push(processPlayer(row['board 5'], row['rating 5']));
-                    roster.push(processPlayer(row['board 6'], row['rating 6']));
+                    roster.push(processPlayer(row['board 1'], row['rating 1'], 1));
+                    roster.push(processPlayer(row['board 2'], row['rating 2'], 2));
+                    roster.push(processPlayer(row['board 3'], row['rating 3'], 3));
+                    roster.push(processPlayer(row['board 4'], row['rating 4'], 4));
+                    roster.push(processPlayer(row['board 5'], row['rating 5'], 5));
+                    roster.push(processPlayer(row['board 6'], row['rating 6'], 6));
 
                     team['captain'] = captain;
                     team['roster'] = roster;
@@ -205,7 +208,8 @@ league_attributes = {
                     newTeams.push(team);
                 });
                 self._teams = newTeams;
-                self._teamLookup = newLookup;
+                self._teamLookup = newTeamLookup;
+                self._playerLookup = newPlayerLookup;
                 _.each(self._teams, function(team) {
                     _.each(team.roster, function(player) {
                         if (player && player.name) {
@@ -502,6 +506,14 @@ league_attributes = {
     'getTeam':function(playerName) {
         var self = this;
         return self._teamLookup[playerName.toLowerCase()];
+    },
+
+    //--------------------------------------------------------------------------
+    // Get the team for a given player
+    //--------------------------------------------------------------------------
+    'getPlayer':function(playerName) {
+        var self = this;
+        return self._playerLookup[playerName.toLowerCase()];
     },
     //--------------------------------------------------------------------------
     // Get the the players from a particular board
