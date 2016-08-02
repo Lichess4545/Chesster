@@ -364,7 +364,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'formatPairingResponse': function(requestingPlayer, details) {
         function getRatingString(rating){
-            return ( rating ? " (" + rating + ")" : "" );
+            return ( rating ? "(" + rating + ")" : "" );
         }
         var self = this;
         return Q.fcall(function() {
@@ -376,30 +376,32 @@ league_attributes = {
             var played_phrase = "";
 
             if (!localTime || !localTime.isValid()) {
-                played_phrase = "will play as";
+                played_phrase = "will play";
                 schedule_phrase = ". The game is unscheduled.";
             } else if (moment.utc().isAfter(localTime)) {
                 // If the match took place in the past, display the date instead of the day
-                played_phrase = "played as";
-                schedule_phrase = " on {localDateTimeString}.".format({
-                    localDateTimeString: localTime.format("MM/DD [at] HH:mm")
+                played_phrase = "played";
+                schedule_phrase = " on {localDateTimeString} in your timezone.".format({
+                    localDateTimeString: localTime.format("YYYY-MM-DD [at] HH:mm")
                 });
             } else {
-                played_phrase = "will play as";
-                schedule_phrase = " on {localDateTimeString} which is in {timeUntil}".format({
-                    localDateTimeString: localTime.format("MM/DD [at] HH:mm"),
+                played_phrase = "will play";
+                schedule_phrase = " on {localDateTimeString} in your timezone, which is in {timeUntil}.".format({
+                    localDateTimeString: localTime.format("MM/DD _(dddd)_ [at] HH:mm"),
                     timeUntil: localTime.fromNow(true)
                 })
             }
 
             // Otherwise display the time until the match
-            return "[{name}]: {details.player} {played_phrase} {details.color} against {details.opponent}{rating}{schedule_phrase}".format({
-                name: self.options.name,
-                details: details,
-                played_phrase: played_phrase,
-                schedule_phrase: schedule_phrase,
-                rating: getRatingString(details.rating)
-            });
+            return ("[{name}]: :{details.color}pieces: _{details.player}_ {played_phrase} against " +
+                ":{opponent_color}pieces: _{details.opponent}_ {rating}{schedule_phrase}").format({
+                    name: self.options.name,
+                    details: details,
+                    opponent_color: (details.color === "white" ? "black" : "white"),
+                    played_phrase: played_phrase,
+                    schedule_phrase: schedule_phrase,
+                    rating: getRatingString(details.rating)
+                });
         });
     },
     //--------------------------------------------------------------------------

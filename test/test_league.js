@@ -152,7 +152,8 @@ describe('league', function() {
                 ).then(function(message) {
                     assert.equal(
                         message,
-                        "[45+45]: lakinwecker will play as white against osskjc (1776). The game is unscheduled."
+                        "[45+45]: :whitepieces: _lakinwecker_ will play against :blackpieces: _osskjc_ (1776). " +
+                            "The game is unscheduled."
                     );
                 }),
                 _45_league.formatPairingResponse(
@@ -161,7 +162,8 @@ describe('league', function() {
                 ).then(function(message) {
                     assert.equal(
                         message,
-                        "[45+45]: lakinwecker played as white against osskjc (1776) on 04/25 at 17:00."
+                        "[45+45]: :whitepieces: _lakinwecker_ played against :blackpieces: _osskjc_ (1776) on " +
+                            "2016-04-25 at 17:00 in your timezone."
                     );
                 }),
                 _45_league.formatPairingResponse(
@@ -169,10 +171,11 @@ describe('league', function() {
                     _.extend({}, common_details, {date: moment.utc().add(1, "day")})
                 ).then(function(message) {
                     var date = moment.utc().add(1, "day");
-                    date = date.format("MM/DD [at] HH:mm");
+                    date = date.format("MM/DD _(dddd)_ [at] HH:mm");
                     assert.equal(
                         message,
-                        "[45+45]: lakinwecker will play as white against osskjc (1776) on " + date  + " which is in a day"
+                        "[45+45]: :whitepieces: _lakinwecker_ will play against :blackpieces: _osskjc_ (1776) on " +
+                            date  + " in your timezone, which is in a day."
                     );
                 })
             ]).then(function() {
