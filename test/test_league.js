@@ -194,6 +194,12 @@ describe('league', function() {
         it("Testing refreshRosters", function() {
             assert.equal(_45_league._teams.length, 26);
         });
+        it("Testing getPlayer", function() {
+            var player = _45_league.getPlayer("lakinwecker");
+            assert.equal(player.name, "lakinwecker");
+            assert.equal(player.board, 5);
+            assert.equal(player.team.name, "The Stale Maids");
+        });
         it("Testing getCaptains()", function() {
             return _45_league.getCaptains().then(function(captains) {
                 captains = _.map(captains, function(c) { return c.name; });
