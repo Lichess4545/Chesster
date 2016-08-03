@@ -239,48 +239,58 @@ function requiresModerator(bot, message, config) {
     });
 }
 
-function withLeague(bot, message, config) {
+function findLeagueByMessageText(bot, message, config) {
+    var allLeagues = league.getAllLeagues(config);
+    var leagueTargets = [];
+    var targetToLeague = {};
+    function add_target(l, target) {
+        leagueTargets.push(target);
+        targetToLeague[target] = l;
+    }
+    _.each(allLeagues, function(l) {
+        add_target(l, l.options.name);
+        _.each(l.options.also_known_as, function(aka) {
+            add_target(l, aka);
+        });
+    });
+
+    // Now fuzzy match them based on each arg in the message
+    var matches = [];
+    var args = message.text.split(" ");
+    _.each(args, function(arg) {
+        var results = fuzzy.rank_choices(arg.toLowerCase(), leagueTargets, true);
+        matches.push.apply(matches, results)
+    });
+    var bestMatches = fuzzy.findBestMatches(matches, true);
+    var possibleLeagues = {};
+    _.each(bestMatches, function(match) {
+        var l = targetToLeague[match[1]];
+        possibleLeagues[l.options.name] = l;
+    });
+    var matchingLeagueNames = _.keys(possibleLeagues);
+    if (matchingLeagueNames.length > 1) {
+        throw new StopControllerError("Ambiguous leagues.");
+    }
+    if (matchingLeagueNames.length === 1) {
+        l = _.values(possibleLeagues)[0];
+        return l;
+    }
+    return null;
+}
+
+function _withLeagueImplementation(bot, message, config, channelOnly) {
     return Q.fcall(function() {
         message.league = null;
 
         // See if the person asked for a specific league first
 
         // generate a set of possible target leagues
-        var allLeagues = league.getAllLeagues(config);
-        var leagueTargets = [];
-        var targetToLeague = {};
-        function add_target(l, target) {
-            leagueTargets.push(target);
-            targetToLeague[target] = l;
-        }
-        _.each(allLeagues, function(l) {
-            add_target(l, l.options.name);
-            _.each(l.options.also_known_as, function(aka) {
-                add_target(l, aka);
-            });
-        });
-
-        // Now fuzzy match them based on each arg in the message
-        var matches = [];
-        var args = message.text.split(" ");
-        _.each(args, function(arg) {
-            var results = fuzzy.rank_choices(arg.toLowerCase(), leagueTargets, true);
-            matches.push.apply(matches, results)
-        });
-        var bestMatches = fuzzy.findBestMatches(matches, true);
-        var possibleLeagues = {};
-        _.each(bestMatches, function(match) {
-            var l = targetToLeague[match[1]];
-            possibleLeagues[l.options.name] = l;
-        });
-        var matchingLeagueNames = _.keys(possibleLeagues);
-        if (matchingLeagueNames.length > 1) {
-            throw new StopControllerError("Ambiguous leagues.");
-        }
-        if (matchingLeagueNames.length === 1) {
-            l = _.values(possibleLeagues)[0];
-            message.league = l;
-            return l;
+        if (!channelOnly) {
+            var l = findLeagueByMessageText(bot, message, config);
+            if (l) {
+                message.league = l;
+                return l;
+            }
         }
 
         // If they didn't ask for a specific league, then we will use the channel
@@ -296,6 +306,12 @@ function withLeague(bot, message, config) {
         }
         return;
     });
+}
+function withLeague(bot, message, config) {
+    return _withLeagueImplementation(bot, message, config, false);
+}
+function withLeagueByChannelName(bot, message, config) {
+    return _withLeagueImplementation(bot, message, config, true);
 }
 function requiresLeague(bot, message, config) {
     return withLeague(bot, message, config).then(function(l) {
@@ -450,6 +466,7 @@ function Bot(options) {
 module.exports.users = users;
 module.exports.channels = channels;
 module.exports.withLeague = withLeague;
+module.exports.withLeagueByChannelName = withLeagueByChannelName;
 module.exports.requiresModerator = requiresModerator;
 module.exports.requiresLeague = requiresLeague;
 module.exports.appendPlayerRegex = appendPlayerRegex;
