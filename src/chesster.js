@@ -621,13 +621,13 @@ function(bot, message) {
     ).then(function(response) {
         updateScheduleResults = response['json'];
         if (updateScheduleResults['updated'] === 0) {
-            if (updateScheduleResults['error'] == 'not_found') {
+            if (updateScheduleResults['error'] === 'not_found') {
                 schedulingReplyMissingPairing(bot, message);
                 deferred.resolve();
-            } else if (updateScheduleResults['error'] == 'no_data') {
+            } else if (updateScheduleResults['error'] === 'no_data') {
                 schedulingReplyNoActiveRound(bot, message);
                 deferred.resolve();
-            } else if (updateScheduleResults['error'] == 'ambiguous') {
+            } else if (updateScheduleResults['error'] === 'ambiguous') {
                 schedulingReplyAmbiguous(bot, message);
                 deferred.resolve();
             } else {
