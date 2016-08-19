@@ -8,13 +8,17 @@ var winston = require("winston");
 
 // Our stuff
 var fuzzy = require('./fuzzy_match.js');
+var heltour = require('./heltour.js');
 var league = require("./league.js");
-var spreadsheets = require('./spreadsheets.js');
+var lichess = require('./lichess.js');
+var scheduling = require('./scheduling.js');
+var spreadsheet = require('./spreadsheets.js');
 var slack = require('./slack.js');
+var spreadsheets = require('./spreadsheets.js');
+var subscription = require('./subscription.js');
+
 var users = slack.users;
 var channels = slack.channels;
-var lichess = require('./lichess.js');
-var subscription = require('./subscription.js');
 
 var SWORDS = "\u2694";
 
@@ -481,6 +485,12 @@ function schedulingReplyMissingPairing(bot, message) {
     bot.reply(message, ":x: " + user + " I couldn't find your pairing. Please use a format like: @white v @black 04/16 @ 16:00");
 }
 
+// There is not active round
+function schedulingReplyNoActiveRound(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " There is currently no active round. If this is a mistake, contact a mod");
+}
+
 // you are very close to the cutoff
 function schedulingReplyTooCloseToCutoff(bot, message, schedulingOptions, white, black) {
     bot.reply(message, 
@@ -547,9 +557,9 @@ function(bot, message) {
         deferred.resolve();
         return deferred.promise;
     } 
-    var spreadsheetOptions = message.league.options.spreadsheet;
-    if (!spreadsheetOptions) {
-        winston.error("[SCHEDULING] {} league doesn't have spreadsheet options!?".format(message.league.options.name));
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("[SCHEDULING] {} league doesn't have heltour options!?".format(message.league.options.name));
         deferred.resolve();
         return deferred.promise;
     } 
@@ -558,99 +568,97 @@ function(bot, message) {
         return deferred.promise;
     }
 
-    var isPotentialSchedule = false;
     var referencesSlackUsers = false;
-    var hasPairing = false;
 
-    var results = {
+    var schedulingResults = {
         white: '',
         black: ''
     };
 
     // Step 1. See if we can parse the dates
     try {
-        results = spreadsheets.parseScheduling(message.text, schedulingOptions);
-        isPotentialSchedule = true;
+        schedulingResults = scheduling.parseScheduling(message.text, schedulingOptions);
     } catch (e) {
-        if (!(e instanceof (spreadsheets.ScheduleParsingError))) {
+        if (!(e instanceof (scheduling.ScheduleParsingError))) {
             throw e; // let others bubble up
         } else {
             winston.debug("[SCHEDULING] Received an exception: {}".format(JSON.stringify(e)));
             winston.debug("[SCHEDULING] Stack: {}".format(e.stack));
         }
-    }
-
-    // Unless they included a date we can parse, ignore this message.
-    if (!isPotentialSchedule) {
         return;
     }
+
     // Step 2. See if we have valid named players
-    var white = users.getByNameOrID(results.white);
-    var black = users.getByNameOrID(results.black);
+    var white = users.getByNameOrID(schedulingResults.white);
+    var black = users.getByNameOrID(schedulingResults.black);
     if (white && black) {
-        results.white = white.name;
-        results.black = black.name;
+        schedulingResults.white = white.name;
+        schedulingResults.black = black.name;
         referencesSlackUsers = true;
+    }
+
+    if (!referencesSlackUsers) {
+        schedulingReplyCantFindUser(bot, message);
+        return;
+    }
+
+    var speaker = users.getByNameOrID(message.user);
+    if (
+        !_.isEqual(white.id, speaker.id) &&
+        !_.isEqual(black.id, speaker.id) &&
+        !message.player.isModerator()
+    ) {
+        schedulingReplyCantScheduleOthers(bot, message);
+        return;
     }
 
     winston.debug("[SCHEDULING] Attempting to update the spreadsheet.");
     // Step 3. attempt to update the spreadsheet
-    spreadsheets.updateSchedule(
-        spreadsheetOptions,
+    heltour.updateSchedule(
+        heltourOptions,
         schedulingOptions,
-        results,
-        function(err, reversed) {
-            if (err) {
-                if (_.includes(err, "Unable to find pairing.")) {
-                    hasPairing = false;
-                } else {
-                    bot.reply(message, "Something went wrong. Notify a mod");
-                    deferred.reject("Error updating scheduling sheet: " + err);
-                }
-            } else {
-                hasPairing = true;
-            }
-            if (reversed) {
-                var tmp = white;
-                white = black;
-                black = tmp;
-            }
-
-            if (!referencesSlackUsers) {
-                schedulingReplyCantFindUser(bot, message);
-                return;
-            }
-            var speaker = users.getByNameOrID(message.user);
-            if (
-                !_.isEqual(white.id, speaker.id) &&
-                !_.isEqual(black.id, speaker.id) &&
-                !message.player.isModerator()
-            ) {
-                schedulingReplyCantScheduleOthers(bot, message);
-                return;
-            }
-            if (!hasPairing) {
+        schedulingResults
+    ).then(function(response) {
+        updateScheduleResults = response['json'];
+        if (updateScheduleResults['updated'] === 0) {
+            if (updateScheduleResults['error'] == 'not_found') {
                 schedulingReplyMissingPairing(bot, message);
-                return;
+                deferred.resolve();
+            } else if (updateScheduleResults['error'] == 'no_data') {
+                schedulingReplyNoActiveRound(bot, message);
+                deferred.resolve();
+            } else if (updateScheduleResults['error'] == 'ambiguous') {
+                schedulingReplyAmbiguous(bot, message);
+                deferred.resolve();
+            } else {
+                bot.reply(message, "Something went wrong. Notify a mod");
+                deferred.reject("Error updating schedule: " + JSON.stringify(updateScheduleResults));
             }
-            if (results.outOfBounds) {
-                schedulingReplyTooLate(bot, message, schedulingOptions);
-                return;
-            }
-            if (results.warn) {
-                schedulingReplyTooCloseToCutoff(bot, message, schedulingOptions, white, black);
-            }
-            
-            var leagueName = message.league.options.name;
-            schedulingReplyScheduled(bot, message, results, white, black);
-            subscription.emitter.emit('a-game-is-scheduled',
-                message.league,
-                [white.name, black.name], {
-                results, white, black, leagueName
-            });
-            deferred.resolve();
+            return;
         }
-    );
+        if (updateScheduleResults['reversed']) {
+            var tmp = white;
+            white = black;
+            black = tmp;
+        }
+
+        if (schedulingResults.outOfBounds) {
+            schedulingReplyTooLate(bot, message, schedulingOptions);
+            return;
+        }
+        if (schedulingResults.warn) {
+            schedulingReplyTooCloseToCutoff(bot, message, schedulingOptions, white, black);
+        }
+        
+        var leagueName = message.league.options.name;
+        schedulingReplyScheduled(bot, message, schedulingResults, white, black);
+        subscription.emitter.emit('a-game-is-scheduled',
+            message.league,
+            [white.name, black.name], {
+            schedulingResults, white, black, leagueName
+        });
+        deferred.resolve();
+    });
     return deferred.promise;
 });
 
@@ -829,7 +837,7 @@ function validateGameDetails(details, options){
         result.reason = "the variant should be standard."
     }else{
         //the link is too old or too new
-        var extrema = spreadsheets.getRoundExtrema(options);
+        var extrema = scheduling.getRoundExtrema(options);
         var game_start = moment.utc(details.timestamp);
         if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
             result.valid = false;
@@ -890,7 +898,7 @@ function validateUserResult(details, result){
 
 function processGamelink(bot, message, gamelink, options, userResult){
     //get the gamelink id if one is in the message
-    var result = spreadsheets.parseGamelink(gamelink);
+    var result = spreadsheet.parseGamelink(gamelink);
     if(!result.gamelinkID){
         //no gamelink found. we can ignore this message
         return;

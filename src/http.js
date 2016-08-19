@@ -1,13 +1,37 @@
 //------------------------------------------------------------------------------
 // HTTP helpers
 //------------------------------------------------------------------------------
-const http = require('http');
+const _http = require('http');
+const _https = require('https');
+const querystring = require('querystring');
 var Q = require("q");
 var winston = require("winston");
+var _ = require("lodash");
 
-function fetchURL(url){
+function fetchURL(options){
     var deferred = Q.defer();
-    http.get(url, (res) => {
+    var http = _http;
+    if (_.isString(options)) {
+        if (_.startsWith(options, "https:")) {
+            http = _https;
+        }
+    } else {
+        if (_.isEqual(options.protocol, "https:")) {
+            http = _https;
+        }
+    }
+
+    if (options.params) {
+        options.path += "?" + querystring.stringify(options.params);
+    }
+    var bodyParameters = null;
+    if (options.bodyParameters) {
+        bodyParameters = querystring.stringify(options.bodyParameters);
+        options.headers = options.headers || {};
+        options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        options.headers['Content-Length'] = Buffer.byteLength(bodyParameters);
+    }
+    var req = http.request(options, (res) => {
         var body = "";
         res.on('data', function (chunk) {
             body += chunk;
@@ -19,11 +43,15 @@ function fetchURL(url){
         winston.error(JSON.stringify(e));
         deferred.reject("failed to get a response from url: " + url);
     });
+    if (bodyParameters) {
+        req.write(bodyParameters);
+    }
+    req.end();
     return deferred.promise;
 }
-function fetchURLIntoJSON(url){
+function fetchURLIntoJSON(options){
     var deferred = Q.defer();
-    fetchURL(url).then(function(result) {
+    fetchURL(options).then(function(result) {
         try {
             var json = JSON.parse(result['body']);
             if (json) {
