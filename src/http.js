@@ -21,8 +21,8 @@ function fetchURL(options){
         }
     }
 
-    if (options.params) {
-        options.path += "?" + querystring.stringify(options.params);
+    if (options.parameters) {
+        options.path += "?" + querystring.stringify(options.parameters);
     }
     var bodyParameters = null;
     if (options.bodyParameters) {
