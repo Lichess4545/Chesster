@@ -1,6 +1,5 @@
 // extlibs
 var fs = require('fs');
-var http = require('http');
 var moment = require('moment');
 var Q = require("q");
 var _ = require("lodash");
@@ -8,7 +7,9 @@ var winston = require("winston");
 
 // Our stuff
 var fuzzy = require('./fuzzy_match.js');
+var gamelinks = require('./gamelinks.js');
 var heltour = require('./heltour.js');
+var http = require("./http.js");
 var league = require("./league.js");
 var lichess = require('./lichess.js');
 var scheduling = require('./scheduling.js');
@@ -473,6 +474,11 @@ function(bot, message) {
 });
 
 
+// There is not active round
+function replyNoActiveRound(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " There is currently no active round. If this is a mistake, contact a mod");
+}
 
 /* Scheduling */
 
@@ -482,12 +488,6 @@ function(bot, message) {
 function schedulingReplyMissingPairing(bot, message) {
     var user = "<@"+message.user+">";
     bot.reply(message, ":x: " + user + " I couldn't find your pairing. Please use a format like: @white v @black 04/16 @ 16:00");
-}
-
-// There is not active round
-function schedulingReplyNoActiveRound(bot, message) {
-    var user = "<@"+message.user+">";
-    bot.reply(message, ":x: " + user + " There is currently no active round. If this is a mistake, contact a mod");
 }
 
 // you are very close to the cutoff
@@ -615,7 +615,6 @@ function(bot, message) {
     // Step 3. attempt to update the spreadsheet
     heltour.updateSchedule(
         heltourOptions,
-        schedulingOptions,
         schedulingResults
     ).then(function(response) {
         updateScheduleResults = response['json'];
@@ -624,7 +623,7 @@ function(bot, message) {
                 schedulingReplyMissingPairing(bot, message);
                 deferred.resolve();
             } else if (updateScheduleResults['error'] === 'no_data') {
-                schedulingReplyNoActiveRound(bot, message);
+                replyNoActiveRound(bot, message);
                 deferred.resolve();
             } else if (updateScheduleResults['error'] === 'ambiguous') {
                 schedulingReplyAmbiguous(bot, message);
@@ -651,11 +650,17 @@ function(bot, message) {
         
         var leagueName = message.league.options.name;
         schedulingReplyScheduled(bot, message, schedulingResults, white, black);
+        // TODO: test this.
         subscription.emitter.emit('a-game-is-scheduled',
             message.league,
-            [white.name, black.name], {
-            schedulingResults, white, black, leagueName
-        });
+            [white.name, black.name],
+            {
+                'result': schedulingResults,
+                'white': white,
+                'black': black,
+                'leagueName': leagueName
+            }
+        );
         deferred.resolve();
     });
     return deferred.promise;
@@ -745,9 +750,14 @@ function(bot, message) {
                                     var leagueName = message.league.options.name;
                                     subscription.emitter.emit('a-game-is-over',
                                         message.league,
-                                        [white.name, black.name], {
-                                        result, white, black, leagueName
-                                    });
+                                        [white.name, black.name],
+                                        {
+                                            'result': result,
+                                            'white': white,
+                                            'black': black,
+                                            'leagueName': leagueName
+                                        }
+                                    );
                                 }
 
                                 resultReplyUpdated(bot, message, result);
@@ -772,6 +782,10 @@ function resultReplyMissingPairing(bot, message){
     bot.reply(message, "Sorry, I could not find that pairing.");
 }
 
+function resultReplyTooManyPairings(bot, message){
+    bot.reply(message, "Sorry, I found too many pairings matching this. Please contact a mod.");
+}
+
 function resultReplyUpdated(bot, message, result){
     bot.reply(message, "Got it. @" + result.white.name + " " + result.result + " @" + result.black.name);
 }
@@ -782,33 +796,8 @@ function resultReplyUpdated(bot, message, result){
 
 //given a gamelinkID, use the lichess api to get the game details
 //pass the details to the callback as a JSON object
-function fetchGameDetails(gamelinkID, callback){
-    fetchURLIntoJSON("http://en.lichess.org/api/game/" + gamelinkID, callback);
-}
-
-function fetchURLIntoJSON(url, callback){
-    const http = require('http');
-    http.get(url, (res) => {
-        var body = "";
-        res.on('data', function (chunk) {
-            body += chunk;
-        });
-        res.on('end', () => {
-            if(!_.isEqual(body, "")){
-                var json = JSON.parse(body);
-                if(json){
-                   callback(undefined, json);
-                }else{
-                   callback("body was not a valid JSON object");
-                }
-            }else{
-                callback("body was empty from url: " + url);
-            }
-        });
-    }).on('error', (e) => {
-        winston.error(JSON.stringify(e));
-        callback("failed to get a response from url: " + url);
-    });
+function fetchGameDetails(gamelinkID){
+    return http.fetchURLIntoJSON("http://en.lichess.org/api/game/" + gamelinkID);
 }
 
 //verify the game meets the specified parameters in options
@@ -895,33 +884,32 @@ function validateUserResult(details, result){
     return validity;
 }
 
-function processGamelink(bot, message, gamelink, options, userResult){
+function processGamelink(bot, message, gamelink, options, heltourOptions, userResult){
     //get the gamelink id if one is in the message
-    var result = spreadsheets.parseGamelink(gamelink);
+    var result = gamelinks.parseGamelink(gamelink);
     if(!result.gamelinkID){
         //no gamelink found. we can ignore this message
         return;
     }
     //get the game details
-    fetchGameDetails(result.gamelinkID, function(error, details){
+    return fetchGameDetails(result.gamelinkID).then(function(response) {
+        var details = response['json']
         //validate the game details vs the user specified result
-        if(details){
-            if(userResult){
-                var validity = validateUserResult(details, userResult);
-                if(!validity.valid){
-                    gamelinkReplyInvalid(bot, message, validity.reason);
-                    return;
-                }
+        if(userResult){
+            var validity = validateUserResult(details, userResult);
+            if(!validity.valid){
+                gamelinkReplyInvalid(bot, message, validity.reason);
+                return;
             }
-            processGameDetails(bot, message, details, options);
-        }else{
-            winston.error(JSON.stringify(error));
-            bot.reply(message, "Sorry, I failed to get game details for " + gamelink + ". Try again later or reach out to a moderator to make the update manually.");
         }
+        return processGameDetails(bot, message, details, options, heltourOptions);
+    }).catch(function(error) {
+        winston.error(JSON.stringify(error));
+        bot.reply(message, "Sorry, I failed to get game details for " + gamelink + ". Try again later or reach out to a moderator to make the update manually.");
     });
 }
 
-function processGameDetails(bot, message, details, options){
+function processGameDetails(bot, message, details, options, heltourOptions){
     //if no details were found the link was no good
     if(!details){
         gamelinkReplyUnknown(bot, message);
@@ -943,6 +931,7 @@ function processGameDetails(bot, message, details, options){
     result.white = users.getByNameOrID(white.userId);
     result.black = users.getByNameOrID(black.userId);
     result.gamelinkID = details.id;
+    result.gamelink =  "http://en.lichess.org/" + result.gamelinkID;
  
     //get the result in the correct format
     if(_.isEqual(details.status, "draw") || _.isEqual(details.status, "stalemate") || details.winner){
@@ -954,46 +943,60 @@ function processGameDetails(bot, message, details, options){
             result.result = "1/2-1/2";
         }
     }else{
+        // TODO: this isn't necessary anymore
         result.result = SWORDS;
     }
     //gamelinks only come from played games, so ignoring forfeit result types
 
     //update the spreadsheet with results from gamelink
-    spreadsheets.updateResult(
-        message.league.options.spreadsheet,
-        result,
-        function(err, reversed, gamelinkChanged, resultChanged){
-            if (err) {
-                if (_.includes(err, "Unable to find pairing.")) {
-                    resultReplyMissingPairing(bot, message);
-                }else if(reversed){
-                    gamelinkReplyInvalid(bot, message, err);
-                }else{
-                    replyGenericFailure(bot, message, "@endrawes0");
-                    throw new Error("Error updating scheduling sheet: " + err);
-                }
-            } else {
-                resultReplyUpdated(bot, message, result);
-                var white = result.white;
-                var black = result.black;
+    heltour.updateResult(
+        heltourOptions,
+        result
+    ).then(function(updateResultsResult) {
 
-                var leagueName = message.league.options.name;
-                if(resultChanged && !_.isEqual(result.result, SWORDS)){
-                    subscription.emitter.emit('a-game-is-over',
-                        message.league,
-                        [white.name, black.name], {
-                        result, white, black, leagueName
-                    });
-                }else if(gamelinkChanged){
-                    subscription.emitter.emit('a-game-starts',
-                        message.league,
-                        [white.name, black.name], {
-                        result, white, black, leagueName
-                    });
-                }
+        if (updateResultsResult['error']) {
+            if (_.isEqual(updateResultsResult['error'], "no_matching_rounds")) {
+                replyNoActiveRound(bot, message);
+            } else if (_.isEqual(updateResultsResult['error'], "no_pairing")) {
+                resultReplyMissingPairing(bot, message);
+            } else if (_.isEqual(updateResultsResult['error'], "ambiguous")) {
+                resultReplyTooManyPairings(bot, message);
+            } else {
+                replyGenericFailure(bot, message, "@endrawes0");
+                throw new Error("Error updating scheduling sheet: " + err);
             }
         }
-    );
+        resultReplyUpdated(bot, message, updateResultsResult);
+
+        var leagueName = message.league.options.name;
+        var white = result.white;
+        var black = result.black;
+        if(updateResultsResult['resultChanged'] && !_.isEmpty(updateResultsResult.result)){
+            // TODO: Test this.
+            subscription.emitter.emit('a-game-is-over',
+                message.league,
+                [white.name, black.name],
+                {
+                    'result': updateResultsResult,
+                    'white': white,
+                    'black': black,
+                    'leagueName': leagueName
+                }
+            );
+        }else if(updateResultsResult['gamelinkChanged']){
+            // TODO: Test this.
+            subscription.emitter.emit('a-game-starts',
+                message.league,
+                [white.name, black.name],
+                {
+                    'result': updateResultsResult,
+                    'white': white,
+                    'black': black,
+                    'leagueName': leagueName
+                }
+            );
+        }
+    });
 }
 
 // gamelink processing will occur on any message
@@ -1018,9 +1021,15 @@ function(bot, message) {
     if (!gamelinkOptions || !_.isEqual(channel.name, gamelinkOptions.channel)) {
         return;
     }
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("[SCHEDULING] {} league doesn't have heltour options!?".format(message.league.options.name));
+        deferred.resolve();
+        return deferred.promise;
+    } 
 
     try{
-        processGamelink(bot, message, message.text, gamelinkOptions);
+        return processGamelink(bot, message, message.text, gamelinkOptions, heltourOptions);
     }catch(e){
         //at the moment, we do not throw from inside the api - rethrow
         throw e;
@@ -1109,10 +1118,10 @@ subscription.register(chesster, 'a-game-is-scheduled', function(target, context)
     // TODO: put these date formats somewhere, probably config?
     var friendlyFormat = "ddd @ HH:mm";
     target = slack.getSlackUserFromNameOrID(target);
-    var targetDate = context.results.date.clone().utcOffset(target.tz_offset/60);
+    var targetDate = context.result.date.clone().utcOffset(target.tz_offset/60);
     context['yourDate'] = targetDate.format(friendlyFormat);
     var fullFormat = "YYYY-MM-DD @ HH:mm UTC";
-    context['realDate'] = context.results.date.format(fullFormat);
+    context['realDate'] = context.result.date.format(fullFormat);
     return "{white.name} vs {black.name} in {leagueName} has been scheduled for {realDate}, which is {yourDate} for you.".format(context);
 });
 

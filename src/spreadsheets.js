@@ -160,25 +160,6 @@ function findPairing(spreadsheetConfig, white, black, callback) {
     );
 }
 
-// Update the schedule
-function updateSchedule(spreadsheetConfig, schedulingConfig, schedule, callback) {
-    var white = schedule.white;
-    var black = schedule.black;
-    var date = schedule.date;
-    findPairing(spreadsheetConfig, white, black, function(err, row, reversed) {
-        if (err) {
-            return callback(err);
-        }
-        // This portion is specific to the team tournament
-        var scheduleCell = row[spreadsheetConfig.scheduleColname];
-        scheduleCell.value = date.format(schedulingConfig.format);
-
-        scheduleCell.save(function(err) {
-            return callback(err, reversed);
-        });
-    });
-}
-
 // parse the input string for a results update
 function parseResult(inputString){
     var tokens = getTokensResult(inputString);   
@@ -316,57 +297,6 @@ function updateResult(spreadsheetConfig, result, callback){
     );
 }
 
-//given the input text from a essage
-function parseGamelink(messageText){
-    //split it into tokens separated by white space and slashes
-    var tokens = messageText.split(/[\<\>\|\/\s]/);
-    var foundBaseURL = false;
-    var gamelinkID;
-
-    //for each token, walk the list looking for a lichess url
-    tokens.some(function(token){
-        //if previously token was a lichess url
-        //this token should be the gamelinkID
-        if(foundBaseURL){
-            gamelinkID = token.replace('>', '');
-            //some tokens will have a > if its the last token
-            //return true to stop iterating
-            return true;
-        }
-        //current token is the base of the lichess url
-        if(token.includes("lichess.org")){
-            foundBaseURL = true;
-        }
-        return false;
-    });
-    return { gamelinkID: gamelinkID };
-}
-
-//given a pairing, get a game link if one already exists
-function fetchPairingGameLink(spreadsheetConfig, result, callback){
-    var white = result.white;
-    var black = result.black;
-
-    //given a pairing, white and black, get the row in the spreadsheet
-    findPairing(
-        spreadsheetConfig,
-        white.name,
-        black.name,
-        function(err, row){
-            if(err){
-                callback(err);
-            }
-            resultCell = row[spreadsheetConfig.resultsColname];
-            var formula = resultCell.formula;
-            if(formula && formula.toUpperCase().includes("HYPERLINK")){
-                callback(err, formula.split("\"")[1]);
-            }else{
-                callback(err, undefined);
-            }
-        }
-    );
-}
-
 // Given '=HYPERLINK("http://en.lichess.org/FwYcks48","1-0")'
 // return {'text': '1-0', 'url': 'http://en.lichess.org/FwYcks48'}
 function parseHyperlink(hyperlink) {
@@ -392,8 +322,5 @@ function parseHyperlink(hyperlink) {
 module.exports.getRows = getRows;
 module.exports.getPairingRows = getPairingRows;
 module.exports.parseResult = parseResult;
-module.exports.parseGamelink = parseGamelink;
-module.exports.parseHyperlink = parseHyperlink;
-module.exports.updateSchedule = updateSchedule;
 module.exports.updateResult = updateResult;
-module.exports.fetchPairingGameLink = fetchPairingGameLink;
+module.exports.parseHyperlink = parseHyperlink;

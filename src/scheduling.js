@@ -1,6 +1,7 @@
+//------------------------------------------------------------------------------
+// Helpers for the scheduling portion of chesster.
+//------------------------------------------------------------------------------
 var moment = require("moment");
-var fuzzy_match = require("./fuzzy_match");
-var GoogleSpreadsheet = require("google-spreadsheet");
 var _ = require("lodash");
 var winston = require("winston");
 
