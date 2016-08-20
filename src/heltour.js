@@ -7,7 +7,7 @@ const http = require("./http.js");
 
 function findPairing(heltourConfig, schedulingConfig, white, black) {
     var options = url.parse(heltourConfig.base_endpoint + "find_pairing/");
-    options.params = {
+    options.parameters = {
         'white': schedule.white,
         'black': schedule.black
     };
