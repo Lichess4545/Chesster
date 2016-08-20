@@ -58,10 +58,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                // TODO: this should be pulled from somewhere else so that
-                // config doesn't require updating each time a season changes
                 "base_endpoint": "https://www.lichess4545.com/api/", 
-                "season_tag": "4",
                 "league_tag": "team4545"
             },
             "spreadsheet": {
@@ -129,10 +126,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                // TODO: this should be pulled from somewhere else so that
-                // config doesn't require updating each time a season changes
                 "base_endpoint": "https://www.lichess4545.com/api/", 
-                "season_tag": "4",
                 "league_tag": "lonewolf"
             },
             "spreadsheet": {

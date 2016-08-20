@@ -23,7 +23,6 @@ function updateSchedule(heltourConfig, schedulingConfig, schedule) {
     options.method = "POST";
     options.bodyParameters = {
         'league': heltourConfig.league_tag,
-        'season': heltourConfig.season_tag,
         'white': schedule.white,
         'black': schedule.black,
         'datetime': schedule.date.format()
