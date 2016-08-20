@@ -12,7 +12,6 @@ var heltour = require('./heltour.js');
 var league = require("./league.js");
 var lichess = require('./lichess.js');
 var scheduling = require('./scheduling.js');
-var spreadsheet = require('./spreadsheets.js');
 var slack = require('./slack.js');
 var spreadsheets = require('./spreadsheets.js');
 var subscription = require('./subscription.js');
@@ -898,7 +897,7 @@ function validateUserResult(details, result){
 
 function processGamelink(bot, message, gamelink, options, userResult){
     //get the gamelink id if one is in the message
-    var result = spreadsheet.parseGamelink(gamelink);
+    var result = spreadsheets.parseGamelink(gamelink);
     if(!result.gamelinkID){
         //no gamelink found. we can ignore this message
         return;
