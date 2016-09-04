@@ -9,7 +9,7 @@ function findPairing(heltourConfig, white, black, league_tag) {
     var options = url.parse(heltourConfig.base_endpoint + "find_pairing/");
     options.parameters = {
         'white': white,
-        'black': black,
+        'black': black
     };
     if(!_.isNil(league_tag)){
         options.parameters.leage = league_tag;
