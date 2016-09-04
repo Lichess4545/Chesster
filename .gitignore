@@ -4,8 +4,12 @@ feedback_log
 node_modules
 .vagrant
 service_account_key.js
+heltour_token.js
 slack_token.js
+logging_token.js
 coverage
 test_service_account_key.js
+test_logging_token.js
+test_heltour_token.js
 test_logging_token.js
 db/database.sqlite

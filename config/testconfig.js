@@ -7,6 +7,7 @@ try {
 } catch (e) {
     var logging_token = null;
 }
+var heltour_token = require("./test_heltour_token.js").token;
 
 var config = require("./config.js");
 config['winston']['token'] = logging_token;
@@ -21,6 +22,11 @@ config["leagues"]["lonewolf"]["spreadsheet"]["serviceAccountAuth"] = {
     "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
     "private_key": private_key,
 };
+config["leagues"]["45+45"]["heltour"]["token"] = heltour_token;
+config["leagues"]["45+45"]["heltour"]["base_endpoint"] = "https://staging.lichess4545.com/api/";
+config["leagues"]["lonewolf"]["heltour"]["token"] = heltour_token;
+config["leagues"]["lonewolf"]["heltour"]["base_endpoint"] = "https://staging.lichess4545.com/api/";
+
 config["leagues"]["45+45"]["scheduling"]["channel"] = "unstable_bot";
 config["leagues"]["45+45"]["results"]["channel"] = "unstable_bot";
 config["leagues"]["45+45"]["gamelinks"]["channel"] = "unstable_bot";

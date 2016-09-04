@@ -1,7 +1,8 @@
-// NOTE: Neither of these files are committed and for good reason.
+// NOTE: None of these files are committed and for good reason.
 //       You must provide your own.
 var token = require("./slack_token.js").token;
 var private_key = require("./service_account_key.js").key;
+var heltour_token = require("./heltour_token.js").token;
 
 try {
     var logging_token = require("./logging_token.js").token;
@@ -55,6 +56,11 @@ var config = {
                 "angborxley",
                 "prune2000",
             ],
+            "heltour": {
+                "token": heltour_token,
+                "base_endpoint": "https://www.lichess4545.com/api/", 
+                "league_tag": "team4545"
+            },
             "spreadsheet": {
                 "key": "1cTBOQNrbUw9-RWmrC9b6Yyi3i2MtIvUWuXNxzQmGfSs",
                 "serviceAccountAuth": {
@@ -118,6 +124,11 @@ var config = {
                 "lakinwecker",
                 "theino"
             ],
+            "heltour": {
+                "token": heltour_token,
+                "base_endpoint": "https://www.lichess4545.com/api/", 
+                "league_tag": "lonewolf"
+            },
             "spreadsheet": {
                 "key": "1WI4H9DWKSI-q6Omeqh28w1lKaqB0AAFV01wDiOeW6Ho",
                 "serviceAccountAuth": {
