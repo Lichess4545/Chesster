@@ -4,6 +4,8 @@
 
 const url = require('url');
 const http = require("./http.js");
+const _ = require("lodash");
+const Q = require("q");
 
 function findPairing(heltourConfig, white, black) {
     var options = url.parse(heltourConfig.base_endpoint + "find_pairing/");
@@ -85,7 +87,31 @@ function updateResult(heltourConfig, result) {
     });
 }
 
+function getRoster(heltourConfig, league_tag) {
+    var options = url.parse(heltourConfig.base_endpoint + "get_roster/");
+    options.parameters = {};
+    if (!_.isNil(league_tag)) {
+        options.parameters.league = league_tag;
+    }
+    options.headers = {
+        'Authorization': 'Token ' + heltourConfig.token
+    };
+    var deferred = Q.defer();
+    http.fetchURLIntoJSON(options).then(function(result) {
+        var roster = result['json'];
+        if (!_.isNil(roster.error)) {
+            deferred.reject(roster);
+        } else {
+            deferred.resolve(roster);
+        }
+    }).catch(function(error) {
+        deferred.reject(error);
+    });
+    return deferred.promise;
+}
+
 
 module.exports.findPairing = findPairing;
 module.exports.updateSchedule = updateSchedule;
 module.exports.updateResult = updateResult;
+module.exports.getRoster = getRoster;

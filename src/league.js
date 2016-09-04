@@ -2,14 +2,15 @@
 // Defines a league object which can be used to interact with the spreadsheet
 // for the given league
 //------------------------------------------------------------------------------
-var _ = require("lodash");
-var Q = require("q");
-var winston = require("winston");
-var moment = require("moment");
-var format = require('string-format')
+const _ = require("lodash");
+const Q = require("q");
+const winston = require("winston");
+const moment = require("moment");
+const format = require('string-format')
 format.extend(String.prototype)
 
-var slack = require('./slack.js')
+const slack = require('./slack.js')
+const heltour = require('./heltour.js')
 
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
@@ -20,13 +21,10 @@ var spreadsheets = require("./spreadsheets");
 var lichess = require("./lichess");
 LEAGUE_DEFAULTS = {
     "name": "",
-    "spreadsheet": {
-        "key": "",
-        "serviceAccountAuth": {
-            "client_email": "",
-            "private_key": ""
-        },
-        "scheduleColname": ""
+    "heltour": {
+        "token": "",
+        "base_endpoint": "",
+        "league_tag": ""
     },
     "channels": [],
     "links": {
@@ -44,6 +42,21 @@ LEAGUE_DEFAULTS = {
 league_attributes = {
     //--------------------------------------------------------------------------
     // A list of objects with the following attributes
+    //   - username
+    //   - rating
+    //   - team
+    //   - isCaptain
+    //   - boardNumber
+    //--------------------------------------------------------------------------
+    _players: [],
+
+    //--------------------------------------------------------------------------
+    // A lookup from player username to a player object (from _players)
+    //--------------------------------------------------------------------------
+    _playerLookup: [],
+
+    //--------------------------------------------------------------------------
+    // A list of objects with the following attributes
     //   - white
     //   - black
     //   - scheduled_date (possibly undefined)
@@ -55,7 +68,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     // A list of objects with the following attributes
     //   - name
-    //   - roster - A list of the players in board order
+    //   - players - A list of the players in board order
     //   - captain - A single player who is the captain
     //--------------------------------------------------------------------------
     _teams: [],
@@ -82,21 +95,24 @@ league_attributes = {
         username = username.split(" ")[0];
         return username.replace("*", "");
     },
+    
+    //--------------------------------------------------------------------------
+    // Lookup a player by playerName
+    //--------------------------------------------------------------------------
+    getPlayer: function(username) {
+        return this._playerLookup[_.toLower(username)];
+    },
+
+    canonicalUsername: function(username) {
+        username = username.split(" ")[0];
+        return username.replace("*", "");
+    },
 
     //--------------------------------------------------------------------------
     // Refreshes everything
     //--------------------------------------------------------------------------
     'refresh': function() {
         var self = this;
-        self.refreshRosters(function(err, rosters) {
-            if (err) {
-                winston.error("Unable to refresh rosters: " + err);
-                throw new Error(err);
-            } else {
-                winston.info("Found " + rosters.length + " teams for " + self.options.name);
-            }
-            self._lastUpdated = moment.utc();
-        });
         self.refreshCurrentRoundSchedules(function(err, pairings) {
             if (err) {
                 winston.error("Unable to refresh schedule: " + err);
@@ -106,119 +122,51 @@ league_attributes = {
             }
             self._lastUpdated = moment.utc();
         });
+        return Q.all([
+            self.refreshRosters().then(function(roster) {
+                winston.info("Found " + rosters.teams + " teams for " + self.options.name);
+                self._lastUpdated = moment.utc();
+            }).catch(function(error) {
+                winston.error("Unable to refresh rosters: " + err);
+                throw new Error(err);
+            }),
+        ]);
     },
 
     //--------------------------------------------------------------------------
     // Refreshes the latest roster information
     //--------------------------------------------------------------------------
-    'refreshRosters': function(callback) {
-        var query_options = {
-            'min-row': 1,
-            'max-row': 100,
-            'min-col': 1,
-            'max-col': 26,
-            'return-empty': true
-        }
+    'refreshRosters': function() {
         var self = this;
         var firstRosterUpdate = self._firstRosterUpdate;
         if (self._firstRosterUpdate) {
             self._firstRosterUpdate = false;
         }
-        spreadsheets.getRows(
-            self.options.spreadsheet,
-            query_options,
-            function(sheet) {
-                return sheet.title.toLowerCase().indexOf('rosters') !== -1;
-            },
-            function(err, rows) {
-                if (err) {
-                    if (!_.isEqual(err, "Unable to find target worksheet")) {
-                        return callback(err, rows);
-                    } else {
-                        return callback(undefined, []);
+        return heltour.getRoster(self.options.heltour).then(function(roster) {
+            self._players = roster.players;
+            var newPlayerLookup = {};
+            var newTeams = [];
+            var newLookup = {};
+            roster.players.forEach(function(player) {
+                newPlayerLookup[player.username.toLowerCase()] = player;
+            });
+            self._playerLookup = newPlayerLookup;
+            _.each(roster.teams, function(team) {
+                _.each(team.players, function(teamPlayer) {
+                    var player = self.getPlayer(teamPlayer.username);
+                    player.isCaptain = player.is_captain;
+                    if (player.isCaptain) {
+                        team.captain = player;
                     }
-                }
-                var newTeams = [];
-                var newLookup = {};
-                rows.forEach(function(row) {
-                    if (
-                        !row['teams'].value ||
-                        !row['board 1'].value ||
-                        !row['rating 1'].value ||
-                        !row['board 2'].value ||
-                        !row['rating 2'].value ||
-                        !row['board 3'].value ||
-                        !row['rating 3'].value ||
-                        !row['board 4'].value ||
-                        !row['rating 4'].value ||
-                        !row['board 5'].value ||
-                        !row['rating 5'].value ||
-                        !row['board 6'].value ||
-                        !row['rating 6'].value
-                    ) {
-                        return;
-                    }
-                    // TODO: this could be put into the config.
-                    var alternateRowSentinels = [
-                        'alternates',
-                        'alt is taken/unresponsive',
-                        'alt needs to reach 20 classical games'
-                    ];
-                    var potentialTeamName = row['teams'].value.toLowerCase();
-                    var isAlternateRow = _.includes(
-                        _.map(alternateRowSentinels, function(sentinel) {
-                            return _.isEqual(potentialTeamName, sentinel);
-                        }),
-                        true
-                    );
-                    if (isAlternateRow) {
-                        // TODO: eventually we'll want this data too!
-                        return;
-                    }
-                    var team = { name: row['teams'].value };
-                    var roster = [];
-                    var captain = null;
-                    function processPlayer(name, rating) {
-                        name = name.value;
-                        rating = rating.value;
-                        var player = {
-                            name: self.canonicalUsername(name),
-                            rating: rating,
-                            team: team
-                        };
-                        if (!_.isEqual(name, player['name']) && _.isEqual(name[name.length-1], '*')) {
-                            captain = player;
-                        }
-                        newLookup[player.name.toLowerCase()] = team;
-                        return player;
-                    }
-                    roster.push(processPlayer(row['board 1'], row['rating 1']));
-                    roster.push(processPlayer(row['board 2'], row['rating 2']));
-                    roster.push(processPlayer(row['board 3'], row['rating 3']));
-                    roster.push(processPlayer(row['board 4'], row['rating 4']));
-                    roster.push(processPlayer(row['board 5'], row['rating 5']));
-                    roster.push(processPlayer(row['board 6'], row['rating 6']));
-
-                    team['captain'] = captain;
-                    team['roster'] = roster;
-
-                    newTeams.push(team);
+                    player.boardNumber = player.board_number;
+                    player.team = team;
                 });
-                self._teams = newTeams;
-                self._teamLookup = newLookup;
-                _.each(self._teams, function(team) {
-                    _.each(team.roster, function(player) {
-                        if (player && player.name) {
-                            lichess.getPlayerRating(player.name, true).then(function(rating) {
-                                player.rating = rating;
-                            });
-                        }
-                    });
-                });
-
-                callback(undefined, self._teams);
-            }
-        );
+                newTeams.push(team);
+                newLookup[_.toLower(team.name)] = team;
+            });
+            self._teams = newTeams;
+            self._teamLookup = newLookup;
+        });
     },
 
     //--------------------------------------------------------------------------
