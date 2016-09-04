@@ -1,16 +1,25 @@
 //------------------------------------------------------------------------------
 // Heltour related facilities
 //------------------------------------------------------------------------------
-
+const _ = require('lodash');
 const url = require('url');
 const http = require("./http.js");
 
-function findPairing(heltourConfig, white, black) {
+/* 
+ * takes an optional league_tag, rather than using the league 
+ * specified in heltour config so you can choose all leagues 
+ * or one in particular.
+ */
+function findPairing(heltourConfig, white, black, league_tag) {
     var options = url.parse(heltourConfig.base_endpoint + "find_pairing/");
     options.parameters = {
         'white': white,
         'black': black
     };
+    if(!_.isNil(league_tag)){
+        options.parameters.leage = league_tag;
+    }
+
     options.headers = {
         'Authorization': 'Token ' + heltourConfig.token
     };
@@ -34,8 +43,8 @@ function updateSchedule(heltourConfig, schedule) {
     return http.fetchURLIntoJSON(options);
 }
 
-// Update the result
-function updateResult(heltourConfig, result) {
+// Update the pairing with a result or link
+function updatePairing(heltourConfig, result) {
     return findPairing(heltourConfig, result.white.name, result.black.name).then(function(response) {
         var pairingResult = response['json'];
         var pairings = pairingResult['pairings'];
@@ -88,4 +97,4 @@ function updateResult(heltourConfig, result) {
 
 module.exports.findPairing = findPairing;
 module.exports.updateSchedule = updateSchedule;
-module.exports.updateResult = updateResult;
+module.exports.updatePairing = updatePairing;
