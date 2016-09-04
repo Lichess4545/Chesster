@@ -211,7 +211,7 @@ function prepareCommandsMessage(){
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
         "    [ source ]                     ! github repo for Chesster \n" +
         "    [ subscription help ]          ! help for chesster's subscription system\n" +
-        "    [ nomination {45|lonewolf} ]   ! get a private nominaion link for league, {45|lonewolf}, of your choosing\n" +
+        "    [ nomination <league> ]   ! get a private nominaion link for <league>, {45|lonewolf}, of your choosing\n" +
         "```\n";
 }
 
