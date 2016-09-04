@@ -17,7 +17,7 @@ function findPairing(heltourConfig, white, black, league_tag) {
         'black': black
     };
     if(!_.isNil(league_tag)){
-        options.parameters.leage = league_tag;
+        options.parameters.league = league_tag;
     }
 
     options.headers = {
@@ -94,7 +94,26 @@ function updatePairing(heltourConfig, result) {
     });
 }
 
+function getPrivateURL(heltourConfig, page, user){
+    var options = url.parse(heltourConfig.base_endpoint + "get_private_url/");
+    options.parameters = {
+        'league': heltourConfig.league_tag,
+        'page': page,
+        'user': user
+    };
 
+    options.headers = {
+        'Authorization': 'Token ' + heltourConfig.token
+    };
+    return http.fetchURLIntoJSON(options).then(function(response){
+        if(response["error"]){
+            throw new Error("error test: " + response["error"]);
+        }
+        return response;
+    });
+}
+
+module.exports.getPrivateURL = getPrivateURL;
 module.exports.findPairing = findPairing;
 module.exports.updateSchedule = updateSchedule;
 module.exports.updatePairing = updatePairing;

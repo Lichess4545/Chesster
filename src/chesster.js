@@ -119,6 +119,36 @@ function leagueDMResponse(patterns, responseName) {
 leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
 leagueDMResponse(['captains', 'captain list'], 'formatCaptainsResponse');
 
+/* game nomination */
+chesster.hears({
+    middleware: [ slack.requiresLeague ],
+    patterns: [ 'nomination' ],
+    messageTypes: [ 'direct_message' ]
+},
+function(bot, message) {
+    if (!message.league) {
+        return;
+    }
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
+        return;
+    }
+
+    var speaker = users.getByNameOrID(message.user);
+    heltour.getPrivateURL(
+        heltourOptions,
+        'nominate', //hardcoding this for now
+        speaker.name
+    ).then(function(getPrivateURLResult){
+        var json = getPrivateURLResult.json;
+        bot.reply(message, "Use this link to nominate your choice: " + json.url);
+        bot.reply(message, "NOTE: this is a private link. Do not share it.");
+    }).catch(function(error){
+        winston.error("[NOMINATION] private link acquisition failure: {}".format(error));
+        bot.reply(message, "I failed to get your private link. Please ask @endrawes0 for help.");
+    });
+});
 
 /* rating */
 
