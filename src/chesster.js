@@ -140,9 +140,8 @@ function(bot, message) {
         heltourOptions,
         'nominate', //hardcoding this for now
         speaker.name
-    ).then(function(getPrivateURLResult){
-        var json = getPrivateURLResult.json;
-        bot.reply(message, "Use this link to nominate your choice: " + json.url);
+    ).then(function(jsonResult){
+        bot.reply(message, "Use this link to nominate your choice: " + jsonResult.url);
         bot.reply(message, "NOTE: this is a private link. Do not share it.");
     }).catch(function(error){
         winston.error("[NOMINATION] private link acquisition failure: {}".format(error));
@@ -212,6 +211,7 @@ function prepareCommandsMessage(){
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
         "    [ source ]                     ! github repo for Chesster \n" +
         "    [ subscription help ]          ! help for chesster's subscription system\n" +
+        "    [ nomination {45|lonewolf} ]   ! get a private nominaion link for league, {45|lonewolf}, of your choosing\n" +
         "```\n";
 }
 

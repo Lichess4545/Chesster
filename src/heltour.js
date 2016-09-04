@@ -109,7 +109,7 @@ function getPrivateURL(heltourConfig, page, user){
         if(response["json"]["error"]){
             throw new Error(response["json"]["error"]);
         }
-        return response;
+        return response["json"];
     });
 }
 
