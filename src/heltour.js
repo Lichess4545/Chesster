@@ -5,6 +5,11 @@ const _ = require('lodash');
 const url = require('url');
 const http = require("./http.js");
 
+/* 
+ * takes an optional league_tag, rather than using the league 
+ * specified in heltour config so you can choose all leagues 
+ * or one in particular.
+ */
 function findPairing(heltourConfig, white, black, league_tag) {
     var options = url.parse(heltourConfig.base_endpoint + "find_pairing/");
     options.parameters = {
