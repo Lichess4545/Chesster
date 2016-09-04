@@ -126,9 +126,6 @@ chesster.hears({
     messageTypes: [ 'direct_message' ]
 },
 function(bot, message) {
-    if (!message.league) {
-        return;
-    }
     var heltourOptions = message.league.options.heltour;
     if (!heltourOptions) {
         winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
@@ -212,7 +209,7 @@ function prepareCommandsMessage(){
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
         "    [ source ]                     ! github repo for Chesster \n" +
         "    [ subscription help ]          ! help for chesster's subscription system\n" +
-        "    [ nomination <league> ]   ! get a private nominaion link for <league>, {45|lonewolf}, of your choosing\n" +
+        "    [ nomination <league> ]        ! get a private nomination link for <league>, {45|lonewolf}, of your choosing\n" +
         "```\n";
 }
 
