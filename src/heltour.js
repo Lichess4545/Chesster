@@ -34,8 +34,8 @@ function updateSchedule(heltourConfig, schedule) {
     return http.fetchURLIntoJSON(options);
 }
 
-// Update the result
-function updateResult(heltourConfig, result) {
+// Update the pairing with a result or link
+function updatePairing(heltourConfig, result) {
     return findPairing(heltourConfig, result.white.name, result.black.name).then(function(response) {
         var pairingResult = response['json'];
         var pairings = pairingResult['pairings'];
@@ -88,4 +88,4 @@ function updateResult(heltourConfig, result) {
 
 module.exports.findPairing = findPairing;
 module.exports.updateSchedule = updateSchedule;
-module.exports.updateResult = updateResult;
+module.exports.updatePairing = updatePairing;

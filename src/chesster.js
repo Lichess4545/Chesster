@@ -8,6 +8,7 @@ var winston = require("winston");
 // Our stuff
 var fuzzy = require('./fuzzy_match.js');
 var gamelinks = require('./gamelinks.js');
+var results = require('./results.js');
 var heltour = require('./heltour.js');
 var http = require("./http.js");
 var league = require("./league.js");
@@ -60,6 +61,19 @@ var config_file = process.argv[2] || "../config/config.js";
 var chesster = new slack.Bot({
     config_file: config_file
 });
+
+function handleHeltourErrors(error){
+    if (_.isEqual(updatePairingResult['error'], "no_matching_rounds")) {
+        replyNoActiveRound(bot, message);
+    } else if (_.isEqual(updatePairingResult['error'], "no_pairing")) {
+        resultReplyMissingPairing(bot, message);
+    } else if (_.isEqual(updatePairingResult['error'], "ambiguous")) {
+        resultReplyTooManyPairings(bot, message);
+    } else {
+        replyGenericFailure(bot, message, "@endrawes0");
+        throw new Error("Error updating scheduling sheet: " + err);
+    }
+}
 
 // A helper for a very common pattern
 function leagueResponse(patterns, responseName) {
@@ -683,26 +697,32 @@ function(bot, message) {
     if (!channel) {
         return;
     }
-    var spreadsheetOptions = message.league.options.spreadsheet;
-    if (!spreadsheetOptions) {
-        winston.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
         return;
-    } 
-    var resultsOptions = message.league.options.results;
-    if (!resultsOptions || !_.isEqual(channel.name, resultsOptions.channel)) {
+    }
+
+    var resultsOptions = message.league.options.results; 
+    if (!resultsOptions || !_.isEqual(channel.name, resultsOptions.channel)){
+        return;
+    }
+
+    var gamelinkOptions = message.league.options.gamelinks;
+    if (!gamelinkOptions) {
         return;
     }
 
     try{
-        var result = spreadsheets.parseResult(message.text);
- 
+        var result = results.parseResult(message.text);
+
         if(!result.white || !result.black || !result.result){
             return;
         }
 
         result.white = users.getByNameOrID(result.white.replace(/[\<\@\>]/g, ''));
         result.black = users.getByNameOrID(result.black.replace(/[\<\@\>]/g, ''));
-        
+
         if(
             !_.isEqual(result.white.id, message.user) &&
             !_.isEqual(result.black.id, message.user) &&
@@ -711,68 +731,71 @@ function(bot, message) {
             replyPermissionFailure(bot, message);
             return;
         }
-
-        //this could and probably should be improved at some point
-        //this will require two requests to the spread sheet and
-        //it can be done in one, but I am trying to reuse what 
-        //I wrote before as simply as possibe for now
-
-        //if a gamelink already exists, get it
-        spreadsheets.fetchPairingGameLink(
-            spreadsheetOptions,
-            result,
-            function(err, gamelink){
-                //if a gamelink is found, use it to acquire details and process them
-                if(!err && gamelink){
-                    processGamelink(
-                        bot, 
-                        message, 
-                        gamelink, 
-                        message.league.options.gamelinks, 
-                        result); //user specified result
-                }else{
-                    //update the spreadsheet with result only
-                    spreadsheets.updateResult(
-                        spreadsheetOptions,
-                        result,
-                        function(err, reversed, gamelinkChanged, resultChanged){
-                            if (err) {
-                                if (_.includes(err, "Unable to find pairing.")) {
-                                    resultReplyMissingPairing(bot, message);
-                                } else {
-                                    bot.reply(message, "Something went wrong. Notify @endrawes0");
-                                    throw new Error("Error updating scheduling sheet: " + err);
-                                }
-                            } else {
-                                if(resultChanged && !_.isEqual(result.result, SWORDS)){
-                                    var white = result.white;
-                                    var black = result.black;
-                                    var leagueName = message.league.options.name;
-                                    subscription.emitter.emit('a-game-is-over',
-                                        message.league,
-                                        [white.name, black.name],
-                                        {
-                                            'result': result,
-                                            'white': white,
-                                            'black': black,
-                                            'leagueName': leagueName
-                                        }
-                                    );
-                                }
-
-                                resultReplyUpdated(bot, message, result);
-                            }
-                        }
-                    );
-                }
+        
+        heltour.findPairing(
+            heltourOptions,
+            result.white.name,
+            result.black.name
+        ).then(function(findPairingResult){
+            if(findPairingResult["error"]){
+                handleHeltourErrors(findPairingResult["error"]);
+                return;
             }
-        );
+
+            var pairing = getPairingForLeague(
+                              findPairingResult["json"].pairings, 
+                              heltourOptions.league_tag);
+            if( !_.isNil(pairing) 
+                && !_.isNil(pairing.game_link) 
+                && !_.isEqual(pairing.game_link, "")){
+                //process game details
+                processGamelink(
+                    bot, 
+                    message,
+                    pairing.game_link,
+                    gamelinkOptions,
+                    heltourOptions,
+                    result);
+            }else if(!_.isNil(pairing)){
+                //update the pairing with the result bc there was no link found
+                heltour.updatePairing(
+                    heltourOptions,
+                    result
+                ).then(function(updatePairingResult) {
+                    if (updatePairingResult['error']) {
+                        handleHeltourErrors(updatePairingResult['error']);
+                        return;
+                    }
+                    resultReplyUpdated(bot, message, updatePairingResult);
+
+                    var leagueName = message.league.options.name;
+                    var white = result.white;
+                    var black = result.black;
+                    if(updatePairingResult['resultChanged'] && !_.isEmpty(updatePairingResult.result)){
+                        subscription.emitter.emit('a-game-is-over',
+                            message.league,
+                            [white.name, black.name],
+                            {
+                                'result': updatePairingResult,
+                                'white': white,
+                                'black': black,
+                                'leagueName': leagueName
+                            }
+                        );
+                    }
+                });
+            }
+        });
 
     }catch(e){
         //at the moment, we do not throw from inside the api - rethrow
         throw e;
     }
 });
+
+function getPairingForLeague(pairings, league_tag){
+    return _.head(_.filter(pairings, _.matches({'league': league_tag})));
+}
 
 function replyPermissionFailure(bot, message){
     bot.reply(message, "Sorry, you do not have permission to update that pairing.");
@@ -942,54 +965,44 @@ function processGameDetails(bot, message, details, options, heltourOptions){
         }else{
             result.result = "1/2-1/2";
         }
-    }else{
-        // TODO: this isn't necessary anymore
-        result.result = SWORDS;
     }
+
     //gamelinks only come from played games, so ignoring forfeit result types
 
     //update the spreadsheet with results from gamelink
-    heltour.updateResult(
+    heltour.updatePairing(
         heltourOptions,
         result
-    ).then(function(updateResultsResult) {
+    ).then(function(updatePairingResult) {
 
-        if (updateResultsResult['error']) {
-            if (_.isEqual(updateResultsResult['error'], "no_matching_rounds")) {
-                replyNoActiveRound(bot, message);
-            } else if (_.isEqual(updateResultsResult['error'], "no_pairing")) {
-                resultReplyMissingPairing(bot, message);
-            } else if (_.isEqual(updateResultsResult['error'], "ambiguous")) {
-                resultReplyTooManyPairings(bot, message);
-            } else {
-                replyGenericFailure(bot, message, "@endrawes0");
-                throw new Error("Error updating scheduling sheet: " + err);
-            }
+        if (updatePairingResult['error']) {
+            handleHeltourErrors(updatePairingResult['error']);
+            return; //if there was a problem with heltour, we should not take further steps 
         }
-        resultReplyUpdated(bot, message, updateResultsResult);
+        resultReplyUpdated(bot, message, updatePairingResult);
 
         var leagueName = message.league.options.name;
         var white = result.white;
         var black = result.black;
-        if(updateResultsResult['resultChanged'] && !_.isEmpty(updateResultsResult.result)){
+        if(updatePairingResult['resultChanged'] && !_.isEmpty(updatePairingResult.result)){
             // TODO: Test this.
             subscription.emitter.emit('a-game-is-over',
                 message.league,
                 [white.name, black.name],
                 {
-                    'result': updateResultsResult,
+                    'result': updatePairingResult,
                     'white': white,
                     'black': black,
                     'leagueName': leagueName
                 }
             );
-        }else if(updateResultsResult['gamelinkChanged']){
+        }else if(updatePairingResult['gamelinkChanged']){
             // TODO: Test this.
             subscription.emitter.emit('a-game-starts',
                 message.league,
                 [white.name, black.name],
                 {
-                    'result': updateResultsResult,
+                    'result': updatePairingResult,
                     'white': white,
                     'black': black,
                     'leagueName': leagueName
@@ -1012,20 +1025,14 @@ function(bot, message) {
     if (!channel) {
         return;
     }
-    var spreadsheetOptions = message.league.options.spreadsheet;
-    if (!spreadsheetOptions) {
-        winston.error("{} league doesn't have spreadsheet options!?".format(message.league.options.name));
-        return;
-    } 
     var gamelinkOptions = message.league.options.gamelinks;
     if (!gamelinkOptions || !_.isEqual(channel.name, gamelinkOptions.channel)) {
         return;
     }
     var heltourOptions = message.league.options.heltour;
     if (!heltourOptions) {
-        winston.error("[SCHEDULING] {} league doesn't have heltour options!?".format(message.league.options.name));
-        deferred.resolve();
-        return deferred.promise;
+        winston.error("[GAMELINK] {} league doesn't have heltour options!?".format(message.league.options.name));
+        return;
     } 
 
     try{
