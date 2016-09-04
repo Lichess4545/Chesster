@@ -735,16 +735,16 @@ function(bot, message) {
         heltour.findPairing(
             heltourOptions,
             result.white.name,
-            result.black.name
+            result.black.name,
+            heltourOptions.league_tag
         ).then(function(findPairingResult){
+debugger;
             if(findPairingResult["error"]){
                 handleHeltourErrors(findPairingResult["error"]);
                 return;
             }
 
-            var pairing = getPairingForLeague(
-                              findPairingResult["json"].pairings, 
-                              heltourOptions.league_tag);
+            var pairing = _.head(findPairingResult["json"].pairings);
             if( !_.isNil(pairing) 
                 && !_.isNil(pairing.game_link) 
                 && !_.isEqual(pairing.game_link, "")){
@@ -784,6 +784,8 @@ function(bot, message) {
                         );
                     }
                 });
+            }else{
+                resultReplyMissingPairing(bot, message);
             }
         });
 
@@ -792,10 +794,6 @@ function(bot, message) {
         throw e;
     }
 });
-
-function getPairingForLeague(pairings, league_tag){
-    return _.head(_.filter(pairings, {'league': league_tag}));
-}
 
 function replyPermissionFailure(bot, message){
     bot.reply(message, "Sorry, you do not have permission to update that pairing.");
