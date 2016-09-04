@@ -106,8 +106,8 @@ function getPrivateURL(heltourConfig, page, user){
         'Authorization': 'Token ' + heltourConfig.token
     };
     return http.fetchURLIntoJSON(options).then(function(response){
-        if(response["error"]){
-            throw new Error("error test: " + response["error"]);
+        if(response["json"]["error"]){
+            throw new Error(response["json"]["error"]);
         }
         return response;
     });
