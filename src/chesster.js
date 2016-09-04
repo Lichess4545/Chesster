@@ -794,7 +794,7 @@ function(bot, message) {
 });
 
 function getPairingForLeague(pairings, league_tag){
-    return _.head(_.filter(pairings, _.matches({'league': league_tag})));
+    return _.head(_.filter(pairings, {'league': league_tag}));
 }
 
 function replyPermissionFailure(bot, message){
