@@ -30,7 +30,7 @@ function findPairing(heltourConfig, white, black, leagueTag) {
         'black': black
     };
     if(!_.isNil(leagueTag)){
-        request.parameters.leage = leagueTag;
+        options.parameters.league = leagueTag;
     }
 
     return http.fetchURLIntoJSON(request);
@@ -161,7 +161,23 @@ function getRoster(heltourConfig, leagueTag) {
     return deferred.promise;
 }
 
+function getPrivateURL(heltourConfig, page, user){
+    var request = heltourRequest(heltourConfig, "get_private_url");
+    request.parameters = {
+        'league': heltourConfig.leagueTag,
+        'page': page,
+        'user': user
+    };
 
+    return http.fetchURLIntoJSON(request).then(function(response){
+        if(response["json"]["error"]){
+            throw new Error(response["json"]["error"]);
+        }
+        return response["json"];
+    });
+}
+
+module.exports.getPrivateURL = getPrivateURL;
 module.exports.findPairing = findPairing;
 module.exports.getAllPairings = getAllPairings;
 module.exports.updateSchedule = updateSchedule;
