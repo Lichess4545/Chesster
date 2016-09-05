@@ -98,11 +98,6 @@ league_attributes = {
         return this._playerLookup[_.toLower(username)];
     },
 
-    canonicalUsername: function(username) {
-        username = username.split(" ")[0];
-        return username.replace("*", "");
-    },
-
     //--------------------------------------------------------------------------
     // Refreshes everything
     //--------------------------------------------------------------------------

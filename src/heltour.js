@@ -46,15 +46,14 @@ function findPairing(heltourConfig, white, black, leagueTag) {
 function getAllPairings(heltourConfig, leagueTag) {
     var request = heltourRequest(heltourConfig, "find_pairing");
     request.parameters = {};
+    var deferred = Q.defer();
     if (!_.isNil(leagueTag)) {
         request.parameters.league = leagueTag;
     } else {
-        var deferred = Q.defer();
         deferred.reject("leagueTag is a required parameter for heltour.getAllPairings");
         return deferred.promise;
     }
 
-    var deferred = Q.defer();
     http.fetchURLIntoJSON(request).then(function(response) {
         var pairings = response['json'];
         if (!_.isNil(pairings.error)) {
@@ -136,16 +135,15 @@ function updatePairing(heltourConfig, result) {
 }
 
 function getRoster(heltourConfig, leagueTag) {
+    var deferred = Q.defer();
     var request = heltourRequest(heltourConfig, "get_roster");
     request.parameters = {};
     if (!_.isNil(leagueTag)) {
         request.parameters.league = leagueTag;
     } else {
-        var deferred = Q.defer();
         deferred.reject("leagueTag is a required parameter for heltour.getRoster");
         return deferred.promise;
     }
-    var deferred = Q.defer();
     http.fetchURLIntoJSON(request).then(function(result) {
         var roster = result['json'];
         if (!_.isNil(roster.error)) {
