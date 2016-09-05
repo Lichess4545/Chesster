@@ -23,8 +23,8 @@ LEAGUE_DEFAULTS = {
     "name": "",
     "heltour": {
         "token": "",
-        "base_endpoint": "",
-        "league_tag": ""
+        "baseEndpoint": "",
+        "leagueTag": ""
     },
     "channels": [],
     "links": {
@@ -134,7 +134,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'refreshRosters': function() {
         var self = this;
-        return heltour.getRoster(self.options.heltour, self.options.heltour.league_tag).then(function(roster) {
+        return heltour.getRoster(self.options.heltour, self.options.heltour.leagueTag).then(function(roster) {
             self._players = roster.players;
             var newPlayerLookup = {};
             var newTeams = [];
@@ -189,7 +189,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'refreshCurrentRoundSchedules': function() {
         var self = this;
-        return heltour.getAllPairings(self.options.heltour, self.options.heltour.league_tag).then(function(pairings) {
+        return heltour.getAllPairings(self.options.heltour, self.options.heltour.leagueTag).then(function(pairings) {
             var newPairings = [];
             _.each(pairings, function(pairing) {
                 var date = moment.utc(pairing.datetime);

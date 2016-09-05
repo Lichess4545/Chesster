@@ -11,7 +11,7 @@ format.extend(String.prototype)
 
 //------------------------------------------------------------------------------
 function heltourRequest(heltourConfig, endpoint) {
-    var request = url.parse("{}{}/".format(heltourConfig.base_endpoint, endpoint));
+    var request = url.parse("{}{}/".format(heltourConfig.baseEndpoint, endpoint));
     request.headers = {
         'Authorization': 'Token ' + heltourConfig.token
     };
@@ -30,7 +30,7 @@ function findPairing(heltourConfig, white, black, leagueTag) {
         'black': black
     };
     if(!_.isNil(leagueTag)){
-        options.parameters.league = leagueTag;
+        request.parameters.league = leagueTag;
     }
 
     return http.fetchURLIntoJSON(request);

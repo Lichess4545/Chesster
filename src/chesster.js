@@ -763,7 +763,7 @@ function(bot, message) {
             heltourOptions,
             result.white.name,
             result.black.name,
-            heltourOptions.league_tag
+            heltourOptions.leagueTag
         ).then(function(findPairingResult){
             if(findPairingResult["error"]){
                 handleHeltourErrors(bot, message, findPairingResult["error"]);

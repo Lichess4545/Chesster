@@ -58,7 +58,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                "base_endpoint": "https://www.lichess4545.com/api/", 
+                "baseEndpoint": "https://www.lichess4545.com/api/", 
                 "leagueTag": "team4545"
             },
             "spreadsheet": {
@@ -126,7 +126,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                "base_endpoint": "https://www.lichess4545.com/api/", 
+                "baseEndpoint": "https://www.lichess4545.com/api/", 
                 "leagueTag": "lonewolf"
             },
             "spreadsheet": {
