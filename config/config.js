@@ -59,7 +59,7 @@ var config = {
             "heltour": {
                 "token": heltour_token,
                 "base_endpoint": "https://www.lichess4545.com/api/", 
-                "league_tag": "team4545"
+                "leagueTag": "team4545"
             },
             "spreadsheet": {
                 "key": "1cTBOQNrbUw9-RWmrC9b6Yyi3i2MtIvUWuXNxzQmGfSs",
@@ -127,7 +127,7 @@ var config = {
             "heltour": {
                 "token": heltour_token,
                 "base_endpoint": "https://www.lichess4545.com/api/", 
-                "league_tag": "lonewolf"
+                "leagueTag": "lonewolf"
             },
             "spreadsheet": {
                 "key": "1WI4H9DWKSI-q6Omeqh28w1lKaqB0AAFV01wDiOeW6Ho",

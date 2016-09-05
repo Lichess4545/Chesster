@@ -61,7 +61,7 @@ var chesster = new slack.Bot({
     config_file: config_file
 });
 
-function handleHeltourErrors(error){
+function handleHeltourErrors(bot, message, error){
     if (_.isEqual(error, "no_matching_rounds")) {
         replyNoActiveRound(bot, message);
     } else if (_.isEqual(error, "no_pairing")) {
@@ -738,7 +738,7 @@ function(bot, message) {
             heltourOptions.league_tag
         ).then(function(findPairingResult){
             if(findPairingResult["error"]){
-                handleHeltourErrors(findPairingResult["error"]);
+                handleHeltourErrors(bot, message, findPairingResult["error"]);
                 return;
             }
 
@@ -761,7 +761,7 @@ function(bot, message) {
                     result
                 ).then(function(updatePairingResult) {
                     if (updatePairingResult['error']) {
-                        handleHeltourErrors(updatePairingResult['error']);
+                        handleHeltourErrors(bot, message, updatePairingResult['error']);
                         return;
                     }
                     resultReplyUpdated(bot, message, updatePairingResult);
@@ -972,7 +972,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
     ).then(function(updatePairingResult) {
 
         if (updatePairingResult['error']) {
-            handleHeltourErrors(updatePairingResult['error']);
+            handleHeltourErrors(bot, message, updatePairingResult['error']);
             return; //if there was a problem with heltour, we should not take further steps 
         }
         resultReplyUpdated(bot, message, updatePairingResult);
