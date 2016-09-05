@@ -11,13 +11,13 @@ format.extend(String.prototype)
 
 const slack = require('./slack.js')
 const heltour = require('./heltour.js')
+const db = require("./models.js");
 
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
 var MINUTES = 60 * SECONDS;
 var HOURS = 60 * MINUTES;
 
-var spreadsheets = require("./spreadsheets");
 var lichess = require("./lichess");
 LEAGUE_DEFAULTS = {
     "name": "",
@@ -84,11 +84,6 @@ league_attributes = {
     _lastUpdated: moment.utc(),
 
     //--------------------------------------------------------------------------
-    // Whether this is the first time through updating or not.
-    //--------------------------------------------------------------------------
-    _firstRosterUpdate: true,
-
-    //--------------------------------------------------------------------------
     // Canonicalize the username
     //--------------------------------------------------------------------------
     canonicalUsername: function(username) {
@@ -113,23 +108,24 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'refresh': function() {
         var self = this;
-        self.refreshCurrentRoundSchedules(function(err, pairings) {
-            if (err) {
-                winston.error("Unable to refresh schedule: " + err);
-                throw new Error(err);
-            } else {
-                winston.info("Found " + pairings.length + " pairings for " + self.options.name);
-            }
-            self._lastUpdated = moment.utc();
-        });
         return Q.all([
-            self.refreshRosters().then(function(roster) {
-                winston.info("Found " + rosters.teams + " teams for " + self.options.name);
+            self.refreshRosters().then(function() {
+                winston.info("Found " + self._players.length + " players for " + self.options.name);
+                if (self._teams.length > 0) {
+                    winston.info("Found " + self._teams.length + " teams for " + self.options.name);
+                }
                 self._lastUpdated = moment.utc();
             }).catch(function(error) {
-                winston.error("Unable to refresh rosters: " + err);
-                throw new Error(err);
+                winston.error("{}: Unable to refresh rosters: {}".format(self.options.name, error));
+                throw new Error(error);
             }),
+            self.refreshCurrentRoundSchedules().then(function(pairings) {
+                winston.info("Found " + pairings.length + " pairings for " + self.options.name);
+                self._lastUpdated = moment.utc();
+            }).catch(function(error) {
+                winston.error("{}: Unable to refresh pairings: {}".format(self.options.name, error));
+                throw new Error(error);
+            })
         ]);
     },
 
@@ -138,17 +134,36 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'refreshRosters': function() {
         var self = this;
-        var firstRosterUpdate = self._firstRosterUpdate;
-        if (self._firstRosterUpdate) {
-            self._firstRosterUpdate = false;
-        }
-        return heltour.getRoster(self.options.heltour).then(function(roster) {
+        return heltour.getRoster(self.options.heltour, self.options.heltour.league_tag).then(function(roster) {
             self._players = roster.players;
             var newPlayerLookup = {};
             var newTeams = [];
             var newLookup = {};
             roster.players.forEach(function(player) {
                 newPlayerLookup[player.username.toLowerCase()] = player;
+                db.lock().then(function(unlock) {
+                    return db.LichessRating.findOrCreate({
+                        where: { lichessUserName: player.username }
+                    }).then(function(lichessRatings) {
+                        lichessRating = lichessRatings[0];
+                        lichessRating.set('rating', player.rating);
+                        lichessRating.set('lastCheckedAt', moment.utc().format());
+                        lichessRating.save().then(function() {
+                            winston.info("Got updated rating from heltour for {name}: {rating}".format({
+                                name: player.username,
+                                rating: player.rating
+                            }));
+                            unlock.resolve();
+                        }).catch(function(error) {
+                            winston.error("{}.refreshRosters.saveRating Error: {}".format(
+                                self.options.name,
+                                error
+                            ));
+                            unlock.resolve();
+                        });
+                        return player.rating;
+                    });
+                });
             });
             self._playerLookup = newPlayerLookup;
             _.each(roster.teams, function(team) {
@@ -172,52 +187,24 @@ league_attributes = {
     //--------------------------------------------------------------------------
     // Figures out the current scheduling information for the round.
     //--------------------------------------------------------------------------
-    'refreshCurrentRoundSchedules': function(callback) {
-        var query_options = {
-            'min-row': 1,
-            'max-row': 100,
-            'min-col': 1,
-            'max-col': 8,
-            'return-empty': true
-        }
+    'refreshCurrentRoundSchedules': function() {
         var self = this;
-        spreadsheets.getPairingRows(
-            self.options.spreadsheet,
-            query_options,
-            function(err, rows) {
-                if (err) { return callback(err, undefined); }
-                var new_pairings = [];
-                rows.forEach(function(row) {
-                    var link;
-
-                    if (!row['white'].value || !row['black'].value) { return; }
-                    if (row['result'].formula) {
-                        link = spreadsheets.parseHyperlink(row['result'].formula || "");
-                    } else {
-                        link = {'text': row['result'].value};
-                    }
-                    var date_string = row[self.options.spreadsheet.scheduleColname].value || '';
-                    date_string = date_string.trim()
-                    var date = moment.utc(
-                        date_string,
-                        self.options.scheduling.format,
-                        true
-                    );
-                    if (!date.isValid()) {
-                        date = undefined;
-                    }
-                    new_pairings.push({
-                        white: self.canonicalUsername(row['white'].value),
-                        black: self.canonicalUsername(row['black'].value),
-                        result: link['text'],
-                        url: link['href'],
-                        scheduled_date: date
-                    });
-                });
-                self._pairings = new_pairings;
-                callback(undefined, self._pairings);
-            }
-        );
+        return heltour.getAllPairings(self.options.heltour, self.options.heltour.league_tag).then(function(pairings) {
+            var newPairings = [];
+            _.each(pairings, function(pairing) {
+                var date = moment.utc(pairing.datetime);
+                if (!date.isValid()) {
+                    date = undefined;
+                }
+                // TODO: eventually we can deprecate these older attribute
+                //       names, but for now I'm ok with supporting both
+                pairing.datetime = pairing.date = date;
+                pairing.url = pairing.game_link;
+                newPairings.push(pairing);
+            });
+            self._pairings = newPairings;
+            return self._pairings;
+        });
     },
 
     //--------------------------------------------------------------------------

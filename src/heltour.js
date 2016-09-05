@@ -1,43 +1,95 @@
 //------------------------------------------------------------------------------
 // Heltour related facilities
 //------------------------------------------------------------------------------
-
+const _ = require('lodash');
 const url = require('url');
 const http = require("./http.js");
-const _ = require("lodash");
 const Q = require("q");
+const format = require('string-format')
+const winston = require("winston");
+format.extend(String.prototype)
 
-function findPairing(heltourConfig, white, black) {
-    var options = url.parse(heltourConfig.base_endpoint + "find_pairing/");
-    options.parameters = {
+//------------------------------------------------------------------------------
+function heltourRequest(heltourConfig, endpoint) {
+    var request = url.parse("{}{}/".format(heltourConfig.base_endpoint, endpoint));
+    request.headers = {
+        'Authorization': 'Token ' + heltourConfig.token
+    };
+    return request;
+}
+
+/* 
+ * takes an optional leagueTag, rather than using the league 
+ * specified in heltour config so you can choose all leagues 
+ * or one in particular.
+ */
+function findPairing(heltourConfig, white, black, leagueTag) {
+    var request = heltourRequest(heltourConfig, "find_pairing");
+    request.parameters = {
         'white': white,
         'black': black
     };
-    options.headers = {
-        'Authorization': 'Token ' + heltourConfig.token
-    };
-    return http.fetchURLIntoJSON(options);
+    if(!_.isNil(leagueTag)){
+        request.parameters.leage = leagueTag;
+    }
+
+    return http.fetchURLIntoJSON(request);
+}
+
+/*
+ * Note that this method is similar to the one above and they are probably
+ * candidates to be refactored together, but this one supports the
+ * refreshCurrentSchedules which gets all of the pairings for the league
+ *
+ * I wasn't sure how to merge the two concepts into a coherent API
+ */
+function getAllPairings(heltourConfig, leagueTag) {
+    var request = heltourRequest(heltourConfig, "find_pairing");
+    request.parameters = {};
+    if (!_.isNil(leagueTag)) {
+        request.parameters.league = leagueTag;
+    } else {
+        var deferred = Q.defer();
+        deferred.reject("leagueTag is a required parameter for heltour.getAllPairings");
+        return deferred.promise;
+    }
+
+    var deferred = Q.defer();
+    http.fetchURLIntoJSON(request).then(function(response) {
+        var pairings = response['json'];
+        if (!_.isNil(pairings.error)) {
+            winston.error("[{}] - Error getting pairings: {}".format(leagueTag, pairings.error));
+            deferred.reject(pairings.error);
+        } else {
+            if (!_.isNil(pairings.pairings)) {
+                deferred.resolve(pairings.pairings);
+            } else {
+                winston.error("Error getting pairings for {}".format(leagueTag));
+                deferred.reject("No Pairings");
+            }
+        }
+    }).catch(function(error) {
+        deferred.reject(error);
+    });
+    return deferred.promise;
 }
 
 // Update the schedule
 function updateSchedule(heltourConfig, schedule) {
-    var options = url.parse(heltourConfig.base_endpoint + "update_pairing/");
-    options.method = "POST";
-    options.bodyParameters = {
-        'league': heltourConfig.league_tag,
+    var request = heltourRequest(heltourConfig, "update_pairing");
+    request.method = "POST";
+    request.bodyParameters = {
+        'league': heltourConfig.leagueTag,
         'white': schedule.white,
         'black': schedule.black,
         'datetime': schedule.date.format()
     };
-    options.headers = {
-        'Authorization': 'Token ' + heltourConfig.token
-    };
 
-    return http.fetchURLIntoJSON(options);
+    return http.fetchURLIntoJSON(request);
 }
 
-// Update the result
-function updateResult(heltourConfig, result) {
+// Update the pairing with a result or link
+function updatePairing(heltourConfig, result) {
     return findPairing(heltourConfig, result.white.name, result.black.name).then(function(response) {
         var pairingResult = response['json'];
         var pairings = pairingResult['pairings'];
@@ -51,25 +103,21 @@ function updateResult(heltourConfig, result) {
             };
         }
         var pairing = pairings[0];
-        var options = url.parse(heltourConfig.base_endpoint + "update_pairing/");
-        options.method = "POST";
-        options.bodyParameters = {
-            'league': heltourConfig.league_tag,
+        var request = heltourRequest(heltourConfig, "update_pairing");
+        request.method = "POST";
+        request.bodyParameters = {
+            'league': heltourConfig.leagueTag,
             'white': result.white.name,
             'black': result.black.name
         };
         if (result.result) {
-            options.bodyParameters['result'] = result.result;
+            request.bodyParameters['result'] = result.result;
         }
         if (result.gamelink) {
-            options.bodyParameters['game_link'] = result.gamelink;
+            request.bodyParameters['game_link'] = result.gamelink;
         }
-        options.headers = {
-            'Authorization': 'Token ' + heltourConfig.token
-        };
 
-
-        return http.fetchURLIntoJSON(options).then(function(response) {
+        return http.fetchURLIntoJSON(request).then(function(response) {
             var newResult = response['json'];
             newResult['gamelinkChanged'] = pairing['game_link'] !== result['gamelink'];
             newResult['resultChanged'] = pairing['result'] !== result['result'];
@@ -87,24 +135,27 @@ function updateResult(heltourConfig, result) {
     });
 }
 
-function getRoster(heltourConfig, league_tag) {
-    var options = url.parse(heltourConfig.base_endpoint + "get_roster/");
-    options.parameters = {};
-    if (!_.isNil(league_tag)) {
-        options.parameters.league = league_tag;
+function getRoster(heltourConfig, leagueTag) {
+    var request = heltourRequest(heltourConfig, "get_roster");
+    request.parameters = {};
+    if (!_.isNil(leagueTag)) {
+        request.parameters.league = leagueTag;
+    } else {
+        var deferred = Q.defer();
+        deferred.reject("leagueTag is a required parameter for heltour.getRoster");
+        return deferred.promise;
     }
-    options.headers = {
-        'Authorization': 'Token ' + heltourConfig.token
-    };
     var deferred = Q.defer();
-    http.fetchURLIntoJSON(options).then(function(result) {
+    http.fetchURLIntoJSON(request).then(function(result) {
         var roster = result['json'];
         if (!_.isNil(roster.error)) {
-            deferred.reject(roster);
+            winston.error("Error getting rosters: {}".format(roster.error));
+            deferred.reject(roster.error);
         } else {
             deferred.resolve(roster);
         }
     }).catch(function(error) {
+        winston.error("Unable to getRoster: {}".format(error));
         deferred.reject(error);
     });
     return deferred.promise;
@@ -112,6 +163,7 @@ function getRoster(heltourConfig, league_tag) {
 
 
 module.exports.findPairing = findPairing;
+module.exports.getAllPairings = getAllPairings;
 module.exports.updateSchedule = updateSchedule;
-module.exports.updateResult = updateResult;
+module.exports.updatePairing = updatePairing;
 module.exports.getRoster = getRoster;
