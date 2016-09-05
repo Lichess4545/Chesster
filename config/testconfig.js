@@ -23,9 +23,9 @@ config["leagues"]["lonewolf"]["spreadsheet"]["serviceAccountAuth"] = {
     "private_key": private_key,
 };
 config["leagues"]["45+45"]["heltour"]["token"] = heltour_token;
-config["leagues"]["45+45"]["heltour"]["base_endpoint"] = "https://staging.lichess4545.com/api/";
+config["leagues"]["45+45"]["heltour"]["baseEndpoint"] = "https://staging.lichess4545.com/api/";
 config["leagues"]["lonewolf"]["heltour"]["token"] = heltour_token;
-config["leagues"]["lonewolf"]["heltour"]["base_endpoint"] = "https://staging.lichess4545.com/api/";
+config["leagues"]["lonewolf"]["heltour"]["baseEndpoint"] = "https://staging.lichess4545.com/api/";
 
 config["leagues"]["45+45"]["scheduling"]["channel"] = "unstable_bot";
 config["leagues"]["45+45"]["results"]["channel"] = "unstable_bot";

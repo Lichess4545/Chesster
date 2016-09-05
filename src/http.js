@@ -4,9 +4,9 @@
 const _http = require('http');
 const _https = require('https');
 const querystring = require('querystring');
-var Q = require("q");
-var winston = require("winston");
-var _ = require("lodash");
+const Q = require("q");
+const winston = require("winston");
+const _ = require("lodash");
 
 function fetchURL(options){
     var deferred = Q.defer();
@@ -61,6 +61,7 @@ function fetchURLIntoJSON(options){
                 deferred.reject("body was not a valid json object: " + url);
             }
         } catch (e) {
+            winston.error("[HTTP] Options: " + JSON.stringify(options));
             winston.error("[HTTP] Exception: " + e);
             winston.error("[HTTP] Stack: " + e.stack);
             winston.error("[HTTP] Body: " + result['body']);
