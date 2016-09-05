@@ -1,4 +1,5 @@
-var assert = require('chai').assert;
+// TODO: reinstate these tests. See: https://github.com/endrawes0/Chesster/issues/148
+/*var assert = require('chai').assert;
 var Q = require("q");
 var _ = require("lodash");
 var moment = require("moment");
@@ -754,4 +755,4 @@ describe('league', function() {
             });
         });
     });
-});
+});*/
