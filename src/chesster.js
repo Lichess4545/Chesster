@@ -413,30 +413,9 @@ function(bot, message) {
                              + "Lichess 45+45 League, <@" + message.user + ">!");
             
             bot.startPrivateConversation(message, function(err, convo){
-                // TODO: the config links references below are hard coded
-                //       to the 45+45 league. Eventually, we'll want to fix that
-                //       but I'm not taking on that task right now.
-                convo.say("Hi <@" + message.user + ">, \n" 
-                        + "\tIt seems you are new here. " 
-                        + "We are happy to have you join the Lichess 45+45 League.\n"
-                        + "\tMy name is Chesster. I am a bot. " 
-                        + "I was created to help moderate the league. " 
-                        + "It is my job to welcome you and to share with you " 
-                        + "some resources with which you should familiarize yourself.\n" 
-                        + "\tPlease read our Starter Guide and Rules documents. " 
-                        + "They will give you a better idea how this league works.\n" 
-                        + "\tIf you have not already, I suggest downloading the Slack App: " 
-                        + "https://slack.com/downloads so you can stay " 
-                        + "connected with the league. It is the easiest way for most "
-                        + "of us to communicate and you will find that many of us "
-                        + "are active in this community every day. Make yourself at home.");
-                convo.say(chesster.config["leagues"]["45+45"].links.guide);
-                convo.say(chesster.config["leagues"]["45+45"].links.rules);
-                convo.say("\tIf there is anything else I can help you with, do not hesitate to ask. " 
-                        + "You can send me a direct message in this private channel. " 
-                        + "Just say `commands` to see a list of ways that I can help you.\n" 
-                        + "\tIf there is ANYTHING else, dont hesitate to reach out to the moderators. " 
-                        + "We love to help out. Say `mods` to get a list.");
+               convo.say("Welcome. I'm the Lichess4545 League's Moderator Bot.");
+               convo.say("Say 'help' to get help."); 
+               convo.say("If you joined for the 45+45 league, read this: " + chesster.config["leagues"]["45+45"].links.rules + ". If you joined for Lone Wolf, read this: " + chesster.config["leagues"]["lonewolf"].links.rules + ". Enjoy the league!"); 
             });
         }
     });

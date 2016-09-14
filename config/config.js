@@ -47,11 +47,9 @@ var config = {
             ],
             "moderators": [
                 "endrawes0",
-                "mkoga",
                 "mrlegilimens",
                 "petruchio",
                 "seb32",
-                "theino",
                 "tnan123",
                 "angborxley",
                 "prune2000",
@@ -101,11 +99,11 @@ var config = {
                 "channel": "team-scheduling"
             },
             "links": {
-                "rules": "https://lichess4545.slack.com/files/endrawes0/F1ARYEKT3/lichess4545leaguerulesregulations",
-                "team": "https://lichess4545.slack.com/files/mrlegilimens/F1J8DMUHJ/lichess4545season4-formresponses1",
+                "rules": "https://www.lichess4545.com/team4545/document/rules/",
+                "league": "https://www.lichess4545.com/team4545/",
                 "guide": "http://bit.ly/1MW9YJ4",
                 "captains": "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc",
-                "registration": "https://docs.google.com/forms/d/1Fx5XL4NZBK-8ADxndWDuH-XLuJDI90ZVKR4GhKs9Ols/viewform"
+                "registration": "https://www.lichess4545.com/team4545/register/"
             }
         },
         "lonewolf": {
@@ -122,7 +120,7 @@ var config = {
                 "endrawes0",
                 "jptriton",
                 "lakinwecker",
-                "theino"
+                "cyanfish"
             ],
             "heltour": {
                 "token": heltour_token,
@@ -170,8 +168,9 @@ var config = {
                 "channel": "lonewolf-scheduling"
             },
             "links": {
-                "rules": "https://docs.google.com/document/d/105gEd79MdUVIt4pW_T_BsX-TvSyNB1lvNJ9p73k9gFo/edit",
-                "team": "https://docs.google.com/spreadsheets/d/1p8RMKSKDryavipF5RzNOxIhonK5lOf6OkQPtpkzCRng/",
+                "rules": "https://www.lichess4545.com/lonewolf/document/rules/",
+                "league": "https://www.lichess4545.com/lonewolf/",
+                "registration": "https://www.lichess45454.com/lonewolf/register/"
             }
         },
     },
