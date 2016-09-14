@@ -29,7 +29,7 @@ LEAGUE_DEFAULTS = {
     "channels": [],
     "links": {
         "rules": "",
-        "team": "",
+        "league": "",
         "lone-wolf": "",
         "guide": "",
         "captains": "",
@@ -351,9 +351,9 @@ league_attributes = {
     'formatPairingsLinkResponse': function() {
         var self = this;
         return Q.fcall(function() {
-            if (self.options.links && self.options.links.team) {
-                return "Here is the pairings/standings sheet:\n" + 
-                        self.options.links.team + 
+            if (self.options.links && self.options.links.league) {
+                return "The pairings/standings can be found on the website:\n" + 
+                        self.options.links.league + 
                         "\nAlternatively, try [ @chesster pairing [competitor] ]";
             } else {
                 return "The {name} league does not have a pairings/standings sheet.".format({
