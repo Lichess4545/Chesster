@@ -118,6 +118,86 @@ function leagueDMResponse(patterns, responseName) {
 leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
 leagueDMResponse(['captains', 'captain list'], 'formatCaptainsResponse');
 
+/* alternate assignment */
+/* assign <player> to board <board-number> for round <round-number> on <team-name>*/
+chesster.hears({
+    middleware: [ slack.requiresLeague ],
+    patterns: [ '^assign' ],
+    messageTypes: [ 
+        'direct_message', 
+        'direct_mention'
+    ]
+}, 
+function(bot, message){
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
+        return;
+    }
+    
+    var requester = slack.getSlackUserFromNameOrID(message.user);
+    var components = message.text.split(" ");
+    var args = _.map(components.slice(0, 8), _.toLower);
+    var teamName = components.splice(8).join(" ");
+    var assign = args[0],
+        player = args[1],
+        to = args[2],
+        board = args[3],
+        boardNumber = args[4], 
+        _for = args[5], 
+        round = args[6],
+        on = args[7];
+
+    // Ensure the basic command format is valid
+    if (!_.isEqual(["assign", "to", "board", "for", "on"], [assign, to, board, _for, on])) {
+        replyMisunderstoodAlternateAssignment(bot, message);
+    }
+
+    if (!message.player.isModerator() || !message.player.isCaptain) {
+        replyOnlyACaptainOrModeratorCanDoThat(bot, message);
+    }
+
+    if(isNaN(parseInt(board))){
+        replyMisunderstoodAlternateAssignement(bot, message);
+        return;
+    }else{
+        board = parseInt(board);
+    }
+
+    if(isNaN(parseInt(round))){
+        replyMisunderstoodAlternatesAssignment(bot, message);
+    }else{
+        round = parseInt(round);
+    }
+
+    heltour.assignAlternate(heltourOptions, round, team, board, player).then(function(){
+        bot.reply(message, player + " has been assigned to board " + board + " for " + team + " during round " + round);
+    }).catch(function(error){
+        bot.reply(message, "I failed to update your alternate assignement: " + error);
+        bot.reply(message, "Please contact endrawes0");
+    })
+});
+
+function replayMisunderstoodAlternateAssignement(bot, message){
+    bot.reply(message, "wat?");
+}
+
+function replyOnlyACaptainOrAModeratorCanDoThat(bot, message){
+    bot.reply(message, "Only a team captain or a league moderator can do that.");
+}
+
+chesster.hears({
+    middleware: [ slack.requiresLeague ],
+    patterns: [ '^unassign' ],
+    messageTypes: [ 
+        'direct_message', 
+        'direct_mention'
+    ]
+}, 
+function(bot, message){
+
+});
+
 /* game nomination */
 chesster.hears({
     middleware: [ slack.requiresLeague ],
