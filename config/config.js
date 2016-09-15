@@ -98,6 +98,9 @@ var config = {
                 "format": "MM/DD @ HH:mm",
                 "channel": "team-scheduling"
             },
+            "alternate": {
+                "channel": "captains"
+            },
             "links": {
                 "rules": "https://www.lichess4545.com/team4545/document/rules/",
                 "league": "https://www.lichess4545.com/team4545/",
@@ -185,7 +188,8 @@ var config = {
         "team-results": "45+45",
         "team-gamelinks": "45+45",
         "team-scheduling": "45+45",
-        "unstable_bot": "45+45"
+        "unstable_bot": "45+45",
+        "captains": "45+45",
     },
 }
 module.exports = config;

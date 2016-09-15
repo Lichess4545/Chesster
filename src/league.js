@@ -164,7 +164,7 @@ league_attributes = {
             _.each(roster.teams, function(team) {
                 _.each(team.players, function(teamPlayer) {
                     var player = self.getPlayer(teamPlayer.username);
-                    player.isCaptain = player.is_captain;
+                    player.isCaptain = teamPlayer.is_captain;
                     if (player.isCaptain) {
                         team.captain = player;
                     }
@@ -427,11 +427,19 @@ league_attributes = {
         });
     },
     //--------------------------------------------------------------------------
-    // Get the team for a given player
+    // Get the team for a given player name
     //--------------------------------------------------------------------------
-    'getTeam':function(playerName) {
+    'getTeamByPlayerName':function(playerName) {
         var self = this;
-        return self._teamLookup[playerName.toLowerCase()];
+        return self._playerLookup[playerName.toLowerCase()] &&
+		self._playerLookup[playerName.toLowerCase()].team;
+    },
+    //--------------------------------------------------------------------------
+    // Get the team for a given team name
+    //--------------------------------------------------------------------------
+    'getTeam':function(teamName) {
+        var self = this;
+        return self._teamLookup[teamName.toLowerCase()];
     },
     //--------------------------------------------------------------------------
     // Get the the players from a particular board

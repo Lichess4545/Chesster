@@ -30,7 +30,9 @@ config["leagues"]["lonewolf"]["heltour"]["baseEndpoint"] = "https://staging.lich
 config["leagues"]["45+45"]["scheduling"]["channel"] = "unstable_bot";
 config["leagues"]["45+45"]["results"]["channel"] = "unstable_bot";
 config["leagues"]["45+45"]["gamelinks"]["channel"] = "unstable_bot";
+config["leagues"]["45+45"]["alternate"]["channel"] = "unstable_bot";
 config["leagues"]["lonewolf"]["scheduling"]["channel"] = "unstable_bot-lonewolf";
 config["leagues"]["lonewolf"]["results"]["channel"] = "unstable_bot-lonewolf";
 config["leagues"]["lonewolf"]["gamelinks"]["channel"] = "unstable_bot-lonewolf";
+
 module.exports = config;
