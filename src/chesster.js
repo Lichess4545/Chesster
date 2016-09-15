@@ -167,7 +167,7 @@ function(bot, message){
     }
 
     // Ensure the basic command format is valid
-    if (!_.isEqual(["assign", "to", "board", "during", "on"], [assign, to, board, during, on])) {
+    if (!_.isEqual(["assign", "to", "board", "during", "round", "on"], [assign, to, board, during, round, on])) {
         replyMisunderstoodAlternateAssignment(bot, message);
         return;
     }
