@@ -172,18 +172,16 @@ function(bot, message){
         return;
     }
 
-    if(isNaN(parseInt(boardNumber))){
-        replyMisunderstoodAlternateAssignment(bot, message);
+    boardNumber = parseInt(boardNumber, 10);
+    if(isNaN(boardNumber)){
+        replyMisunderstoodAlternateUnassignement(bot, message);
         return;
-    }else{
-        boardNumber = parseInt(boardNumber);
     }
 
-    if(isNaN(parseInt(roundNumber))){
-        replyMisunderstoodAlternatesAssignment(bot, message);
+    roundNumber = parseInt(roundNumber, 10);
+    if(isNaN(roundNumber)){
+        replyMisunderstoodAlternatesUnassignment(bot, message);
         return;
-    }else{
-        roundNumber = parseInt(roundNumber);
     }
 
     var team = message.league.getTeam(teamName);
@@ -261,18 +259,16 @@ function(bot, message){
         return;
     }
 
-    if(isNaN(parseInt(boardNumber))){
+    boardNumber = parseInt(boardNumber, 10);
+    if(isNaN(boardNumber)){
         replyMisunderstoodAlternateUnassignement(bot, message);
         return;
-    }else{
-        boardNumber = parseInt(boardNumber);
     }
 
-    if(isNaN(parseInt(roundNumber))){
+    roundNumber = parseInt(roundNumber, 10);
+    if(isNaN(roundNumber)){
         replyMisunderstoodAlternatesUnassignment(bot, message);
         return;
-    }else{
-        roundNumber = parseInt(roundNumber);
     }
 
     var team = message.league.getTeam(teamName);
@@ -295,8 +291,8 @@ function isCaptainOrModerator(speaker, speakerTeam, teamName){
     return speaker.isModerator() || //speaker is a moderator
 	( speakerTeam && //speaker is on a team
         speakerTeam.captain && //speaker's team has a captain
-        speaker.name == speakerTeam.captain.name && //speaker is the team captain
-        speakerTeam.name == teamName ); //speaker's team is the team being operated on
+        _.isEqual(speaker.name, speakerTeam.captain.name) && //speaker is the team captain
+        _.isEqual(speakerTeam.name, teamName) ); //speaker's team is the team being operated on
 }
 
 function replyOnlyACaptainOrAModeratorCanDoThat(bot, message){
@@ -311,10 +307,6 @@ function replyMisunderstoodAlternateUnassignment(bot, message){
     bot.reply(message, "Sorry, I did not understand your alternate unassignment");
     bot.reply(message, "Please use the following format:");
     bot.reply(message, "`unassign alternate for board <board-number> during round <round-number> on <team-name>`");
-}
-
-function replyOnlyACaptainOrAModeratorCanDoThat(bot, message){
-    bot.reply(message, "Only the team's captain or a league moderator can do that.");
 }
 
 /* game nomination */
