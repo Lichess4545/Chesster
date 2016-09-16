@@ -174,13 +174,13 @@ function(bot, message){
 
     boardNumber = parseInt(boardNumber, 10);
     if(isNaN(boardNumber)){
-        replyMisunderstoodAlternateUnassignement(bot, message);
+        replyMisunderstoodAlternateAssignement(bot, message);
         return;
     }
 
     roundNumber = parseInt(roundNumber, 10);
     if(isNaN(roundNumber)){
-        replyMisunderstoodAlternatesUnassignment(bot, message);
+        replyMisunderstoodAlternatesAssignment(bot, message);
         return;
     }
 
