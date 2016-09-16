@@ -79,6 +79,11 @@ league_attributes = {
     _teamLookup: {},
 
     //--------------------------------------------------------------------------
+    // A list of moderator names
+    //--------------------------------------------------------------------------
+    _moderators: [],
+
+    //--------------------------------------------------------------------------
     // The datetime when we were last updated
     //--------------------------------------------------------------------------
     _lastUpdated: moment.utc(),
@@ -119,6 +124,13 @@ league_attributes = {
                 self._lastUpdated = moment.utc();
             }).catch(function(error) {
                 winston.error("{}: Unable to refresh pairings: {}".format(self.options.name, error));
+                throw new Error(error);
+            }),
+            self.refreshLeagueModerators().then(function(){
+                winston.info("Found " + self._moderators.length + " moderators for " + self.options.name);
+                self._lastUpdated = moment.utc();
+            }).catch(function(error) {
+                winston.error("{}: Unable to refresh moderators: {}".format(self.options.name, error));
                 throw new Error(error);
             })
         ]);
@@ -178,6 +190,16 @@ league_attributes = {
             self._teamLookup = newLookup;
         });
     },
+    
+    //--------------------------------------------------------------------------
+    // Figures out the current scheduling information for the round.
+    //--------------------------------------------------------------------------
+    'refreshLeagueModerators': function(){
+        var self = this;
+        return heltour.getLeagueModerators(self.options.heltour).then(function(moderators){
+            self._moderators = moderators;
+        });
+    },
 
     //--------------------------------------------------------------------------
     // Figures out the current scheduling information for the round.
@@ -229,7 +251,7 @@ league_attributes = {
     // Returns whether someone is a moderator or not.
     //--------------------------------------------------------------------------
     'isModerator': function(name) {
-        return _.includes(this.options.moderators, name);
+        return _.includes(this._moderators, name);
     },
     //--------------------------------------------------------------------------
     // Prepare a debug message for this league
@@ -584,7 +606,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'formatModsResponse': function() {
         var self = this;
-        moderators = _.map(self.options.moderators, function(name) {
+        moderators = _.map(self._moderators, function(name) {
             return name[0] + "\u200B" + name.slice(1);
         });
         return Q.fcall(function() {
@@ -596,11 +618,17 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'formatSummonModsResponse': function() {
         var self = this;
-        moderators = _.map(self.options.moderators, function(name) {
+        moderators = _.map(self._moderators, function(name) {
             return slack.users.getIdString(name);
         });
         return Q.fcall(function() {
             return ("{0} mods: " + moderators.join(", ")).format(self.options.name);
+        });
+    },
+    'formatFAQResponse': function() {
+        var self = this;
+        return Q.fcall(function(){
+            return "The FAQ for {} can be found: {}".format(self.options.name, self.options.links.faq);
         });
     }
 };

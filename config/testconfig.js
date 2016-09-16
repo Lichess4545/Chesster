@@ -12,6 +12,9 @@ var heltour_token = require("./test_heltour_token.js").token;
 var config = require("./config.js");
 config['winston']['token'] = logging_token;
 config['winston']['channel'] = "#modster-logging";
+
+config["welcome"]["channel"] = "unstable_bot";
+
 config["leagues"]["45+45"]["spreadsheet"]["key"] = "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA";
 config["leagues"]["45+45"]["spreadsheet"]["serviceAccountAuth"] = {
     "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",

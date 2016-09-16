@@ -395,7 +395,7 @@ function prepareCommandsMessage(){
         "    [ mods (lonewolf)| \n"  +
         "        mod list (lonewolf)|       ! list the mods (without summoning)\n" +
         "        mods summon (lonewolf)]    ! summon the mods\n" +
-        "    [ faq ]                        ! a document of frequently asked questions\n" + 
+        "    [ faq (lonewolf)]                        ! a document of frequently asked questions\n" + 
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
         "    [ source ]                     ! github repo for Chesster \n" +
         "    [ subscription help ]          ! help for chesster's subscription system\n" +
@@ -424,6 +424,9 @@ function(bot,message) {
 
 leagueResponse(['summon mods'], 'formatSummonModsResponse');
 leagueResponse(['mods'], 'formatModsResponse');
+
+/* faq */
+leagueResponse(["faq"], 'formatFAQResponse');
 
 /* channels */
 function prepareChannelListMessage(){
@@ -599,14 +602,18 @@ function(bot, message) {
 chesster.on({event: 'user_channel_join'},
 function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        if(_.isEqual(message.channel, channels.getId("general"))){
+        if(_.isEqual(message.channel, channels.getId(chesster.config["welcome"]["channel"]))){
             bot.reply(message, "Everyone, please welcome the newest member of the " 
                              + "Lichess 45+45 League, <@" + message.user + ">!");
             
             bot.startPrivateConversation(message, function(err, convo){
-               convo.say("Welcome. I'm the Lichess4545 League's Moderator Bot.");
+               convo.say("Welcome. I am the moderator bot for the Lichess4545 league");
                convo.say("Say 'help' to get help."); 
-               convo.say("If you joined for the 45+45 league, read this: " + chesster.config["leagues"]["45+45"].links.rules + ". If you joined for Lone Wolf, read this: " + chesster.config["leagues"]["lonewolf"].links.rules + ". Enjoy the league!"); 
+               convo.say("If you joined for the 45+45 league, read this: " 
+                   + chesster.config["leagues"]["45+45"].links.faq 
+                   + ". If you joined for Lone Wolf, read this: " 
+                   + chesster.config["leagues"]["lonewolf"].links.faq 
+                   + ". Enjoy the league!"); 
             });
         }
     });
