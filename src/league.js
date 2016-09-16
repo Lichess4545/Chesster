@@ -192,7 +192,8 @@ league_attributes = {
     },
     
     //--------------------------------------------------------------------------
-    // Figures out the current scheduling information for the round.
+    // Calls into the website moderators endpoint to get the list of moderators
+    // for the league.
     //--------------------------------------------------------------------------
     'refreshLeagueModerators': function(){
         var self = this;
