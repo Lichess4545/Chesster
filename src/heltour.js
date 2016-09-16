@@ -166,7 +166,33 @@ function getPrivateURL(heltourConfig, page, user){
         'page': page,
         'user': user
     };
+    return fetchJSONandHandleErrors(request);
+}
 
+function assignAlternate(heltourConfig, round, team, board, player){
+    var request = heltourRequest(heltourConfig, "assign_alternate");
+    request.method = "POST";
+    request.bodyParameters = {
+        "league": heltourConfig.leagueTag,
+        "round": round,
+        "team": team,
+        "board": board,
+        "player": player
+    };
+    return fetchJSONandHandleErrors(request);
+}
+
+function getLeagueModerators(heltourConfig){
+    var request = heltourRequest(heltourConfig, "get_league_moderators");
+    request.parameters = {
+        "league": heltourConfig.leagueTag
+    };
+    return fetchJSONandHandleErrors(request).then(function(json){
+        return json["moderators"];
+    });
+}
+
+function fetchJSONandHandleErrors(request){
     return http.fetchURLIntoJSON(request).then(function(response){
         if(response["json"]["error"]){
             throw new Error(response["json"]["error"]);
@@ -175,9 +201,11 @@ function getPrivateURL(heltourConfig, page, user){
     });
 }
 
+module.exports.assignAlternate = assignAlternate;
 module.exports.getPrivateURL = getPrivateURL;
 module.exports.findPairing = findPairing;
 module.exports.getAllPairings = getAllPairings;
 module.exports.updateSchedule = updateSchedule;
 module.exports.updatePairing = updatePairing;
 module.exports.getRoster = getRoster;
+module.exports.getLeagueModerators = getLeagueModerators;

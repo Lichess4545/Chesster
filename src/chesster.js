@@ -118,6 +118,197 @@ function leagueDMResponse(patterns, responseName) {
 leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
 leagueDMResponse(['captains', 'captain list'], 'formatCaptainsResponse');
 
+/* alternate assignment */
+/* assign <player> to board <board-number> during round <round-number> on <team-name>*/
+chesster.hears({
+    middleware: [ slack.withLeagueByChannelName ],
+    patterns: [ '^assign' ],
+    messageTypes: [ 
+        'ambient'
+    ]
+}, 
+function(bot, message){
+    var channel = channels.byId[message.channel];
+    if (!message.league) {
+        return;
+    }
+    if (!channel) {
+        return;
+    }
+    var alternateOptions = message.league.options.alternate;
+    if (!alternateOptions || !_.isEqual(channel.name, alternateOptions.channel)) {
+        return;
+    }
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
+        return;
+    }
+    
+    var components = message.text.split(" ");
+    var args = _.map(components.slice(0, 9), _.toLower);
+    var teamName = components.splice(9).join(" ");
+    var assign      = args[0],
+        player      = args[1],
+        to          = args[2],
+        board       = args[3],
+        boardNumber = args[4], 
+        during      = args[5], 
+        round       = args[6],
+        roundNumber = args[7],
+        on          = args[8];
+
+    var speaker = slack.getSlackUserFromNameOrID(message.user);
+    var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
+    
+    if (!isCaptainOrModerator(speaker, speakerTeam, teamName)) {
+        replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
+        return;
+    }
+
+    // Ensure the basic command format is valid
+    if (!_.isEqual(["assign", "to", "board", "during", "round", "on"], [assign, to, board, during, round, on])) {
+        replyMisunderstoodAlternateAssignment(bot, message);
+        return;
+    }
+
+    boardNumber = parseInt(boardNumber, 10);
+    if(isNaN(boardNumber)){
+        replyMisunderstoodAlternateAssignment(bot, message);
+        return;
+    }
+
+    roundNumber = parseInt(roundNumber, 10);
+    if(isNaN(roundNumber)){
+        replyMisunderstoodAlternateAssignment(bot, message);
+        return;
+    }
+
+    var team = message.league.getTeam(teamName);
+    if(!team){
+        replyUnrecognizedTeam(bot, message, teamName);
+        return;
+    }
+
+    heltour.assignAlternate(heltourOptions, roundNumber, team.number, boardNumber, player).then(function(){
+        bot.reply(message, player + " has been assigned to board " + boardNumber + " for " + teamName + " during round " + roundNumber);
+    }).catch(function(error){
+        bot.reply(message, "I failed to update your alternate assignement: " + error);
+        bot.reply(message, "Please contact a moderator.");
+    });
+});
+
+function replyMisunderstoodAlternateAssignment(bot, message){
+    bot.reply(message, "Sorry, I did not understand your alternate assignment");
+    bot.reply(message, "Please use the following format:");
+    bot.reply(message, "`assign <player> to board <board-number> during round <round-number> on <team-name>`");
+}
+
+/* alternate unassignment */
+/* unassign alternate for board <board-number> during round <round-number> on <team-name> */
+/* look up the original player and assign him to his board */
+chesster.hears({
+    middleware: [ slack.withLeagueByChannelName ],
+    patterns: [ '^unassign' ],
+    messageTypes: [ 
+        'ambient'
+    ]
+}, 
+function(bot, message){
+    var channel = channels.byId[message.channel];
+    if (!message.league) {
+        return;
+    }
+    if (!channel) {
+        return;
+    }
+    var alternateOptions = message.league.options.alternate;
+    if (!alternateOptions || !_.isEqual(channel.name, alternateOptions.channel)) {
+        return;
+    }
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
+        return;
+    }
+    
+    var components = message.text.split(" ");
+    var args = _.map(components.slice(0, 9), _.toLower);
+    var teamName = components.splice(9).join(" ");
+    var unassign    = args[0],
+        alternate   = args[1],
+        _for        = args[2],
+        board       = args[3],
+        boardNumber = args[4], 
+        during      = args[5], 
+        round       = args[6],
+        roundNumber = args[7],
+        on          = args[8];
+
+    var speaker = slack.getSlackUserFromNameOrID(message.user);
+    var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
+
+    if (!isCaptainOrModerator(speaker, speakerTeam, teamName)) {
+        replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
+        return;
+    }
+
+    // Ensure the basic command format is valid
+    if (!_.isEqual(["unassign", "alternate", "for", "board", "during", "round", "on"], [unassign, alternate, _for, board, during, round, on])) {
+        replyMisunderstoodAlternateUnassignment(bot, message);
+        return;
+    }
+
+    boardNumber = parseInt(boardNumber, 10);
+    if(isNaN(boardNumber)){
+        replyMisunderstoodAlternateUnassignment(bot, message);
+        return;
+    }
+
+    roundNumber = parseInt(roundNumber, 10);
+    if(isNaN(roundNumber)){
+        replyMisunderstoodAlternateUnassignment(bot, message);
+        return;
+    }
+
+    var team = message.league.getTeam(teamName);
+    var player;
+    if(team){
+        player = team.players[boardNumber-1].username;
+    }else{
+        replyUnrecognizedTeam(bot, message, teamName);
+        return;
+    }
+    heltour.assignAlternate(heltourOptions, roundNumber, team.number, boardNumber, player).then(function(){
+        bot.reply(message, player + " has been assigned to board " + boardNumber + " for " + teamName + " during round " + roundNumber);
+    }).catch(function(error){
+        bot.reply(message, "I failed to unassign your alternate: " + error);
+        bot.reply(message, "Please contact a moderator.");
+    });
+});
+
+function isCaptainOrModerator(speaker, speakerTeam, teamName){
+    return speaker.isModerator() || //speaker is a moderator
+	( speakerTeam && //speaker is on a team
+        speakerTeam.captain && //speaker's team has a captain
+        _.isEqual(speaker.name, speakerTeam.captain.name) && //speaker is the team captain
+        _.isEqual(speakerTeam.name, teamName) ); //speaker's team is the team being operated on
+}
+
+function replyOnlyACaptainOrAModeratorCanDoThat(bot, message){
+    bot.reply(message, "Only the team's captain or a league moderator can do that.");
+}
+
+function replyUnrecognizedTeam(bot, message, team){
+    bot.reply(message, "I do not recognize the team: " + team);
+}
+
+function replyMisunderstoodAlternateUnassignment(bot, message){
+    bot.reply(message, "Sorry, I did not understand your alternate unassignment");
+    bot.reply(message, "Please use the following format:");
+    bot.reply(message, "`unassign alternate for board <board-number> during round <round-number> on <team-name>`");
+}
+
 /* game nomination */
 chesster.hears({
     middleware: [ slack.requiresLeague ],
@@ -204,7 +395,7 @@ function prepareCommandsMessage(){
         "    [ mods (lonewolf)| \n"  +
         "        mod list (lonewolf)|       ! list the mods (without summoning)\n" +
         "        mods summon (lonewolf)]    ! summon the mods\n" +
-        "    [ faq ]                        ! a document of frequently asked questions\n" + 
+        "    [ faq (lonewolf)]                        ! a document of frequently asked questions\n" + 
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
         "    [ source ]                     ! github repo for Chesster \n" +
         "    [ subscription help ]          ! help for chesster's subscription system\n" +
@@ -233,6 +424,9 @@ function(bot,message) {
 
 leagueResponse(['summon mods'], 'formatSummonModsResponse');
 leagueResponse(['mods'], 'formatModsResponse');
+
+/* faq */
+leagueResponse(["faq"], 'formatFAQResponse');
 
 /* channels */
 function prepareChannelListMessage(){
@@ -408,14 +602,18 @@ function(bot, message) {
 chesster.on({event: 'user_channel_join'},
 function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        if(_.isEqual(message.channel, channels.getId("general"))){
+        if(_.isEqual(message.channel, channels.getId(chesster.config["welcome"]["channel"]))){
             bot.reply(message, "Everyone, please welcome the newest member of the " 
                              + "Lichess 45+45 League, <@" + message.user + ">!");
             
             bot.startPrivateConversation(message, function(err, convo){
-               convo.say("Welcome. I'm the Lichess4545 League's Moderator Bot.");
+               convo.say("Welcome. I am the moderator bot for the Lichess4545 league");
                convo.say("Say 'help' to get help."); 
-               convo.say("If you joined for the 45+45 league, read this: " + chesster.config["leagues"]["45+45"].links.rules + ". If you joined for Lone Wolf, read this: " + chesster.config["leagues"]["lonewolf"].links.rules + ". Enjoy the league!"); 
+               convo.say("If you joined for the 45+45 league, read this: " 
+                   + chesster.config["leagues"]["45+45"].links.faq 
+                   + ". If you joined for Lone Wolf, read this: " 
+                   + chesster.config["leagues"]["lonewolf"].links.faq 
+                   + ". Enjoy the league!"); 
             });
         }
     });

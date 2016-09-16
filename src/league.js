@@ -79,6 +79,11 @@ league_attributes = {
     _teamLookup: {},
 
     //--------------------------------------------------------------------------
+    // A list of moderator names
+    //--------------------------------------------------------------------------
+    _moderators: [],
+
+    //--------------------------------------------------------------------------
     // The datetime when we were last updated
     //--------------------------------------------------------------------------
     _lastUpdated: moment.utc(),
@@ -119,6 +124,13 @@ league_attributes = {
                 self._lastUpdated = moment.utc();
             }).catch(function(error) {
                 winston.error("{}: Unable to refresh pairings: {}".format(self.options.name, error));
+                throw new Error(error);
+            }),
+            self.refreshLeagueModerators().then(function(){
+                winston.info("Found " + self._moderators.length + " moderators for " + self.options.name);
+                self._lastUpdated = moment.utc();
+            }).catch(function(error) {
+                winston.error("{}: Unable to refresh moderators: {}".format(self.options.name, error));
                 throw new Error(error);
             })
         ]);
@@ -164,7 +176,7 @@ league_attributes = {
             _.each(roster.teams, function(team) {
                 _.each(team.players, function(teamPlayer) {
                     var player = self.getPlayer(teamPlayer.username);
-                    player.isCaptain = player.is_captain;
+                    player.isCaptain = teamPlayer.is_captain;
                     if (player.isCaptain) {
                         team.captain = player;
                     }
@@ -176,6 +188,17 @@ league_attributes = {
             });
             self._teams = newTeams;
             self._teamLookup = newLookup;
+        });
+    },
+    
+    //--------------------------------------------------------------------------
+    // Calls into the website moderators endpoint to get the list of moderators
+    // for the league.
+    //--------------------------------------------------------------------------
+    'refreshLeagueModerators': function(){
+        var self = this;
+        return heltour.getLeagueModerators(self.options.heltour).then(function(moderators){
+            self._moderators = moderators;
         });
     },
 
@@ -229,7 +252,7 @@ league_attributes = {
     // Returns whether someone is a moderator or not.
     //--------------------------------------------------------------------------
     'isModerator': function(name) {
-        return _.includes(this.options.moderators, name);
+        return _.includes(this._moderators, name);
     },
     //--------------------------------------------------------------------------
     // Prepare a debug message for this league
@@ -427,11 +450,19 @@ league_attributes = {
         });
     },
     //--------------------------------------------------------------------------
-    // Get the team for a given player
+    // Get the team for a given player name
     //--------------------------------------------------------------------------
-    'getTeam':function(playerName) {
+    'getTeamByPlayerName':function(playerName) {
         var self = this;
-        return self._teamLookup[playerName.toLowerCase()];
+        return self._playerLookup[playerName.toLowerCase()] &&
+		self._playerLookup[playerName.toLowerCase()].team;
+    },
+    //--------------------------------------------------------------------------
+    // Get the team for a given team name
+    //--------------------------------------------------------------------------
+    'getTeam':function(teamName) {
+        var self = this;
+        return self._teamLookup[teamName.toLowerCase()];
     },
     //--------------------------------------------------------------------------
     // Get the the players from a particular board
@@ -576,11 +607,11 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'formatModsResponse': function() {
         var self = this;
-        moderators = _.map(self.options.moderators, function(name) {
+        moderators = _.map(self._moderators, function(name) {
             return name[0] + "\u200B" + name.slice(1);
         });
         return Q.fcall(function() {
-            return ("{0} mods: " + moderators.join(", ")).format(self.options.name);
+            return ("{0} mods: " + moderators.join(", ") + " (**Note**: this does not ping the moderators. Use: `@chesster: summon mods` to ping them)").format(self.options.name);
         });
     },
     //--------------------------------------------------------------------------
@@ -588,11 +619,17 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'formatSummonModsResponse': function() {
         var self = this;
-        moderators = _.map(self.options.moderators, function(name) {
+        moderators = _.map(self._moderators, function(name) {
             return slack.users.getIdString(name);
         });
         return Q.fcall(function() {
             return ("{0} mods: " + moderators.join(", ")).format(self.options.name);
+        });
+    },
+    'formatFAQResponse': function() {
+        var self = this;
+        return Q.fcall(function(){
+            return "The FAQ for {} can be found: {}".format(self.options.name, self.options.links.faq);
         });
     }
 };

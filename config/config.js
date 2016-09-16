@@ -36,7 +36,9 @@ var config = {
     "links": {
         "source": "https://github.com/endrawes0/Chesster"
     },
-
+    "welcome": {
+        "channel": "general"
+    },
     "leagues": {
         "45+45": {
             "name": "45+45",
@@ -44,15 +46,6 @@ var config = {
                 "4545",
                 "Team",
                 "45",
-            ],
-            "moderators": [
-                "endrawes0",
-                "mrlegilimens",
-                "petruchio",
-                "seb32",
-                "tnan123",
-                "angborxley",
-                "prune2000",
             ],
             "heltour": {
                 "token": heltour_token,
@@ -98,7 +91,11 @@ var config = {
                 "format": "MM/DD @ HH:mm",
                 "channel": "team-scheduling"
             },
+            "alternate": {
+                "channel": "captains"
+            },
             "links": {
+                "faq": "https://www.lichess4545.com/team4545/document/faq/",
                 "rules": "https://www.lichess4545.com/team4545/document/rules/",
                 "league": "https://www.lichess4545.com/team4545/",
                 "guide": "http://bit.ly/1MW9YJ4",
@@ -115,12 +112,6 @@ var config = {
                 "lw",
                 "lonewolf",
                 "wolf",
-            ],
-            "moderators": [
-                "endrawes0",
-                "jptriton",
-                "lakinwecker",
-                "cyanfish"
             ],
             "heltour": {
                 "token": heltour_token,
@@ -168,6 +159,7 @@ var config = {
                 "channel": "lonewolf-scheduling"
             },
             "links": {
+                "faq": "https://www.lichess4545.com/lonewolf/document/faq/",
                 "rules": "https://www.lichess4545.com/lonewolf/document/rules/",
                 "league": "https://www.lichess4545.com/lonewolf/",
                 "registration": "https://www.lichess45454.com/lonewolf/register/"
@@ -185,7 +177,8 @@ var config = {
         "team-results": "45+45",
         "team-gamelinks": "45+45",
         "team-scheduling": "45+45",
-        "unstable_bot": "45+45"
+        "unstable_bot": "45+45",
+        "captains": "45+45",
     },
 }
 module.exports = config;
