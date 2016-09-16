@@ -162,7 +162,7 @@ function(bot, message){
     var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
     
     if (!isCaptainOrModerator(speaker, speakerTeam, teamName)) {
-        replyOnlyACaptainOrModeratorCanDoThat(bot, message);
+        replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
         return;
     }
 
@@ -174,13 +174,13 @@ function(bot, message){
 
     boardNumber = parseInt(boardNumber, 10);
     if(isNaN(boardNumber)){
-        replyMisunderstoodAlternateAssignement(bot, message);
+        replyMisunderstoodAlternateAssignment(bot, message);
         return;
     }
 
     roundNumber = parseInt(roundNumber, 10);
     if(isNaN(roundNumber)){
-        replyMisunderstoodAlternatesAssignment(bot, message);
+        replyMisunderstoodAlternateAssignment(bot, message);
         return;
     }
 
@@ -249,7 +249,7 @@ function(bot, message){
     var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
 
     if (!isCaptainOrModerator(speaker, speakerTeam, teamName)) {
-        replyOnlyACaptainOrModeratorCanDoThat(bot, message);
+        replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
         return;
     }
 
@@ -261,13 +261,13 @@ function(bot, message){
 
     boardNumber = parseInt(boardNumber, 10);
     if(isNaN(boardNumber)){
-        replyMisunderstoodAlternateUnassignement(bot, message);
+        replyMisunderstoodAlternateUnassignment(bot, message);
         return;
     }
 
     roundNumber = parseInt(roundNumber, 10);
     if(isNaN(roundNumber)){
-        replyMisunderstoodAlternatesUnassignment(bot, message);
+        replyMisunderstoodAlternateUnassignment(bot, message);
         return;
     }
 
