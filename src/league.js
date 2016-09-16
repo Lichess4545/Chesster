@@ -611,7 +611,7 @@ league_attributes = {
             return name[0] + "\u200B" + name.slice(1);
         });
         return Q.fcall(function() {
-            return ("{0} mods: " + moderators.join(", ")).format(self.options.name);
+            return ("{0} mods: " + moderators.join(", ") + " (**Note**: this does not ping the moderators. Use: `@chesster: summon mods` to ping them)").format(self.options.name);
         });
     },
     //--------------------------------------------------------------------------
