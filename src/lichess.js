@@ -225,5 +225,5 @@ var ratingFunctions = (function() {
     };
 }());
 
-module.exports.getPlayerRating = ratingFunctions.getPlayerRating
-module.exports.getPlayerByName = getPlayerByName
+module.exports.getPlayerRating = ratingFunctions.getPlayerRating;
+module.exports.getPlayerByName = getPlayerByName;

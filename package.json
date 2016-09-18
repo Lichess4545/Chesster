@@ -16,6 +16,7 @@
     "fast-levenshtein": "1.1.3",
     "google-spreadsheet": "2.0.1",
     "istanbul": "^0.4.3",
+    "jshint": "^2.9.3",
     "lodash": "^4.13.1",
     "moment": "2.13.0",
     "q": "1.4.1",
@@ -32,7 +33,8 @@
   "scripts": {
     "test": "mocha",
     "send-coverage": "node_modules/.bin/codeclimate-test-reporter < coverage/lcov.info; exit 0",
-    "lint": "node_modules/.bin/eslint ."
+    "lint": "node_modules/.bin/eslint .",
+    "hint": "node_modules/.bin/jshint src"
   },
   "repository": {
     "type": "git",

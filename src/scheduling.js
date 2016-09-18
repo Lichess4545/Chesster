@@ -162,6 +162,7 @@ function getPossibleDateStrings(dateString, extrema) {
 
     var cur = extrema.start.clone();
     var now = moment.utc();
+    var month;
     while (!cur.isAfter(extrema.end)) {
         var monthDay = cur.format("MM-DD");
         // Deal with a couple of formats that moment doesn't produce but are used.
@@ -174,7 +175,7 @@ function getPossibleDateStrings(dateString, extrema) {
         dateNameMappings[cur.format("ddd").toLowerCase()] = monthDay;
         dateNameMappings[cur.format("dddd").toLowerCase()] = monthDay;
         dateNameMappings[cur.format("Do").toLowerCase()] = cur.format("DD");
-        var month = cur.format("MM");
+        month = cur.format("MM");
         dateNameMappings[cur.format("MMM").toLowerCase()] = month;
         dateNameMappings[cur.format("MMMM").toLowerCase()] = month;
         cur.add(1, 'days');
@@ -320,7 +321,7 @@ function getRoundExtrema(options) {
     } else {
         roundStart = moment(extrema.referenceDate).clone();
     }
-    referenceDate = roundStart.clone()
+    referenceDate = roundStart.clone();
     // Make it the right time of day.
     roundStart.hour(extrema.hour).minute(extrema.minute).second(0);
 

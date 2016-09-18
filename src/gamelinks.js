@@ -3,7 +3,7 @@ var _ = require("lodash");
 //given the input text from a essage
 function parseGamelink(messageText){
     //split it into tokens separated by white space and slashes
-    var tokens = messageText.split(/[\<\>\|\/\s]/);
+    var tokens = messageText.split(/[<>\|\/\s]/);
     var foundBaseURL = false;
     var gamelinkID;
 

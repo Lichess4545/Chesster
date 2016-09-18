@@ -6,11 +6,11 @@ const _ = require("lodash");
 const Q = require("q");
 const winston = require("winston");
 const moment = require("moment");
-const format = require('string-format')
-format.extend(String.prototype)
+const format = require('string-format');
+format.extend(String.prototype);
 
-const slack = require('./slack.js')
-const heltour = require('./heltour.js')
+const slack = require('./slack.js');
+const heltour = require('./heltour.js');
 const db = require("./models.js");
 
 var MILISECOND = 1;
@@ -266,7 +266,7 @@ league_attributes = {
                 pairingsCount: self._pairings.length,
                 lastUpdated: self._lastUpdated.format("YYYY-MM-DD HH:mm UTC"),
                 since: self._lastUpdated.fromNow(true)
-            })
+            });
         });
     },
     //--------------------------------------------------------------------------
@@ -286,7 +286,7 @@ league_attributes = {
                 "color": "white",
                 "opponent":  pairing.black,
                 "date": pairing.scheduled_date
-            }
+            };
             if (!_.isEqual(pairing.white.toLowerCase(), targetPlayer.name.toLowerCase())) {
                 details.color = "black";
                 details.opponent = pairing.white;
@@ -338,7 +338,7 @@ league_attributes = {
                 schedule_phrase = " on {localDateTimeString} in your timezone, which is in {timeUntil}.".format({
                     localDateTimeString: localTime.format("MM/DD _(dddd)_ [at] HH:mm"),
                     timeUntil: localTime.fromNow(true)
-                })
+                });
             }
 
             // Otherwise display the time until the match
@@ -586,7 +586,7 @@ league_attributes = {
                 });
             }
             teams = _.filter(self._teams, function(t) {
-                return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase())
+                return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase());
             });
             if (teams.length === 0) {
                 return "No team by that name";
@@ -669,7 +669,7 @@ var getLeague = (function() {
             }
         }
         return _league_cache[league_name];
-    }
+    };
 }());
 
 module.exports.League = League;

@@ -112,7 +112,7 @@ function updatesUsers(bot){
             for (var i = 0; i < total; i++) {
                 var member = response.members[i];
                 byName[member.name] = member;
-                byId[member.id] = member
+                byId[member.id] = member;
             }
             users.byName = byName;
             users.byId = byId;
@@ -215,7 +215,7 @@ function isModerator(message) {
             throw new Error("isModerator requires a league to be attached to the message. Use the withLeague middleware");
         }
         return message.league.isModerator(this.name);
-    }
+    };
 }
 
 
@@ -259,7 +259,7 @@ function findLeagueByMessageText(bot, message, config) {
     var args = message.text.split(" ");
     _.each(args, function(arg) {
         var results = fuzzy.rank_choices(arg.toLowerCase(), leagueTargets, true);
-        matches.push.apply(matches, results)
+        matches.push.apply(matches, results);
     });
     var bestMatches = fuzzy.findBestMatches(matches, true);
     var possibleLeagues = {};
@@ -285,8 +285,9 @@ function _withLeagueImplementation(bot, message, config, channelOnly) {
         // See if the person asked for a specific league first
 
         // generate a set of possible target leagues
+        var l;
         if (!channelOnly) {
-            var l = findLeagueByMessageText(bot, message, config);
+            l = findLeagueByMessageText(bot, message, config);
             if (l) {
                 message.league = l;
                 return l;

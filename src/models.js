@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 //------------------------------------------------------------------------------
 // Models for our locally stored data
@@ -92,4 +92,4 @@ var exports = (function() {
     };
 }());
 
-module.exports = exports
+module.exports = exports;
