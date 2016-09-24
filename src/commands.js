@@ -48,14 +48,13 @@ function InvalidTypeValueError(token, type){
  * Commands that are too short will throw TooFewTokensError
  */
 function tokenize(command, descriptions){
-    var deferred = Q.defer();
-    var tokens = getTokens(_.toLower(command), descriptions.length);    
+    return Q.fcall(function(){
+        var tokens = getTokens(_.toLower(command), descriptions.length);    
 
-    var parameters = {};
-    try{
+        var parameters = {};
         _.zipWith(tokens, descriptions, function(token, description){
             if(_.isNil(token)){
-                deferred.reject(new TooFewTokensError(tokens, descriptions));
+                throw new TooFewTokensError(tokens, descriptions);
             }else if(description.match(VARIABLE)){
                 parameterizeVariableToken(token, description, parameters);
             }else if(description.match(CHOICE_VARIABLE)){
@@ -63,12 +62,11 @@ function tokenize(command, descriptions){
             }else if(description.match(CONSTANT_VALUE)){
                 parameterizeConstantToken(token, description, parameters); 
             }else{
-                deferred.reject(new InvalidTokenDescriptionError(description));
+                throw new InvalidTokenDescriptionError(description);
             }
         });
-        deferred.resolve(parameters);
-    }catch(e){ deferred.reject(e); }
-    return deferred.promise;
+        return parameters;
+    });
 }
 
 function TooFewTokensError(tokens, descriptions){
