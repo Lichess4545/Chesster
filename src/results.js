@@ -1,5 +1,4 @@
 var _ = require("lodash");
-var heltour = require("./heltour.js");
 
 var VALID_RESULTS = {
     "0-0":"0-0",

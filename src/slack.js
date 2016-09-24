@@ -172,7 +172,7 @@ function refresh(bot, delay, config) {
 }
 
 function criticalPath(promise){
-    exceptionLogger(promise).catch(function(e) {
+    exceptionLogger(promise).catch(function() {
         winston.error("An exception was caught in a critical code-path. I am going down.");
         process.exit(1);
     });
@@ -194,7 +194,7 @@ function exceptionLogger(promise){
 }
 
 function botExceptionHandler(bot, message, promise){
-    exceptionLogger(promise).catch(function(e){
+    exceptionLogger(promise).catch(function(){
         winston.error("Message: " + JSON.stringify(message));
         bot.reply(message, "Something has gone terribly terribly wrong. Please forgive me.");
         
@@ -222,7 +222,7 @@ function isModerator(message) {
 //------------------------------------------------------------------------------
 // Various middleware
 //------------------------------------------------------------------------------
-function requiresModerator(bot, message, config) {
+function requiresModerator(bot, message) {
     return Q.fcall(function() {
         if (_.isUndefined(message.league)) {
             throw new Error("requiresModerator MUST be called after withLeague.");
@@ -272,8 +272,7 @@ function findLeagueByMessageText(bot, message, config) {
         throw new StopControllerError("Ambiguous leagues.");
     }
     if (matchingLeagueNames.length === 1) {
-        l = _.values(possibleLeagues)[0];
-        return l;
+        return _.values(possibleLeagues)[0];
     }
     return null;
 }
@@ -327,7 +326,7 @@ function requiresLeague(bot, message, config) {
 //------------------------------------------------------------------------------
 // A controller wrapper.
 //------------------------------------------------------------------------------
-DEFAULT_HEARS_OPTIONS = {
+var DEFAULT_HEARS_OPTIONS = {
     middleware: []
 };
 function hears(options, callback) {
@@ -362,7 +361,7 @@ function hears(options, callback) {
         }));
     });
 }
-DEFAULT_ON_OPTIONS = {
+var DEFAULT_ON_OPTIONS = {
     middleware: []
 };
 function on(options, callback) {
@@ -400,7 +399,7 @@ function on(options, callback) {
 //------------------------------------------------------------------------------
 function startPrivateConversation(nameOrId) {
     var deferred = Q.defer();
-    target = getSlackUserFromNameOrID(nameOrId);
+    var target = getSlackUserFromNameOrID(nameOrId);
     if (_.isNil(target)) {
         deferred.reject("Unable to find user");
     } else {
@@ -415,7 +414,7 @@ function startPrivateConversation(nameOrId) {
 }
 
 
-DEFAULT_BOT_OPTIONS = {
+var DEFAULT_BOT_OPTIONS = {
     debug: false,
     config_file: "./config.js"
 };
@@ -426,7 +425,7 @@ function Bot(options) {
     winston.info("Loading config from: " + self.options.config_file);
     self.config = require(self.options.config_file);
     if (!self.config.token) {
-        winston.error('Failed to load token from: ' + config_file);
+        winston.error('Failed to load token from: ' + self.options.config_file);
         throw new Error("A token must be specified in the configuration file");
     }
 

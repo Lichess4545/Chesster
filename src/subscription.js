@@ -178,7 +178,7 @@ function processTellCommand(config, message) {
                         league: _league.options.name.toLowerCase(),
                         target: listener.toLowerCase()
                     }
-                }).then(function(subscription) {
+                }).then(function() {
                     unlock.resolve();
                     return "Great! I will tell {target} when {event} for {source} in {league}".format({
                         source: sourceName,
@@ -272,7 +272,7 @@ function register(bot, eventName, cb) {
             _.each(targets, function(target) {
                 var deferred = Q.defer();
                 bot.startPrivateConversation(target).then(function(convo) {
-                    message = cb(target, _.clone(context));
+                    var message = cb(target, _.clone(context));
                     convo.say(message);
                     deferred.resolve();
                 });

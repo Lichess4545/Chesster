@@ -41,7 +41,7 @@ function fetchURL(options){
         });
     }).on('error', (e) => {
         winston.error(JSON.stringify(e));
-        deferred.reject("failed to get a response from url: " + url);
+        deferred.reject("failed to get a response from url: " + options.href);
     });
     if (bodyParameters) {
         req.write(bodyParameters);
@@ -58,7 +58,7 @@ function fetchURLIntoJSON(options){
                 result['json'] = json;
                 deferred.resolve(result);
             } else {
-                deferred.reject("body was not a valid json object: " + url);
+                deferred.reject("body was not a valid json object: " + JSON.stringify(result["body"]));
             }
         } catch (e) {
             winston.error("[HTTP] Options: " + JSON.stringify(options));

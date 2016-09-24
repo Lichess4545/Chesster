@@ -4,5 +4,7 @@
     "sub": true,
     "laxbreak": true,
     "laxcomma": true,
-    "strict": false
+    "strict": false,
+    "undef": true,
+    "unused": true
 }

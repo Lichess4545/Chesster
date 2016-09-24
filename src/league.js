@@ -13,13 +13,8 @@ const slack = require('./slack.js');
 const heltour = require('./heltour.js');
 const db = require("./models.js");
 
-var MILISECOND = 1;
-var SECONDS = 1000 * MILISECOND;
-var MINUTES = 60 * SECONDS;
-var HOURS = 60 * MINUTES;
-
 var lichess = require("./lichess");
-LEAGUE_DEFAULTS = {
+var LEAGUE_DEFAULTS = {
     "name": "",
     "heltour": {
         "token": "",
@@ -39,7 +34,7 @@ LEAGUE_DEFAULTS = {
 };
 
 
-league_attributes = {
+var league_attributes = {
     //--------------------------------------------------------------------------
     // A list of objects with the following attributes
     //   - username
@@ -152,7 +147,7 @@ league_attributes = {
                     return db.LichessRating.findOrCreate({
                         where: { lichessUserName: player.username }
                     }).then(function(lichessRatings) {
-                        lichessRating = lichessRatings[0];
+                        var lichessRating = lichessRatings[0];
                         lichessRating.set('rating', player.rating);
                         lichessRating.set('lastCheckedAt', moment.utc().format());
                         lichessRating.save().then(function() {
@@ -280,7 +275,7 @@ league_attributes = {
                 return {};
             }
             // TODO: determine what to do if multiple pairings are returned. ?
-            pairing = pairings[0];
+            var pairing = pairings[0];
             var details = {
                 "player": targetPlayer.name, 
                 "color": "white",
@@ -482,7 +477,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     // Format the response for the list of captains
     //--------------------------------------------------------------------------
-    'formatCaptainsResponse':function(boardNumber) {
+    'formatCaptainsResponse':function() {
         var self = this;
         return Q.fcall(function() {
             if (self._teams.length === 0) {
@@ -492,7 +487,7 @@ league_attributes = {
             }
             var message = "Team Captains:\n";
             var teamIndex = 1;
-            self._teams.forEach(function(team, index, array){
+            self._teams.forEach(function(team){
                 var captain = team.captain;
                 if (captain) {
                     captain = captain.name;
@@ -515,7 +510,7 @@ league_attributes = {
                     name: self.options.name
                 });
             }
-            teams = _.filter(self._teams, function(t) {
+            var teams = _.filter(self._teams, function(t) {
                 return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase());
             });
             if (teams.length === 0) {
@@ -524,7 +519,7 @@ league_attributes = {
             if (teams.length > 1) {
                 return "Too many teams by that name";
             }
-            team = teams[0];
+            var team = teams[0];
             if(team && team.captain){
                 return "Captain of " + team.name + " is " + team.captain.name;
             }else{
@@ -535,7 +530,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     // Format the teams response
     //--------------------------------------------------------------------------
-    'formatTeamsResponse':function(teamName) {
+    'formatTeamsResponse':function() {
         var self = this;
         return Q.fcall(function() {
             if (self._teams.length === 0) {
@@ -544,9 +539,8 @@ league_attributes = {
                 });
             }
             var message = "There are currently " + self._teams.length + " teams competing. \n";
-            var teamIndex = 1;
-            self._teams.forEach(function(team, index, array){
-                message += "\t" + (teamIndex++) + ". " + team.name + "\n";
+            self._teams.forEach(function(team){
+                message += "\t" + team.number + ". " + team.name + "\n";
             });
             return message;
         });
@@ -567,7 +561,7 @@ league_attributes = {
                 players.sort(function(e1, e2){
                     return e1.rating > e2.rating ? -1 : e1.rating < e2.rating ? 1 : 0;
                 });
-                players.forEach(function(member, index, array){
+                players.forEach(function(member){
                     message += "\t" + member.name + ": (Rating: " + member.rating + "; Team: " + member.team.name + ")\n";
                 });
                 return message;
@@ -585,7 +579,7 @@ league_attributes = {
                     name: self.options.name
                 });
             }
-            teams = _.filter(self._teams, function(t) {
+            var teams = _.filter(self._teams, function(t) {
                 return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase());
             });
             if (teams.length === 0) {
@@ -594,9 +588,9 @@ league_attributes = {
             if (teams.length > 1) {
                 return "Too many teams by that name";
             }
-            team = teams[0];
+            var team = teams[0];
             var message = "The members of " + team.name + " are \n";
-            team.roster.forEach(function(member, index, array){
+            team.roster.forEach(function(member, index){
                 message += "\tBoard " + (index+1) + ": " + member.name + " (" + member.rating + ")\n";
             });
             return message;
@@ -607,7 +601,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'formatModsResponse': function() {
         var self = this;
-        moderators = _.map(self._moderators, function(name) {
+        var moderators = _.map(self._moderators, function(name) {
             return name[0] + "\u200B" + name.slice(1);
         });
         return Q.fcall(function() {
@@ -619,7 +613,7 @@ league_attributes = {
     //--------------------------------------------------------------------------
     'formatSummonModsResponse': function() {
         var self = this;
-        moderators = _.map(self._moderators, function(name) {
+        var moderators = _.map(self._moderators, function(name) {
             return slack.users.getIdString(name);
         });
         return Q.fcall(function() {
@@ -662,7 +656,7 @@ var getLeague = (function() {
                 winston.info("Creating new league for " + league_name);
                 this_league_config = _.clone(this_league_config);
                 this_league_config.name = league_name;
-                league = new League(this_league_config);
+                var league = new League(this_league_config);
                 _league_cache[league_name] = league;
             } else {
                 return undefined;

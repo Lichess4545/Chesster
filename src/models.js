@@ -10,8 +10,6 @@ var winston = require("winston");
 
 
 var exports = (function() {
-    var _models = {};
-    var _lockQueue = [];
     var _lock = new AsyncLock();
 
     //--------------------------------------------------------------------------

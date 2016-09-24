@@ -1,34 +1,5 @@
 var levenshtein = require('fast-levenshtein');
 
-var LONEWOLF_CHANNEL_NAMES = [
-    "lonewolf-general",
-    "lonewolf-gamelinks",
-    "lonewolf-schedule",
-    "lonewolf-results",
-    "unstable_bot-lonewolf"
-];
-var TEAM_CHANNEL_NAMES = [
-    "general",
-    "team-general",
-    "team-gamelinks",
-    "team-schedule",
-    "team-results",
-    "unstable_bot"
-];
-var LONEWOLF_TARGETS = LONEWOLF_CHANNEL_NAMES.concat([
-    "lonewolf",
-    "lone",
-    "wolf",
-    "lw",
-    "30",
-    "3030"
-]);
-var TEAM_TARGETS = TEAM_CHANNEL_NAMES.concat([
-    "team",
-    "45",
-    "4545"
-]);
-
 function findBestMatches(results, includeDistance) {
     if (results.length === 0) {
         return results;
