@@ -90,7 +90,7 @@ function InvalidTokenDescriptionError(description){
  * " " separated words is returned without concatenation
  */
 function getTokens(text, numTokens){
-    var words = _.filter(_.split(text, ' '));
+    var words = _(text).split(' ').filter().value();
     if(words.length <= numTokens) return words;
 
     var tokens = _.slice(words, 0, numTokens-1);
@@ -110,7 +110,8 @@ function getTokens(text, numTokens){
  */
 function parameterizeVariableToken(token, descriptionString, parameters){
     //create an object splitting the description string into type and name
-    var description = _.zipObject(['type', 'name'], _.filter(_.split(descriptionString, /[\{\:\}]/)));
+    var description = 
+        _.zipObject(['type', 'name'], _(descriptionString).split(/[\{\:\}]/).filter().value());
     //if either are not specified, the description string is bad.
     if(_.isNil(description.type) || _.isNil(description.name)) 
         throw new InvalidTokenDescriptionError(descriptionString);
@@ -141,7 +142,7 @@ function InvalidTypeError(type, description){
  */
 function parameterizeChoiceToken(token, description, parameters){
     //get the choices from the description
-    var choices = _.filter(_.split(description, /[\{\|\}]/));
+    var choices = _(description).split(/[\{\|\}]/).filter().value();
     //verify the token exists as one of the valid choices
     if(!_.includes(choices, token)) throw new InvalidChoiceError(token);
     parameters[token] = token; // name and token are the same here
@@ -162,7 +163,7 @@ function parameterizeConstantToken(token, description, parameters){
     if(_.isEqual(token, description)){
         parameters[description] = token;
     }else{
-         throw new InvalidConstantError(token);
+         throw new InvalidConstantError(token, description);
     }
 }
 

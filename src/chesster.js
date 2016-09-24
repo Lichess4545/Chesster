@@ -131,7 +131,7 @@ function(bot, message){
     }
 
     var commandDescription;
-    if(_.isEqual(_.head(_.words(message.text)), "player")){
+    if(_.isEqual(_(message.text).split(' ').head(), "player")){
         commandDescription = [
             "player",
             "{text:playerName}",
@@ -275,7 +275,6 @@ function(bot, message){
         "on",
         "{text:teamName}"
     ]).then(function(parameters){
-debugger;
         var speaker = slack.getSlackUserFromNameOrID(message.user);
         var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
     
@@ -302,14 +301,12 @@ debugger;
             team.number, 
             boardNumber, 
             player.name).then(function(){
-debugger;
             bot.reply(message, 
                 "*{player}* has been assigned to *board {boardNumber}* for *{teamName}* during *round {roundNumber}*".format(parameters));
         }).catch(function(error){
             replyFailedToUpdate(bot, message, "alternate assignment", error);
         });
     }).catch(function(error){
-debugger;
         if(error instanceof commands.TooFewTokensError ||
             error instanceof commands.InvalidChoiceError ||
             error instanceof commands.InvalidConstantError ){
