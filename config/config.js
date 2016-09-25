@@ -98,8 +98,10 @@ var config = {
                 "faq": "https://www.lichess4545.com/team4545/document/faq/",
                 "rules": "https://www.lichess4545.com/team4545/document/rules/",
                 "league": "https://www.lichess4545.com/team4545/",
-                "guide": "http://bit.ly/1MW9YJ4",
-                "captains": "https://lichess4545.slack.com/files/endrawes0/F0V3SPE90/guidelinesforlichess4545teamcaptains2.doc",
+                "pairings": "https://www.lichess4545.com/team4545/pairings/",
+                "standings": "https://www.lichess4545.com/team4545/standings/",
+                "guide": "https://www.lichess4545.com/team4545/document/player-handbook/",
+                "captains": "https://www.lichess4545.com/team4545/document/captains/",
                 "registration": "https://www.lichess4545.com/team4545/register/"
             }
         },
@@ -162,6 +164,8 @@ var config = {
                 "faq": "https://www.lichess4545.com/lonewolf/document/faq/",
                 "rules": "https://www.lichess4545.com/lonewolf/document/rules/",
                 "league": "https://www.lichess4545.com/lonewolf/",
+                "pairings": "https://www.lichess4545.com/lonewolf/pairings/",
+                "standings": "https://www.lichess4545.com/lonewolf/standings/",
                 "registration": "https://www.lichess45454.com/lonewolf/register/"
             }
         },
