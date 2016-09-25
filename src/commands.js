@@ -6,14 +6,12 @@ const CHOICE_VARIABLE = /^\{([a-zA-Z]+\|?)+\}$/;
 const CONSTANT_VALUE = /^[a-zA-Z]+$/;
 
 const VARIABLE_TYPES = {
-    "TEXT": {
-        match_expression: /text/,
+    "text": {
         parse: function(token){
             return token; //all tokens are valid
         }
     },
-    "INT": { 
-        match_expression: /int/, 
+    "int": { 
         parse: function(token){
             var value = parseInt(token, 10);
             if(isNaN(value)) throw new InvalidTypeValueError(token, "int");
@@ -23,19 +21,12 @@ const VARIABLE_TYPES = {
     /*...*/
 };
 
-function InvalidTypeValueError(token, type){
-    this.token = token;
-    this.type = type;
-    this.name = 'InvalidTypeValueError';
-    this.stack = (new Error()).stack;
-}
-
 /* 
  * This command tokenizer takes the following token descriptions
- * constant: constantValue - constant values will be varified to be the exact 
+ * constant: constantValue - constant values will be verified to be the exact 
  *           value specified. If it does not match, this function will throw 
  *           InvalidConstantError
- * variable: {type: variableName} - variable values will be varified to be the 
+ * variable: {type: variableName} - variable values will be verified to be the 
  *           type specified. If the type does not match, this function will throw
  *           InvalidTypeValueError
  * choice:   {option1|option2|option3} - choices must be one of the prespecified  
@@ -43,7 +34,7 @@ function InvalidTypeValueError(token, type){
  *           returned token object. If it does not match one of the specified 
  *           options, this function will throw InvalidChoiceError
  * 
- * types:    int, text - type must match one of these. If it does not match, thi
+ * types:    int, text - type must match one of these. If it does not match,
  *           this function will throw InvalidTypeError
  * Commands that are too short will throw TooFewTokensError
  */
@@ -69,22 +60,9 @@ function tokenize(command, descriptions){
     });
 }
 
-function TooFewTokensError(tokens, descriptions){
-    this.tokens = tokens;
-    this.descriptions = descriptions;
-    this.name = 'TooFewTokensError';
-    this.stack = (new Error()).stack;
-}
-
-function InvalidTokenDescriptionError(description){
-    this.description = description;
-    this.name = 'InvalidTokenDescriptionError';
-    this.stack = (new Error()).stack;
-}
-
 /*
  * separates the text into numTokens-1, where the remaining words make up the final token
- * if the number of tokens is greater than the number of " " separted words, the array of 
+ * if the number of tokens is greater than the number of " " separated words, the array of 
  * " " separated words is returned without concatenation
  */
 function getTokens(text, numTokens){
@@ -110,28 +88,19 @@ function parameterizeVariableToken(token, descriptionString, parameters){
     //create an object splitting the description string into type and name
     var description = 
         _.zipObject(['type', 'name'], _(descriptionString).split(/[\{\:\}]/).filter().value());
+
     //if either are not specified, the description string is bad.
     if(_.isNil(description.type) || _.isNil(description.name)) 
         throw new InvalidTokenDescriptionError(descriptionString);
+
     //for each type defined, test it to see if it matches
     //   given a match, parse the token and store
-    _.forIn(VARIABLE_TYPES, function (type){
-       if(description.type.match(type.match_expression)){
-           parameters[description.name] = type.parse(token);
-           return false;
-       }
-    });
-
-    //if value could not be parameterized because the type was not matched, throw InvalidTypeError
-    if(!parameters[description.name])
+    var type =  VARIABLE_TYPES[description.type];
+    if(type){
+        parameters[description.name] = type.parse(token);
+    }else{
         throw new InvalidTypeError(description.type, descriptionString);
-}
-
-function InvalidTypeError(type, description){
-    this.type = type;
-    this.description = description;
-    this.name = 'InvalidTypeError';
-    this.stack = (new Error()).stack;
+    }
 }
 
 /*
@@ -141,16 +110,10 @@ function InvalidTypeError(type, description){
 function parameterizeChoiceToken(token, description, parameters){
     //get the choices from the description
     var choices = _(description).split(/[\{\|\}]/).filter().value();
+
     //verify the token exists as one of the valid choices
     if(!_.includes(choices, token)) throw new InvalidChoiceError(token);
     parameters[token] = token; // name and token are the same here
-}
-
-function InvalidChoiceError(token, description){
-    this.token = token;
-    this.description = description;
-    this.name = 'InvalidChoiceError';
-    this.stack = (new Error()).stack;
 }
 
 /*
@@ -165,6 +128,45 @@ function parameterizeConstantToken(token, description, parameters){
     }
 }
 
+module.exports.tokenize = tokenize;
+
+/* 
+ * commands error types 
+*/
+function InvalidTypeValueError(token, type){
+    this.token = token;
+    this.type = type;
+    this.name = 'InvalidTypeValueError';
+    this.stack = (new Error()).stack;
+}
+
+function TooFewTokensError(tokens, descriptions){
+    this.tokens = tokens;
+    this.descriptions = descriptions;
+    this.name = 'TooFewTokensError';
+    this.stack = (new Error()).stack;
+}
+
+function InvalidTokenDescriptionError(description){
+    this.description = description;
+    this.name = 'InvalidTokenDescriptionError';
+    this.stack = (new Error()).stack;
+}
+
+function InvalidTypeError(type, description){
+    this.type = type;
+    this.description = description;
+    this.name = 'InvalidTypeError';
+    this.stack = (new Error()).stack;
+}
+
+function InvalidChoiceError(token, description){
+    this.token = token;
+    this.description = description;
+    this.name = 'InvalidChoiceError';
+    this.stack = (new Error()).stack;
+}
+
 function InvalidConstantError(token, description){
     this.token = token;
     this.description = description;
@@ -172,9 +174,6 @@ function InvalidConstantError(token, description){
     this.stack = (new Error()).stack;
 }
 
-module.exports.tokenize = tokenize;
-
-/* error types */
 module.exports.InvalidTypeValueError = InvalidTypeValueError;
 module.exports.TooFewTokensError = TooFewTokensError;
 module.exports.InvalidTokenDescriptionError = InvalidTokenDescriptionError;

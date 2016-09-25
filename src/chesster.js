@@ -154,7 +154,7 @@ function(bot, message){
         ];
     }
 
-    commands.tokenize(message.text, commandDescription).then(function(parameters){
+    return commands.tokenize(message.text, commandDescription).then(function(parameters){
         var available = parameters["available"] ? true : false;
         var roundNumber = parameters["roundNumber"];
         var speaker = slack.getSlackUserFromNameOrID(message.user);
@@ -182,7 +182,7 @@ function(bot, message){
             }
         }
 
-        heltour.setAvailability(heltourOptions, playerName, available, roundNumber).then(function (){
+        return heltour.setAvailability(heltourOptions, playerName, available, roundNumber).then(function (){
             formatReplyUpdatedAvailability(bot, message, playerName, available, roundNumber);
         }).catch(function(error){
             replyFailedToUpdate(bot, message, "availability", error); 
@@ -263,7 +263,7 @@ function(bot, message){
         return;
     }
     
-    commands.tokenize(message.text, [
+    return commands.tokenize(message.text, [
         "assign", 
         "{text:player}", 
         "to", 
@@ -296,7 +296,7 @@ function(bot, message){
         if(!player){
             replyFailedToUpdate(bot, message, "alternate assignment", "unknown player");
         }
-        heltour.assignAlternate(heltourOptions, 
+        return heltour.assignAlternate(heltourOptions, 
             roundNumber, 
             team.number, 
             boardNumber, 
@@ -404,7 +404,7 @@ function(bot, message){
         replyUnrecognizedTeam(bot, message, teamName);
         return;
     }
-    heltour.assignAlternate(heltourOptions, roundNumber, team.number, boardNumber, player).then(function(){
+    return heltour.assignAlternate(heltourOptions, roundNumber, team.number, boardNumber, player).then(function(){
         bot.reply(message, player + " has been assigned to board " + boardNumber + " for " + teamName + " during round " + roundNumber);
     }).catch(function(error){
         replyFailedToUpdate(bot, message, "alternate assignment", error);
@@ -1058,7 +1058,7 @@ function(bot, message) {
             return;
         }
         
-        heltour.findPairing(
+        return heltour.findPairing(
             heltourOptions,
             result.white.name,
             result.black.name,
@@ -1293,7 +1293,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
     //gamelinks only come from played games, so ignoring forfeit result types
 
     //update the spreadsheet with results from gamelink
-    heltour.updatePairing(
+    return heltour.updatePairing(
         heltourOptions,
         result
     ).then(function(updatePairingResult) {
