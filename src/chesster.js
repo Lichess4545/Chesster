@@ -889,18 +889,11 @@ chesster.on({
 },
 function(bot, message) {
     var deferred = Q.defer();
+    if(!message.league){
+        return;
+    }
+
     var schedulingOptions = message.league.options.scheduling;
-    if (!schedulingOptions) {
-        winston.error("[SCHEDULING] {} league doesn't have scheduling options!?".format(message.league.options.name));
-        deferred.resolve();
-        return deferred.promise;
-    } 
-    var heltourOptions = message.league.options.heltour;
-    if (!heltourOptions) {
-        winston.error("[SCHEDULING] {} league doesn't have heltour options!?".format(message.league.options.name));
-        deferred.resolve();
-        return deferred.promise;
-    } 
     var channel = channels.byId[message.channel];
     if (!channel) {
         return;
@@ -909,6 +902,19 @@ function(bot, message) {
         deferred.resolve();
         return deferred.promise;
     }
+
+    if (!schedulingOptions) {
+        winston.error("[SCHEDULING] {} league doesn't have scheduling options!?".format(message.league.options.name));
+        deferred.resolve();
+        return deferred.promise;
+    } 
+
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("[SCHEDULING] {} league doesn't have heltour options!?".format(message.league.options.name));
+        deferred.resolve();
+        return deferred.promise;
+    } 
 
     var referencesSlackUsers = false;
 
@@ -1019,18 +1025,21 @@ chesster.on({
     middleware: [slack.withLeagueByChannelName]
 },
 function(bot, message) {
-    var heltourOptions = message.league.options.heltour;
-    if (!heltourOptions) {
-        winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
+    if(!message.league){
         return;
     }
-
     var resultsOptions = message.league.options.results; 
     var channel = channels.byId[message.channel];
     if (!channel) {
         return;
     }
     if (!resultsOptions || !_.isEqual(channel.name, resultsOptions.channel)){
+        return;
+    }
+
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
         return;
     }
 
