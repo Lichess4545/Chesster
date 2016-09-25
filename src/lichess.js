@@ -13,7 +13,6 @@ var db = require("./models.js");
 
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;
-var MINUTES = 60 * SECONDS;
 
 //------------------------------------------------------------------------------
 // A lichess API queue.
@@ -33,7 +32,6 @@ var makeRequest = (function() {
     var backgroundQueue = [];
     // The mainQueue will be processed first.
     var mainQueue = [];
-    var lastRequest = moment.utc();
     function makeRequest(url, isJSON, isBackground) {
         var deferred = Q.defer();
         if (isBackground) {
@@ -131,8 +129,6 @@ function getPlayerByName(name, isBackground){
 // can type it in themselves.
 //------------------------------------------------------------------------------
 var ratingFunctions = (function() {
-    var _playerRatings = {};
-    
     //promises are added and replaced with each new call
     //promises may be used more than once because multiple requests may be out
     //for a single rating request
@@ -153,7 +149,7 @@ var ratingFunctions = (function() {
                 return db.LichessRating.findOrCreate({
                     where: { lichessUserName: name }
                 }).then(function(lichessRatings) {
-                    lichessRating = lichessRatings[0];
+                    var lichessRating = lichessRatings[0];
                     lichessRating.set('rating', rating);
                     lichessRating.set('lastCheckedAt', moment.utc().format());
                     lichessRating.save().then(function() {
@@ -162,7 +158,7 @@ var ratingFunctions = (function() {
                             rating: rating
                         }));
                         unlock.resolve();
-                    }).catch(function(error) {
+                    }).catch(function() {
                         unlock.resolve();
                     });
                     return rating;
@@ -225,5 +221,5 @@ var ratingFunctions = (function() {
     };
 }());
 
-module.exports.getPlayerRating = ratingFunctions.getPlayerRating
-module.exports.getPlayerByName = getPlayerByName
+module.exports.getPlayerRating = ratingFunctions.getPlayerRating;
+module.exports.getPlayerByName = getPlayerByName;

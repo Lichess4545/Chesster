@@ -1,12 +1,10 @@
 // extlibs
-var fs = require('fs');
 var moment = require('moment');
 var Q = require("q");
 var _ = require("lodash");
 var winston = require("winston");
 
 // Our stuff
-var fuzzy = require('./fuzzy_match.js');
 var gamelinks = require('./gamelinks.js');
 var results = require('./results.js');
 var heltour = require('./heltour.js');
@@ -16,11 +14,10 @@ var lichess = require('./lichess.js');
 var scheduling = require('./scheduling.js');
 var slack = require('./slack.js');
 var subscription = require('./subscription.js');
+var commands = require('./commands.js');
 
 var users = slack.users;
 var channels = slack.channels;
-
-var SWORDS = "\u2694";
 
 /* exception handling */
 /* later this will move it its own module */
@@ -47,13 +44,6 @@ function bot_exception_handler(bot, message, todo){
     });
 }
 
-function critical_path(todo){
-    exception_handler(todo, function(){
-        winston.error("An exception was caught in a critical code-path. I am going down.");
-        process.exit(1);
-    });
-}
-
 /* static entry point */
 
 var config_file = process.argv[2] || "../config/config.js"; 
@@ -70,7 +60,7 @@ function handleHeltourErrors(bot, message, error){
         resultReplyTooManyPairings(bot, message);
     } else {
         replyGenericFailure(bot, message, "@endrawes0");
-        throw new Error("Error making your update: " + err);
+        throw new Error("Error making your update: " + error);
     }
 }
 
@@ -118,6 +108,137 @@ function leagueDMResponse(patterns, responseName) {
 leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
 leagueDMResponse(['captains', 'captain list'], 'formatCaptainsResponse');
 
+/* availability */
+/* [player <player-name> is] {available, unavailable} for round <round-number> in <league> */
+chesster.hears({
+    middleware: [ 
+        slack.withLeague
+    ],
+    patterns: [
+        'available',
+        'unavailable'
+    ],
+    messageTypes: [
+        'direct_message',
+        'direct_mention'
+    ]
+}, 
+function(bot, message){
+    var heltourOptions = message.league.options.heltour;
+    if(!heltourOptions){
+        winston.error("{} league doesn't have heltour options.".format(message.league.options.name));
+        return;
+    }
+
+    var commandDescription;
+    if(_.isEqual(_(message.text).split(' ').head(), "player")){
+        commandDescription = [
+            "player",
+            "{text:playerName}",
+            "is",
+            "{available|unavailable}",
+            "for",
+            "round",
+            "{int:roundNumber}",
+            "in",
+            "{text:league}"
+        ];
+    }else{
+        commandDescription = [
+            "{available|unavailable}",
+            "for",
+            "round",
+            "{int:roundNumber}",
+            "in",
+            "{text:league}"
+        ];
+    }
+
+    return commands.tokenize(message.text, commandDescription).then(function(parameters){
+        var available = parameters["available"] ? true : false;
+        var roundNumber = parameters["roundNumber"];
+        var speaker = slack.getSlackUserFromNameOrID(message.user);
+        var playerName = speaker.name;
+        if(parameters["playerName"]){
+            //playerName is specified as an identifier or clear text, validate it and get the name
+            var slackUser = slack.getSlackUserFromNameOrID(_.toUpper(parameters["playerName"]));
+            if(!slackUser){
+                //didnt find a user by Name or ID
+               replyFailedToUpdate(bot, message, 
+                    "availability", 
+                    "unknown player: {}".format(parameters["playerName"])
+                );
+                return;
+            }
+            //get the team associated with the player
+            playerName = slackUser.name;
+            var playerTeam = message.league.getTeamByPlayerName(playerName);
+            //get the team associated with the speaker
+            var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
+            //the speaker must be the captain of the player's team or a moderator
+            if (!isCaptainOrModerator(speaker, speakerTeam, playerTeam)) {
+                replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
+                return;
+            }
+        }
+
+        return heltour.setAvailability(heltourOptions, playerName, available, roundNumber).then(function (){
+            formatReplyUpdatedAvailability(bot, message, playerName, available, roundNumber);
+        }).catch(function(error){
+            replyFailedToUpdate(bot, message, "availability", error); 
+        });
+    }).catch(function(error){
+        if(error instanceof commands.TooFewTokensError ||
+            error instanceof commands.InvalidChoiceError ||
+            error instanceof commands.InvalidConstantError ||
+            error instanceof commands.InvalidTypeValueError){
+            winston.debug("[AVAILABILITY] Couldn't understand {}".format(JSON.stringify(error)));
+            replyMisunderstoodAvailability(bot, message);
+        }else if(error instanceof commands.InvalidTokenDescriptionError ||
+                error instanceof commands.InvalidTypeError){
+            winston.error("[AVAILABILITY] Internal Error: Your description is not valid: {}".format(
+                JSON.stringify(error)
+            ));
+        }else{
+            //some unknown error, rethrow;
+            throw error;
+        }
+    });
+});
+
+function formatReply(bot, message, reply, format){
+    bot.reply(message, reply.format(format));
+}
+
+function formatReplyUpdatedAvailability(bot, message, playerName, available, roundNumber){
+    formatReply(bot, message, 
+        "I have updated the availability. " 
+        + "*@{playerName} will{not}* be available for *round{roundNumber}*.",
+        { 
+            "playerName": playerName,
+            "not": (available ? "" : " not"),
+            "roundNumber": " " + roundNumber
+        }
+    );
+}
+
+function replyFailedToUpdate(bot, message, task, error){
+    bot.reply(message, "I failed to update {}: {}".format(task, error));
+    bot.reply(message, "Please contact a moderator.");
+}
+
+function replyMisunderstood(bot, message, command, syntax){
+    bot.reply(message, "Sorry, I did not understand your {}.".format(command));
+    bot.reply(message, "Please use the following syntax:");
+    bot.reply(message, "`{}`".format(syntax));
+}
+
+function replyMisunderstoodAvailability(bot, message){
+    replyMisunderstood(bot, message, 
+        "availability", 
+        "[player <player> is] {available,unavailable} during round <round-number> in <league>");
+}
+
 /* alternate assignment */
 /* assign <player> to board <board-number> during round <round-number> on <team-name>*/
 chesster.hears({
@@ -128,14 +249,11 @@ chesster.hears({
     ]
 }, 
 function(bot, message){
+    var alternateOptions = message.league.options.alternate;
     var channel = channels.byId[message.channel];
-    if (!message.league) {
-        return;
-    }
     if (!channel) {
         return;
     }
-    var alternateOptions = message.league.options.alternate;
     if (!alternateOptions || !_.isEqual(channel.name, alternateOptions.channel)) {
         return;
     }
@@ -145,63 +263,73 @@ function(bot, message){
         return;
     }
     
-    var components = message.text.split(" ");
-    var args = _.map(components.slice(0, 9), _.toLower);
-    var teamName = components.splice(9).join(" ");
-    var assign      = args[0],
-        player      = args[1],
-        to          = args[2],
-        board       = args[3],
-        boardNumber = args[4], 
-        during      = args[5], 
-        round       = args[6],
-        roundNumber = args[7],
-        on          = args[8];
-
-    var speaker = slack.getSlackUserFromNameOrID(message.user);
-    var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
+    return commands.tokenize(message.text, [
+        "assign", 
+        "{text:player}", 
+        "to", 
+        "board", 
+        "{int:boardNumber}", 
+        "during", 
+        "round", 
+        "{int:roundNumber}", 
+        "on",
+        "{text:teamName}"
+    ]).then(function(parameters){
+        var speaker = slack.getSlackUserFromNameOrID(message.user);
+        var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
     
-    if (!isCaptainOrModerator(speaker, speakerTeam, teamName)) {
-        replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
-        return;
-    }
+        if (!isCaptainOrModerator(speaker, speakerTeam, parameters["teamName"])) {
+            replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
+            return;
+        }
 
-    // Ensure the basic command format is valid
-    if (!_.isEqual(["assign", "to", "board", "during", "round", "on"], [assign, to, board, during, round, on])) {
-        replyMisunderstoodAlternateAssignment(bot, message);
-        return;
-    }
+        var boardNumber = parameters["boardNumber"];
+        var roundNumber = parameters["roundNumber"];
 
-    boardNumber = parseInt(boardNumber, 10);
-    if(isNaN(boardNumber)){
-        replyMisunderstoodAlternateAssignment(bot, message);
-        return;
-    }
+        var team = message.league.getTeam(parameters["teamName"]);
+        if(!team){
+            replyUnrecognizedTeam(bot, message, parameters["teamName"]);
+            return;
+        }
 
-    roundNumber = parseInt(roundNumber, 10);
-    if(isNaN(roundNumber)){
-        replyMisunderstoodAlternateAssignment(bot, message);
-        return;
-    }
-
-    var team = message.league.getTeam(teamName);
-    if(!team){
-        replyUnrecognizedTeam(bot, message, teamName);
-        return;
-    }
-
-    heltour.assignAlternate(heltourOptions, roundNumber, team.number, boardNumber, player).then(function(){
-        bot.reply(message, player + " has been assigned to board " + boardNumber + " for " + teamName + " during round " + roundNumber);
+        var player = slack.getSlackUserFromNameOrID(parameters["player"]);
+        if(!player){
+            replyFailedToUpdate(bot, message, "alternate assignment", "unknown player");
+        }
+        return heltour.assignAlternate(heltourOptions, 
+            roundNumber, 
+            team.number, 
+            boardNumber, 
+            player.name).then(function(){
+            bot.reply(message, 
+                "*{player}* has been assigned to *board {boardNumber}* for *{teamName}* during *round {roundNumber}*".format(parameters));
+        }).catch(function(error){
+            replyFailedToUpdate(bot, message, "alternate assignment", error);
+        });
     }).catch(function(error){
-        bot.reply(message, "I failed to update your alternate assignement: " + error);
-        bot.reply(message, "Please contact a moderator.");
+        if(error instanceof commands.TooFewTokensError ||
+            error instanceof commands.InvalidChoiceError ||
+            error instanceof commands.InvalidConstantError ){
+            winston.debug("[ASSIGNMENT] Invalid command format: {}".format(JSON.stringify(error)));
+        }else if(error instanceof commands.InvalidTypeValueError){
+            winston.debug("[ASSIGNMENT] Couldn't understand: ".format(JSON.stringify(error)));
+            replyMisunderstoodAlternateAssignment(bot, message);
+        }else if(error instanceof commands.InvalidTokenDescriptionError ||
+                error instanceof commands.InvalidTypeError){
+            winston.error("[ASSIGNMENT] Internal Error: Your description is not valid: {}".format(
+                JSON.stringify(error)
+            ));
+        }else{
+            //some unknown error, rethrow;
+            throw error;
+        }
     });
 });
 
 function replyMisunderstoodAlternateAssignment(bot, message){
-    bot.reply(message, "Sorry, I did not understand your alternate assignment");
-    bot.reply(message, "Please use the following format:");
-    bot.reply(message, "`assign <player> to board <board-number> during round <round-number> on <team-name>`");
+    replyMisunderstood(bot, message, 
+        "alternate assignment",
+        "assign <player> to board <board-number> during round <round-number> on <team-name>");
 }
 
 /* alternate unassignment */
@@ -215,14 +343,11 @@ chesster.hears({
     ]
 }, 
 function(bot, message){
+    var alternateOptions = message.league.options.alternate;
     var channel = channels.byId[message.channel];
-    if (!message.league) {
-        return;
-    }
     if (!channel) {
         return;
     }
-    var alternateOptions = message.league.options.alternate;
     if (!alternateOptions || !_.isEqual(channel.name, alternateOptions.channel)) {
         return;
     }
@@ -279,11 +404,10 @@ function(bot, message){
         replyUnrecognizedTeam(bot, message, teamName);
         return;
     }
-    heltour.assignAlternate(heltourOptions, roundNumber, team.number, boardNumber, player).then(function(){
+    return heltour.assignAlternate(heltourOptions, roundNumber, team.number, boardNumber, player).then(function(){
         bot.reply(message, player + " has been assigned to board " + boardNumber + " for " + teamName + " during round " + roundNumber);
     }).catch(function(error){
-        bot.reply(message, "I failed to unassign your alternate: " + error);
-        bot.reply(message, "Please contact a moderator.");
+        replyFailedToUpdate(bot, message, "alternate assignment", error);
     });
 });
 
@@ -304,9 +428,9 @@ function replyUnrecognizedTeam(bot, message, team){
 }
 
 function replyMisunderstoodAlternateUnassignment(bot, message){
-    bot.reply(message, "Sorry, I did not understand your alternate unassignment");
-    bot.reply(message, "Please use the following format:");
-    bot.reply(message, "`unassign alternate for board <board-number> during round <round-number> on <team-name>`");
+    replyMisunderstood(bot, message,
+        "alternate unassignment",
+        "unassign alternate for board <board-number> during round <round-number> on <team-name>");
 }
 
 /* game nomination */
@@ -357,7 +481,7 @@ function(bot,message) {
     });
 });
 
-function prepareRatingMessage(_player, rating, convo){
+function prepareRatingMessage(_player, rating){
     return _player + " is rated " + rating + " in classical chess";
 }
 
@@ -470,7 +594,6 @@ chesster.controller.hears([
 	'direct_message'
 ],function(bot, message) {
     bot_exception_handler(bot, message, function(){
-        var self = this;
         bot.reply(message, prepareChannelListMessage());
     });
 });
@@ -517,7 +640,7 @@ chesster.hears({
                     winston.error(JSON.stringify(error));
                 });
             })
-        ).then(function(results) {
+        ).then(function() {
             deferred.resolve();
         }, function(error) {
             deferred.reject(error);
@@ -551,7 +674,7 @@ chesster.hears({
         "ambient"
     ]
 },
-function(bot, message){
+function(){
     throw new Error("an error");
 });
 
@@ -648,7 +771,7 @@ chesster.controller.hears([
 	'direct_mention', 
 	'direct_message'
 ], function(bot,message) {
-    bot_exception_handler(bot, message, _.noop) 
+    bot_exception_handler(bot, message, _.noop);
 });
 
 /* source */
@@ -677,7 +800,7 @@ chesster.hears({
 function(bot, message) {
     var deferred = Q.defer();
     bot.startPrivateConversation(message, function (response, convo) {
-        boardNumber = parseInt(message.text.split(" ")[1], 10);
+        var boardNumber = parseInt(message.text.split(" ")[1], 10);
         if(boardNumber && !isNaN(boardNumber)){
             message.league.formatBoardResponse(boardNumber).then(function(response) {
                 convo.say(response);
@@ -715,6 +838,13 @@ function schedulingReplyTooCloseToCutoff(bot, message, schedulingOptions, white,
     );
 }
 
+// the pairing is ambiguous
+function schedulingReplyAmbiguous(bot, message){
+    bot.reply(message, 
+        "The pairing you are trying to schedule is ambiguous. Please contact a moderator."
+    );
+}
+
 // Game has been scheduled.
 function schedulingReplyScheduled(bot, message, results, white, black) {
     var whiteDate = results.date.clone().utcOffset(white.tz_offset/60);
@@ -726,7 +856,7 @@ function schedulingReplyScheduled(bot, message, results, white, black) {
         whiteDate.format(friendly_format) + " for " + white.name,
         blackDate.format(friendly_format) + " for " + black.name
     ];
-    date_formats  = dates.join("\n\t");
+    var date_formats  = dates.join("\n\t");
 
     bot.reply(message, 
         ":heavy_check_mark: @" + white.name + " (_white pieces_) vs @" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats
@@ -758,16 +888,7 @@ chesster.on({
     middleware: [slack.withLeagueByChannelName]
 },
 function(bot, message) {
-    var channel = channels.byId[message.channel];
     var deferred = Q.defer();
-    if (!message.league) {
-        deferred.resolve();
-        return deferred.promise;
-    }
-    if (!channel) {
-        deferred.resolve();
-        return deferred.promise;
-    }
     var schedulingOptions = message.league.options.scheduling;
     if (!schedulingOptions) {
         winston.error("[SCHEDULING] {} league doesn't have scheduling options!?".format(message.league.options.name));
@@ -780,6 +901,10 @@ function(bot, message) {
         deferred.resolve();
         return deferred.promise;
     } 
+    var channel = channels.byId[message.channel];
+    if (!channel) {
+        return;
+    }
     if (!_.isEqual(channel.name, schedulingOptions.channel)) {
         deferred.resolve();
         return deferred.promise;
@@ -835,7 +960,7 @@ function(bot, message) {
         heltourOptions,
         schedulingResults
     ).then(function(response) {
-        updateScheduleResults = response['json'];
+        var updateScheduleResults = response['json'];
         if (updateScheduleResults['updated'] === 0) {
             if (updateScheduleResults['error'] === 'not_found') {
                 schedulingReplyMissingPairing(bot, message);
@@ -894,13 +1019,6 @@ chesster.on({
     middleware: [slack.withLeagueByChannelName]
 },
 function(bot, message) {
-    var channel = channels.byId[message.channel];
-    if (!message.league) {
-        return;
-    }
-    if (!channel) {
-        return;
-    }
     var heltourOptions = message.league.options.heltour;
     if (!heltourOptions) {
         winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
@@ -908,6 +1026,10 @@ function(bot, message) {
     }
 
     var resultsOptions = message.league.options.results; 
+    var channel = channels.byId[message.channel];
+    if (!channel) {
+        return;
+    }
     if (!resultsOptions || !_.isEqual(channel.name, resultsOptions.channel)){
         return;
     }
@@ -924,8 +1046,8 @@ function(bot, message) {
             return;
         }
 
-        result.white = users.getByNameOrID(result.white.replace(/[\<\@\>]/g, ''));
-        result.black = users.getByNameOrID(result.black.replace(/[\<\@\>]/g, ''));
+        result.white = users.getByNameOrID(result.white.replace(/[<\@>]/g, ''));
+        result.black = users.getByNameOrID(result.black.replace(/[<\@>]/g, ''));
 
         if(
             !_.isEqual(result.white.id, message.user) &&
@@ -936,7 +1058,7 @@ function(bot, message) {
             return;
         }
         
-        heltour.findPairing(
+        return heltour.findPairing(
             heltourOptions,
             result.white.name,
             result.black.name,
@@ -1042,11 +1164,11 @@ function validateGameDetails(details, options){
     ){
         //the time control does not match options
         result.valid = false;
-        result.reason = "the time control is incorrect."
+        result.reason = "the time control is incorrect.";
     }else if(!_.isEqual(details.variant, options.variant)){
         //the variant does not match
         result.valid = false;
-        result.reason = "the variant should be standard."
+        result.reason = "the variant should be standard.";
     }else{
         //the link is too old or too new
         var extrema = scheduling.getRoundExtrema(options);
@@ -1117,7 +1239,7 @@ function processGamelink(bot, message, gamelink, options, heltourOptions, userRe
     }
     //get the game details
     return fetchGameDetails(result.gamelinkID).then(function(response) {
-        var details = response['json']
+        var details = response['json'];
         //validate the game details vs the user specified result
         if(userResult){
             var validity = validateUserResult(details, userResult);
@@ -1171,7 +1293,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
     //gamelinks only come from played games, so ignoring forfeit result types
 
     //update the spreadsheet with results from gamelink
-    heltour.updatePairing(
+    return heltour.updatePairing(
         heltourOptions,
         result
     ).then(function(updatePairingResult) {
@@ -1219,10 +1341,10 @@ chesster.on({
     middleware: [slack.withLeagueByChannelName]
 },
 function(bot, message) {
-    var channel = channels.byId[message.channel];
     if (!message.league) {
         return;
     }
+    var channel = channels.byId[message.channel];
     if (!channel) {
         return;
     }

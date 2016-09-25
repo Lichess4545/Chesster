@@ -99,22 +99,6 @@ var WORDS_TO_IGNORE = [
     "pieces"
 ];
 
-var VALID_RESULTS = {
-    "0-0":"0-0",
-    "1-0":"1-0",
-    "0-1":"0-1",
-    "1/2-1/2":"1/2-1/2",
-    "0.5-0.5":"1/2-1/2",
-    "1X-0F":"1X-0F",
-    "0F-1X":"0F-1X",
-    "0F-0F":"0F-0F",
-    "1/2Z-1/2Z":"1/2Z-1/2Z",
-    "0.5Z-0.5Z":"1/2Z-1/2Z",
-    "DRAW":"1/2-1/2",
-    "DREW":"1/2-1/2",
-    "GIRI":"1/2-1/2"
-};
-
 // A scheduling error (as opposed to other errors)
 function ScheduleParsingError () {}
 ScheduleParsingError.prototype = new Error();
@@ -162,6 +146,7 @@ function getPossibleDateStrings(dateString, extrema) {
 
     var cur = extrema.start.clone();
     var now = moment.utc();
+    var month;
     while (!cur.isAfter(extrema.end)) {
         var monthDay = cur.format("MM-DD");
         // Deal with a couple of formats that moment doesn't produce but are used.
@@ -174,7 +159,7 @@ function getPossibleDateStrings(dateString, extrema) {
         dateNameMappings[cur.format("ddd").toLowerCase()] = monthDay;
         dateNameMappings[cur.format("dddd").toLowerCase()] = monthDay;
         dateNameMappings[cur.format("Do").toLowerCase()] = cur.format("DD");
-        var month = cur.format("MM");
+        month = cur.format("MM");
         dateNameMappings[cur.format("MMM").toLowerCase()] = month;
         dateNameMappings[cur.format("MMMM").toLowerCase()] = month;
         cur.add(1, 'days');
@@ -205,7 +190,7 @@ function getPossibleDateStrings(dateString, extrema) {
 
     // Now make some where we inject the year at the beginning
     now = moment.utc();
-    year = now.format("YYYY");
+    var year = now.format("YYYY");
     month = now.format("MM");
     dateStrings.slice().forEach(function(dateString) {
         dateStrings.push("" + year + "-" + dateString);
@@ -310,17 +295,18 @@ function parseScheduling(inputString, options) {
 //       cutoff during which we will warn users they are cutting it close.
 function getRoundExtrema(options) {
     options = options || {};
-    extrema = {};
+    var extrema = {};
     _.extend(extrema, EXTREMA_DEFAULTS, options.extrema);
 
     // Get the reference date, which is either today or the referenceDate
     // from the options
+    var roundStart;
     if (!extrema.referenceDate) {
         roundStart = moment.utc();
     } else {
         roundStart = moment(extrema.referenceDate).clone();
     }
-    referenceDate = roundStart.clone()
+    var referenceDate = roundStart.clone();
     // Make it the right time of day.
     roundStart.hour(extrema.hour).minute(extrema.minute).second(0);
 

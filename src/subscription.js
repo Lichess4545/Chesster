@@ -4,8 +4,8 @@
 
 var Q = require("q");
 var _ = require("lodash");
-var format = require('string-format')
-format.extend(String.prototype)
+var format = require('string-format');
+format.extend(String.prototype);
 
 var league = require("./league.js");
 var slack = require("./slack.js");
@@ -160,7 +160,7 @@ function processTellCommand(config, message) {
         // Ensure the source is a valid user or team within slack
         var source = slack.getSlackUserFromNameOrID(sourceName);
         return _league.getTeams().then(function(teams) {
-            var team = _.find(teams, function(team) { return team.name.toLowerCase() === sourceName.toLowerCase()});
+            var team = _.find(teams, function(team) { return team.name.toLowerCase() === sourceName.toLowerCase();});
             if (_.isUndefined(source) && _.isUndefined(team)) {
                 return formatInvalidSourceResponse(config, sourceName);
             }
@@ -178,7 +178,7 @@ function processTellCommand(config, message) {
                         league: _league.options.name.toLowerCase(),
                         target: listener.toLowerCase()
                     }
-                }).then(function(subscription) {
+                }).then(function() {
                     unlock.resolve();
                     return "Great! I will tell {target} when {event} for {source} in {league}".format({
                         source: sourceName,
@@ -272,7 +272,7 @@ function register(bot, eventName, cb) {
             _.each(targets, function(target) {
                 var deferred = Q.defer();
                 bot.startPrivateConversation(target).then(function(convo) {
-                    message = cb(target, _.clone(context));
+                    var message = cb(target, _.clone(context));
                     convo.say(message);
                     deferred.resolve();
                 });

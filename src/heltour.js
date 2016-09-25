@@ -5,9 +5,9 @@ const _ = require('lodash');
 const url = require('url');
 const http = require("./http.js");
 const Q = require("q");
-const format = require('string-format')
+const format = require('string-format');
 const winston = require("winston");
-format.extend(String.prototype)
+format.extend(String.prototype);
 
 //------------------------------------------------------------------------------
 function heltourRequest(heltourConfig, endpoint) {
@@ -192,6 +192,18 @@ function getLeagueModerators(heltourConfig){
     });
 }
 
+function setAvailability(heltourConfig, playerName, available, roundNumber){
+    var request = heltourRequest(heltourConfig, "set_availability");
+    request.method = "POST";
+    request.bodyParameters = {
+        "league": heltourConfig.leagueTag,
+        "player": playerName,
+        "round": roundNumber,
+        "available": available
+    };
+    return fetchJSONandHandleErrors(request);
+}
+
 function fetchJSONandHandleErrors(request){
     return http.fetchURLIntoJSON(request).then(function(response){
         if(response["json"]["error"]){
@@ -201,11 +213,15 @@ function fetchJSONandHandleErrors(request){
     });
 }
 
-module.exports.assignAlternate = assignAlternate;
+/* GET Requests */
 module.exports.getPrivateURL = getPrivateURL;
 module.exports.findPairing = findPairing;
 module.exports.getAllPairings = getAllPairings;
+module.exports.getLeagueModerators = getLeagueModerators;
+
+/* POST Requests */
 module.exports.updateSchedule = updateSchedule;
 module.exports.updatePairing = updatePairing;
 module.exports.getRoster = getRoster;
-module.exports.getLeagueModerators = getLeagueModerators;
+module.exports.assignAlternate = assignAlternate;
+module.exports.setAvailability = setAvailability;

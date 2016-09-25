@@ -23,7 +23,7 @@ var Slack = module.exports.Slack  = function (options) {
         this.raw        = options.raw      || false;
         this.name       = options.name     || 'slack';
         //- Enabled loging of uncaught exceptions
-        this.handleExceptions = options.handleExceptions || false
+        this.handleExceptions = options.handleExceptions || false;
 
         self.controller = Botkit.slackbot({
             debug: false

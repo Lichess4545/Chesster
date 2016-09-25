@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 //------------------------------------------------------------------------------
 // Models for our locally stored data
@@ -10,8 +10,6 @@ var winston = require("winston");
 
 
 var exports = (function() {
-    var _models = {};
-    var _lockQueue = [];
     var _lock = new AsyncLock();
 
     //--------------------------------------------------------------------------
@@ -92,4 +90,4 @@ var exports = (function() {
     };
 }());
 
-module.exports = exports
+module.exports = exports;

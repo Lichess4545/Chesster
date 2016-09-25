@@ -1,5 +1,4 @@
 var _ = require("lodash");
-var heltour = require("./heltour.js");
 
 var VALID_RESULTS = {
     "0-0":"0-0",
@@ -62,7 +61,7 @@ function findPlayers(tokens){
 function filterPlayerTokens(tokens){
     return _.filter(tokens, function(token){
         //matches slack uer ids: <@[A-Z0-9]>[:]*
-        return /^\<@[A-Z0-9]+\>[:,.-]*$/.test(token);
+        return /^<@[A-Z0-9]+>[:,.-]*$/.test(token);
     });
 }
 
