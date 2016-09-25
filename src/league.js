@@ -175,8 +175,9 @@ var league_attributes = {
                     if (player.isCaptain) {
                         team.captain = player;
                     }
-                    player.boardNumber = player.board_number;
-                    player.team = team;
+                    teamPlayer.rating = player.rating;
+                    player.boardNumber = teamPlayer.board_number;
+                    teamPlayer.team = player.team = team;
                 });
                 newTeams.push(team);
                 newLookup[_.toLower(team.name)] = team;
@@ -364,17 +365,33 @@ var league_attributes = {
         });
     },
     //--------------------------------------------------------------------------
-    // Formats the pairings sheet response
+    // Formats the pairings response
     //--------------------------------------------------------------------------
     'formatPairingsLinkResponse': function() {
         var self = this;
         return Q.fcall(function() {
             if (self.options.links && self.options.links.league) {
-                return "The pairings/standings can be found on the website:\n" + 
-                        self.options.links.league + 
+                return "The pairings can be found on the website:\n" + 
+                        self.options.links.pairings + 
                         "\nAlternatively, try [ @chesster pairing [competitor] ]";
             } else {
-                return "The {name} league does not have a pairings/standings sheet.".format({
+                return "The {name} league does not have a pairings link.".format({
+                    name: self.options.name
+                });
+            }
+        });
+    },
+    //--------------------------------------------------------------------------
+    // Formats the standings response
+    //--------------------------------------------------------------------------
+    'formatStandingsLinkResponse': function() {
+        var self = this;
+        return Q.fcall(function() {
+            if (self.options.links && self.options.links.league) {
+                return "The standings can be found on the website:\n" + 
+                        self.options.links.standings;
+            } else {
+                return "The {name} league does not have a standings link.".format({
                     name: self.options.name
                 });
             }
@@ -467,8 +484,8 @@ var league_attributes = {
         return Q.fcall(function() {
             var players = [];
             _.each(self._teams, function(team) {
-                if (boardNumber-1 < team.roster.length) {
-                    players.push(team.roster[boardNumber-1]);
+                if (boardNumber-1 < team.players.length) {
+                    players.push(team.players[boardNumber-1]);
                 }
             });
             return players;
@@ -490,7 +507,7 @@ var league_attributes = {
             self._teams.forEach(function(team){
                 var captain = team.captain;
                 if (captain) {
-                    captain = captain.name;
+                    captain = captain.username;
                 } else {
                     captain = "Unchosen";
                 }
@@ -521,7 +538,7 @@ var league_attributes = {
             }
             var team = teams[0];
             if(team && team.captain){
-                return "Captain of " + team.name + " is " + team.captain.name;
+                return "Captain of " + team.name + " is " + team.captain.username;
             }else{
                 return team.name + " has not chosen a team captain. ";
             }
@@ -562,7 +579,7 @@ var league_attributes = {
                     return e1.rating > e2.rating ? -1 : e1.rating < e2.rating ? 1 : 0;
                 });
                 players.forEach(function(member){
-                    message += "\t" + member.name + ": (Rating: " + member.rating + "; Team: " + member.team.name + ")\n";
+                    message += "\t" + member.username + ": (Rating: " + member.rating + "; Team: " + member.team.name + ")\n";
                 });
                 return message;
             });
@@ -590,8 +607,8 @@ var league_attributes = {
             }
             var team = teams[0];
             var message = "The members of " + team.name + " are \n";
-            team.roster.forEach(function(member, index){
-                message += "\tBoard " + (index+1) + ": " + member.name + " (" + member.rating + ")\n";
+            team.players.forEach(function(member, index){
+                message += "\tBoard " + (index+1) + ": " + member.username + " (" + self.getPlayer(member.username).rating + ")\n";
             });
             return message;
         });

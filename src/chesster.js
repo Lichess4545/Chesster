@@ -493,7 +493,8 @@ function prepareCommandsMessage(){
         "    [ starter guide ]              ! get the starter guide link; thanks GnarlyGoat!\n" +
         "    [ rules | regulations ]        ! get the rules and regulations.\n" + 
         "    [ pairing | pairing <player> ] ! get your (or given <player>) latest pairings with scheduled time\n" +
-        "    [ pairings | standings ]       ! get pairings/standings spreadsheet link\n" +
+        "    [ pairings ]                   ! get pairings link\n" +
+        "    [ standings ]                  ! get standings link\n" +
         "    [ channels | \n" +
         "        channel list |             ! list the important channels\n" +
         "        channel detail <channel> ] ! details regarding #<channel>\n" +
@@ -514,8 +515,6 @@ function prepareCommandsMessage(){
         "        captain list |             ! list the team captains\n" +
         "        captain guidelines ]       ! get the team captain guidelines\n" +
         "    [ board <number> ]             ! get a sorted list of players by board\n" +
-        "    [ feedback <feedback>]         ! send @chesster some feedback (bug reports, \n" +
-        "                                   ! suggestions, gratitude, etc)\n" +
         "    [ mods (lonewolf)| \n"  +
         "        mod list (lonewolf)|       ! list the mods (without summoning)\n" +
         "        mods summon (lonewolf)]    ! summon the mods\n" +
@@ -611,7 +610,10 @@ chesster.controller.hears([
 
 
 /* pairings */
-leagueResponse(['pairings', 'standings'], 'formatPairingsLinkResponse');
+leagueResponse(['pairings'], 'formatPairingsLinkResponse');
+
+/* standings */
+leagueResponse(['standings'], 'formatStandingsLinkResponse');
 
 chesster.hears({
     patterns: [
@@ -744,7 +746,7 @@ function(bot, message) {
 
 leagueResponse(['welcome', 'starter guide', 'player handbook'], 'formatStarterGuideResponse');
 
-/* feedback */
+/* thanks */
 chesster.hears({
     patterns: ['thanks', 'thank you'],
     messageTypes: [
