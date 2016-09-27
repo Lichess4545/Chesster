@@ -19,6 +19,8 @@ var commands = require('./commands.js');
 var users = slack.users;
 var channels = slack.channels;
 
+var SWORDS = '\u2694';
+
 /* exception handling */
 /* later this will move it its own module */
 
@@ -1136,7 +1138,7 @@ function resultReplyTooManyPairings(bot, message){
 }
 
 function resultReplyUpdated(bot, message, result){
-    bot.reply(message, "Got it. @" + result.white.name + " " + result.result + " @" + result.black.name);
+    bot.reply(message, "Got it. @" + result.white.name + " " + (result.result || SWORDS) + " @" + result.black.name);
 }
 
 
