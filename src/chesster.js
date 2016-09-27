@@ -250,11 +250,7 @@ chesster.hears({
 }, 
 function(bot, message){
     var alternateOptions = message.league.options.alternate;
-    var channel = channels.byId[message.channel];
-    if (!channel) {
-        return;
-    }
-    if (!alternateOptions || !_.isEqual(channel.name, alternateOptions.channel)) {
+    if (!alternateOptions || !_.isEqual(message.channel, alternateOptions.channel_id)) {
         return;
     }
     var heltourOptions = message.league.options.heltour;
@@ -344,11 +340,7 @@ chesster.hears({
 }, 
 function(bot, message){
     var alternateOptions = message.league.options.alternate;
-    var channel = channels.byId[message.channel];
-    if (!channel) {
-        return;
-    }
-    if (!alternateOptions || !_.isEqual(channel.name, alternateOptions.channel)) {
+    if (!alternateOptions || !_.isEqual(message.channel, alternateOptions.channel_id)) {
         return;
     }
     var heltourOptions = message.league.options.heltour;
@@ -793,7 +785,7 @@ function(bot, message){
 
 chesster.hears({
     middleware: [slack.requiresLeague],
-    patterns: ['board'],
+    patterns: ['^board'],
     messageTypes: [
         'direct_mention', 
         'direct_message'

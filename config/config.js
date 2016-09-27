@@ -92,7 +92,7 @@ var config = {
                 "channel": "team-scheduling"
             },
             "alternate": {
-                "channel": "captains"
+                "channel_id": "G0DFRURGQ"
             },
             "links": {
                 "faq": "https://www.lichess4545.com/team4545/document/faq/",
@@ -181,8 +181,8 @@ var config = {
         "team-results": "45+45",
         "team-gamelinks": "45+45",
         "team-scheduling": "45+45",
-        "unstable_bot": "45+45",
         "captains": "45+45",
+        "G0DFRURGQ": "45+45",
     },
 }
 module.exports = config;

@@ -34,7 +34,8 @@
     "test": "mocha",
     "send-coverage": "node_modules/.bin/codeclimate-test-reporter < coverage/lcov.info; exit 0",
     "lint": "node_modules/.bin/eslint .",
-    "hint": "node_modules/.bin/jshint src"
+    "hint": "node_modules/.bin/jshint src",
+    "migrate": "node_modules/sequelize-cli/bin/sequelize db:migrate --config"
   },
   "repository": {
     "type": "git",
