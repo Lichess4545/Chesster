@@ -295,11 +295,24 @@ function _withLeagueImplementation(bot, message, config, channelOnly) {
 
         // If they didn't ask for a specific league, then we will use the channel
         // to determine it
+        var targetLeague;
         var channel = channels.byId[message.channel];
         if (channel && channel.name) {
-            var target_league = config.channel_map[channel.name];
-            l = league.getLeague(target_league, config);
+            targetLeague = config.channel_map[channel.name];
+            l = league.getLeague(targetLeague, config);
             if (l) {
+                message.league = l;
+                return l;
+            }
+        }
+
+        // If no channel name matched, try the channel Id this is necessary for private channels
+        // it makes me sad ... :(
+        var channelId = message.channel;
+        targetLeague = config["channel_map"][channelId];
+        if (targetLeague){
+            l = league.getLeague(targetLeague, config);
+            if (l){
                 message.league = l;
                 return l;
             }

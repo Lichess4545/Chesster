@@ -281,7 +281,7 @@ var league_attributes = {
                 "player": targetPlayer.name, 
                 "color": "white",
                 "opponent":  pairing.black,
-                "date": pairing.scheduled_date
+                "date": pairing.date
             };
             if (!_.isEqual(pairing.white.toLowerCase(), targetPlayer.name.toLowerCase())) {
                 details.color = "black";

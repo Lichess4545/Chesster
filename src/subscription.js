@@ -294,7 +294,7 @@ function getListeners(leagueName, sources, event) {
         // user and teams. This is somewhat wasteful - but I'm not sure whether
         // this is the right design or if we should pass in users to this point. 
         var _league = league.getLeague(leagueName);
-        var teamNames = _(sources).map(function(n) { return _league.getTeam(n); }).filter(_.isObject).map("name").map(_.toLower).value();
+        var teamNames = _(sources).map(function(n) { return _league.getTeamByPlayerName(n); }).filter(_.isObject).map("name").map(_.toLower).value();
         var possibleSources = _.concat(sources, teamNames);
         return db.Subscription.findAll({
             where: {
