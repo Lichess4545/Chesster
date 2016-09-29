@@ -1461,7 +1461,7 @@ subscription.register(chesster, 'a-game-is-scheduled', function(target, context)
 });
 
 subscription.register(chesster, 'a-game-starts', function (target, context) {
-    return "{white.name} vs {black.name} in {leagueName} has started: https://en.lichess.org/{result.gamelinkID}".format(context);
+    return "{white.name} vs {black.name} in {leagueName} has started: result.game_link}".format(context);
 });
 
 subscription.register(chesster, 'a-game-is-over', function(target, context) {
