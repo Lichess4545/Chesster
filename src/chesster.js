@@ -1330,7 +1330,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
                 message.league,
                 [white.name, black.name],
                 {
-                    'result': updatePairingResult,
+                    'result': result,
                     'white': white,
                     'black': black,
                     'leagueName': leagueName
