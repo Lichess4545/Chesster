@@ -178,7 +178,7 @@ function(bot, message){
             //get the team associated with the speaker
             var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
             //the speaker must be the captain of the player's team or a moderator
-            if (!isCaptainOrModerator(speaker, speakerTeam, playerTeam)) {
+            if (!isCaptainOrModerator(speaker, speakerTeam, playerTeam, message.league)) {
                 replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
                 return;
             }
@@ -276,7 +276,7 @@ function(bot, message){
         var speaker = slack.getSlackUserFromNameOrID(message.user);
         var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
     
-        if (!isCaptainOrModerator(speaker, speakerTeam, parameters["teamName"])) {
+        if (!isCaptainOrModerator(speaker, speakerTeam, parameters["teamName"], message.league)) {
             replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
             return;
         }
@@ -367,7 +367,7 @@ function(bot, message){
     var speaker = slack.getSlackUserFromNameOrID(message.user);
     var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
 
-    if (!isCaptainOrModerator(speaker, speakerTeam, teamName)) {
+    if (!isCaptainOrModerator(speaker, speakerTeam, teamName, message.league)) {
         replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
         return;
     }
@@ -405,12 +405,13 @@ function(bot, message){
     });
 });
 
-function isCaptainOrModerator(speaker, speakerTeam, teamName){
-    return speaker.isModerator() || //speaker is a moderator
+function isCaptainOrModerator(speaker, speakerTeam, teamName, league){
+    var  isLeagueModerator = league.isModerator(speaker.name);
+    return isLeagueModerator || //speaker is a moderator
 	( speakerTeam && //speaker is on a team
         speakerTeam.captain && //speaker's team has a captain
-        _.isEqual(speaker.name, speakerTeam.captain.name) && //speaker is the team captain
-        _.isEqual(speakerTeam.name, teamName) ); //speaker's team is the team being operated on
+        _.isEqual(_.toLower(speaker.name), _.toLower(speakerTeam.captain.username)) && //speaker is the team captain
+        _.isEqual(_.toLower(speakerTeam.name), _.toLower(teamName))); //speaker's team is the team being operated on
 }
 
 function replyOnlyACaptainOrAModeratorCanDoThat(bot, message){
