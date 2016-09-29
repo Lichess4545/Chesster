@@ -1330,7 +1330,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
                 message.league,
                 [white.name, black.name],
                 {
-                    'result': updatePairingResult,
+                    'result': result,
                     'white': white,
                     'black': black,
                     'leagueName': leagueName
@@ -1461,7 +1461,7 @@ subscription.register(chesster, 'a-game-is-scheduled', function(target, context)
 });
 
 subscription.register(chesster, 'a-game-starts', function (target, context) {
-    return "{white.name} vs {black.name} in {leagueName} has started: {result.game_link}".format(context);
+    return "{white.name} vs {black.name} in {leagueName} has started: {result.gamelink}".format(context);
 });
 
 subscription.register(chesster, 'a-game-is-over', function(target, context) {
