@@ -1153,12 +1153,23 @@ function fetchGameDetails(gamelinkID){
 }
 
 //verify the game meets the specified parameters in options
-function validateGameDetails(details, options){
+function validateGameDetails(details, league, options){
     var result = {
         valid: true,
         reason: ""
     };
-    if(!_.isEqual(details.rated, options.rated)){
+
+    var white = details.players.white.userId;
+    var black = details.players.black.userId;
+
+    var potentialPairings = league.findPairing(white, black);
+    var pairing = _.head(potentialPairings);    
+
+    if(potentialPairings.length !== 1 || (pairing && _.isEqual(_.toLower(pairing.white), black))){
+        result.valid = false;
+        result.reason = league.findPairing(black, white).length? "the colors are reversed.":
+                                                                 "the pairing was not found.";
+    }else if(!_.isEqual(details.rated, options.rated)){
         //the game is not rated correctly
         result.valid = false;
         result.reason = "the game is " + ( options.rated ? "unrated." : "rated." );
@@ -1269,7 +1280,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
     }
 
     //verify the game meets the requirements of the channel we are in
-    var validity = validateGameDetails(details, options);
+    var validity = validateGameDetails(details, message.league, options);
     if(!validity.valid){
         //game was not valid
         gamelinkReplyInvalid(bot, message, validity.reason);

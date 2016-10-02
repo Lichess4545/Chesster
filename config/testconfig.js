@@ -40,5 +40,7 @@ config["leagues"]["lonewolf"]["gamelinks"]["channel"] = "unstable_bot-lonewolf";
 
 config["channel_map"]["G2G6URBT5"] = "45+45";
 config["channel_map"]["G0DFRURGQ"] = undefined;
+config["channel_map"]["unstable_bot"] = "45+45";
+config["channel_map"]["unstabled_bot-lonewolf"] = "lonewolf";
 
 module.exports = config;
