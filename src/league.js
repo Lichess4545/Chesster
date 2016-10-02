@@ -151,10 +151,6 @@ var league_attributes = {
                         lichessRating.set('rating', player.rating);
                         lichessRating.set('lastCheckedAt', moment.utc().format());
                         lichessRating.save().then(function() {
-                            winston.info("Got updated rating from heltour for {name}: {rating}".format({
-                                name: player.username,
-                                rating: player.rating
-                            }));
                             unlock.resolve();
                         }).catch(function(error) {
                             winston.error("{}.refreshRosters.saveRating Error: {}".format(
