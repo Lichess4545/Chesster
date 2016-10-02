@@ -59,14 +59,18 @@ function fetchURLIntoJSON(options){
                 deferred.resolve(result);
             } else {
                 winston.error("[HTTP] Options: " + JSON.stringify(options));
-                winston.error("[HTTP] Result: " + JSON.stringify(result));
+                winston.error("[HTTP] Body: " + result["body"]);
+                winston.error("[HTTP] Status Code: " + result["response"]["statusCode"]);
+                winston.error("[HTTP] Status Message: " + result["response"]["statusMessage"]);
                 deferred.reject("body was not a valid json object: " + JSON.stringify(result["body"]));
             }
         } catch (e) {
             winston.error("[HTTP] Options: " + JSON.stringify(options));
             winston.error("[HTTP] Exception: " + e);
             winston.error("[HTTP] Stack: " + e.stack);
-            winston.error("[HTTP] Result: " + JSON.stringify(result));
+            winston.error("[HTTP] Body: " + result["body"]);
+            winston.error("[HTTP] Status Code: " + result["response"]["statusCode"]);
+            winston.error("[HTTP] Status Message: " + result["response"]["statusMessage"]);
             deferred.reject(e);
         }
     }, function(error) {
