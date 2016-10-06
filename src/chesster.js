@@ -294,7 +294,7 @@ function(bot, message){
         if(!player){
             replyFailedToUpdate(bot, message, "alternate assignment", "unknown player");
         }
-        if(_.toUpper(parameters["player"]).includes(player.id)){
+        if(_(parameters["player"]).toUpper().includes(player.id)){
             //currently commands makes everything lower case
             //until I have added something to control the case-sensitivity
             //I will need to convert player ids to upper case.
