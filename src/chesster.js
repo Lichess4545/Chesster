@@ -163,7 +163,7 @@ function(bot, message){
         var playerName = speaker.name;
         if(parameters["playerName"]){
             //playerName is specified as an identifier or clear text, validate it and get the name
-            var slackUser = slack.getSlackUserFromNameOrID(_.toUpper(parameters["playerName"]));
+            var slackUser = slack.getSlackUserFromNameOrID(parameters["playerName"]);
             if(!slackUser){
                 //didnt find a user by Name or ID
                replyFailedToUpdate(bot, message, 
@@ -293,6 +293,12 @@ function(bot, message){
         var player = slack.getSlackUserFromNameOrID(parameters["player"]);
         if(!player){
             replyFailedToUpdate(bot, message, "alternate assignment", "unknown player");
+        }
+        if(_.toUpper(parameters["player"]).includes(player.id)){
+            //currently commands makes everything lower case
+            //until I have added something to control the case-sensitivity
+            //I will need to convert player ids to upper case.
+            parameters["player"] = _.toUpper(parameters["player"]);
         }
         return heltour.assignAlternate(heltourOptions, 
             roundNumber, 
