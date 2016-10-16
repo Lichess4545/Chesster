@@ -2,7 +2,7 @@ var Q = require("q");
 var _ = require("lodash");
 
 const VARIABLE = /^\{(int)(text)|:[a-zA-Z]+\}$/;
-const CHOICE_VARIABLE = /^\{([a-zA-Z]+\|?)+\}$/;
+const CHOICE_VARIABLE = /^\{([a-zA-Z0-9]+\|?)+\}$/;
 const CONSTANT_VALUE = /^[a-zA-Z]+$/;
 
 const VARIABLE_TYPES = {
