@@ -163,7 +163,7 @@ function(bot, message){
         var playerName = speaker.name;
         if(parameters["playerName"]){
             //playerName is specified as an identifier or clear text, validate it and get the name
-            var slackUser = slack.getSlackUserFromNameOrID(_.toUpper(parameters["playerName"]));
+            var slackUser = slack.getSlackUserFromNameOrID(parameters["playerName"]);
             if(!slackUser){
                 //didnt find a user by Name or ID
                replyFailedToUpdate(bot, message, 
@@ -178,7 +178,7 @@ function(bot, message){
             //get the team associated with the speaker
             var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
             //the speaker must be the captain of the player's team or a moderator
-            if (!isCaptainOrModerator(speaker, speakerTeam, playerTeam)) {
+            if (!isCaptainOrModerator(speaker, speakerTeam, playerTeam, message.league)) {
                 replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
                 return;
             }
@@ -276,7 +276,7 @@ function(bot, message){
         var speaker = slack.getSlackUserFromNameOrID(message.user);
         var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
     
-        if (!isCaptainOrModerator(speaker, speakerTeam, parameters["teamName"])) {
+        if (!isCaptainOrModerator(speaker, speakerTeam, parameters["teamName"], message.league)) {
             replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
             return;
         }
@@ -293,6 +293,12 @@ function(bot, message){
         var player = slack.getSlackUserFromNameOrID(parameters["player"]);
         if(!player){
             replyFailedToUpdate(bot, message, "alternate assignment", "unknown player");
+        }
+        if(_(parameters["player"]).toUpper().includes(player.id)){
+            //currently commands makes everything lower case
+            //until I have added something to control the case-sensitivity
+            //I will need to convert player ids to upper case.
+            parameters["player"] = _.toUpper(parameters["player"]);
         }
         return heltour.assignAlternate(heltourOptions, 
             roundNumber, 
@@ -367,7 +373,7 @@ function(bot, message){
     var speaker = slack.getSlackUserFromNameOrID(message.user);
     var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
 
-    if (!isCaptainOrModerator(speaker, speakerTeam, teamName)) {
+    if (!isCaptainOrModerator(speaker, speakerTeam, teamName, message.league)) {
         replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
         return;
     }
@@ -405,12 +411,13 @@ function(bot, message){
     });
 });
 
-function isCaptainOrModerator(speaker, speakerTeam, teamName){
-    return speaker.isModerator() || //speaker is a moderator
+function isCaptainOrModerator(speaker, speakerTeam, teamName, league){
+    var  isLeagueModerator = league.isModerator(speaker.name);
+    return isLeagueModerator || //speaker is a moderator
 	( speakerTeam && //speaker is on a team
         speakerTeam.captain && //speaker's team has a captain
-        _.isEqual(speaker.name, speakerTeam.captain.name) && //speaker is the team captain
-        _.isEqual(speakerTeam.name, teamName) ); //speaker's team is the team being operated on
+        _.isEqual(_.toLower(speaker.name), _.toLower(speakerTeam.captain.username)) && //speaker is the team captain
+        _.isEqual(_.toLower(speakerTeam.name), _.toLower(teamName))); //speaker's team is the team being operated on
 }
 
 function replyOnlyACaptainOrAModeratorCanDoThat(bot, message){
@@ -1152,12 +1159,23 @@ function fetchGameDetails(gamelinkID){
 }
 
 //verify the game meets the specified parameters in options
-function validateGameDetails(details, options){
+function validateGameDetails(details, league, options){
     var result = {
         valid: true,
         reason: ""
     };
-    if(!_.isEqual(details.rated, options.rated)){
+
+    var white = details.players.white.userId;
+    var black = details.players.black.userId;
+
+    var potentialPairings = league.findPairing(white, black);
+    var pairing = _.head(potentialPairings);    
+
+    if(potentialPairings.length !== 1 || (pairing && _.isEqual(_.toLower(pairing.white), black))){
+        result.valid = false;
+        result.reason = league.findPairing(black, white).length? "the colors are reversed.":
+                                                                 "the pairing was not found.";
+    }else if(!_.isEqual(details.rated, options.rated)){
         //the game is not rated correctly
         result.valid = false;
         result.reason = "the game is " + ( options.rated ? "unrated." : "rated." );
@@ -1268,7 +1286,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
     }
 
     //verify the game meets the requirements of the channel we are in
-    var validity = validateGameDetails(details, options);
+    var validity = validateGameDetails(details, message.league, options);
     if(!validity.valid){
         //game was not valid
         gamelinkReplyInvalid(bot, message, validity.reason);
@@ -1330,7 +1348,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
                 message.league,
                 [white.name, black.name],
                 {
-                    'result': updatePairingResult,
+                    'result': result,
                     'white': white,
                     'black': black,
                     'leagueName': leagueName
@@ -1461,7 +1479,7 @@ subscription.register(chesster, 'a-game-is-scheduled', function(target, context)
 });
 
 subscription.register(chesster, 'a-game-starts', function (target, context) {
-    return "{white.name} vs {black.name} in {leagueName} has started: https://en.lichess.org/{result.gamelinkID}".format(context);
+    return "{white.name} vs {black.name} in {leagueName} has started: {result.gamelink}".format(context);
 });
 
 subscription.register(chesster, 'a-game-is-over', function(target, context) {

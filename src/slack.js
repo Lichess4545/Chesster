@@ -23,13 +23,13 @@ var users = {
     byName: {},
     byId: {},
     getId: function(name){
-        return this.byName[name].id;
+        return this.byName[_.toLower(name)].id;
     },
     getIdString: function(name){
         return "<@"+this.getId(name)+">";
     },
     getByNameOrID: function(nameOrId) {
-        return this.byId[nameOrId] || this.byName[nameOrId];
+        return this.byId[_.toUpper(nameOrId)] || this.byName[_.toLower(nameOrId)];
     }
 };
 var channels = {
