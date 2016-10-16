@@ -38,7 +38,7 @@ describe('commands', function(){
         });
         it("throw an InvalidConstantError if the token does not exactly match the specified constant", 
             function(){
-                return commands.tokenize('this', ['that']).then(assertIfCalled('tokenize did not throw'))
+                return commands.tokenize('this', ['that']).then(assertIfCalled('tokenize did not throw when a constant did not match the expected value'))
                     .catch(function(error){
                         assert(
                             error instanceof commands.InvalidConstantError, 
@@ -51,7 +51,7 @@ describe('commands', function(){
         it("throw an InvalidTypeError if I create a variable with an unknown type", 
             function(){
                 return commands.tokenize('dummy', ['{unknown:variableName}'])
-                    .then(assertIfCalled(false, 'tokenize did not throw'))
+                    .then(assertIfCalled('tokenize did not throw when a variable is created with an unknown type'))
                     .catch(function(error){
                         assert(
                             error instanceof commands.InvalidTypeError,
@@ -66,7 +66,7 @@ describe('commands', function(){
                 return commands.tokenize(
                     'only 3 tokens', 
                     ['{text:expecting}', '{int:someNumber}', '{text:of}', 'tokens']
-                ).then(assertIfCalled('tokenize did not throw')).catch(function(error){
+                ).then(assertIfCalled('tokenize did not throw when too few tokens present')).catch(function(error){
                     assert(
                         error instanceof commands.TooFewTokensError,
                         'was expecting TooFewTokensError, got ' + error.name
@@ -77,7 +77,7 @@ describe('commands', function(){
         it("throw InvalidTokenDescriptionError if the tokenDescriptor is not  one of the valid descriptions", 
             function(){
                 return commands.tokenize('dummy', ['inva!idT0kenD3scription'])
-                    .then(assertIfCalled('tokenize did not throw')).catch(function(error){
+                    .then(assertIfCalled('tokenize did not throw when encountering an invalid type descriptor')).catch(function(error){
                     assert(
                         error instanceof commands.InvalidTokenDescriptionError,
                         'was expecting InvalidTokenDescritionError, got ' + error.name
@@ -88,7 +88,7 @@ describe('commands', function(){
         it("throw an InvalidChoiceError if the token is not token is not one of the valid choices", 
             function(){
                 return commands.tokenize('choice0', ['{choice1|choice2|choice3}'])
-                    .then(assertIfCalled('tokenize did not throw')).catch(function(error){
+                    .then(assertIfCalled('tokenize did not throw when the token is an invalid choice')).catch(function(error){
                     assert(
                         error instanceof commands.InvalidChoiceError,
                         'was expecting InvalidChoiceError, got ' + error.name
@@ -99,7 +99,7 @@ describe('commands', function(){
         it("throw an InvalidTypeValueError if the value provided cannot be parsed into the specified type", 
             function(){
                 return commands.tokenize('value', ['{int:variable}'])
-                    .then(assertIfCalled('tokenize did not throw')).catch(function(error){
+                    .then(assertIfCalled('tokenize did not throw when encountering an unparseable variable')).catch(function(error){
                     assert(
                         error instanceof commands.InvalidTypeValueError,
                         'was expecting InvalidTypeValueError, got ' + error.name
