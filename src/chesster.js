@@ -1094,38 +1094,43 @@ function(bot, message) {
                     heltourOptions,
                     result);
             }else if(!_.isNil(pairing)){
-                //update the pairing with the result bc there was no link found
-                heltour.updatePairing(
-                    heltourOptions,
-                    result
-                ).then(function(updatePairingResult) {
-                    if (updatePairingResult['error']) {
-                        handleHeltourErrors(bot, message, updatePairingResult['error']);
-                        return;
-                    }
-                    resultReplyUpdated(bot, message, updatePairingResult);
+                var speaker = slack.getSlackUserFromNameOrID(message.user);
+                if(message.league.isModerator(speaker.name)){
+                    //current speaker is a moderator for the league
+                    //update the pairing with the result bc there was no link found
+                    heltour.updatePairing(
+                        heltourOptions,
+                        result
+                    ).then(function(updatePairingResult) {
+                        if (updatePairingResult['error']) {
+                            handleHeltourErrors(bot, message, updatePairingResult['error']);
+                            return;
+                        }
+                        resultReplyUpdated(bot, message, updatePairingResult);
 
-                    var leagueName = message.league.options.name;
-                    var white = result.white;
-                    var black = result.black;
-                    if(updatePairingResult['resultChanged'] && !_.isEmpty(updatePairingResult.result)){
-                        subscription.emitter.emit('a-game-is-over',
-                            message.league,
-                            [white.name, black.name],
-                            {
-                                'result': updatePairingResult,
-                                'white': white,
-                                'black': black,
-                                'leagueName': leagueName
-                            }
-                        );
-                    }
-                });
+                        var leagueName = message.league.options.name;
+                        var white = result.white;
+                        var black = result.black;
+                        if(updatePairingResult['resultChanged'] && !_.isEmpty(updatePairingResult.result)){
+                            subscription.emitter.emit('a-game-is-over',
+                                message.league,
+                                [white.name, black.name],
+                                {
+                                    'result': updatePairingResult,
+                                    'white': white,
+                                    'black': black,
+                                    'leagueName': leagueName
+                                }
+                            );
+                        }
+                    });
+                }else{
+                    resultReplyMissingGamelink(bot, message);
+                }
             }else{
                 resultReplyMissingPairing(bot, message);
             }
         });
-
     }catch(e){
         //at the moment, we do not throw from inside the api - rethrow
         throw e;
@@ -1134,6 +1139,12 @@ function(bot, message) {
 
 function replyPermissionFailure(bot, message){
     bot.reply(message, "Sorry, you do not have permission to update that pairing.");
+}
+
+function resultReplyMissingGamelink(bot, message){
+    var channel = channels.byName[message.league.options.gamelinks.channel];
+    bot.reply(message, "Sorry, that game does not have a link. I will not update the result without it.");
+    bot.reply(message, "Please go to <#" +channel.id + "> and post the gamelink.");
 }
 
 function resultReplyMissingPairing(bot, message){
