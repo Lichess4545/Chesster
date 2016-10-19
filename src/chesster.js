@@ -1094,9 +1094,10 @@ function(bot, message) {
                     heltourOptions,
                     result);
             }else if(!_.isNil(pairing)){
-                //update the pairing with the result bc there was no link found
                 var speaker = slack.getSlackUserFromNameOrID(message.user);
                 if(message.league.isModerator(speaker.name)){
+                    //current speaker is a moderator for the league
+                    //update the pairing with the result bc there was no link found
                     heltour.updatePairing(
                         heltourOptions,
                         result
