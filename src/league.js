@@ -190,7 +190,7 @@ var league_attributes = {
     'refreshLeagueModerators': function(){
         var self = this;
         return heltour.getLeagueModerators(self.options.heltour).then(function(moderators){
-            self._moderators = moderators;
+            self._moderators = _.map(moderators, _.toLower);
         });
     },
 
@@ -244,7 +244,7 @@ var league_attributes = {
     // Returns whether someone is a moderator or not.
     //--------------------------------------------------------------------------
     'isModerator': function(name) {
-        return _.includes(this._moderators, name);
+        return _.includes(this._moderators, _.toLower(name));
     },
     //--------------------------------------------------------------------------
     // Prepare a debug message for this league
