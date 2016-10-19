@@ -1064,7 +1064,7 @@ function(bot, message) {
         if(
             !_.isEqual(result.white.id, message.user) &&
             !_.isEqual(result.black.id, message.user) &&
-            !message.player.isModerator(message)
+            !message.player.isModerator()
         ){
             replyPermissionFailure(bot, message);
             return;
