@@ -862,7 +862,8 @@ function schedulingReplyScheduled(bot, message, results, white, black) {
     var date_formats  = dates.join("\n\t");
 
     bot.reply(message, 
-        ":heavy_check_mark: @" + white.name + " (_white pieces_) vs @" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats
+        ":heavy_check_mark: @" + white.name + " (_white pieces_) vs @" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats + "\n\t" +
+        '_Attention: The dates above are *incorrect* during DST transition periods. Please verify your time independently during these times._'
     );
 }
 
