@@ -850,7 +850,6 @@ function schedulingReplyAmbiguous(bot, message){
 
 // Game has been scheduled.
 function schedulingReplyScheduled(bot, message, results, white, black) {
-debugger;
     var whiteDate = results.date.clone().utcOffset(white.tz_offset/60);
     var blackDate = results.date.clone().utcOffset(black.tz_offset/60);
     var format = "YYYY-MM-DD @ HH:mm UTC";
