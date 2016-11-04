@@ -267,10 +267,10 @@ function(bot, message){
         "to", 
         "board", 
         "{int:boardNumber}", 
-        "during", 
+        "{during|for|in}",
         "round", 
         "{int:roundNumber}", 
-        "on",
+        "{on|for|in}",
         "{text:teamName}"
     ]).then(function(parameters){
         var speaker = slack.getSlackUserFromNameOrID(message.user);
