@@ -365,6 +365,14 @@ describe('scheduling', function() {
                 }
             );
             testParseScheduling(
+                "supervj: v ecstaticbroccoli Wednesday 19:00 UTC",
+                {
+                    white: "supervj",
+                    black: "ecstaticbroccoli",
+                    date: "2016-04-13T19:00:00+0000"
+                }
+            );
+            testParseScheduling(
                 "@ronaldulyssesswanson – @esolcneveton on Saturday, April 16th at 14:00 GMT.",
                 {
                     white: "ronaldulyssesswanson",
