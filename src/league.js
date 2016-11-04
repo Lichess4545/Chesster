@@ -142,10 +142,11 @@ var league_attributes = {
             var newTeams = [];
             var newLookup = {};
             roster.players.forEach(function(player) {
-                newPlayerLookup[player.username.toLowerCase()] = player;
+                var name = _.toLower(player.username);
+                newPlayerLookup[name] = player;
                 db.lock().then(function(unlock) {
                     return db.LichessRating.findOrCreate({
-                        where: { lichessUserName: player.username }
+                        where: { lichessUserName: name }
                     }).then(function(lichessRatings) {
                         var lichessRating = lichessRatings[0];
                         lichessRating.set('rating', player.rating);
