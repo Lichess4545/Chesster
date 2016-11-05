@@ -1,5 +1,5 @@
 // extlibs
-var moment = require('moment');
+var moment = require('moment-timezone');
 var Q = require("q");
 var _ = require("lodash");
 var winston = require("winston");
@@ -850,8 +850,8 @@ function schedulingReplyAmbiguous(bot, message){
 
 // Game has been scheduled.
 function schedulingReplyScheduled(bot, message, results, white, black) {
-    var whiteDate = results.date.clone().utcOffset(white.tz_offset/60);
-    var blackDate = results.date.clone().utcOffset(black.tz_offset/60);
+    var whiteDate = results.date.clone().tz(white.tz);
+    var blackDate = results.date.clone().tz(black.tz);
     var format = "YYYY-MM-DD @ HH:mm UTC";
     var friendly_format = "ddd @ HH:mm";
     var dates = [

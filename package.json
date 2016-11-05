@@ -19,6 +19,7 @@
     "jshint": "^2.9.3",
     "lodash": "^4.13.1",
     "moment": "2.13.0",
+    "moment-timezone": "0.5.7",
     "q": "1.4.1",
     "sequelize": "3.23.4",
     "sequelize-cli": "2.4.0",
