@@ -15,6 +15,7 @@ var scheduling = require('./scheduling.js');
 var slack = require('./slack.js');
 var subscription = require('./subscription.js');
 var commands = require('./commands.js');
+const watcher = require('./watcher.js');
 
 var users = slack.users;
 var channels = slack.channels;
@@ -1170,52 +1171,6 @@ function fetchGameDetails(gamelinkID){
     return http.fetchURLIntoJSON("http://en.lichess.org/api/game/" + gamelinkID);
 }
 
-//verify the game meets the specified parameters in options
-function validateGameDetails(details, league, options){
-    var result = {
-        valid: true,
-        reason: ""
-    };
-
-    var white = details.players.white.userId;
-    var black = details.players.black.userId;
-
-    var potentialPairings = league.findPairing(white, black);
-    var pairing = _.head(potentialPairings);    
-
-    if(potentialPairings.length !== 1 || (pairing && _.isEqual(_.toLower(pairing.white), black))){
-        result.valid = false;
-        result.reason = league.findPairing(black, white).length? "the colors are reversed.":
-                                                                 "the pairing was not found.";
-    }else if(!_.isEqual(details.rated, options.rated)){
-        //the game is not rated correctly
-        result.valid = false;
-        result.reason = "the game is " + ( options.rated ? "unrated." : "rated." );
-    }else if( !details.clock || ( // no clock - unlimited or coorespondence
-        details.clock && ( //clock
-            !_.isEqual(details.clock.initial, options.clock.initial * 60) || // initial time
-            !_.isEqual(details.clock.increment, options.clock.increment) ) // increment
-        ) 
-    ){
-        //the time control does not match options
-        result.valid = false;
-        result.reason = "the time control is incorrect.";
-    }else if(!_.isEqual(details.variant, options.variant)){
-        //the variant does not match
-        result.valid = false;
-        result.reason = "the variant should be standard.";
-    }else{
-        //the link is too old or too new
-        var extrema = scheduling.getRoundExtrema(options);
-        var game_start = moment.utc(details.timestamp);
-        if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
-            result.valid = false;
-            result.reason = "the game was not played in the current round.";
-        }
-    }
-    return result;
-}
-
 function gamelinkReplyInvalid(bot, message, reason){
     bot.reply(message, "I am sorry, <@" + message.user + ">,  "
                      + "your post is *not valid* because "
@@ -1298,7 +1253,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
     }
 
     //verify the game meets the requirements of the channel we are in
-    var validity = validateGameDetails(details, message.league, options);
+    var validity = league.validateGameDetails(details);
     if(!validity.valid){
         //game was not valid
         gamelinkReplyInvalid(bot, message, validity.reason);
@@ -1498,3 +1453,7 @@ subscription.register(chesster, 'a-game-is-over', function(target, context) {
     return "{white.name} vs {black.name} in {leagueName} is over. The result is {result.result}.".format(context);
 });
 
+
+//------------------------------------------------------------------------------
+// Start the watcher.
+watcher.watch(chesster);
