@@ -9,7 +9,6 @@ var fuzzy = require("./fuzzy_match.js");
 var models = require("./models.js");
 var winston = require('winston');
 var logging = require('./logging.js');
-var moment = require('moment-timezone');
 
 var slackIDRegex = module.exports.slackIDRegex = /<@([^\s]+)>/;
 
