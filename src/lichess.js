@@ -2,7 +2,7 @@
 // Lichess helpers
 //------------------------------------------------------------------------------
 var http = require("./http.js");
-var moment = require("moment");
+var moment = require('moment-timezone');
 var Q = require("q");
 var _ = require("lodash");
 var winston = require("winston");
