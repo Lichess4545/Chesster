@@ -203,7 +203,7 @@ function botExceptionHandler(bot, message, promise){
 }
 
 function localTime(datetime) {
-    return datetime.utcOffset(this.tz_offset / 60);
+    return datetime.clone().tz(this.tz);
 }
 
 //------------------------------------------------------------------------------

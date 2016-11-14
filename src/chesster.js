@@ -1,5 +1,5 @@
 // extlibs
-var moment = require('moment');
+var moment = require('moment-timezone');
 var Q = require("q");
 var _ = require("lodash");
 var winston = require("winston");
@@ -850,8 +850,8 @@ function schedulingReplyAmbiguous(bot, message){
 
 // Game has been scheduled.
 function schedulingReplyScheduled(bot, message, results, white, black) {
-    var whiteDate = results.date.clone().utcOffset(white.tz_offset/60);
-    var blackDate = results.date.clone().utcOffset(black.tz_offset/60);
+    var whiteDate = results.date.clone().tz(white.tz);
+    var blackDate = results.date.clone().tz(black.tz);
     var format = "YYYY-MM-DD @ HH:mm UTC";
     var friendly_format = "ddd @ HH:mm";
     var dates = [
@@ -862,8 +862,7 @@ function schedulingReplyScheduled(bot, message, results, white, black) {
     var date_formats  = dates.join("\n\t");
 
     bot.reply(message, 
-        ":heavy_check_mark: @" + white.name + " (_white pieces_) vs @" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats + "\n\t" +
-        '_Attention: The dates above are *incorrect* during DST transition periods. Please verify your time independently during these times._'
+        ":heavy_check_mark: @" + white.name + " (_white pieces_) vs @" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats
     );
 }
 

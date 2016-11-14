@@ -1,5 +1,5 @@
 var assert = require('chai').assert;
-var moment = require("moment");
+var moment = require("moment-timezone");
 var gamelinks = require('../src/gamelinks');
 
 
