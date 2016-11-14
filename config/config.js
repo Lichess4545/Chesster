@@ -139,8 +139,8 @@ var config = {
                 "channel": "lonewolf-gamelinks",
                 "channel_id": "C0SD3SCAH",
                 "clock": {
-                    "initial": 30,
-                    "increment": 30
+                    "initial": 1,
+                    "increment": 0
                 },
                 "rated": true,
                 "variant" : "standard",
