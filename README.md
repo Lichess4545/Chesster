@@ -13,12 +13,16 @@ Andrew W. Haddad
 0. Clone this repo
 1. Install vagrant
 2. Use the included Vagrantfile to bring up the environment
-3. Migrate databases: `npm run migrate config/testconfig.js`
-
-## Start Chesster
-1. Generate a bot token in your Slack Team's Services and Customization.
-2. Install your bot's token in the start script, start_chesster.
-3. Start the bot. ` > ./bin./start ../config/config.js`
+3. Install the npm modules - `npm -i`
+4. Generate a bot token in your Slack Team's Services and Customization.
+5. cp config/slack_token.js.example config/slack_token.js
+6. update config/slack_token.js with your token 
+7. cp config/heltour_token.js.example config/test_heltour_token.js
+8. cp config/heltour_token.js.example config/heltour_token.js
+9. update config/config/test_heltour_token.js with a token from the heltour site
+10. Migrate databases: `npm run migrate config/testconfig.js`
+11. Install your bot's token in the start script, start_chesster.
+12. Start the bot. ` > ./bin./start ../config/config.js`
 
 ## Website Integration
 This bot utilizes the heltour api from this repo: https://github.com/cyanfish/heltour/
