@@ -547,6 +547,7 @@ function(bot,message) {
 /* mods */
 
 leagueResponse(['summon mods'], 'formatSummonModsResponse');
+leagueResponse(['notify mods'], 'formatSummonModsResponse');
 leagueResponse(['mods'], 'formatModsResponse');
 
 /* faq */
