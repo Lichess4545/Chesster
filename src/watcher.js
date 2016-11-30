@@ -9,7 +9,7 @@ const _league = require("./league.js");
 var baseURL = "https://en.lichess.org/api/game-stream?users="
 
 const CREATED = 10;
-const STARTED = 20,
+const STARTED = 20;
 const ABORTED = 25;
 const MATE = 30;
 const RESIGN = 31;
