@@ -5,8 +5,7 @@ var _ = require("lodash");
 var winston = require("winston");
 
 // Our stuff
-var gamelinks = require('./gamelinks.js');
-var results = require('./results.js');
+var games = require('./games.js');
 var heltour = require('./heltour.js');
 var http = require("./http.js");
 var league = require("./league.js");
@@ -381,7 +380,7 @@ function(bot, message) {
     }
 
     try{
-        var result = results.parseResult(message.text);
+        var result = games.parseResult(message.text);
 
         if(!result.white || !result.black || !result.result){
             return;
@@ -549,7 +548,7 @@ function validateUserResult(details, result){
 
 function processGamelink(bot, message, gamelink, options, heltourOptions, userResult){
     //get the gamelink id if one is in the message
-    var result = gamelinks.parseGamelink(gamelink);
+    var result = games.parseGamelink(gamelink);
     if(!result.gamelinkID){
         //no gamelink found. we can ignore this message
         return;
