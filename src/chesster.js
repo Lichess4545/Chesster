@@ -579,7 +579,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
     }
 
     //verify the game meets the requirements of the channel we are in
-    var validity = league.validateGameDetails(details);
+    var validity = games.validateGameDetails(league, details);
     if(!validity.valid){
         //game was not valid
         gamelinkReplyInvalid(bot, message, validity.reason);

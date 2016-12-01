@@ -5,6 +5,7 @@ const winston = require("winston");
 const format = require('string-format');
 format.extend(String.prototype);
 const _league = require("./league.js");
+const games = require("./games.js");
 
 var baseURL = "https://en.lichess.org/api/game-stream?users="
 
@@ -57,7 +58,7 @@ function Watcher(bot, league) {
         // 3. pairing match during a 4 hour window (+-2 hours), warn for other mismatches
         console.log(details);
 
-        var result = self.league.validateGameDetails(details);
+        var result = games.validateGameDetails(self.league, details);
         // If we don't have a pairing from this information, then it will
         // never be valid. Ignore it.
         if (!result.pairing) {
