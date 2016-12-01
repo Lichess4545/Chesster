@@ -1,7 +1,6 @@
 // NOTE: None of these files are committed and for good reason.
 //       You must provide your own.
 var token = require("./slack_token.js").token;
-var private_key = require("./service_account_key.js").key;
 var heltour_token = require("./heltour_token.js").token;
 
 try {
@@ -55,8 +54,7 @@ var config = {
             "spreadsheet": {
                 "key": "1cTBOQNrbUw9-RWmrC9b6Yyi3i2MtIvUWuXNxzQmGfSs",
                 "serviceAccountAuth": {
-                    "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
-                    "private_key": private_key,
+                    "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com"
                 },
                 "scheduleColname": "time (mm/dd @ hh:mm*)",
                 "resultsColname": "result"
@@ -125,8 +123,7 @@ var config = {
             "spreadsheet": {
                 "key": "1WI4H9DWKSI-q6Omeqh28w1lKaqB0AAFV01wDiOeW6Ho",
                 "serviceAccountAuth": {
-                    "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
-                    "private_key": private_key,
+                    "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com"
                 },
                 "scheduleColname": "game scheduled (in gmt)",
                 "resultsColname": "result"

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 // Helpers for the scheduling portion of chesster.
 //------------------------------------------------------------------------------
-var moment = require("moment");
+var moment = require('moment-timezone');
 var _ = require("lodash");
 var winston = require("winston");
 

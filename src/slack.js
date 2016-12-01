@@ -56,10 +56,10 @@ function appendPlayerRegex(command, optional) {
     if (optional) {
         // If the username is optional (as in the "rating" command), append
         // a ? to the whole player matching regex.
-        return new RegExp(playerRegex + "?");
+        return new RegExp(playerRegex + "?", "i");
     }
 
-    return new RegExp(playerRegex);
+    return new RegExp(playerRegex, "i");
 }
 
 function getSlackUser(message) {
@@ -203,7 +203,7 @@ function botExceptionHandler(bot, message, promise){
 }
 
 function localTime(datetime) {
-    return datetime.utcOffset(this.tz_offset / 60);
+    return datetime.clone().tz(this.tz);
 }
 
 //------------------------------------------------------------------------------

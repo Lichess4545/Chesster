@@ -5,7 +5,7 @@
 const _ = require("lodash");
 const Q = require("q");
 const winston = require("winston");
-const moment = require("moment");
+const moment = require("moment-timezone");
 const format = require('string-format');
 format.extend(String.prototype);
 

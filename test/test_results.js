@@ -1,5 +1,5 @@
 var assert = require('chai').assert;
-var moment = require("moment");
+var moment = require("moment-timezone");
 var results = require('../src/results');
 
 // we are exposing 2 new functions - parseResult and updateResult

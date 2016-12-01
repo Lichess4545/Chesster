@@ -13,3 +13,4 @@ test_logging_token.js
 test_heltour_token.js
 test_logging_token.js
 db/database.sqlite
+npm-debug.log
