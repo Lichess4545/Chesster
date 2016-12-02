@@ -108,10 +108,6 @@ function leagueDMResponse(patterns, responseName) {
     });
 }
 
-function requiresLeague(patterns, callback) {
-    chest
-}
-
 /* captains */
 leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
 leagueDMResponse(['captains', 'captain list'], 'formatCaptainsResponse');
