@@ -243,6 +243,8 @@ function assignAlternate(bot, message){
     });
 }
 
+/* unassign alternate for board <board-number> during round <round-number> on <team-name> */
+/* look up the original player and assign him to his board */
 function unassignAlternate(bot, message){
     var alternateOptions = message.league.options.alternate;
     if (!alternateOptions || !_.isEqual(message.channel, alternateOptions.channel_id)) {

@@ -17,6 +17,7 @@ var subscription = require('./subscription.js');
 var commands = require('./commands.js');
 //const watcher = require('./watcher.js');
 const availability = require("./commands/availability.js");
+const nomination = require("./commands/nomination.js");
 
 var users = slack.users;
 var channels = slack.channels;
@@ -138,8 +139,6 @@ chesster.hears(
 );
 
 /* alternate unassignment */
-/* unassign alternate for board <board-number> during round <round-number> on <team-name> */
-/* look up the original player and assign him to his board */
 chesster.hears(
     {
         middleware: [ slack.withLeagueByChannelName ],
@@ -152,32 +151,14 @@ chesster.hears(
 );
 
 /* game nomination */
-chesster.hears({
-    middleware: [ slack.requiresLeague ],
-    patterns: [ 'nomination' ],
-    messageTypes: [ 'direct_message' ]
-},
-function(bot, message) {
-    var heltourOptions = message.league.options.heltour;
-    if (!heltourOptions) {
-        winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
-        return;
-    }
-
-    var speaker = users.getByNameOrID(message.user);
-    heltour.getPrivateURL(
-        heltourOptions,
-        'nominate', //hardcoding this for now
-        speaker.name
-    ).then(function(jsonResult){
-        bot.reply(message, "Use this link to nominate your choice: {}".format(jsonResult.url));
-        bot.reply(message, "NOTE: this is a private link. Do not share it.");
-        bot.reply(message, "This link will expire at: {}".format(jsonResult.expires));
-    }).catch(function(error){
-        winston.error("[NOMINATION] private link acquisition failure: {}".format(error));
-        bot.reply(message, "I failed to get your private link. Please ask @endrawes0 for help.");
-    });
-});
+chesster.hears(
+    {
+        middleware: [ slack.requiresLeague ],
+        patterns: [ 'nomination' ],
+        messageTypes: [ 'direct_message' ]
+    },
+    nomination.nomination
+)
 
 /* rating */
 
