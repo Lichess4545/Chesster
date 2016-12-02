@@ -761,6 +761,18 @@ function(bot, message) {
     return deferred.promise;
 });
 
+subscription.register(chesster, 'a-game-is-scheduled', function(target, context) {
+    // TODO: put these date formats somewhere, probably config?
+    var friendlyFormat = "ddd @ HH:mm";
+    target = slack.getSlackUserFromNameOrID(target);
+    var targetDate = context.result.date.clone().utcOffset(target.tz_offset/60);
+    context['yourDate'] = targetDate.format(friendlyFormat);
+    var fullFormat = "YYYY-MM-DD @ HH:mm UTC";
+    context['realDate'] = context.result.date.format(fullFormat);
+    return "{white.name} vs {black.name} in {leagueName} has been scheduled for {realDate}, which is {yourDate} for you.".format(context);
+});
+
+
 subscription.register(chesster, 'a-game-starts', function (target, context) {
     return "{white.name} vs {black.name} in {leagueName} has started: {result.gamelink}".format(context);
 });
