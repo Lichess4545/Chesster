@@ -1,4 +1,6 @@
 var _ = require("lodash");
+var moment = require("moment-timezone");
+var scheduling = require("./scheduling");
 
 var VALID_RESULTS = {
     "0-0":"0-0",
@@ -142,7 +144,7 @@ function validateGameDetails(league, details) {
     }else{
         //the link is too old or too new
         var extrema = scheduling.getRoundExtrema(options);
-        var game_start = moment.utc(details.timestamp);
+        var game_start = moment.utc(details.createdAt);
         if(game_start.isBefore(extrema.start) || game_start.isAfter(extrema.end)){
             result.valid = false;
             result.gameOutsideOfCurrentRound = true;

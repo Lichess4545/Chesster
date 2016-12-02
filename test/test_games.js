@@ -111,7 +111,7 @@ describe('games', function(){
             );
         });
     });
-    
+
     describe('#parseGamelink', function(){
         it("Tests gamelinks format parsing.", function(){
             function testParseGamelink(string, expected)  {
@@ -143,6 +143,71 @@ describe('games', function(){
                 undefined
             );
 
+        });
+    });
+    
+    describe('#validateGameDetails', function(){
+        it("Tests game details validation.", function(){
+            var testLeagueOptions = {
+                "gamelinks": {
+                    "clock": {
+                        "initial": 45,
+                        "increment": 45
+                    },
+                    "rated": true,
+                    "variant" : "standard",
+                    "extrema": {
+                        "iso_weekday": 1,
+                        "hour": 11,
+                        "minute": 0,
+                        "warning_hours": 1,
+                        "referenceDate": moment("2016-10-16T12:00:00Z")
+                    }
+                }
+            };
+            var mockLeague = { options: testLeagueOptions, findPairing: function() { return this._pairings; }};
+            function testValidateGameDetails(details, pairings, expected)  {
+                mockLeague._pairings = pairings;
+                var result = games.validateGameDetails(mockLeague, details);
+                for (var prop in expected) {
+                    assert.equal(result[prop], expected[prop], "result." + prop);
+                }
+            }
+            testValidateGameDetails(
+                {"id":"gVbuwhK3","rated":true,"variant":"standard","speed":"classical","perf":"classical","createdAt":1476567724919,"status":35,"clock":{"initial": 2700, "increment": 45},"players":{"white":{"userId":"happy0","rating":1680},"black":{"userId":"tephra","rating":1418}}},
+                [{white:"happy0", black: "tephra"}],
+                {valid: true}
+            );
+            testValidateGameDetails(
+                {"id":"gVbuwhK3","rated":true,"variant":"standard","speed":"classical","perf":"classical","createdAt":1476567724919,"status":35,"clock":{"initial": 2700, "increment": 45},"players":{"white":{"userId":"happy0","rating":1680},"black":{"userId":"tephra","rating":1418}}},
+                [],
+                {valid: false, pairingWasNotFound: true, reason: "the pairing was not found."}
+            );
+            testValidateGameDetails(
+                {"id":"gVbuwhK3","rated":true,"variant":"standard","speed":"classical","perf":"classical","createdAt":1476567724919,"status":35,"clock":{"initial": 2700, "increment": 45},"players":{"white":{"userId":"happy0","rating":1680},"black":{"userId":"tephra","rating":1418}}},
+                [{white:"tephra", black: "happy0"}],
+                {valid: false, colorsAreReversed: true, reason: "the colors are reversed."}
+            );
+            testValidateGameDetails(
+                {"id":"gVbuwhK3","rated":false,"variant":"standard","speed":"classical","perf":"classical","createdAt":1476567724919,"status":35,"clock":{"initial": 2700, "increment": 45},"players":{"white":{"userId":"happy0","rating":1680},"black":{"userId":"tephra","rating":1418}}},
+                [{white:"happy0", black: "tephra"}],
+                {valid: false, gameIsUnrated: true, reason: "the game is unrated."}
+            );
+            testValidateGameDetails(
+                {"id":"gVbuwhK4","rated":true,"variant":"standard","speed":"correspondence","perf":"correspondence","createdAt":1476567724919,"status":35,"daysPerTurn":5,"players":{"white":{"userId":"happy0","rating":1680},"black":{"userId":"tephra","rating":1418}}},
+                [{white:"happy0", black: "tephra"}],
+                {valid: false, timeControlIsIncorrect: true, reason: "the time control is incorrect."}
+            );
+            testValidateGameDetails(
+                {"id":"gVbuwhK3","rated":true,"variant":"chess960","speed":"classical","perf":"classical","createdAt":1476567724919,"status":35,"clock":{"initial": 2700, "increment": 45},"players":{"white":{"userId":"happy0","rating":1680},"black":{"userId":"tephra","rating":1418}}},
+                [{white:"happy0", black: "tephra"}],
+                {valid: false, variantIsIncorrect: true, reason: "the variant should be standard."}
+            );
+            testValidateGameDetails(
+                {"id":"gVbuwhK3","rated":true,"variant":"standard","speed":"classical","perf":"classical","createdAt":1477567724919,"status":35,"clock":{"initial": 2700, "increment": 45},"players":{"white":{"userId":"happy0","rating":1680},"black":{"userId":"tephra","rating":1418}}},
+                [{white:"happy0", black: "tephra"}],
+                {valid: false, gameOutsideOfCurrentRound: true, reason: "the game was not played in the current round."}
+            );
         });
     });
 });
