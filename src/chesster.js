@@ -194,9 +194,6 @@ function prepareCommandsMessage(){
         "    [ pairing | pairing <player> ] ! get your (or given <player>) latest pairings with scheduled time\n" +
         "    [ pairings ]                   ! get pairings link\n" +
         "    [ standings ]                  ! get standings link\n" +
-        "    [ channels | \n" +
-        "        channel list |             ! list the important channels\n" +
-        "        channel detail <channel> ] ! details regarding #<channel>\n" +
         "    [ commands | \n"  +
         "        command list ]             ! this list\n" +
         "    [ rating <player> ]            ! get the player's classical rating.\n" +
@@ -251,64 +248,6 @@ leagueResponse(['mods'], 'formatModsResponse');
 /* faq */
 leagueResponse(["faq"], 'formatFAQResponse');
 
-/* channels */
-function prepareChannelListMessage(){
-    return "You may find the following channels useful:\n" +
-        "\t" + channels.getIdString("general") + "\n" +
-        "\t" + channels.getIdString("team-scheduling") + "\n" +
-        "\t" + channels.getIdString("team-gamelinks") + "\n" +
-        "\t" + channels.getIdString("team-results") + "\n" +
-        "\t" + channels.getIdString("team-scheduling") + "\n" +
-        "\t" + channels.getIdString("team-gamelinks") + "\n" +
-        "\t" + channels.getIdString("team-results") + "\n" +
-        "\t" + channels.getIdString("random") + "\n" +
-        "Try: [ @chesster channel details <channel name> ] for more detail.";
-}
-
-function prepareChannelDetailMessage(channel){
-    var CHANNEL_DETAILS = {
-        "general": channels.getIdString("general") + " is used to communicate news to members of " + 
-			"the league. Any general league discussion can be done there. If conversation is not " +
-			"league related, please go to " + channels.getIdString("random") + 
-			" or create a new channel.",
-        "team-scheduling": "Put the time of your scheduled games here." + 
-			"\n\tFormat: \"@white v @black, mm/dd @ HH:MM\" (all times GMT)",
-        "team-gamelinks": "Post links to lichess, league games here.",
-        "team-results": "Post results here."
-			+ "\n\tFormat: \"@white v @black, <result>\", where <result> in {1-0, 1/2-1/2, 0-1}",
-        "random": "Anything can be discussed here. " + 
-			"And if it is not league related, it belongs in here.",
-        "default": "I am sorry. I do not recognize that channel."
-    };
-
-    channel = channel.replace("#", ""); //remove channel special character
-    return CHANNEL_DETAILS[channel] || CHANNEL_DETAILS["default"] + ": " + channel;
-}
-
-chesster.controller.hears([
-	'channels', 
-	'channel list'
-],[
-	'direct_mention', 
-	'direct_message'
-],function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        bot.reply(message, prepareChannelListMessage());
-    });
-});
-
-chesster.controller.hears([
-	'channel detail'
-],[
-	'direct_mention'
-],function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        var channel_name = message.text.split(" ").slice(2).join(" ");
-        bot.reply(message, prepareChannelDetailMessage(channel_name));
-    });
-});
-
-
 /* pairings */
 leagueResponse(['pairings'], 'formatPairingsLinkResponse');
 
@@ -351,76 +290,8 @@ chesster.hears({
     return deferred.promise;
 });
 
-chesster.hears({
-    middleware: [slack.requiresLeague, slack.requiresModerator],
-    patterns: [
-        'debug'
-    ],
-    messageTypes: [
-        'direct_mention', 'direct_message'
-    ]
-}, function(bot, message) {
-    return message.league.formatDebugResponse().then(function(reply) {
-        bot.reply(message, reply);
-    });
-});
-
 /* rules */
 leagueResponse(['rules', 'regulations'], 'formatRulesLinkResponse');
-
-/* exceptions */
-
-chesster.hears({
-    patterns: "exception handle test",
-    messageTypes: [
-        "ambient"
-    ]
-},
-function(){
-    throw new Error("an error");
-});
-
-/* teams */
-
-chesster.hears({
-    middleware: [slack.requiresLeague],
-    patterns: 'team captain',
-    messageTypes: [
-        'direct_mention', 
-        'direct_message'
-    ]
-},
-function(bot, message) {
-    var teamName = message.text.split(" ").slice(2).join(" ");
-    return message.league.formatTeamCaptainResponse(teamName).then(function(response) {
-        bot.reply(message, response);
-    });
-});
-
-leagueResponse(['teams', 'team list'], 'formatTeamsResponse');
-
-
-/* team members */
-chesster.hears({
-    middleware: [slack.requiresLeague],
-    patterns: ['team members'],
-    messageTypes: [
-        'direct_mention', 
-        'direct_message'
-    ]
-},
-function(bot, message) {
-    return Q.fcall(function() {
-        var teamName = message.text.split(" ").slice(2).join(" ");
-        if(teamName && !_.isEqual(teamName, "")){
-            message.league.formatTeamMembersResponse(teamName).then(function(response) {
-                bot.reply(message, response);
-            });
-        }else{
-            bot.reply(message, "Which team did you say? [ team members <team-name> ]. Please try again.");
-        }
-    });
-});
 
 /* welcome */
 
@@ -446,36 +317,6 @@ function(bot, message) {
 
 leagueResponse(['welcome', 'starter guide', 'player handbook'], 'formatStarterGuideResponse');
 
-/* thanks */
-chesster.hears({
-    patterns: ['thanks', 'thank you'],
-    messageTypes: [
-        'direct_mention', 
-        'mention', 
-        'direct_message'
-    ]
-},
-function(bot,message) {
-    bot.reply(message, "It is my pleasure to serve you!");
-});
-
-/* registration */
-leagueResponse(['registration', 'register', 'sign up', 'signup'], 'formatRegistrationResponse');
-
-
-/* challenges */
-
-//http --form POST en.l.org/setup/friend?user=usernameOrId variant=1 clock=false time=60 increment=60 color=random 'Accept:application/vnd.lichess.v1+json'
-
-chesster.controller.hears([
-	'challenge'
-], [
-	'direct_mention', 
-	'direct_message'
-], function(bot,message) {
-    bot_exception_handler(bot, message, _.noop);
-});
-
 /* source */
 
 chesster.hears({
@@ -487,33 +328,6 @@ chesster.hears({
 },
 function(bot, message){
     bot.reply(message, chesster.config.links.source);
-});
-
-/* board */
-
-chesster.hears({
-    middleware: [slack.requiresLeague],
-    patterns: ['^board'],
-    messageTypes: [
-        'direct_mention', 
-        'direct_message'
-    ]
-},
-function(bot, message) {
-    var deferred = Q.defer();
-    bot.startPrivateConversation(message, function (response, convo) {
-        var boardNumber = parseInt(message.text.split(" ")[1], 10);
-        if(boardNumber && !isNaN(boardNumber)){
-            message.league.formatBoardResponse(boardNumber).then(function(response) {
-                convo.say(response);
-                deferred.resolve();
-            });
-        }else{
-            convo.say("Which board did you say? [ board <number> ]. Please try again.");
-            deferred.resolve();
-        }
-    });
-    return deferred.promise;
 });
 
 
