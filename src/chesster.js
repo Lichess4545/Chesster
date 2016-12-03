@@ -297,22 +297,20 @@ leagueResponse(['rules', 'regulations'], 'formatRulesLinkResponse');
 
 chesster.on({event: 'user_channel_join'},
 function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        if(_.isEqual(message.channel, channels.getId(chesster.config["welcome"]["channel"]))){
-            bot.reply(message, "Everyone, please welcome the newest member of the " 
-                             + "Lichess 45+45 League, <@" + message.user + ">!");
-            
-            bot.startPrivateConversation(message, function(err, convo){
-               convo.say("Welcome. I am the moderator bot for the Lichess4545 league");
-               convo.say("Say 'help' to get help."); 
-               convo.say("If you joined for the 45+45 league, read this: " 
-                   + chesster.config["leagues"]["45+45"].links.faq 
-                   + ". If you joined for Lone Wolf, read this: " 
-                   + chesster.config["leagues"]["lonewolf"].links.faq 
-                   + ". Enjoy the league!"); 
-            });
-        }
-    });
+    if(_.isEqual(message.channel, channels.getId(chesster.config["welcome"]["channel"]))){
+        bot.reply(message, "Everyone, please welcome the newest member of the " 
+                         + "Lichess 45+45 League, <@" + message.user + ">!");
+
+        bot.startPrivateConversation(message, function(err, convo){
+           convo.say("Welcome. I am the moderator bot for the Lichess4545 league");
+           convo.say("Say 'help' to get help."); 
+           convo.say("If you joined for the 45+45 league, read this: " 
+               + chesster.config["leagues"]["45+45"].links.faq 
+               + ". If you joined for Lone Wolf, read this: " 
+               + chesster.config["leagues"]["lonewolf"].links.faq 
+               + ". Enjoy the league!"); 
+        });
+    }
 });
 
 leagueResponse(['welcome', 'starter guide', 'player handbook'], 'formatStarterGuideResponse');
