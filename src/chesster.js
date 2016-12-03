@@ -18,6 +18,7 @@ var commands = require('./commands.js');
 const availability = require("./commands/availability.js");
 const nomination = require("./commands/nomination.js");
 const scheduling = require("./commands/scheduling.js");
+const leagueInfo = require("./commands/leagueInfo.js");
 
 var users = slack.users;
 var channels = slack.channels;
@@ -30,6 +31,22 @@ var config_file = process.argv[2] || "../config/config.js";
 var chesster = new slack.Bot({
     config_file: config_file
 });
+
+if (!('toJSON' in Error.prototype)) {
+    Object.defineProperty(Error.prototype, 'toJSON', {
+        value: function () {
+            var alt = {};
+
+            Object.getOwnPropertyNames(this).forEach(function (key) {
+                alt[key] = this[key];
+            }, this);
+
+            return alt;
+        },
+        configurable: true,
+        writable: true
+    });
+}
 
 function handleHeltourErrors(bot, message, error){
     if (_.isEqual(error, "no_matching_rounds")) {
@@ -45,48 +62,57 @@ function handleHeltourErrors(bot, message, error){
 }
 
 // A helper for a very common pattern
-function leagueResponse(patterns, responseName) {
-    chesster.hears({
-        middleware: [slack.requiresLeague],
-        patterns: patterns,
-        messageTypes: [
-            'direct_message',
-            'direct_mention'
-        ]
-    },
-    function (bot, message){
-        return message.league[responseName]().then(function(response) {
-            bot.reply(message, response);
-        });
-    });
-}
-// A helper for a very common pattern
-function leagueDMResponse(patterns, responseName) {
-    chesster.hears({
-        middleware: [slack.requiresLeague],
-        patterns: patterns,
-        messageTypes: [
-            'direct_message',
-            'direct_mention'
-        ]
-    },
-    function (bot, message){
-        var deferred = Q.defer();
-        bot.startPrivateConversation(message, function (response, convo) {
-            message.league[responseName]().then(function(response) {
-                convo.say(response);
-                deferred.resolve();
-            }, function(error) {
-                deferred.reject(error);
-            });
-        });
-        return deferred.promise;
-    });
+function directRequiresLeague(patterns, callback) {
+    chesster.hears(
+        {
+            middleware: [slack.requiresLeague],
+            patterns: patterns,
+            messageTypes: [
+                'direct_message',
+                'direct_mention'
+            ]
+        },
+        callback
+    );
 }
 
-/* captains */
-leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
-leagueDMResponse(['captains', 'captain list'], 'formatCaptainsResponse');
+/* league information */
+directRequiresLeague(
+    ['captain guidelines'],
+    leagueInfo.directResponse('formatCaptainGuidelinesResponse')
+);
+directRequiresLeague(
+    ['captains', 'captain list'],
+    leagueInfo.dmResponse('formatCaptainsResponse')
+);
+directRequiresLeague(
+    ["faq"],
+    leagueInfo.directResponse('formatFAQResponse')
+);
+directRequiresLeague(
+    ['notify mods', 'summon mods'],
+    leagueInfo.directResponse('formatSummonModsResponse')
+);
+directRequiresLeague(
+    ['^mods$', '^moderators$'],
+    leagueInfo.directResponse('formatModsResponse')
+);
+directRequiresLeague(
+    ['pairings'],
+    leagueInfo.directResponse('formatPairingsLinkResponse')
+);
+directRequiresLeague(
+    ['rules', 'regulations'],
+    leagueInfo.directResponse('formatRulesLinkResponse')
+);
+directRequiresLeague(
+    ['standings'],
+    leagueInfo.directResponse('formatStandingsLinkResponse')
+);
+directRequiresLeague(
+    ['welcome', 'starter guide', 'player handbook'],
+    leagueInfo.directResponse('formatStarterGuideResponse')
+);
 
 
 /* availability */
@@ -214,20 +240,6 @@ function(bot,message) {
     });
 });
 
-/* mods */
-
-leagueResponse(['summon mods'], 'formatSummonModsResponse');
-leagueResponse(['notify mods'], 'formatSummonModsResponse');
-leagueResponse(['mods'], 'formatModsResponse');
-
-/* faq */
-leagueResponse(["faq"], 'formatFAQResponse');
-
-/* pairings */
-leagueResponse(['pairings'], 'formatPairingsLinkResponse');
-
-/* standings */
-leagueResponse(['standings'], 'formatStandingsLinkResponse');
 
 chesster.hears({
     patterns: [
@@ -265,8 +277,6 @@ chesster.hears({
     return deferred.promise;
 });
 
-/* rules */
-leagueResponse(['rules', 'regulations'], 'formatRulesLinkResponse');
 
 /* welcome */
 
@@ -288,7 +298,6 @@ function(bot, message) {
     }
 });
 
-leagueResponse(['welcome', 'starter guide', 'player handbook'], 'formatStarterGuideResponse');
 
 /* source */
 
