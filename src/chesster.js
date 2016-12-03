@@ -24,31 +24,6 @@ var channels = slack.channels;
 
 var SWORDS = '\u2694';
 
-/* exception handling */
-/* later this will move it its own module */
-
-function exception_handler(todo, on_error){
-    try{
-       todo();
-    }catch(e){
-        var error_log = "An error occurred:" +
-            "\nDatetime: " + new Date() +
-            "\nError: " + JSON.stringify(e) +
-            "\nStack: " + e.stack;
-        winston.error(error_log);
-        if (on_error) {
-            on_error();
-        }
-    }
-}
-
-function bot_exception_handler(bot, message, todo){
-    exception_handler(todo, function(){
-        winston.error("Message: " + JSON.stringify(message));
-        bot.reply(message, "Something has gone terribly terribly wrong. Please forgive me.");
-    });
-}
-
 /* static entry point */
 
 var config_file = process.argv[2] || "../config/config.js"; 
