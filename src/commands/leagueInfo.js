@@ -1,14 +1,7 @@
 //------------------------------------------------------------------------------
 // Commands related to league information
 //------------------------------------------------------------------------------
-const _ = require("lodash");
-const winston = require("winston");
 const Q = require("q");
-
-const slack = require('../slack.js');
-const league = require('../league.js');
-const heltour = require('../heltour.js');
-const subscription = require('../subscription.js');
 
 // A helper for a very common pattern
 function directResponse(responseName) {
