@@ -19,6 +19,7 @@ const availability = require("./commands/availability.js");
 const nomination = require("./commands/nomination.js");
 const scheduling = require("./commands/scheduling.js");
 const leagueInfo = require("./commands/leagueInfo.js");
+const playerInfo = require("./commands/playerInfo.js");
 
 var users = slack.users;
 var channels = slack.channels;
@@ -163,27 +164,28 @@ chesster.hears(
 
 /* rating */
 
-chesster.hears({
-    patterns: [slack.appendPlayerRegex("rating", true)],
-    messageTypes: [
-        'direct_mention', 
-        'direct_message'
-    ]
-},
-function(bot,message) {
-    var playerName = slack.getSlackUser(message).name;
-    return lichess.getPlayerRating(playerName).then(function(rating) {
-        if(rating){
-            bot.reply(message, prepareRatingMessage(playerName, rating));
-        }else{
-            bot.reply(message, "I am sorry. I could not find that player.");
-        }
-    });
-});
+chesster.hears(
+    {
+        patterns: [slack.appendPlayerRegex("rating", true)],
+        messageTypes: [
+            'direct_mention', 
+            'direct_message'
+        ]
+    },
+    playerInfo.playerRating
+);
 
-function prepareRatingMessage(_player, rating){
-    return _player + " is rated " + rating + " in classical chess";
-}
+chesster.hears(
+    {
+        patterns: [
+            slack.appendPlayerRegex("pairing", true)
+        ],
+        messageTypes: [
+            'direct_mention', 'direct_message'
+        ]
+    },
+    playerInfo.playerPairings(chesster.config)
+);
 
 /* commands */
 
@@ -238,43 +240,6 @@ function(bot,message) {
     bot.startPrivateConversation(message, function (response, convo) {
         convo.say(prepareCommandsMessage());
     });
-});
-
-
-chesster.hears({
-    patterns: [
-        slack.appendPlayerRegex("pairing", true)
-    ],
-    messageTypes: [
-        'direct_mention', 'direct_message'
-    ]
-}, function(bot, message) {
-    var targetPlayer = slack.getSlackUser(message);
-    var deferred = Q.defer();
-    var allLeagues = league.getAllLeagues(chesster.config);
-    bot.startPrivateConversation(message, function (response, convo) {
-        Q.all(
-            _.map(allLeagues, function(l) {
-                return l.getPairingDetails(targetPlayer).then(function(details) {
-                    if (details && details.opponent) {
-                        return l.formatPairingResponse(message.player, details).then(function(response) {
-                            convo.say(response);
-                        });
-                    } else {
-                        convo.say("[" + l.options.name + "] Unable to find pairing for " + targetPlayer.name);
-                    }
-                }, function(error) {
-                    winston.error("error");
-                    winston.error(JSON.stringify(error));
-                });
-            })
-        ).then(function() {
-            deferred.resolve();
-        }, function(error) {
-            deferred.reject(error);
-        });
-    });
-    return deferred.promise;
 });
 
 
