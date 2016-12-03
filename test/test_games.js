@@ -1,6 +1,6 @@
 var assert = require('chai').assert;
 var moment = require("moment-timezone");
-var games = require('../src/games');
+var games = require('../src/commands/games');
 
 var fmt = "YYYY-MM-DDTHH:mm:ssZZ";
 
