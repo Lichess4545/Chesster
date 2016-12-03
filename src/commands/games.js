@@ -1,10 +1,10 @@
 var _ = require("lodash");
 var moment = require("moment-timezone");
 var scheduling = require("./scheduling");
-var subscription = require("./subscription");
-var slack = require("./slack");
-var heltour = require('./heltour.js');
-var http = require("./http.js");
+var subscription = require("../subscription");
+var slack = require("../slack");
+var heltour = require('../heltour.js');
+var http = require("../http.js");
 
 var VALID_RESULTS = {
     "0-0":"0-0",
