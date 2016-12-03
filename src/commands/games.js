@@ -1,6 +1,10 @@
 var _ = require("lodash");
 var moment = require("moment-timezone");
 var scheduling = require("./scheduling");
+var subscription = require("./subscription");
+var slack = require("./slack");
+var heltour = require('./heltour.js');
+var http = require("./http.js");
 
 var VALID_RESULTS = {
     "0-0":"0-0",
@@ -65,6 +69,138 @@ function filterPlayerTokens(tokens){
         //matches slack uer ids: <@[A-Z0-9]>[:]*
         return /^<@[A-Z0-9]+>[:,.-]*$/.test(token);
     });
+}
+
+function ambientResults(bot, message) {
+    if(!message.league){
+        return;
+    }
+    var resultsOptions = message.league.options.results; 
+    var channel = slack.channels.byId[message.channel];
+    if (!channel) {
+        return;
+    }
+    if (!resultsOptions || !_.isEqual(channel.name, resultsOptions.channel)){
+        return;
+    }
+
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
+        return;
+    }
+
+    var gamelinkOptions = message.league.options.gamelinks;
+    if (!gamelinkOptions) {
+        return;
+    }
+
+    try{
+        var result = games.parseResult(message.text);
+
+        if(!result.white || !result.black || !result.result){
+            return;
+        }
+
+        result.white = users.getByNameOrID(result.white.replace(/[<\@>]/g, ''));
+        result.black = users.getByNameOrID(result.black.replace(/[<\@>]/g, ''));
+
+        if(
+            !_.isEqual(result.white.id, message.user) &&
+            !_.isEqual(result.black.id, message.user) &&
+            !message.player.isModerator()
+        ){
+            replyPermissionFailure(bot, message);
+            return;
+        }
+        
+        return heltour.findPairing(
+            heltourOptions,
+            result.white.name,
+            result.black.name,
+            heltourOptions.leagueTag
+        ).then(function(findPairingResult){
+            if(findPairingResult["error"]){
+                handleHeltourErrors(bot, message, findPairingResult["error"]);
+                return;
+            }
+
+            var pairing = _.head(findPairingResult["json"].pairings);
+            if( !_.isNil(pairing) 
+                && !_.isNil(pairing.game_link) 
+                && !_.isEqual(pairing.game_link, "")){
+                //process game details
+                processGamelink(
+                    bot, 
+                    message,
+                    pairing.game_link,
+                    gamelinkOptions,
+                    heltourOptions,
+                    result);
+            }else if(!_.isNil(pairing)){
+                var speaker = slack.getSlackUserFromNameOrID(message.user);
+                if(message.league.isModerator(speaker.name)){
+                    //current speaker is a moderator for the league
+                    //update the pairing with the result bc there was no link found
+                    heltour.updatePairing(
+                        heltourOptions,
+                        result
+                    ).then(function(updatePairingResult) {
+                        if (updatePairingResult['error']) {
+                            handleHeltourErrors(bot, message, updatePairingResult['error']);
+                            return;
+                        }
+                        resultReplyUpdated(bot, message, updatePairingResult);
+
+                        var leagueName = message.league.options.name;
+                        var white = result.white;
+                        var black = result.black;
+                        if(updatePairingResult['resultChanged'] && !_.isEmpty(updatePairingResult.result)){
+                            subscription.emitter.emit('a-game-is-over',
+                                message.league,
+                                [white.name, black.name],
+                                {
+                                    'result': updatePairingResult,
+                                    'white': white,
+                                    'black': black,
+                                    'leagueName': leagueName
+                                }
+                            );
+                        }
+                    });
+                }else{
+                    resultReplyMissingGamelink(bot, message);
+                }
+            }else{
+                resultReplyMissingPairing(bot, message);
+            }
+        });
+    }catch(e){
+        //at the moment, we do not throw from inside the api - rethrow
+        throw e;
+    }
+}
+
+function replyPermissionFailure(bot, message){
+    bot.reply(message, "Sorry, you do not have permission to update that pairing.");
+}
+
+function resultReplyMissingGamelink(bot, message){
+    var channel = slack.channels.byName[message.league.options.gamelinks.channel];
+    bot.reply(message, "Sorry, that game does not have a link. I will not update the result without it.");
+    bot.reply(message, "Please go to <#" +channel.id + "> and post the gamelink.");
+}
+
+function resultReplyMissingPairing(bot, message){
+    bot.reply(message, "Sorry, I could not find that pairing.");
+}
+
+function resultReplyTooManyPairings(bot, message){
+    bot.reply(message, "Sorry, I found too many pairings matching this. Please contact a mod.");
+}
+
+function resultReplyUpdated(bot, message, result){
+    bot.reply(message, "Got it. @" + result.white.name + " " + (result.result || SWORDS) + " @" + result.black.name);
 }
 
 //given the input text from a essage
@@ -154,6 +290,194 @@ function validateGameDetails(league, details) {
     return result;
 }
 
+//given a gamelinkID, use the lichess api to get the game details
+//pass the details to the callback as a JSON object
+function fetchGameDetails(gamelinkID){
+    return http.fetchURLIntoJSON("http://en.lichess.org/api/game/" + gamelinkID);
+}
+
+function gamelinkReplyInvalid(bot, message, reason){
+    bot.reply(message, "I am sorry, <@" + message.user + ">,  "
+                     + "your post is *not valid* because "
+                     + "*" + reason + "*");
+    bot.reply(message, "If this was a mistake, please correct it and "
+                     + "try again. If intentional, please contact one "
+                     + "of the moderators for review. Thank you.");
+}
+
+function replyGenericFailure(bot, message, contact){
+    bot.reply(message, "Something went wrong. Notify " + contact);
+}
+
+function gamelinkReplyUnknown(bot, message){
+    bot.reply(message, "Sorry, I could not find that game. Please verify your gamelink.");
+}
+
+function validateUserResult(details, result){
+    //if colors are reversed, in the game link, we will catch that later
+    //we know the players are correct or we would not already be here
+    //the only way we can validate the result is if the order is 100% correct.
+    var validity = {
+        valid: true,
+        reason: ""
+    };
+    if( details.winner && _.isEqual(result.result, "1/2-1/2")){
+        //the details gave a winner but the user claimed draw
+        validity.reason = "the user claimed a draw " 
+                        + "but the gamelink specifies " + details.winner + " as the winner.";
+        validity.valid = false;
+   }else if(_.isEqual(details.winner, "black") && _.isEqual(result.result, "1-0")){
+        //the details gave the winner as black but the user claimed white
+        validity.reason = "the user claimed a win for white " 
+                        + "but the gamelink specifies black as the winner.";
+        validity.valid = false;
+    }else if(_.isEqual(details.winner, "white") && _.isEqual(result.result, "0-1")){
+        //the details gave the winner as white but the user claimed black
+        validity.reason = "the user claimed a win for black " 
+                        + "but the gamelink specifies white as the winner.";
+        validity.valid = false;
+    }else if(_.isEqual(details.status, "draw") && !_.isEqual(result.result, "1/2-1/2")){
+        //the details gave a draw but the user did not claim a draw
+        validity.reason = "the user claimed a decisive result " 
+                        + "but the gamelink specifies a draw.";
+        validity.valid = false;
+    }
+    return validity;
+}
+
+function processGamelink(bot, message, gamelink, options, heltourOptions, userResult){
+    //get the gamelink id if one is in the message
+    var result = games.parseGamelink(gamelink);
+    if(!result.gamelinkID){
+        //no gamelink found. we can ignore this message
+        return;
+    }
+    //get the game details
+    return fetchGameDetails(result.gamelinkID).then(function(response) {
+        var details = response['json'];
+        //validate the game details vs the user specified result
+        if(userResult){
+            var validity = validateUserResult(details, userResult);
+            if(!validity.valid){
+                gamelinkReplyInvalid(bot, message, validity.reason);
+                return;
+            }
+        }
+        return processGameDetails(bot, message, details, options, heltourOptions);
+    }).catch(function(error) {
+        winston.error(JSON.stringify(error));
+        bot.reply(message, "Sorry, I failed to get game details for " + gamelink + ". Try again later or reach out to a moderator to make the update manually.");
+    });
+}
+
+function processGameDetails(bot, message, details, options, heltourOptions){
+    //if no details were found the link was no good
+    if(!details){
+        gamelinkReplyUnknown(bot, message);
+        return;
+    }
+
+    //verify the game meets the requirements of the channel we are in
+    var validity = games.validateGameDetails(league, details);
+    if(!validity.valid){
+        //game was not valid
+        gamelinkReplyInvalid(bot, message, validity.reason);
+        return;
+    }
+    var result = {};
+    //our game is valid
+    //get players to update the result in the sheet
+    var white = details.players.white;
+    var black = details.players.black;
+    result.white = slack.users.getByNameOrID(white.userId);
+    result.black = slack.users.getByNameOrID(black.userId);
+    result.gamelinkID = details.id;
+    result.gamelink =  "http://en.lichess.org/" + result.gamelinkID;
+ 
+    //get the result in the correct format
+    if(_.isEqual(details.status, "draw") || _.isEqual(details.status, "stalemate") || details.winner){
+        if(_.isEqual(details.winner, "black")){
+            result.result = "0-1";
+        }else if(_.isEqual(details.winner, "white")){
+            result.result = "1-0";
+        }else{
+            result.result = "1/2-1/2";
+        }
+    }
+
+    //gamelinks only come from played games, so ignoring forfeit result types
+
+    //update the spreadsheet with results from gamelink
+    return heltour.updatePairing(
+        heltourOptions,
+        result
+    ).then(function(updatePairingResult) {
+
+        if (updatePairingResult['error']) {
+            handleHeltourErrors(bot, message, updatePairingResult['error']);
+            return; //if there was a problem with heltour, we should not take further steps 
+        }
+        resultReplyUpdated(bot, message, updatePairingResult);
+
+        var leagueName = message.league.options.name;
+        var white = result.white;
+        var black = result.black;
+        if(updatePairingResult['resultChanged'] && !_.isEmpty(updatePairingResult.result)){
+            // TODO: Test this.
+            subscription.emitter.emit('a-game-is-over',
+                message.league,
+                [white.name, black.name],
+                {
+                    'result': updatePairingResult,
+                    'white': white,
+                    'black': black,
+                    'leagueName': leagueName
+                }
+            );
+        }else if(updatePairingResult['gamelinkChanged']){
+            // TODO: Test this.
+            subscription.emitter.emit('a-game-starts',
+                message.league,
+                [white.name, black.name],
+                {
+                    'result': result,
+                    'white': white,
+                    'black': black,
+                    'leagueName': leagueName
+                }
+            );
+        }
+    });
+}
+
+function ambientGamelinks(bot, message) {
+    if (!message.league) {
+        return;
+    }
+    var channel = slack.channels.byId[message.channel];
+    if (!channel) {
+        return;
+    }
+    var gamelinkOptions = message.league.options.gamelinks;
+    if (!gamelinkOptions || !_.isEqual(channel.name, gamelinkOptions.channel)) {
+        return;
+    }
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("[GAMELINK] {} league doesn't have heltour options!?".format(message.league.options.name));
+        return;
+    } 
+
+    try{
+        return processGamelink(bot, message, message.text, gamelinkOptions, heltourOptions);
+    }catch(e){
+        //at the moment, we do not throw from inside the api - rethrow
+        throw e;
+    }
+}
+
 module.exports.parseResult = parseResult;
+module.exports.ambientResults = ambientResults;
 module.exports.parseGamelink = parseGamelink;
 module.exports.validateGameDetails = validateGameDetails;
+module.exports.ambientGamelinks = ambientGamelinks;
