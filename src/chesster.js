@@ -5,7 +5,7 @@ var _ = require("lodash");
 var winston = require("winston");
 
 // Our stuff
-var games = require('./games.js');
+var games = require('./commands/games.js');
 var heltour = require('./heltour.js');
 var http = require("./http.js");
 var league = require("./league.js");

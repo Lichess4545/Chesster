@@ -5,7 +5,7 @@ const winston = require("winston");
 const format = require('string-format');
 format.extend(String.prototype);
 const _league = require("./league.js");
-const games = require("./games.js");
+const games = require("./commands/games.js");
 
 var baseURL = "https://en.lichess.org/api/game-stream?users="
 
