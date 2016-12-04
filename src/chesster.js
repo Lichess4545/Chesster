@@ -10,7 +10,6 @@ var http = require("./http.js");
 var league = require("./league.js");
 var lichess = require('./lichess.js');
 var slack = require('./slack.js');
-var subscription = require('./subscription.js');
 var commands = require('./commands.js');
 
 const errors = require('./errors.js');
@@ -23,6 +22,7 @@ const nomination = require("./commands/nomination.js");
 const scheduling = require("./commands/scheduling.js");
 const leagueInfo = require("./commands/leagueInfo.js");
 const playerInfo = require("./commands/playerInfo.js");
+const subscription = require('./commands/subscription.js');
 
 var users = slack.users;
 var channels = slack.channels;
@@ -187,20 +187,7 @@ function prepareCommandsMessage(){
         "    [ commands | \n"  +
         "        command list ]             ! this list\n" +
         "    [ rating <player> ]            ! get the player's classical rating.\n" +
-/*        "    [ challenge <opp1> <opp2> <w|b|r> <tc-min>+<tc-inc> <[un]rated> ]" +
-        "                                   ! this command will create a <rated|casual> challenge between\n" +
-        "                                   ! two opponents <opp1> <opp2> \n" +
-        "                                   ! opponent one being colored <w|b|r> and \n" +
-        "                                   ! time control <tc-min> with a <tc-inc> increment \n" +*/
-        "    [ teams | \n" +
-        "        team list |                ! list the teams in the current tournament\n" +
-        "        team stats <team-name> |   ! get statistics for a given <team-name>\n" +
-        "        team members <team-name> | ! list the members of a given <team-name>\n" +
-        "        team captain <team-name> ] ! name the captain of a given <team-name>\n" +
-        "    [ captains | \n" +
-        "        captain list |             ! list the team captains\n" +
-        "        captain guidelines ]       ! get the team captain guidelines\n" +
-        "    [ board <number> ]             ! get a sorted list of players by board\n" +
+        "    [ captain guidelines ]         ! get the team captain guidelines\n" +
         "    [ mods (lonewolf)| \n"  +
         "        mod list (lonewolf)|       ! list the mods (without summoning)\n" +
         "        mods summon (lonewolf)]    ! summon the mods\n" +
@@ -307,102 +294,41 @@ chesster.on(
 
 /* subscriptions */
 
-chesster.hears({
-    middleware: [],
-    patterns: ['^tell'],
-    messageTypes: ['direct_message']
-},
-function(bot, message) {
-    var deferred = Q.defer();
-    bot.startPrivateConversation(message, function (response, convo) {
-        subscription.processTellCommand(chesster.config, message).then(function(response) {
-            convo.say(response);
-            deferred.resolve();
-        }).catch(function(error) {
-            convo.say("I'm sorry, but an error occurred processing this subscription command");
-            deferred.reject(error);
-        });
-    });
-    return deferred.promise;
-});
+chesster.hears(
+    {
+        patterns: ['^tell'],
+        messageTypes: ['direct_message']
+    },
+    subscription.tellMeWhenHandler(chesster.config)
+);
 
-chesster.hears({
-    middleware: [],
-    patterns: ['^subscription help$', '^unsubscribe$'],
-    messageTypes: ['direct_message']
-},
-function(bot, message) {
-    var deferred = Q.defer();
-    bot.startPrivateConversation(message, function (response, convo) {
-        subscription.formatHelpResponse(chesster.config).then(function(response) {
-            convo.say(response);
-            deferred.resolve();
-        }).catch(function(error) {
-            convo.say("I'm sorry, but an error occurred processing this subscription command");
-            deferred.reject(error);
-        });
-    });
-    return deferred.promise;
-});
+chesster.hears(
+    {
+        patterns: ['^subscription help$', '^unsubscribe$'],
+        messageTypes: ['direct_message']
+    },
+    subscription.helpHandler(chesster.config)
+);
 
-chesster.hears({
-    middleware: [],
-    patterns: ['^subscription list$'],
-    messageTypes: ['direct_message']
-},
-function(bot, message) {
-    var deferred = Q.defer();
-    bot.startPrivateConversation(message, function (response, convo) {
-        subscription.processSubscriptionListCommand(chesster.config, message).then(function(response) {
-            convo.say(response);
-            deferred.resolve();
-        }).catch(function(error) {
-            convo.say("I'm sorry, but an error occurred processing this subscription command");
-            deferred.reject(error);
-        });
-    });
-    return deferred.promise;
-});
+chesster.hears(
+    {
+        patterns: ['^subscription list$'],
+        messageTypes: ['direct_message']
+    },
+    subscription.listHandler(chesster.config)
+);
 
-chesster.hears({
-    middleware: [],
-    patterns: [/^subscription remove (\d+)$/],
-    messageTypes: ['direct_message']
-},
-function(bot, message) {
-    var deferred = Q.defer();
-    bot.startPrivateConversation(message, function (response, convo) {
-        subscription.processSubscriptionRemoveCommand(chesster.config, message, message.match[1]).then(function(response) {
-            convo.say(response);
-            deferred.resolve();
-        }).catch(function(error) {
-            convo.say("I'm sorry, but an error occurred processing this subscription command");
-            deferred.reject(error);
-        });
-    });
-    return deferred.promise;
-});
+chesster.hears(
+    {
+        patterns: [/^subscription remove (\d+)$/],
+        messageTypes: ['direct_message']
+    },
+    subscription.removeHandler(chesster.config)
+);
 
-subscription.register(chesster, 'a-game-is-scheduled', function(target, context) {
-    // TODO: put these date formats somewhere, probably config?
-    var friendlyFormat = "ddd @ HH:mm";
-    target = slack.getSlackUserFromNameOrID(target);
-    var targetDate = context.result.date.clone().utcOffset(target.tz_offset/60);
-    context['yourDate'] = targetDate.format(friendlyFormat);
-    var fullFormat = "YYYY-MM-DD @ HH:mm UTC";
-    context['realDate'] = context.result.date.format(fullFormat);
-    return "{white.name} vs {black.name} in {leagueName} has been scheduled for {realDate}, which is {yourDate} for you.".format(context);
-});
-
-
-subscription.register(chesster, 'a-game-starts', function (target, context) {
-    return "{white.name} vs {black.name} in {leagueName} has started: {result.gamelink}".format(context);
-});
-
-subscription.register(chesster, 'a-game-is-over', function(target, context) {
-    return "{white.name} vs {black.name} in {leagueName} is over. The result is {result.result}.".format(context);
-});
-
+subscription.register(chesster, 'a-game-is-scheduled', subscription.formatAGameIsSscheduled);
+subscription.register(chesster, 'a-game-starts', subscription.formatAGameStarts);
+subscription.register(chesster, 'a-game-is-over', subscription.formatAGameIsOver);
 
 //------------------------------------------------------------------------------
 // Start the watcher.
