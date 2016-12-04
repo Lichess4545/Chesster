@@ -21,6 +21,7 @@ const availability = require("./commands/availability.js");
 const nomination = require("./commands/nomination.js");
 const scheduling = require("./commands/scheduling.js");
 const leagueInfo = require("./commands/leagueInfo.js");
+const onboarding = require("./commands/onboarding.js");
 const playerInfo = require("./commands/playerInfo.js");
 const subscription = require('./commands/subscription.js');
 
@@ -98,7 +99,7 @@ directRequiresLeague(
     leagueInfo.directResponse('formatStandingsLinkResponse')
 );
 directRequiresLeague(
-    ['welcome', 'starter guide', 'player handbook'],
+    ['^welcome$', 'starter guide', 'player handbook'],
     leagueInfo.directResponse('formatStarterGuideResponse')
 );
 
@@ -219,24 +220,15 @@ function(bot,message) {
 
 /* welcome */
 
-chesster.on({event: 'user_channel_join'},
-function(bot, message) {
-    if(_.isEqual(message.channel, channels.getId(chesster.config["welcome"]["channel"]))){
-        bot.reply(message, "Everyone, please welcome the newest member of the " 
-                         + "Lichess 45+45 League, <@" + message.user + ">!");
-
-        bot.startPrivateConversation(message, function(err, convo){
-           convo.say("Welcome. I am the moderator bot for the Lichess4545 league");
-           convo.say("Say 'help' to get help."); 
-           convo.say("If you joined for the 45+45 league, read this: " 
-               + chesster.config["leagues"]["45+45"].links.faq 
-               + ". If you joined for Lone Wolf, read this: " 
-               + chesster.config["leagues"]["lonewolf"].links.faq 
-               + ". Enjoy the league!"); 
-        });
-    }
-});
-
+chesster.on({event: 'user_channel_join'}, onboarding.welcomeMessage(chesster.config));
+chesster.hears(
+    {
+        middleware: [slack.requiresLeague, slack.requiresModerator],
+        patterns: ['^welcome me'],
+        messageTypes: ['direct_mention']
+    },
+    onboarding.welcomeMessage(chesster.config)
+);
 
 /* source */
 
