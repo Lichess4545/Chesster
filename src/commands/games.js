@@ -1,5 +1,6 @@
 var _ = require("lodash");
 var moment = require("moment-timezone");
+var winston = require("winston");
 var scheduling = require("./scheduling");
 var subscription = require("../subscription");
 var slack = require("../slack");
@@ -96,14 +97,19 @@ function ambientResults(bot, message) {
     }
 
     try{
-        var result = games.parseResult(message.text);
+        var result = parseResult(message.text);
 
         if(!result.white || !result.black || !result.result){
             return;
         }
 
-        result.white = users.getByNameOrID(result.white.replace(/[<\@>]/g, ''));
-        result.black = users.getByNameOrID(result.black.replace(/[<\@>]/g, ''));
+        result.white = slack.users.getByNameOrID(result.white.replace(/[<\@>]/g, ''));
+        result.black = slack.users.getByNameOrID(result.black.replace(/[<\@>]/g, ''));
+
+        if(!result.white || !result.black) {
+            replyPlayerNotFound(bot, message);
+            return;
+        }
 
         if(
             !_.isEqual(result.white.id, message.user) &&
@@ -185,6 +191,10 @@ function replyPermissionFailure(bot, message){
     bot.reply(message, "Sorry, you do not have permission to update that pairing.");
 }
 
+function replyPlayerNotFound(bot, message){
+    bot.reply(message, "Sorry, I could not find one of the players on Slack.");
+}
+
 function resultReplyMissingGamelink(bot, message){
     var channel = slack.channels.byName[message.league.options.gamelinks.channel];
     bot.reply(message, "Sorry, that game does not have a link. I will not update the result without it.");
@@ -247,8 +257,7 @@ function validateGameDetails(league, details) {
     var black = details.players.black.userId;
 
     var potentialPairings = league.findPairing(white, black);
-    var pairing = result.pairing = _.head(potentialPairings);    
-
+    var pairing = result.pairing = _.head(potentialPairings);
     if(potentialPairings.length === 0) {
         result.valid = false;
         result.pairingWasNotFound = true;
@@ -347,7 +356,7 @@ function validateUserResult(details, result){
 
 function processGamelink(bot, message, gamelink, options, heltourOptions, userResult){
     //get the gamelink id if one is in the message
-    var result = games.parseGamelink(gamelink);
+    var result = parseGamelink(gamelink);
     if(!result.gamelinkID){
         //no gamelink found. we can ignore this message
         return;
@@ -365,6 +374,7 @@ function processGamelink(bot, message, gamelink, options, heltourOptions, userRe
         }
         return processGameDetails(bot, message, details, options, heltourOptions);
     }).catch(function(error) {
+        winston.error("Error in processGamelink: {} {}".format(error, error.stack));
         winston.error(JSON.stringify(error));
         bot.reply(message, "Sorry, I failed to get game details for " + gamelink + ". Try again later or reach out to a moderator to make the update manually.");
     });
@@ -378,12 +388,18 @@ function processGameDetails(bot, message, details, options, heltourOptions){
     }
 
     //verify the game meets the requirements of the channel we are in
-    var validity = games.validateGameDetails(league, details);
+    var validity = validateGameDetails(message.league, details);
     if(!validity.valid){
         //game was not valid
         gamelinkReplyInvalid(bot, message, validity.reason);
         return;
     }
+    return updateGamelink(message.league, details).then(function(updatePairingResult) {
+        resultReplyUpdated(bot, message, updatePairingResult);
+    });
+}
+
+function updateGamelink(league, details) {
     var result = {};
     //our game is valid
     //get players to update the result in the sheet
@@ -409,23 +425,21 @@ function processGameDetails(bot, message, details, options, heltourOptions){
 
     //update the spreadsheet with results from gamelink
     return heltour.updatePairing(
-        heltourOptions,
+        league.options.heltour,
         result
     ).then(function(updatePairingResult) {
-
         if (updatePairingResult['error']) {
             handleHeltourErrors(bot, message, updatePairingResult['error']);
             return; //if there was a problem with heltour, we should not take further steps 
         }
-        resultReplyUpdated(bot, message, updatePairingResult);
 
-        var leagueName = message.league.options.name;
+        var leagueName = league.options.name;
         var white = result.white;
         var black = result.black;
         if(updatePairingResult['resultChanged'] && !_.isEmpty(updatePairingResult.result)){
             // TODO: Test this.
             subscription.emitter.emit('a-game-is-over',
-                message.league,
+                league,
                 [white.name, black.name],
                 {
                     'result': updatePairingResult,
@@ -437,7 +451,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
         }else if(updatePairingResult['gamelinkChanged']){
             // TODO: Test this.
             subscription.emitter.emit('a-game-starts',
-                message.league,
+                league,
                 [white.name, black.name],
                 {
                     'result': result,
@@ -447,6 +461,7 @@ function processGameDetails(bot, message, details, options, heltourOptions){
                 }
             );
         }
+        return updatePairingResult;
     });
 }
 
@@ -480,4 +495,5 @@ module.exports.parseResult = parseResult;
 module.exports.ambientResults = ambientResults;
 module.exports.parseGamelink = parseGamelink;
 module.exports.validateGameDetails = validateGameDetails;
+module.exports.updateGamelink = updateGamelink;
 module.exports.ambientGamelinks = ambientGamelinks;
