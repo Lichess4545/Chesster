@@ -12,6 +12,10 @@ var lichess = require('./lichess.js');
 var slack = require('./slack.js');
 var subscription = require('./subscription.js');
 var commands = require('./commands.js');
+
+const errors = require('./errors.js');
+errors.init();
+
 const watcher = require('./watcher.js');
 const games = require('./commands/games.js');
 const availability = require("./commands/availability.js");
@@ -31,22 +35,6 @@ var config_file = process.argv[2] || "../config/config.js";
 var chesster = new slack.Bot({
     config_file: config_file
 });
-
-if (!('toJSON' in Error.prototype)) {
-    Object.defineProperty(Error.prototype, 'toJSON', {
-        value: function () {
-            var alt = {};
-
-            Object.getOwnPropertyNames(this).forEach(function (key) {
-                alt[key] = this[key];
-            }, this);
-
-            return alt;
-        },
-        configurable: true,
-        writable: true
-    });
-}
 
 function handleHeltourErrors(bot, message, error){
     if (_.isEqual(error, "no_matching_rounds")) {
