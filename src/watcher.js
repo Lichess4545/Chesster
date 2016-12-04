@@ -76,9 +76,30 @@ function Watcher(bot, league) {
         }
         console.log("Scheduled Date: {}".format(scheduledDate));
 
+        // Only warn when a game starts, not when it ends
+        var warn = (details.status === 20); // "started"
+
         if (result.valid) {
-            if (result.pairing.game_link || result.pairing.result) {
-                console.log("VALID But overwriting!");
+            if (result.pairing.result) {
+                console.log("VALID but result already exists");
+                if (warn) {
+                    self.bot.say({
+                        text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
+                            + " There is already a result set for this pairing. If you want "
+                            + "the new game to count for the league, please contact a mod.",
+                        channel: self.league.options.gamelinks.channel_id,
+                    });
+                }
+            } else if (result.pairing.game_link && !result.pairing.game_link.endsWith(details.id)) {
+                console.log("VALID But game link does not match");
+                if (warn) {
+                    self.bot.say({
+                        text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
+                            + " There is already a gamelink set for this pairing. If you want "
+                            + "the new game to count for the league, please contact a mod.",
+                        channel: self.league.options.gamelinks.channel_id,
+                    });
+                }
             } else {
                 console.log("VALID AND NEEDED!");
                 // Fetch the game details from the lichess games API because updateGamelink is more picky about the details format
@@ -87,26 +108,32 @@ function Watcher(bot, league) {
                     var detailsFromApi = response['json'];
                     games.updateGamelink(self.league, detailsFromApi).then(function(updatePairingResult) {
                         console.log(updatePairingResult);
-                        self.bot.say({
-                            text: "<@" + result.pairing.white + "> vs  <@" + result.pairing.black + ">: <"
-                                + updatePairingResult.gamelink + "|" + updatePairingResult.gamelink +">",
-                            channel: self.league.options.gamelinks.channel_id,
-                            attachments: [] // Needed to activate link parsing in the message
-                        });
+                        if (updatePairingResult.gamelinkChanged) {
+                            self.bot.say({
+                                text: "<@" + result.pairing.white + "> vs <@" + result.pairing.black + ">: <"
+                                    + updatePairingResult.gamelink +">",
+                                channel: self.league.options.gamelinks.channel_id,
+                                attachments: [] // Needed to activate link parsing in the message
+                            });
+                        }
+                        if (updatePairingResult.resultChanged) {
+                            self.bot.say({
+                                text: "<@" + result.pairing.white + "> " + updatePairingResult.result + " <@" + result.pairing.black + ">",
+                                channel: self.league.options.results.channel_id,
+                            });
+                        }
                     });
                 });
             }
-        } else {
-            var warn = false;
+        } else if (warn) {
             var hours = Math.abs(now.diff(scheduledDate));
-            if (hours >= 2 || result.timeControlIsIncorrect) {
+            if (hours >= 2 && result.timeControlIsIncorrect) {
                 // If the game is not the right time control,
                 // and we are not within 2 hours either way
                 // of the scheduled time, then don't warn.
                 return;
             }
 
-            var heltourOptions = self.league.options.heltour;
             self.bot.say({
                 text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
                     + " Your game is *not valid* because "

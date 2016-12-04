@@ -495,5 +495,6 @@ module.exports.parseResult = parseResult;
 module.exports.ambientResults = ambientResults;
 module.exports.parseGamelink = parseGamelink;
 module.exports.validateGameDetails = validateGameDetails;
+module.exports.fetchGameDetails = fetchGameDetails;
 module.exports.updateGamelink = updateGamelink;
 module.exports.ambientGamelinks = ambientGamelinks;
