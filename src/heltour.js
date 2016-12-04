@@ -213,6 +213,12 @@ function fetchJSONandHandleErrors(request){
     });
 }
 
+function HeltourError(code){
+    this.code = code;
+    this.name = 'HeltourError';
+    this.stack = (new Error()).stack;
+}
+
 /* GET Requests */
 module.exports.getPrivateURL = getPrivateURL;
 module.exports.findPairing = findPairing;
@@ -225,3 +231,5 @@ module.exports.updatePairing = updatePairing;
 module.exports.getRoster = getRoster;
 module.exports.assignAlternate = assignAlternate;
 module.exports.setAvailability = setAvailability;
+
+module.exports.HeltourError = HeltourError;

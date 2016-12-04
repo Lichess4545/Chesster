@@ -415,6 +415,12 @@ function processGameDetails(bot, message, details){
     }
     return updateGamelink(message.league, details).then(function(updatePairingResult) {
         resultReplyUpdated(bot, message, updatePairingResult);
+    }, function(error) {
+        if (error instanceof heltour.HeltourError) {
+            handleHeltourErrors(bot, message, error.code);
+        } else {
+            winston.error(JSON.stringify(error));
+        }
     });
 }
 
@@ -448,9 +454,8 @@ function updateGamelink(league, details) {
         result
     ).then(function(updatePairingResult) {
         if (updatePairingResult['error']) {
-            // TODO: Propagate the error out
-            //handleHeltourErrors(bot, message, updatePairingResult['error']);
-            return; //if there was a problem with heltour, we should not take further steps 
+            //if there was a problem with heltour, we should not take further steps
+            throw new heltour.HeltourError(updatePairingResult['error']); 
         }
 
         var leagueName = league.options.name;
