@@ -56,10 +56,7 @@ function directRequiresLeague(patterns, callback) {
         {
             middleware: [slack.requiresLeague],
             patterns: patterns,
-            messageTypes: [
-                'direct_message',
-                'direct_mention'
-            ]
+            messageTypes: ['direct_message', 'direct_mention']
         },
         callback
     );
@@ -107,9 +104,9 @@ directRequiresLeague(
 /* availability */
 chesster.hears(
     {
-        middleware: [ slack.withLeague ],
-        patterns: [ 'available', 'unavailable' ],
-        messageTypes: [ 'direct_message', 'direct_mention' ]
+        middleware: [slack.withLeague],
+        patterns: ['available', 'unavailable'],
+        messageTypes: ['direct_message', 'direct_mention']
     },
     availability.updateAvailability
 );
@@ -119,11 +116,9 @@ chesster.hears(
 /* alternate assignment */
 chesster.hears(
     {
-        middleware: [ slack.withLeagueByChannelName ],
-        patterns: [ '^assign' ],
-        messageTypes: [ 
-            'ambient'
-        ]
+        middleware: [slack.withLeagueByChannelName],
+        patterns: ['^assign'],
+        messageTypes: ['ambient']
     }, 
     availability.assignAlternate
 );
@@ -131,11 +126,9 @@ chesster.hears(
 /* alternate unassignment */
 chesster.hears(
     {
-        middleware: [ slack.withLeagueByChannelName ],
-        patterns: [ '^unassign' ],
-        messageTypes: [ 
-            'ambient'
-        ]
+        middleware: [slack.withLeagueByChannelName],
+        patterns: ['^unassign'],
+        messageTypes: ['ambient']
     }, 
     availability.unassignAlternate
 );
@@ -143,9 +136,9 @@ chesster.hears(
 /* game nomination */
 chesster.hears(
     {
-        middleware: [ slack.requiresLeague ],
-        patterns: [ 'nomination' ],
-        messageTypes: [ 'direct_message' ]
+        middleware: [slack.requiresLeague],
+        patterns: ['nomination'],
+        messageTypes: ['direct_message']
     },
     nomination.nomination
 )
@@ -155,10 +148,7 @@ chesster.hears(
 chesster.hears(
     {
         patterns: [slack.appendPlayerRegex("rating", true)],
-        messageTypes: [
-            'direct_mention', 
-            'direct_message'
-        ]
+        messageTypes: ['direct_mention', 'direct_message']
     },
     playerInfo.playerRating
 );
@@ -168,9 +158,7 @@ chesster.hears(
         patterns: [
             slack.appendPlayerRegex("pairing", true)
         ],
-        messageTypes: [
-            'direct_mention', 'direct_message'
-        ]
+        messageTypes: ['direct_mention', 'direct_message']
     },
     playerInfo.playerPairings(chesster.config)
 );
@@ -201,15 +189,8 @@ function prepareCommandsMessage(){
 }
 
 chesster.hears({
-    patterns: [
-        'commands', 
-        'command list',
-        '^help$'
-    ],
-    messageTypes: [
-        'direct_mention', 
-        'direct_message'
-    ]
+    patterns: ['commands', 'command list', '^help$'],
+    messageTypes: ['direct_mention', 'direct_message']
 },
 function(bot,message) {
     bot.startPrivateConversation(message, function (response, convo) {
@@ -232,16 +213,15 @@ chesster.hears(
 
 /* source */
 
-chesster.hears({
-    patterns: "source",
-    messageTypes: [
-        'direct_message',
-        'direct_mention'
-    ]
-},
-function(bot, message){
-    bot.reply(message, chesster.config.links.source);
-});
+chesster.hears(
+    {
+        patterns: "source",
+        messageTypes: ['direct_message', 'direct_mention']
+    },
+    function(bot, message){
+        bot.reply(message, chesster.config.links.source);
+    }
+);
 
 
 // There is not active round
