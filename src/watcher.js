@@ -33,10 +33,7 @@ function Watcher(bot, league) {
     self.usernames = [];
 
     self.league.onRefreshRosters(function(players) {
-        var newUsernames = [];
-        _.each(league._players, function(player) {
-            newUsernames.push(player.username);
-        });
+        var newUsernames = _.map(league._players, "username");
         newUsernames.sort();
         winston.info("-----------------------------------------------------");
         winston.info("{} old usernames {} incoming usernames".format(
@@ -45,7 +42,7 @@ function Watcher(bot, league) {
         ));
         var union = _.union(newUsernames, self.usernames);
         winston.info("{} differences".format(self.usernames.length - union.length));
-        if (self.usernames.length - union.length != 0) {
+        if (self.usernames.length - union.length !== 0) {
             winston.info("Restarting watcher because usernames have changed");
             self.usernames = newUsernames;
             self.watch(self.usernames);
@@ -84,7 +81,7 @@ function Watcher(bot, league) {
                         text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
                             + " There is already a result set for this pairing. If you want "
                             + "the new game to count for the league, please contact a mod.",
-                        channel: self.league.options.gamelinks.channel_id,
+                        channel: self.league.options.gamelinks.channel_id
                     });
                 }
             } else if (result.pairing.game_link && !result.pairing.game_link.endsWith(details.id)) {
@@ -94,7 +91,7 @@ function Watcher(bot, league) {
                         text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
                             + " There is already a gamelink set for this pairing. If you want "
                             + "the new game to count for the league, please contact a mod.",
-                        channel: self.league.options.gamelinks.channel_id,
+                        channel: self.league.options.gamelinks.channel_id
                     });
                 }
             } else {
@@ -116,7 +113,7 @@ function Watcher(bot, league) {
                         if (updatePairingResult.resultChanged) {
                             self.bot.say({
                                 text: "<@" + result.pairing.white + "> " + updatePairingResult.result + " <@" + result.pairing.black + ">",
-                                channel: self.league.options.results.channel_id,
+                                channel: self.league.options.results.channel_id
                             });
                         }
                     });
@@ -135,13 +132,13 @@ function Watcher(bot, league) {
                 text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
                     + " Your game is *not valid* because "
                     + "*" + result.reason + "*",
-                channel: self.league.options.gamelinks.channel_id,
+                channel: self.league.options.gamelinks.channel_id
             });
             self.bot.say({
                 text: "If this was a mistake, please correct it and "
                      + "try again. If this is not a league game, you "
                      + "may ignore this message. Thank you.",
-                channel: self.league.options.gamelinks.channel_id,
+                channel: self.league.options.gamelinks.channel_id
             });
         }
     }
