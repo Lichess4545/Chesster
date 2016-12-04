@@ -394,7 +394,6 @@ function processGamelink(bot, message, gamelink, options, heltourOptions, userRe
         }
         return processGameDetails(bot, message, details);
     }).catch(function(error) {
-        winston.error("Error in processGamelink: {} {}".format(error, error.stack));
         winston.error(JSON.stringify(error));
         bot.reply(message, "Sorry, I failed to get game details for " + gamelink + ". Try again later or reach out to a moderator to make the update manually.");
     });
