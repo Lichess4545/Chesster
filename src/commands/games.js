@@ -415,7 +415,7 @@ function processGameDetails(bot, message, details){
     }
     return updateGamelink(message.league, details).then(function(updatePairingResult) {
         resultReplyUpdated(bot, message, updatePairingResult);
-    }, function(error) {
+    }).catch(function(error) {
         if (error instanceof heltour.HeltourError) {
             handleHeltourErrors(bot, message, error.code);
         } else {

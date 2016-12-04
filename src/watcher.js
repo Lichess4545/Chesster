@@ -112,10 +112,10 @@ function Watcher(bot, league) {
                                 channel: self.league.options.results.channel_id
                             });
                         }
-                    }, function(error) {
+                    }).catch(function(error) {
                         winston.error("Error updating game in watcher: {}".format(JSON.stringify(error)));
                     });
-                }, function(error) {
+                }).catch(function(error) {
                     winston.error("Error fetching game details in watcher: {}".format(JSON.stringify(error)));
                 });
             }
