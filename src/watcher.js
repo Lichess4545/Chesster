@@ -150,6 +150,7 @@ function Watcher(bot, league) {
     self.watch = function(usernames) {
         if (self.req) {
             self.req.end();
+            self.req.abort();
         }
         var watchURL = baseURL + usernames.join(",");
         console.log("watching " + watchURL);
