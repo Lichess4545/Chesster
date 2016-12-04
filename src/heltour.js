@@ -101,7 +101,6 @@ function updatePairing(heltourConfig, result) {
                 "error": "ambiguous"
             };
         }
-        var pairing = pairings[0];
         var request = heltourRequest(heltourConfig, "update_pairing");
         request.method = "POST";
         request.bodyParameters = {

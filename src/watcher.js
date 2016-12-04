@@ -8,21 +8,21 @@ format.extend(String.prototype);
 const _league = require("./league.js");
 const games = require('./commands/games.js');
 
-var baseURL = "https://en.lichess.org/api/game-stream?users="
+var baseURL = "https://en.lichess.org/api/game-stream?users=";
 
-const CREATED = 10;
+// const CREATED = 10;
 const STARTED = 20;
-const ABORTED = 25;
-const MATE = 30;
-const RESIGN = 31;
-const STALEMATE = 32;
-const TIMEOUT = 33;
-const DRAW = 34;
-const OUT_OF_TIME = 35;
-const CHEAT = 36;
-const NO_START = 37;
-const UNKNOWN_FINISH = 38;
-const VARIANT_END = 60
+// const ABORTED = 25;
+// const MATE = 30;
+// const RESIGN = 31;
+// const STALEMATE = 32;
+// const TIMEOUT = 33;
+// const DRAW = 34;
+// const OUT_OF_TIME = 35;
+// const CHEAT = 36;
+// const NO_START = 37;
+// const UNKNOWN_FINISH = 38;
+// const VARIANT_END = 60;
 
 //------------------------------------------------------------------------------
 function Watcher(bot, league) {
@@ -32,7 +32,7 @@ function Watcher(bot, league) {
     self.req = null;
     self.usernames = [];
 
-    self.league.onRefreshRosters(function(players) {
+    self.league.onRefreshRosters(function() {
         var newUsernames = _.map(league._players, "username");
         newUsernames.sort();
         winston.info("-----------------------------------------------------");
@@ -141,7 +141,7 @@ function Watcher(bot, league) {
                 channel: self.league.options.gamelinks.channel_id
             });
         }
-    }
+    };
 
     //--------------------------------------------------------------------------
     self.watch = function(usernames) {
@@ -167,7 +167,7 @@ function Watcher(bot, league) {
             self.req = null;
             self.watch(usernames);
         });
-    }
+    };
 }
 
 var watcherMap = {};
@@ -178,11 +178,11 @@ var watchAllLeagues = function(bot) {
         console.log("Watching: {}".format(league.options.name));
         watcherMap[league.name] = new Watcher(bot, league);
     });
-}
+};
 
 var getWatcher = function(league) {
     return watcherMap[league.name];
-}
+};
 
 module.exports.watchAllLeagues = watchAllLeagues;
 module.exports.getWatcher = getWatcher;

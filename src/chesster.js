@@ -1,17 +1,13 @@
 // extlibs
-var moment = require('moment-timezone');
 var Q = require("q");
 var _ = require("lodash");
 var winston = require("winston");
 
 // Our stuff
-var heltour = require('./heltour.js');
-var http = require("./http.js");
 var league = require("./league.js");
 var lichess = require('./lichess.js');
 var slack = require('./slack.js');
 var subscription = require('./subscription.js');
-var commands = require('./commands.js');
 const watcher = require('./watcher.js');
 const games = require('./commands/games.js');
 const availability = require("./commands/availability.js");
@@ -20,8 +16,6 @@ const scheduling = require("./commands/scheduling.js");
 
 var users = slack.users;
 var channels = slack.channels;
-
-var SWORDS = '\u2694';
 
 /* exception handling */
 /* later this will move it its own module */
@@ -54,19 +48,6 @@ var config_file = process.argv[2] || "../config/config.js";
 var chesster = new slack.Bot({
     config_file: config_file
 });
-
-function handleHeltourErrors(bot, message, error){
-    if (_.isEqual(error, "no_matching_rounds")) {
-        replyNoActiveRound(bot, message);
-    } else if (_.isEqual(error, "no_pairing")) {
-        resultReplyMissingPairing(bot, message);
-    } else if (_.isEqual(error, "ambiguous")) {
-        resultReplyTooManyPairings(bot, message);
-    } else {
-        replyGenericFailure(bot, message, "@endrawes0");
-        throw new Error("Error making your update: " + error);
-    }
-}
 
 // A helper for a very common pattern
 function leagueResponse(patterns, responseName) {
@@ -157,7 +138,7 @@ chesster.hears(
         messageTypes: [ 'direct_message' ]
     },
     nomination.nomination
-)
+);
 
 /* rating */
 
@@ -328,13 +309,6 @@ chesster.hears({
 function(bot, message){
     bot.reply(message, chesster.config.links.source);
 });
-
-
-// There is not active round
-function replyNoActiveRound(bot, message) {
-    var user = "<@"+message.user+">";
-    bot.reply(message, ":x: " + user + " There is currently no active round. If this is a mistake, contact a mod");
-}
 
 /* Scheduling */
 
