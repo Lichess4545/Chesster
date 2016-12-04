@@ -118,8 +118,9 @@ function updatePairing(heltourConfig, result) {
 
         return http.fetchURLIntoJSON(request).then(function(response) {
             var newResult = response['json'];
-            newResult['gamelinkChanged'] = pairing['game_link'] !== result['gamelink'];
-            newResult['resultChanged'] = pairing['result'] !== result['result'];
+            newResult['gamelink'] = result['gamelink'];
+            newResult['gamelinkChanged'] = newResult['game_link_changed'];
+            newResult['resultChanged'] = newResult['result_changed'];
             newResult['result'] = result['result'];
             if (newResult['reversed']) {
                 newResult['white'] = result['black'];

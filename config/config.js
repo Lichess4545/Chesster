@@ -48,7 +48,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                "baseEndpoint": "https://www.lichess4545.com/api/", 
+                "baseEndpoint": "https://staging.lichess4545.com/api/", 
                 "leagueTag": "team4545"
             },
             "spreadsheet": {
@@ -60,12 +60,12 @@ var config = {
                 "resultsColname": "result"
             },
             "results": {
-                "channel": "team-results",
-                "channel_id": "C0CSALKL4"
+                "channel": "unstable_bot",
+                "channel_id": "C0VCCPMJ8"
             },
             "gamelinks": {
-                "channel": "team-gamelinks",
-                "channel_id": "C0CSAHD43",
+                "channel": "unstable_bot",
+                "channel_id": "C0VCCPMJ8",
                 "clock": {
                     "initial": 45,
                     "increment": 45
@@ -117,7 +117,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                "baseEndpoint": "https://www.lichess4545.com/api/", 
+                "baseEndpoint": "https://staging.lichess4545.com/api/", 
                 "leagueTag": "lonewolf"
             },
             "spreadsheet": {
@@ -129,15 +129,15 @@ var config = {
                 "resultsColname": "result"
             },
             "results": {
-                "channel": "lonewolf-results",
-                "channel_id": "C0SD3TGGM"
+                "channel": "unstable_bot-lonewolf",
+                "channel_id": "C0XQM31SL"
             },
             "gamelinks": {
-                "channel": "lonewolf-gamelinks",
-                "channel_id": "C0SD3SCAH",
+                "channel": "unstable_bot-lonewolf",
+                "channel_id": "C0XQM31SL",
                 "clock": {
-                    "initial": 1,
-                    "increment": 0
+                    "initial": 30,
+                    "increment": 30
                 },
                 "rated": true,
                 "variant" : "standard",

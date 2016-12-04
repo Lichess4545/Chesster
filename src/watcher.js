@@ -2,14 +2,16 @@ const _ = require('lodash');
 const _https = require('https');
 const url = require("url");
 const winston = require("winston");
+const moment = require("moment-timezone");
 const format = require('string-format');
 format.extend(String.prototype);
 const _league = require("./league.js");
+const games = require('./commands/games.js');
 
 var baseURL = "https://en.lichess.org/api/game-stream?users="
 
 const CREATED = 10;
-const STARTED = 20,
+const STARTED = 20;
 const ABORTED = 25;
 const MATE = 30;
 const RESIGN = 31;
@@ -31,10 +33,7 @@ function Watcher(bot, league) {
     self.usernames = [];
 
     self.league.onRefreshRosters(function(players) {
-        var newUsernames = [];
-        _.each(league._players, function(player) {
-            newUsernames.push(player.username);
-        });
+        var newUsernames = _.map(league._players, "username");
         newUsernames.sort();
         winston.info("-----------------------------------------------------");
         winston.info("{} old usernames {} incoming usernames".format(
@@ -43,7 +42,7 @@ function Watcher(bot, league) {
         ));
         var union = _.union(newUsernames, self.usernames);
         winston.info("{} differences".format(self.usernames.length - union.length));
-        if (self.usernames.length - union.length != 0) {
+        if (self.usernames.length - union.length !== 0) {
             winston.info("Restarting watcher because usernames have changed");
             self.usernames = newUsernames;
             self.watch(self.usernames);
@@ -57,10 +56,12 @@ function Watcher(bot, league) {
         // 3. pairing match during a 4 hour window (+-2 hours), warn for other mismatches
         console.log(details);
 
-        var result = self.league.validateGameDetails(details);
+        var result = games.validateGameDetails(self.league, details);
+        console.log(result);
         // If we don't have a pairing from this information, then it will
         // never be valid. Ignore it.
         if (!result.pairing) {
+            console.log("no pairing");
             return;
         }
         console.log(result.pairing);
@@ -70,38 +71,74 @@ function Watcher(bot, league) {
         if (!scheduledDate.isValid()) {
             scheduledDate = undefined;
         }
-        console.log("Scheduled Date: {}".format(scheduleDate));
+        console.log("Scheduled Date: {}".format(scheduledDate));
 
-        if (result.isValid) {
-            if (result.pairing.game_link) {
-                console.log("VALID But overwriting!");
+        if (result.valid) {
+            if (result.pairing.result) {
+                console.log("VALID but result already exists");
+                if (details.status === STARTED) {
+                    self.bot.say({
+                        text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
+                            + " There is already a result set for this pairing. If you want "
+                            + "the new game to count for the league, please contact a mod.",
+                        channel: self.league.options.gamelinks.channel_id
+                    });
+                }
+            } else if (result.pairing.game_link && !result.pairing.game_link.endsWith(details.id)) {
+                console.log("VALID But game link does not match");
+                if (details.status === STARTED) {
+                    self.bot.say({
+                        text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
+                            + " There is already a gamelink set for this pairing. If you want "
+                            + "the new game to count for the league, please contact a mod.",
+                        channel: self.league.options.gamelinks.channel_id
+                    });
+                }
             } else {
-                // TODO: check to ensure we are not overwriting.
                 console.log("VALID AND NEEDED!");
+                // Fetch the game details from the lichess games API because updateGamelink is more picky about the details format
+                // This could be obviated by an enhancement to the game-stream API
+                games.fetchGameDetails(details.id).then(function(response) {
+                    var detailsFromApi = response['json'];
+                    games.updateGamelink(self.league, detailsFromApi).then(function(updatePairingResult) {
+                        console.log(updatePairingResult);
+                        if (updatePairingResult.gamelinkChanged) {
+                            self.bot.say({
+                                text: "<@" + result.pairing.white + "> vs <@" + result.pairing.black + ">: <"
+                                    + updatePairingResult.gamelink +">",
+                                channel: self.league.options.gamelinks.channel_id,
+                                attachments: [] // Needed to activate link parsing in the message
+                            });
+                        }
+                        if (updatePairingResult.resultChanged) {
+                            self.bot.say({
+                                text: "<@" + result.pairing.white + "> " + updatePairingResult.result + " <@" + result.pairing.black + ">",
+                                channel: self.league.options.results.channel_id
+                            });
+                        }
+                    });
+                });
             }
-        } else {
-            var warn = false;
+        } else if (details.status === STARTED) {
             var hours = Math.abs(now.diff(scheduledDate));
-            if (hours >= 2 || result.timeControlIsIncorrect) {
+            if (hours >= 2 && result.timeControlIsIncorrect) {
                 // If the game is not the right time control,
                 // and we are not within 2 hours either way
                 // of the scheduled time, then don't warn.
                 return;
             }
 
-            var heltourOptions = self.league.options.heltour;
             self.bot.say({
-                text: "I am sorry, <@" + message.user + ">,  "
-                    + "your post is *not valid* because "
+                text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
+                    + " Your game is *not valid* because "
                     + "*" + result.reason + "*",
-                channel: self.league.options.gamelinks.channel_id,
+                channel: self.league.options.gamelinks.channel_id
             });
             self.bot.say({
                 text: "If this was a mistake, please correct it and "
-                     + "try again. If intentional, please contact one "
-                     + "of the moderators for review. Thank you.",
-                channel: self.league.options.gamelinks.channel_id,
-
+                     + "try again. If this is not a league game, you "
+                     + "may ignore this message. Thank you.",
+                channel: self.league.options.gamelinks.channel_id
             });
         }
     }
@@ -110,6 +147,7 @@ function Watcher(bot, league) {
     self.watch = function(usernames) {
         if (self.req) {
             self.req.end();
+            self.req.abort();
         }
         var watchURL = baseURL + usernames.join(",");
         console.log("watching " + watchURL);
@@ -132,13 +170,19 @@ function Watcher(bot, league) {
     }
 }
 
+var watcherMap = {};
+
 //------------------------------------------------------------------------------
-var watch = function(bot) {
+var watchAllLeagues = function(bot) {
     _.each(_league.getAllLeagues(bot.config), function(league) {
         console.log("Watching: {}".format(league.options.name));
-        new Watcher(bot, league);
+        watcherMap[league.name] = new Watcher(bot, league);
     });
 }
 
-module.exports.watch = watch;
+var getWatcher = function(league) {
+    return watcherMap[league.name];
+}
 
+module.exports.watchAllLeagues = watchAllLeagues;
+module.exports.getWatcher = getWatcher;

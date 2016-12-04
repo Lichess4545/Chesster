@@ -404,6 +404,9 @@ function on(options, callback) {
         }));
     });
 }
+function say(options) {
+    this.bot.say(options);
+}
 //------------------------------------------------------------------------------
 // A helper method to workaround a bug in botkit. 
 //
@@ -473,6 +476,7 @@ function Bot(options) {
 
     self.hears = hears;
     self.on = on;
+    self.say = say;
     self.startPrivateConversation = startPrivateConversation;
 }
 
