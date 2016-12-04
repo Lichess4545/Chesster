@@ -81,13 +81,18 @@ function Watcher(bot, league) {
                 console.log("VALID But overwriting!");
             } else {
                 console.log("VALID AND NEEDED!");
-                games.updateGamelink(self.league, details).then(function(updatePairingResult) {
-                    console.log(updatePairingResult);
-                    self.bot.say({
-                        text: "<@" + result.pairing.white + "> vs  <@" + result.pairing.black + ">: <"
-                            + updatePairingResult.gamelink + "|" + updatePairingResult.gamelink +">",
-                        channel: self.league.options.gamelinks.channel_id,
-                        attachments: [] // Needed to activate link parsing in the message
+                // Fetch the game details from the lichess games API because updateGamelink is more picky about the details format
+                // This could be obviated by an enhancement to the game-stream API
+                games.fetchGameDetails(details.id).then(function(response) {
+                    var detailsFromApi = response['json'];
+                    games.updateGamelink(self.league, detailsFromApi).then(function(updatePairingResult) {
+                        console.log(updatePairingResult);
+                        self.bot.say({
+                            text: "<@" + result.pairing.white + "> vs  <@" + result.pairing.black + ">: <"
+                                + updatePairingResult.gamelink + "|" + updatePairingResult.gamelink +">",
+                            channel: self.league.options.gamelinks.channel_id,
+                            attachments: [] // Needed to activate link parsing in the message
+                        });
                     });
                 });
             }
