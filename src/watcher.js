@@ -119,7 +119,7 @@ function Watcher(bot, league) {
             winston.info("Watcher received INVALID game");
 
             var hours = Math.abs(now.diff(scheduledDate));
-            if (hours >= 2 && result.timeControlIsIncorrect) {
+            if ((!scheduledDate || hours >= 2) && result.timeControlIsIncorrect) {
                 // If the game is not the right time control,
                 // and we are not within 2 hours either way
                 // of the scheduled time, then don't warn.
