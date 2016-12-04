@@ -118,6 +118,7 @@ function updatePairing(heltourConfig, result) {
 
         return http.fetchURLIntoJSON(request).then(function(response) {
             var newResult = response['json'];
+            newResult['gamelink'] = result['gamelink'];
             newResult['gamelinkChanged'] = pairing['game_link'] !== result['gamelink'];
             newResult['resultChanged'] = pairing['result'] !== result['result'];
             newResult['result'] = result['result'];

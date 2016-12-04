@@ -2,6 +2,7 @@ const _ = require('lodash');
 const _https = require('https');
 const url = require("url");
 const winston = require("winston");
+const moment = require("moment-timezone");
 const format = require('string-format');
 format.extend(String.prototype);
 const _league = require("./league.js");
@@ -59,9 +60,11 @@ function Watcher(bot, league) {
         console.log(details);
 
         var result = games.validateGameDetails(self.league, details);
+        console.log(result);
         // If we don't have a pairing from this information, then it will
         // never be valid. Ignore it.
         if (!result.pairing) {
+            console.log("no pairing");
             return;
         }
         console.log(result.pairing);
@@ -71,14 +74,22 @@ function Watcher(bot, league) {
         if (!scheduledDate.isValid()) {
             scheduledDate = undefined;
         }
-        console.log("Scheduled Date: {}".format(scheduleDate));
+        console.log("Scheduled Date: {}".format(scheduledDate));
 
-        if (result.isValid) {
-            if (result.pairing.game_link) {
+        if (result.valid) {
+            if (result.pairing.game_link || result.pairing.result) {
                 console.log("VALID But overwriting!");
             } else {
-                // TODO: check to ensure we are not overwriting.
                 console.log("VALID AND NEEDED!");
+                games.updateGamelink(self.league, details).then(function(updatePairingResult) {
+                    console.log(updatePairingResult);
+                    self.bot.say({
+                        text: "<@" + result.pairing.white + "> vs  <@" + result.pairing.black + ">: <"
+                            + updatePairingResult.gamelink + "|" + updatePairingResult.gamelink +">",
+                        channel: self.league.options.gamelinks.channel_id,
+                        attachments: [] // Needed to activate link parsing in the message
+                    });
+                });
             }
         } else {
             var warn = false;
@@ -92,17 +103,16 @@ function Watcher(bot, league) {
 
             var heltourOptions = self.league.options.heltour;
             self.bot.say({
-                text: "I am sorry, <@" + message.user + ">,  "
-                    + "your post is *not valid* because "
+                text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
+                    + " Your game is *not valid* because "
                     + "*" + result.reason + "*",
                 channel: self.league.options.gamelinks.channel_id,
             });
             self.bot.say({
                 text: "If this was a mistake, please correct it and "
-                     + "try again. If intentional, please contact one "
-                     + "of the moderators for review. Thank you.",
+                     + "try again. If this is not a league game, you "
+                     + "may ignore this message. Thank you.",
                 channel: self.league.options.gamelinks.channel_id,
-
             });
         }
     }
@@ -133,13 +143,19 @@ function Watcher(bot, league) {
     }
 }
 
+var watcherMap = {};
+
 //------------------------------------------------------------------------------
-var watch = function(bot) {
+var watchAllLeagues = function(bot) {
     _.each(_league.getAllLeagues(bot.config), function(league) {
         console.log("Watching: {}".format(league.options.name));
-        new Watcher(bot, league);
+        watcherMap[league.name] = new Watcher(bot, league);
     });
 }
 
-module.exports.watch = watch;
+var getWatcher = function(league) {
+    return watcherMap[league.name];
+}
 
+module.exports.watchAllLeagues = watchAllLeagues;
+module.exports.getWatcher = getWatcher;
