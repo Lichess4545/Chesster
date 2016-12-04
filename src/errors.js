@@ -1,3 +1,5 @@
+/*eslint no-extend-native: ["error", { "exceptions": ["Error"] }]*/
+
 //------------------------------------------------------------------------------
 // A file to hold various error handling facilities that aren't specific
 // to other modules. 
