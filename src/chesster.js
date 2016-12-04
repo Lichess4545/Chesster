@@ -12,7 +12,7 @@ var lichess = require('./lichess.js');
 var slack = require('./slack.js');
 var subscription = require('./subscription.js');
 var commands = require('./commands.js');
-//const watcher = require('./watcher.js');
+const watcher = require('./watcher.js');
 const games = require('./commands/games.js');
 const availability = require("./commands/availability.js");
 const nomination = require("./commands/nomination.js");
@@ -471,4 +471,4 @@ subscription.register(chesster, 'a-game-is-over', function(target, context) {
 
 //------------------------------------------------------------------------------
 // Start the watcher.
-//watcher.watch(chesster);
+watcher.watchAllLeagues(chesster);
