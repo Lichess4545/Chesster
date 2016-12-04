@@ -76,13 +76,10 @@ function Watcher(bot, league) {
         }
         console.log("Scheduled Date: {}".format(scheduledDate));
 
-        // Only warn when a game starts, not when it ends
-        var warn = (details.status === 20); // "started"
-
         if (result.valid) {
             if (result.pairing.result) {
                 console.log("VALID but result already exists");
-                if (warn) {
+                if (details.status === STARTED) {
                     self.bot.say({
                         text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
                             + " There is already a result set for this pairing. If you want "
@@ -92,7 +89,7 @@ function Watcher(bot, league) {
                 }
             } else if (result.pairing.game_link && !result.pairing.game_link.endsWith(details.id)) {
                 console.log("VALID But game link does not match");
-                if (warn) {
+                if (details.status === STARTED) {
                     self.bot.say({
                         text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
                             + " There is already a gamelink set for this pairing. If you want "
@@ -125,7 +122,7 @@ function Watcher(bot, league) {
                     });
                 });
             }
-        } else if (warn) {
+        } else if (details.status === STARTED) {
             var hours = Math.abs(now.diff(scheduledDate));
             if (hours >= 2 && result.timeControlIsIncorrect) {
                 // If the game is not the right time control,
