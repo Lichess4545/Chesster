@@ -32,8 +32,11 @@ function Watcher(bot, league) {
     self.req = null;
     self.usernames = [];
 
-    self.league.onRefreshRosters(function() {
-        var newUsernames = _.map(league._players, "username");
+    self.league.onRefreshPairings(function() {
+        var newUsernames = _.concat(
+            _.map(league._pairings, "white"),
+            _.map(league._pairings, "black")
+        );
         newUsernames.sort();
         winston.info("-----------------------------------------------------");
         winston.info("{} old usernames {} incoming usernames".format(
@@ -155,7 +158,7 @@ function Watcher(bot, league) {
         var watchURL = baseURL + usernames.join(",");
         winston.info("watching " + watchURL);
         winston.info("============================================================");
-        self.req = _https.get(url.parse(watchURL));
+        self.req = _https.post(url.parse(watchURL));
         return self.req.on('response', function (res) {
             res.on('data', function (chunk) {
                 var details = JSON.parse(chunk.toString());

@@ -108,6 +108,12 @@ var league_attributes = {
     onRefreshRosters: function(fn) {
         this.emitter.on('refreshRosters', fn);
     },
+    //--------------------------------------------------------------------------
+    // Register a refreshPairings event
+    //--------------------------------------------------------------------------
+    onRefreshPairings: function(fn) {
+        this.emitter.on('refreshPairings', fn);
+    },
 
     //--------------------------------------------------------------------------
     // Refreshes everything
@@ -129,6 +135,7 @@ var league_attributes = {
             self.refreshCurrentRoundSchedules().then(function(pairings) {
                 winston.info("Found " + pairings.length + " pairings for " + self.options.name);
                 self._lastUpdated = moment.utc();
+                self.emitter.emit('refreshPairings', self);
             }).catch(function(error) {
                 winston.error("{}: Unable to refresh pairings: {}".format(self.options.name, error));
                 throw new Error(error);
