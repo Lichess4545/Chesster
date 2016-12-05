@@ -1,3 +1,7 @@
+//------------------------------------------------------------------------------
+// Watcher uses the game-stream API from Lichess to listen for games as they
+// start and end.
+//------------------------------------------------------------------------------
 const _ = require('lodash');
 const _https = require('https');
 const url = require("url");

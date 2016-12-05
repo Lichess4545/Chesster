@@ -1,14 +1,14 @@
 //------------------------------------------------------------------------------
 // Bot / Slack related helpers
 //------------------------------------------------------------------------------
-var Q = require("q");
-var Botkit = require('botkit');
-var _ = require("lodash");
-var league = require("./league.js");
-var fuzzy = require("./fuzzy_match.js");
-var models = require("./models.js");
-var winston = require('winston');
-var logging = require('./logging.js');
+const Q = require("q");
+const Botkit = require('botkit');
+const _ = require("lodash");
+const league = require("./league.js");
+const fuzzy = require("./fuzzy_match.js");
+const models = require("./models.js");
+const winston = require('winston');
+const logging = require('./logging.js');
 
 var slackIDRegex = module.exports.slackIDRegex = /<@([^\s]+)>/;
 

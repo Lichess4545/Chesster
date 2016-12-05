@@ -1,11 +1,11 @@
 // TODO: reinstate these tests. See: https://github.com/endrawes0/Chesster/issues/148
-/*var assert = require('chai').assert;
-var Q = require("q");
-var _ = require("lodash");
-var moment = require("moment-timezone");
-var league = require('../src/league');
-var lichess = require('../src/lichess');
-var slack = require('../src/slack');
+/*const assert = require('chai').assert;
+const Q = require("q");
+const _ = require("lodash");
+const moment = require("moment-timezone");
+const league = require('../src/league');
+const lichess = require('../src/lichess');
+const slack = require('../src/slack');
 
 var _45_45_LEAGUE_CONF = {
     "name": "45+45",

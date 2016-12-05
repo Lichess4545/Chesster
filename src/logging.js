@@ -1,10 +1,11 @@
-/**
- * Based off of work by andy.batchelor on 2/26/14.
- */
+//------------------------------------------------------------------------------
+// Winston transport implementation that writes log data to a Slack instance
+// Based off of work by andy.batchelor on 2/26/14.
+//------------------------------------------------------------------------------
 
-var _ = require("lodash");
-var Botkit = require('botkit');
-var util = require('util'),
+const _ = require("lodash");
+const Botkit = require('botkit');
+const util = require('util'),
     winston = require('winston');
 
 var Slack = module.exports.Slack  = function (options) {
