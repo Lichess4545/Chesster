@@ -8,7 +8,7 @@ format.extend(String.prototype);
 const _league = require("./league.js");
 const games = require('./commands/games.js');
 
-var baseURL = "https://en.lichess.org/api/game-stream?users=";
+var baseURL = "https://en.lichess.org/api/game-stream";
 
 // const CREATED = 10;
 const STARTED = 20;
@@ -155,11 +155,17 @@ function Watcher(bot, league) {
             self.req.end();
             self.req.abort();
         }
-        var watchURL = baseURL + usernames.join(",");
+        var watchURL = baseURL;
         winston.info("watching " + watchURL);
         winston.info("============================================================");
-        self.req = _https.post(url.parse(watchURL));
-        return self.req.on('response', function (res) {
+        var body = usernames.join(",");
+        var options = url.parse(watchURL);
+        options.method = "POST";
+        options.headers = {
+            "Content-Length": Buffer.byteLength(body)
+        };
+        self.req = _https.request(options);
+        self.req.on('response', function (res) {
             res.on('data', function (chunk) {
                 var details = JSON.parse(chunk.toString());
                 self.processGameDetails(details);
@@ -173,6 +179,8 @@ function Watcher(bot, league) {
             self.req = null;
             self.watch(usernames);
         });
+        self.req.write(body);
+        self.req.end();
     };
 }
 
