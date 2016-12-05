@@ -1,46 +1,20 @@
-// extlibs
-var Q = require("q");
-var _ = require("lodash");
-var winston = require("winston");
-
 // Our stuff
-var league = require("./league.js");
-var lichess = require('./lichess.js');
 var slack = require('./slack.js');
-var subscription = require('./subscription.js');
+
+const errors = require('./errors.js');
+errors.init();
+
 const watcher = require('./watcher.js');
 const games = require('./commands/games.js');
 const availability = require("./commands/availability.js");
 const nomination = require("./commands/nomination.js");
 const scheduling = require("./commands/scheduling.js");
+const leagueInfo = require("./commands/leagueInfo.js");
+const onboarding = require("./commands/onboarding.js");
+const playerInfo = require("./commands/playerInfo.js");
+const subscription = require('./commands/subscription.js');
 
 var users = slack.users;
-var channels = slack.channels;
-
-/* exception handling */
-/* later this will move it its own module */
-
-function exception_handler(todo, on_error){
-    try{
-       todo();
-    }catch(e){
-        var error_log = "An error occurred:" +
-            "\nDatetime: " + new Date() +
-            "\nError: " + JSON.stringify(e) +
-            "\nStack: " + e.stack;
-        winston.error(error_log);
-        if (on_error) {
-            on_error();
-        }
-    }
-}
-
-function bot_exception_handler(bot, message, todo){
-    exception_handler(todo, function(){
-        winston.error("Message: " + JSON.stringify(message));
-        bot.reply(message, "Something has gone terribly terribly wrong. Please forgive me.");
-    });
-}
 
 /* static entry point */
 
@@ -50,70 +24,71 @@ var chesster = new slack.Bot({
 });
 
 // A helper for a very common pattern
-function leagueResponse(patterns, responseName) {
-    chesster.hears({
-        middleware: [slack.requiresLeague],
-        patterns: patterns,
-        messageTypes: [
-            'direct_message',
-            'direct_mention'
-        ]
-    },
-    function (bot, message){
-        return message.league[responseName]().then(function(response) {
-            bot.reply(message, response);
-        });
-    });
-}
-// A helper for a very common pattern
-function leagueDMResponse(patterns, responseName) {
-    chesster.hears({
-        middleware: [slack.requiresLeague],
-        patterns: patterns,
-        messageTypes: [
-            'direct_message',
-            'direct_mention'
-        ]
-    },
-    function (bot, message){
-        var deferred = Q.defer();
-        bot.startPrivateConversation(message, function (response, convo) {
-            message.league[responseName]().then(function(response) {
-                convo.say(response);
-                deferred.resolve();
-            }, function(error) {
-                deferred.reject(error);
-            });
-        });
-        return deferred.promise;
-    });
+function directRequiresLeague(patterns, callback) {
+    chesster.hears(
+        {
+            middleware: [slack.requiresLeague],
+            patterns: patterns,
+            messageTypes: ['direct_message', 'direct_mention']
+        },
+        callback
+    );
 }
 
-/* captains */
-leagueResponse(['captain guidelines'], 'formatCaptainGuidelinesResponse');
-leagueDMResponse(['captains', 'captain list'], 'formatCaptainsResponse');
-
+/* league information */
+directRequiresLeague(
+    ['captain guidelines'],
+    leagueInfo.directResponse('formatCaptainGuidelinesResponse')
+);
+directRequiresLeague(
+    ['captains', 'captain list'],
+    leagueInfo.dmResponse('formatCaptainsResponse')
+);
+directRequiresLeague(
+    ["faq"],
+    leagueInfo.directResponse('formatFAQResponse')
+);
+directRequiresLeague(
+    ['notify mods', 'summon mods'],
+    leagueInfo.directResponse('formatSummonModsResponse')
+);
+directRequiresLeague(
+    ['^mods$', '^moderators$'],
+    leagueInfo.directResponse('formatModsResponse')
+);
+directRequiresLeague(
+    ['pairings'],
+    leagueInfo.directResponse('formatPairingsLinkResponse')
+);
+directRequiresLeague(
+    ['rules', 'regulations'],
+    leagueInfo.directResponse('formatRulesLinkResponse')
+);
+directRequiresLeague(
+    ['standings'],
+    leagueInfo.directResponse('formatStandingsLinkResponse')
+);
+directRequiresLeague(
+    ['^welcome$', 'starter guide', 'player handbook'],
+    leagueInfo.directResponse('formatStarterGuideResponse')
+);
 
 /* availability */
 chesster.hears(
     {
-        middleware: [ slack.withLeague ],
-        patterns: [ 'available', 'unavailable' ],
-        messageTypes: [ 'direct_message', 'direct_mention' ]
+        middleware: [slack.withLeague],
+        patterns: ['available', 'unavailable'],
+        messageTypes: ['direct_message', 'direct_mention']
     },
     availability.updateAvailability
 );
 
-
-
 /* alternate assignment */
 chesster.hears(
     {
-        middleware: [ slack.withLeagueByChannelName ],
-        patterns: [ '^assign' ],
-        messageTypes: [ 
-            'ambient'
-        ]
+        middleware: [slack.withLeagueByChannelName],
+        patterns: ['^assign'],
+        messageTypes: ['ambient']
     }, 
     availability.assignAlternate
 );
@@ -121,11 +96,9 @@ chesster.hears(
 /* alternate unassignment */
 chesster.hears(
     {
-        middleware: [ slack.withLeagueByChannelName ],
-        patterns: [ '^unassign' ],
-        messageTypes: [ 
-            'ambient'
-        ]
+        middleware: [slack.withLeagueByChannelName],
+        patterns: ['^unassign'],
+        messageTypes: ['ambient']
     }, 
     availability.unassignAlternate
 );
@@ -133,36 +106,32 @@ chesster.hears(
 /* game nomination */
 chesster.hears(
     {
-        middleware: [ slack.requiresLeague ],
-        patterns: [ 'nomination' ],
-        messageTypes: [ 'direct_message' ]
+        middleware: [slack.requiresLeague],
+        patterns: ['nomination'],
+        messageTypes: ['direct_message']
     },
     nomination.nomination
 );
 
 /* rating */
 
-chesster.hears({
-    patterns: [slack.appendPlayerRegex("rating", true)],
-    messageTypes: [
-        'direct_mention', 
-        'direct_message'
-    ]
-},
-function(bot,message) {
-    var playerName = slack.getSlackUser(message).name;
-    return lichess.getPlayerRating(playerName).then(function(rating) {
-        if(rating){
-            bot.reply(message, prepareRatingMessage(playerName, rating));
-        }else{
-            bot.reply(message, "I am sorry. I could not find that player.");
-        }
-    });
-});
+chesster.hears(
+    {
+        patterns: [slack.appendPlayerRegex("rating", true)],
+        messageTypes: ['direct_mention', 'direct_message']
+    },
+    playerInfo.playerRating
+);
 
-function prepareRatingMessage(_player, rating){
-    return _player + " is rated " + rating + " in classical chess";
-}
+chesster.hears(
+    {
+        patterns: [
+            slack.appendPlayerRegex("pairing", true)
+        ],
+        messageTypes: ['direct_mention', 'direct_message']
+    },
+    playerInfo.playerPairings(chesster.config)
+);
 
 /* commands */
 
@@ -177,20 +146,7 @@ function prepareCommandsMessage(){
         "    [ commands | \n"  +
         "        command list ]             ! this list\n" +
         "    [ rating <player> ]            ! get the player's classical rating.\n" +
-/*        "    [ challenge <opp1> <opp2> <w|b|r> <tc-min>+<tc-inc> <[un]rated> ]" +
-        "                                   ! this command will create a <rated|casual> challenge between\n" +
-        "                                   ! two opponents <opp1> <opp2> \n" +
-        "                                   ! opponent one being colored <w|b|r> and \n" +
-        "                                   ! time control <tc-min> with a <tc-inc> increment \n" +*/
-        "    [ teams | \n" +
-        "        team list |                ! list the teams in the current tournament\n" +
-        "        team stats <team-name> |   ! get statistics for a given <team-name>\n" +
-        "        team members <team-name> | ! list the members of a given <team-name>\n" +
-        "        team captain <team-name> ] ! name the captain of a given <team-name>\n" +
-        "    [ captains | \n" +
-        "        captain list |             ! list the team captains\n" +
-        "        captain guidelines ]       ! get the team captain guidelines\n" +
-        "    [ board <number> ]             ! get a sorted list of players by board\n" +
+        "    [ captain guidelines ]         ! get the team captain guidelines\n" +
         "    [ mods (lonewolf)| \n"  +
         "        mod list (lonewolf)|       ! list the mods (without summoning)\n" +
         "        mods summon (lonewolf)]    ! summon the mods\n" +
@@ -203,15 +159,8 @@ function prepareCommandsMessage(){
 }
 
 chesster.hears({
-    patterns: [
-        'commands', 
-        'command list',
-        '^help$'
-    ],
-    messageTypes: [
-        'direct_mention', 
-        'direct_message'
-    ]
+    patterns: ['commands', 'command list', '^help$'],
+    messageTypes: ['direct_mention', 'direct_message']
 },
 function(bot,message) {
     bot.startPrivateConversation(message, function (response, convo) {
@@ -219,96 +168,30 @@ function(bot,message) {
     });
 });
 
-/* mods */
-
-leagueResponse(['summon mods'], 'formatSummonModsResponse');
-leagueResponse(['notify mods'], 'formatSummonModsResponse');
-leagueResponse(['mods'], 'formatModsResponse');
-
-/* faq */
-leagueResponse(["faq"], 'formatFAQResponse');
-
-/* pairings */
-leagueResponse(['pairings'], 'formatPairingsLinkResponse');
-
-/* standings */
-leagueResponse(['standings'], 'formatStandingsLinkResponse');
-
-chesster.hears({
-    patterns: [
-        slack.appendPlayerRegex("pairing", true)
-    ],
-    messageTypes: [
-        'direct_mention', 'direct_message'
-    ]
-}, function(bot, message) {
-    var targetPlayer = slack.getSlackUser(message);
-    var deferred = Q.defer();
-    var allLeagues = league.getAllLeagues(chesster.config);
-    bot.startPrivateConversation(message, function (response, convo) {
-        Q.all(
-            _.map(allLeagues, function(l) {
-                return l.getPairingDetails(targetPlayer).then(function(details) {
-                    if (details && details.opponent) {
-                        return l.formatPairingResponse(message.player, details).then(function(response) {
-                            convo.say(response);
-                        });
-                    } else {
-                        convo.say("[" + l.options.name + "] Unable to find pairing for " + targetPlayer.name);
-                    }
-                }, function(error) {
-                    winston.error("error");
-                    winston.error(JSON.stringify(error));
-                });
-            })
-        ).then(function() {
-            deferred.resolve();
-        }, function(error) {
-            deferred.reject(error);
-        });
-    });
-    return deferred.promise;
-});
-
-/* rules */
-leagueResponse(['rules', 'regulations'], 'formatRulesLinkResponse');
 
 /* welcome */
 
-chesster.on({event: 'user_channel_join'},
-function(bot, message) {
-    bot_exception_handler(bot, message, function(){
-        if(_.isEqual(message.channel, channels.getId(chesster.config["welcome"]["channel"]))){
-            bot.reply(message, "Everyone, please welcome the newest member of the " 
-                             + "Lichess 45+45 League, <@" + message.user + ">!");
-            
-            bot.startPrivateConversation(message, function(err, convo){
-               convo.say("Welcome. I am the moderator bot for the Lichess4545 league");
-               convo.say("Say 'help' to get help."); 
-               convo.say("If you joined for the 45+45 league, read this: " 
-                   + chesster.config["leagues"]["45+45"].links.faq 
-                   + ". If you joined for Lone Wolf, read this: " 
-                   + chesster.config["leagues"]["lonewolf"].links.faq 
-                   + ". Enjoy the league!"); 
-            });
-        }
-    });
-});
-
-leagueResponse(['welcome', 'starter guide', 'player handbook'], 'formatStarterGuideResponse');
+chesster.on({event: 'user_channel_join'}, onboarding.welcomeMessage(chesster.config));
+chesster.hears(
+    {
+        middleware: [slack.requiresLeague, slack.requiresModerator],
+        patterns: ['^welcome me'],
+        messageTypes: ['direct_mention']
+    },
+    onboarding.welcomeMessage(chesster.config)
+);
 
 /* source */
 
-chesster.hears({
-    patterns: "source",
-    messageTypes: [
-        'direct_message',
-        'direct_mention'
-    ]
-},
-function(bot, message){
-    bot.reply(message, chesster.config.links.source);
-});
+chesster.hears(
+    {
+        patterns: "source",
+        messageTypes: ['direct_message', 'direct_mention']
+    },
+    function(bot, message){
+        bot.reply(message, chesster.config.links.source);
+    }
+);
 
 /* Scheduling */
 
@@ -346,102 +229,41 @@ chesster.on(
 
 /* subscriptions */
 
-chesster.hears({
-    middleware: [],
-    patterns: ['^tell'],
-    messageTypes: ['direct_message']
-},
-function(bot, message) {
-    var deferred = Q.defer();
-    bot.startPrivateConversation(message, function (response, convo) {
-        subscription.processTellCommand(chesster.config, message).then(function(response) {
-            convo.say(response);
-            deferred.resolve();
-        }).catch(function(error) {
-            convo.say("I'm sorry, but an error occurred processing this subscription command");
-            deferred.reject(error);
-        });
-    });
-    return deferred.promise;
-});
+chesster.hears(
+    {
+        patterns: ['^tell'],
+        messageTypes: ['direct_message']
+    },
+    subscription.tellMeWhenHandler(chesster.config)
+);
 
-chesster.hears({
-    middleware: [],
-    patterns: ['^subscription help$', '^unsubscribe$'],
-    messageTypes: ['direct_message']
-},
-function(bot, message) {
-    var deferred = Q.defer();
-    bot.startPrivateConversation(message, function (response, convo) {
-        subscription.formatHelpResponse(chesster.config).then(function(response) {
-            convo.say(response);
-            deferred.resolve();
-        }).catch(function(error) {
-            convo.say("I'm sorry, but an error occurred processing this subscription command");
-            deferred.reject(error);
-        });
-    });
-    return deferred.promise;
-});
+chesster.hears(
+    {
+        patterns: ['^subscription help$', '^unsubscribe$'],
+        messageTypes: ['direct_message']
+    },
+    subscription.helpHandler(chesster.config)
+);
 
-chesster.hears({
-    middleware: [],
-    patterns: ['^subscription list$'],
-    messageTypes: ['direct_message']
-},
-function(bot, message) {
-    var deferred = Q.defer();
-    bot.startPrivateConversation(message, function (response, convo) {
-        subscription.processSubscriptionListCommand(chesster.config, message).then(function(response) {
-            convo.say(response);
-            deferred.resolve();
-        }).catch(function(error) {
-            convo.say("I'm sorry, but an error occurred processing this subscription command");
-            deferred.reject(error);
-        });
-    });
-    return deferred.promise;
-});
+chesster.hears(
+    {
+        patterns: ['^subscription list$'],
+        messageTypes: ['direct_message']
+    },
+    subscription.listHandler(chesster.config)
+);
 
-chesster.hears({
-    middleware: [],
-    patterns: [/^subscription remove (\d+)$/],
-    messageTypes: ['direct_message']
-},
-function(bot, message) {
-    var deferred = Q.defer();
-    bot.startPrivateConversation(message, function (response, convo) {
-        subscription.processSubscriptionRemoveCommand(chesster.config, message, message.match[1]).then(function(response) {
-            convo.say(response);
-            deferred.resolve();
-        }).catch(function(error) {
-            convo.say("I'm sorry, but an error occurred processing this subscription command");
-            deferred.reject(error);
-        });
-    });
-    return deferred.promise;
-});
+chesster.hears(
+    {
+        patterns: [/^subscription remove (\d+)$/],
+        messageTypes: ['direct_message']
+    },
+    subscription.removeHandler(chesster.config)
+);
 
-subscription.register(chesster, 'a-game-is-scheduled', function(target, context) {
-    // TODO: put these date formats somewhere, probably config?
-    var friendlyFormat = "ddd @ HH:mm";
-    target = slack.getSlackUserFromNameOrID(target);
-    var targetDate = context.result.date.clone().utcOffset(target.tz_offset/60);
-    context['yourDate'] = targetDate.format(friendlyFormat);
-    var fullFormat = "YYYY-MM-DD @ HH:mm UTC";
-    context['realDate'] = context.result.date.format(fullFormat);
-    return "{white.name} vs {black.name} in {leagueName} has been scheduled for {realDate}, which is {yourDate} for you.".format(context);
-});
-
-
-subscription.register(chesster, 'a-game-starts', function (target, context) {
-    return "{white.name} vs {black.name} in {leagueName} has started: {result.gamelink}".format(context);
-});
-
-subscription.register(chesster, 'a-game-is-over', function(target, context) {
-    return "{white.name} vs {black.name} in {leagueName} is over. The result is {result.result}.".format(context);
-});
-
+subscription.register(chesster, 'a-game-is-scheduled', subscription.formatAGameIsScheduled);
+subscription.register(chesster, 'a-game-starts', subscription.formatAGameStarts);
+subscription.register(chesster, 'a-game-is-over', subscription.formatAGameIsOver);
 
 //------------------------------------------------------------------------------
 // Start the watcher.

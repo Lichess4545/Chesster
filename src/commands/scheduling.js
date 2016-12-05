@@ -8,7 +8,7 @@ const Q = require("q");
 
 const slack = require('../slack.js');
 const heltour = require('../heltour.js');
-const subscription = require('../subscription.js');
+const subscription = require('./subscription.js');
 
 var EXTREMA_DEFAULTS = {
     'isoWeekday': 2,

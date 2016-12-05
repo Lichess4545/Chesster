@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// A simple subscription system
+// Commands related to subscriptions
 //------------------------------------------------------------------------------
 
 var Q = require("q");
@@ -7,9 +7,9 @@ var _ = require("lodash");
 var format = require('string-format');
 format.extend(String.prototype);
 
-var league = require("./league.js");
-var slack = require("./slack.js");
-var db = require("./models.js");
+var league = require("../league.js");
+var slack = require("../slack.js");
+var db = require("../models.js");
 
 // The emitter we will use.
 const EventEmitter = require('events');
@@ -95,6 +95,34 @@ function formatInvalidSourceResponse(config, source) {
     return Q.fcall(function() {
         return "`" + source + "` is not a valid source of that event. Please target a valid user or team.";
     });
+}
+
+//------------------------------------------------------------------------------
+// Format the a-game-is-scheduled response
+//------------------------------------------------------------------------------
+function formatAGameIsScheduled(target, context) {
+    // TODO: put these date formats somewhere, probably config?
+    var friendlyFormat = "ddd @ HH:mm";
+    target = slack.getSlackUserFromNameOrID(target);
+    var targetDate = context.result.date.clone().utcOffset(target.tz_offset/60);
+    context['yourDate'] = targetDate.format(friendlyFormat);
+    var fullFormat = "YYYY-MM-DD @ HH:mm UTC";
+    context['realDate'] = context.result.date.format(fullFormat);
+    return "{white.name} vs {black.name} in {leagueName} has been scheduled for {realDate}, which is {yourDate} for you.".format(context);
+}
+
+//------------------------------------------------------------------------------
+// Format the A Game Starts response.
+//------------------------------------------------------------------------------
+function formatAGameStarts(target, context) {
+    return "{white.name} vs {black.name} in {leagueName} has started: {result.gamelink}".format(context);
+}
+
+//------------------------------------------------------------------------------
+// Format the a game is over response.
+//------------------------------------------------------------------------------
+function formatAGameIsOver(target, context) {
+    return "{white.name} vs {black.name} in {leagueName} is over. The result is {result.result}.".format(context);
 }
 
 //------------------------------------------------------------------------------
@@ -311,10 +339,91 @@ function getListeners(leagueName, sources, event) {
     });
 }
 
+
+//------------------------------------------------------------------------------
+// Handler the tell me when command
+//------------------------------------------------------------------------------
+function tellMeWhenHandler(config) {
+    return function(bot, message) {
+        var deferred = Q.defer();
+        bot.startPrivateConversation(message, function (response, convo) {
+            processTellCommand(config, message).then(function(response) {
+                convo.say(response);
+                deferred.resolve();
+            }).catch(function(error) {
+                convo.say("I'm sorry, but an error occurred processing this subscription command");
+                deferred.reject(error);
+            });
+        });
+        return deferred.promise;
+    };
+}
+
+//------------------------------------------------------------------------------
+// Handle the help message command
+//------------------------------------------------------------------------------
+function helpHandler(config) {
+    return function(bot, message) {
+        var deferred = Q.defer();
+        bot.startPrivateConversation(message, function (response, convo) {
+            formatHelpResponse(config).then(function(response) {
+                convo.say(response);
+                deferred.resolve();
+            }).catch(function(error) {
+                convo.say("I'm sorry, but an error occurred processing this subscription command");
+                deferred.reject(error);
+            });
+        });
+        return deferred.promise;
+    };
+}
+
+//------------------------------------------------------------------------------
+// Handle the subscription list command.
+//------------------------------------------------------------------------------
+function listHandler(config) {
+    return function(bot, message) {
+        var deferred = Q.defer();
+        bot.startPrivateConversation(message, function (response, convo) {
+            processSubscriptionListCommand(config, message).then(function(response) {
+                convo.say(response);
+                deferred.resolve();
+            }).catch(function(error) {
+                convo.say("I'm sorry, but an error occurred processing this subscription command");
+                deferred.reject(error);
+            });
+        });
+        return deferred.promise;
+    };
+}
+
+//------------------------------------------------------------------------------
+// Handle the subscription remove command.
+//------------------------------------------------------------------------------
+function removeHandler(config) {
+    return function(bot, message) {
+        var deferred = Q.defer();
+        bot.startPrivateConversation(message, function (response, convo) {
+            processSubscriptionRemoveCommand(config, message, message.match[1]).then(function(response) {
+                convo.say(response);
+                deferred.resolve();
+            }).catch(function(error) {
+                convo.say("I'm sorry, but an error occurred processing this subscription command");
+                deferred.reject(error);
+            });
+        });
+        return deferred.promise;
+    };
+}
+
 module.exports.emitter = emitter;
-module.exports.formatHelpResponse = formatHelpResponse;
-module.exports.processTellCommand = processTellCommand;
-module.exports.processSubscriptionListCommand = processSubscriptionListCommand;
-module.exports.processSubscriptionRemoveCommand = processSubscriptionRemoveCommand;
 module.exports.getListeners = getListeners;
 module.exports.register = register;
+
+module.exports.tellMeWhenHandler = tellMeWhenHandler;
+module.exports.helpHandler = helpHandler;
+module.exports.listHandler = listHandler;
+module.exports.removeHandler = removeHandler;
+module.exports.formatAGameIsScheduled = formatAGameIsScheduled;
+module.exports.formatAGameStarts = formatAGameStarts;
+module.exports.formatAGameIsOver = formatAGameIsOver;

@@ -15,7 +15,7 @@ var config = require("./config.js");
 config['winston']['token'] = logging_token;
 config['winston']['channel'] = "#modster-logging";
 
-config["welcome"]["channel"] = "unstable_bot";
+config["welcome"]["channel"] = "unstable_bot-lonewolf";
 
 config["leagues"]["45+45"]["spreadsheet"]["key"] = "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA";
 config["leagues"]["45+45"]["spreadsheet"]["serviceAccountAuth"] = {
