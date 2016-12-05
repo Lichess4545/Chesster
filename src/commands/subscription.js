@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
-// Commands related to subscriptions
+// Commands and helpers related to subscriptions
 //------------------------------------------------------------------------------
-
 var Q = require("q");
 var _ = require("lodash");
 var format = require('string-format');

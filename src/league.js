@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Defines a league object which can be used to interact with the spreadsheet
+// Defines a league object which can be used to interact with the website
 // for the given league
 //------------------------------------------------------------------------------
 const _ = require("lodash");

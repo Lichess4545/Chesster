@@ -1,3 +1,6 @@
+//------------------------------------------------------------------------------
+// Common utilities for command implementations
+//------------------------------------------------------------------------------
 const _ = require("lodash");
 
 function isCaptainOrModerator(speaker, speakerTeam, teamName, league){

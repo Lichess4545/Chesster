@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Commands related to availability 
+// Commands related to availability
 //------------------------------------------------------------------------------
 const winston = require("winston");
 const _ = require("lodash");

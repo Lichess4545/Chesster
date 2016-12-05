@@ -1,4 +1,7 @@
-// Our stuff
+//------------------------------------------------------------------------------
+// Entry point for Chesster
+// Bot commands are defined here with implementations in various modules. 
+//------------------------------------------------------------------------------
 var slack = require('./slack.js');
 
 const errors = require('./errors.js');

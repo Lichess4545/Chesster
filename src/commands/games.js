@@ -1,3 +1,6 @@
+//------------------------------------------------------------------------------
+// Commands and helpers related to gamelinks and results
+//------------------------------------------------------------------------------
 var _ = require("lodash");
 var moment = require("moment-timezone");
 var winston = require("winston");

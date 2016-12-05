@@ -1,3 +1,7 @@
+//------------------------------------------------------------------------------
+// Utilities for command parsing
+// See chesster.js for command definitions.
+//------------------------------------------------------------------------------
 var Q = require("q");
 var _ = require("lodash");
 
