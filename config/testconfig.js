@@ -8,6 +8,9 @@ try {
 }
 var heltour_token = require("./test_heltour_token.js").token;
 
+const UNSTABLE_BOT_ID = "C0VCCPMJ8";
+const UNSTABLE_BOT_LONEWOLF_ID = "C0XQM31SL";
+
 var config = require("./config.js");
 config['winston']['token'] = logging_token;
 config['winston']['channel'] = "#modster-logging";
@@ -29,15 +32,19 @@ config["leagues"]["lonewolf"]["heltour"]["baseEndpoint"] = "https://staging.lich
 
 config["leagues"]["45+45"]["scheduling"]["channel"] = "unstable_bot";
 config["leagues"]["45+45"]["results"]["channel"] = "unstable_bot";
+config["leagues"]["45+45"]["results"]["channel_id"] = UNSTABLE_BOT_ID;
 config["leagues"]["45+45"]["gamelinks"]["channel"] = "unstable_bot";
-config["leagues"]["45+45"]["alternate"]["channel_id"] = "G2G6URBT5";
+config["leagues"]["45+45"]["gamelinks"]["channel_id"] = UNSTABLE_BOT_ID;
+config["leagues"]["45+45"]["alternate"]["channel_id"] = UNSTABLE_BOT_ID;
 config["leagues"]["lonewolf"]["scheduling"]["channel"] = "unstable_bot-lonewolf";
 config["leagues"]["lonewolf"]["results"]["channel"] = "unstable_bot-lonewolf";
+config["leagues"]["lonewolf"]["results"]["channel_id"] = UNSTABLE_BOT_LONEWOLF_ID;
 config["leagues"]["lonewolf"]["gamelinks"]["channel"] = "unstable_bot-lonewolf";
+config["leagues"]["lonewolf"]["gamelinks"]["channel_id"] = UNSTABLE_BOT_LONEWOLF_ID;
 
-config["channel_map"]["G2G6URBT5"] = "45+45";
-config["channel_map"]["G0DFRURGQ"] = undefined;
+config["channel_map"][UNSTABLE_BOT_ID] = "45+45";
 config["channel_map"]["unstable_bot"] = "45+45";
 config["channel_map"]["unstabled_bot-lonewolf"] = "lonewolf";
+config["channel_map"][UNSTABLE_BOT_LONEWOLF_ID] = "lonewolf";
 
 module.exports = config;

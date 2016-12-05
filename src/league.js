@@ -9,6 +9,11 @@ const moment = require("moment-timezone");
 const format = require('string-format');
 format.extend(String.prototype);
 
+// An emitter for league events
+const EventEmitter = require('events');
+function ChessLeagueEmitter() {}
+ChessLeagueEmitter.prototype  = new EventEmitter();
+
 const slack = require('./slack.js');
 const heltour = require('./heltour.js');
 const db = require("./models.js");
@@ -97,11 +102,17 @@ var league_attributes = {
     getPlayer: function(username) {
         return this._playerLookup[_.toLower(username)];
     },
+    //--------------------------------------------------------------------------
+    // Register a refreshRosters event
+    //--------------------------------------------------------------------------
+    onRefreshRosters: function(fn) {
+        this.emitter.on('refreshRosters', fn);
+    },
 
     //--------------------------------------------------------------------------
     // Refreshes everything
     //--------------------------------------------------------------------------
-    'refresh': function() {
+    refresh: function() {
         var self = this;
         return Q.all([
             self.refreshRosters().then(function() {
@@ -110,6 +121,7 @@ var league_attributes = {
                     winston.info("Found " + self._teams.length + " teams for " + self.options.name);
                 }
                 self._lastUpdated = moment.utc();
+                self.emitter.emit('refreshRosters', self);
             }).catch(function(error) {
                 winston.error("{}: Unable to refresh rosters: {}".format(self.options.name, error));
                 throw new Error(error);
@@ -134,7 +146,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Refreshes the latest roster information
     //--------------------------------------------------------------------------
-    'refreshRosters': function() {
+    refreshRosters: function() {
         var self = this;
         return heltour.getRoster(self.options.heltour, self.options.heltour.leagueTag).then(function(roster) {
             self._players = roster.players;
@@ -188,7 +200,7 @@ var league_attributes = {
     // Calls into the website moderators endpoint to get the list of moderators
     // for the league.
     //--------------------------------------------------------------------------
-    'refreshLeagueModerators': function(){
+    refreshLeagueModerators: function(){
         var self = this;
         return heltour.getLeagueModerators(self.options.heltour).then(function(moderators){
             self._moderators = _.map(moderators, _.toLower);
@@ -198,7 +210,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Figures out the current scheduling information for the round.
     //--------------------------------------------------------------------------
-    'refreshCurrentRoundSchedules': function() {
+    refreshCurrentRoundSchedules: function() {
         var self = this;
         return heltour.getAllPairings(self.options.heltour, self.options.heltour.leagueTag).then(function(pairings) {
             var newPairings = [];
@@ -222,7 +234,7 @@ var league_attributes = {
     // Finds the pairing for this current round given either a black or a white
     // username.
     //--------------------------------------------------------------------------
-    'findPairing': function(white, black) {
+    findPairing: function(white, black) {
         if (!white) {
             throw new Error("findPairing requires at least one username.");
         }
@@ -244,13 +256,13 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Returns whether someone is a moderator or not.
     //--------------------------------------------------------------------------
-    'isModerator': function(name) {
+    isModerator: function(name) {
         return _.includes(this._moderators, _.toLower(name));
     },
     //--------------------------------------------------------------------------
     // Prepare a debug message for this league
     //--------------------------------------------------------------------------
-    'formatDebugResponse': function() {
+    formatDebugResponse: function() {
         var self = this;
 
         return Q.fcall(function() {
@@ -265,7 +277,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Generates the appropriate data format for pairing result for this league.
     //--------------------------------------------------------------------------
-    'getPairingDetails': function(targetPlayer) {
+    getPairingDetails: function(targetPlayer) {
         var self = this;
         return Q.fcall(function() {
             var pairings = self.findPairing(targetPlayer.name);
@@ -304,7 +316,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the pairing result for this league
     //--------------------------------------------------------------------------
-    'formatPairingResponse': function(requestingPlayer, details) {
+    formatPairingResponse: function(requestingPlayer, details) {
         function getRatingString(rating){
             return ( rating ? "(" + rating + ")" : "" );
         }
@@ -349,7 +361,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the captains Guidelines
     //--------------------------------------------------------------------------
-    'formatCaptainGuidelinesResponse': function() {
+    formatCaptainGuidelinesResponse: function() {
         var self = this;
         return Q.fcall(function() {
             if (self.options.links && self.options.links.captains) {
@@ -364,7 +376,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the pairings response
     //--------------------------------------------------------------------------
-    'formatPairingsLinkResponse': function() {
+    formatPairingsLinkResponse: function() {
         var self = this;
         return Q.fcall(function() {
             if (self.options.links && self.options.links.league) {
@@ -381,7 +393,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the standings response
     //--------------------------------------------------------------------------
-    'formatStandingsLinkResponse': function() {
+    formatStandingsLinkResponse: function() {
         var self = this;
         return Q.fcall(function() {
             if (self.options.links && self.options.links.league) {
@@ -397,7 +409,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the rules link response
     //--------------------------------------------------------------------------
-    'formatRulesLinkResponse': function() {
+    formatRulesLinkResponse: function() {
         var self = this;
         return Q.fcall(function() {
             if (self.options.links && self.options.links.rules) {
@@ -413,7 +425,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the starter guide message
     //--------------------------------------------------------------------------
-    'formatStarterGuideResponse': function() {
+    formatStarterGuideResponse: function() {
         var self = this;
         return Q.fcall(function() {
             if (self.options.links && self.options.links.guide) {
@@ -428,7 +440,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the signup response
     //--------------------------------------------------------------------------
-    'formatRegistrationResponse': function() {
+    formatRegistrationResponse: function() {
         var self = this;
         return Q.fcall(function() {
             if (self.options.links && self.options.links.registration) {
@@ -443,7 +455,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Get a list of captain names
     //--------------------------------------------------------------------------
-    'getCaptains':function() {
+    getCaptains:function() {
         var self = this;
         return Q.fcall(function() {
             return _.map(self._teams, "captain");
@@ -452,7 +464,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Get the list of teams
     //--------------------------------------------------------------------------
-    'getTeams':function() {
+    getTeams:function() {
         var self = this;
         return Q.fcall(function() {
             return self._teams;
@@ -461,7 +473,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Get the team for a given player name
     //--------------------------------------------------------------------------
-    'getTeamByPlayerName':function(playerName) {
+    getTeamByPlayerName:function(playerName) {
         var self = this;
         return self._playerLookup[playerName.toLowerCase()] &&
 		self._playerLookup[playerName.toLowerCase()].team;
@@ -469,14 +481,14 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Get the team for a given team name
     //--------------------------------------------------------------------------
-    'getTeam':function(teamName) {
+    getTeam:function(teamName) {
         var self = this;
         return self._teamLookup[teamName.toLowerCase()];
     },
     //--------------------------------------------------------------------------
     // Get the the players from a particular board
     //--------------------------------------------------------------------------
-    'getBoard':function(boardNumber) {
+    getBoard:function(boardNumber) {
         var self = this;
         return Q.fcall(function() {
             var players = [];
@@ -491,7 +503,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format the response for the list of captains
     //--------------------------------------------------------------------------
-    'formatCaptainsResponse':function() {
+    formatCaptainsResponse:function() {
         var self = this;
         return Q.fcall(function() {
             if (self._teams.length === 0) {
@@ -516,7 +528,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format the response for the list of captains
     //--------------------------------------------------------------------------
-    'formatTeamCaptainResponse':function(teamName) {
+    formatTeamCaptainResponse:function(teamName) {
         var self = this;
         return Q.fcall(function() {
             if (self._teams.length === 0) {
@@ -544,7 +556,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format the teams response
     //--------------------------------------------------------------------------
-    'formatTeamsResponse':function() {
+    formatTeamsResponse:function() {
         var self = this;
         return Q.fcall(function() {
             if (self._teams.length === 0) {
@@ -562,7 +574,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format board response
     //--------------------------------------------------------------------------
-    'formatBoardResponse': function(boardNumber) {
+    formatBoardResponse: function(boardNumber) {
         var self = this;
         return Q.fcall(function() {
             if (self._teams.length === 0) {
@@ -585,7 +597,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format team members response
     //--------------------------------------------------------------------------
-    'formatTeamMembersResponse': function(teamName) {
+    formatTeamMembersResponse: function(teamName) {
         var self = this;
         return Q.fcall(function() {
             if (self._teams.length === 0) {
@@ -613,7 +625,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format the mods message
     //--------------------------------------------------------------------------
-    'formatModsResponse': function() {
+    formatModsResponse: function() {
         var self = this;
         var moderators = _.map(self._moderators, function(name) {
             return name[0] + "\u200B" + name.slice(1);
@@ -625,7 +637,7 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format the summon mods message
     //--------------------------------------------------------------------------
-    'formatSummonModsResponse': function() {
+    formatSummonModsResponse: function() {
         var self = this;
         var moderators = _.map(self._moderators, function(name) {
             return slack.users.getIdString(name);
@@ -634,7 +646,7 @@ var league_attributes = {
             return ("{0} mods: " + moderators.join(", ")).format(self.options.name);
         });
     },
-    'formatFAQResponse': function() {
+    formatFAQResponse: function() {
         var self = this;
         return Q.fcall(function(){
             return "The FAQ for {} can be found: {}".format(self.options.name, self.options.links.faq);
@@ -644,6 +656,7 @@ var league_attributes = {
 
 function League(options) {
     this.options = {};
+    this.emitter = new ChessLeagueEmitter();
     _.extend(this.options, LEAGUE_DEFAULTS, options || {});
     _.extend(this, league_attributes);
 }

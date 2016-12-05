@@ -60,10 +60,12 @@ var config = {
                 "resultsColname": "result"
             },
             "results": {
-                "channel": "team-results"
+                "channel": "team-results",
+                "channel_id": "C0CSALKL4"
             },
             "gamelinks": {
                 "channel": "team-gamelinks",
+                "channel_id": "C0CSAHD43",
                 "clock": {
                     "initial": 45,
                     "increment": 45
@@ -127,10 +129,12 @@ var config = {
                 "resultsColname": "result"
             },
             "results": {
-                "channel": "lonewolf-results"
+                "channel": "lonewolf-results",
+                "channel_id": "C0SD3TGGM"
             },
             "gamelinks": {
                 "channel": "lonewolf-gamelinks",
+                "channel_id": "C0SD3SCAH",
                 "clock": {
                     "initial": 30,
                     "increment": 30

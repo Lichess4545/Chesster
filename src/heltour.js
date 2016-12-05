@@ -101,7 +101,6 @@ function updatePairing(heltourConfig, result) {
                 "error": "ambiguous"
             };
         }
-        var pairing = pairings[0];
         var request = heltourRequest(heltourConfig, "update_pairing");
         request.method = "POST";
         request.bodyParameters = {
@@ -118,8 +117,9 @@ function updatePairing(heltourConfig, result) {
 
         return http.fetchURLIntoJSON(request).then(function(response) {
             var newResult = response['json'];
-            newResult['gamelinkChanged'] = pairing['game_link'] !== result['gamelink'];
-            newResult['resultChanged'] = pairing['result'] !== result['result'];
+            newResult['gamelink'] = result['gamelink'];
+            newResult['gamelinkChanged'] = newResult['game_link_changed'];
+            newResult['resultChanged'] = newResult['result_changed'];
             newResult['result'] = result['result'];
             if (newResult['reversed']) {
                 newResult['white'] = result['black'];
@@ -213,6 +213,12 @@ function fetchJSONandHandleErrors(request){
     });
 }
 
+function HeltourError(code){
+    this.code = code;
+    this.name = 'HeltourError';
+    this.stack = (new Error()).stack;
+}
+
 /* GET Requests */
 module.exports.getPrivateURL = getPrivateURL;
 module.exports.findPairing = findPairing;
@@ -225,3 +231,5 @@ module.exports.updatePairing = updatePairing;
 module.exports.getRoster = getRoster;
 module.exports.assignAlternate = assignAlternate;
 module.exports.setAvailability = setAvailability;
+
+module.exports.HeltourError = HeltourError;

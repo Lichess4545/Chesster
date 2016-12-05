@@ -1,9 +1,14 @@
 //------------------------------------------------------------------------------
 // Helpers for the scheduling portion of chesster.
 //------------------------------------------------------------------------------
-var moment = require('moment-timezone');
-var _ = require("lodash");
-var winston = require("winston");
+const moment = require('moment-timezone');
+const _ = require("lodash");
+const winston = require("winston");
+const Q = require("q");
+
+const slack = require('../slack.js');
+const heltour = require('../heltour.js');
+const subscription = require('../subscription.js');
 
 var EXTREMA_DEFAULTS = {
     'isoWeekday': 2,
@@ -329,6 +334,198 @@ function getRoundExtrema(options) {
     };
 }
 
+// There is not active round
+function replyNoActiveRound(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " There is currently no active round. If this is a mistake, contact a mod");
+}
+
+// Can't find the pairing
+function schedulingReplyMissingPairing(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " I couldn't find your pairing. Please use a format like: @white v @black 04/16 @ 16:00");
+}
+
+// you are very close to the cutoff
+function schedulingReplyTooCloseToCutoff(bot, message, schedulingOptions, white, black) {
+    bot.reply(message, 
+        ":heavy_exclamation_mark: @" + white.name + " @" + black.name + " " + schedulingOptions.warningMessage
+    );
+}
+
+
+// the pairing is ambiguous
+function schedulingReplyAmbiguous(bot, message){
+    bot.reply(message, 
+        "The pairing you are trying to schedule is ambiguous. Please contact a moderator."
+    );
+}
+
+// Game has been scheduled.
+function schedulingReplyScheduled(bot, message, results, white, black) {
+    var whiteDate = results.date.clone().tz(white.tz);
+    var blackDate = results.date.clone().tz(black.tz);
+    var format = "YYYY-MM-DD @ HH:mm UTC";
+    var friendly_format = "ddd @ HH:mm";
+    var dates = [
+        results.date.format(format) + " ",
+        whiteDate.format(friendly_format) + " for " + white.name,
+        blackDate.format(friendly_format) + " for " + black.name
+    ];
+    var date_formats  = dates.join("\n\t");
+
+    bot.reply(message, 
+        ":heavy_check_mark: @" + white.name + " (_white pieces_) vs @" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats
+    );
+}
+
+// Your game is out of bounds
+function schedulingReplyTooLate(bot, message, schedulingOptions) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " " + schedulingOptions.lateMessage);
+}
+
+// can't find the users you menteiond
+function schedulingReplyCantScheduleOthers(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " you may not schedule games for other people. You may only schedule your own games.");
+}
+
+// can't find the users you menteiond
+function schedulingReplyCantFindUser(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " I don't recognize one of the players you mentioned.");
+}
+
+
+function ambientScheduling(bot, message) {
+    var deferred = Q.defer();
+    if(!message.league){
+        return;
+    }
+
+    var schedulingOptions = message.league.options.scheduling;
+    var channel = slack.channels.byId[message.channel];
+    if (!channel) {
+        return;
+    }
+    if (!_.isEqual(channel.name, schedulingOptions.channel)) {
+        deferred.resolve();
+        return deferred.promise;
+    }
+
+    if (!schedulingOptions) {
+        winston.error("[SCHEDULING] {} league doesn't have scheduling options!?".format(message.league.options.name));
+        deferred.resolve();
+        return deferred.promise;
+    } 
+
+    var heltourOptions = message.league.options.heltour;
+    if (!heltourOptions) {
+        winston.error("[SCHEDULING] {} league doesn't have heltour options!?".format(message.league.options.name));
+        deferred.resolve();
+        return deferred.promise;
+    } 
+
+    var referencesSlackUsers = false;
+
+    var schedulingResults = {
+        white: '',
+        black: ''
+    };
+
+    // Step 1. See if we can parse the dates
+    try {
+        schedulingResults = parseScheduling(message.text, schedulingOptions);
+    } catch (e) {
+        if (!(e instanceof (ScheduleParsingError))) {
+            throw e; // let others bubble up
+        } else {
+            winston.debug("[SCHEDULING] Received an exception: {}".format(JSON.stringify(e)));
+            winston.debug("[SCHEDULING] Stack: {}".format(e.stack));
+        }
+        return;
+    }
+
+    // Step 2. See if we have valid named players
+    var white = slack.users.getByNameOrID(schedulingResults.white);
+    var black = slack.users.getByNameOrID(schedulingResults.black);
+    if (white && black) {
+        schedulingResults.white = white.name;
+        schedulingResults.black = black.name;
+        referencesSlackUsers = true;
+    }
+
+    if (!referencesSlackUsers) {
+        schedulingReplyCantFindUser(bot, message);
+        return;
+    }
+
+    var speaker = slack.users.getByNameOrID(message.user);
+    if (
+        !_.isEqual(white.id, speaker.id) &&
+        !_.isEqual(black.id, speaker.id) &&
+        !message.player.isModerator()
+    ) {
+        schedulingReplyCantScheduleOthers(bot, message); return;
+    }
+
+    winston.debug("[SCHEDULING] Attempting to update the website.");
+    // Step 3. attempt to update the website
+    heltour.updateSchedule(
+        heltourOptions,
+        schedulingResults
+    ).then(function(response) {
+        var updateScheduleResults = response['json'];
+        if (updateScheduleResults['updated'] === 0) {
+            if (updateScheduleResults['error'] === 'not_found') {
+                schedulingReplyMissingPairing(bot, message);
+                deferred.resolve();
+            } else if (updateScheduleResults['error'] === 'no_data') {
+                replyNoActiveRound(bot, message);
+                deferred.resolve();
+            } else if (updateScheduleResults['error'] === 'ambiguous') {
+                schedulingReplyAmbiguous(bot, message);
+                deferred.resolve();
+            } else {
+                bot.reply(message, "Something went wrong. Notify a mod");
+                deferred.reject("Error updating schedule: " + JSON.stringify(updateScheduleResults));
+            }
+            return;
+        }
+        if (updateScheduleResults['reversed']) {
+            var tmp = white;
+            white = black;
+            black = tmp;
+        }
+
+        if (schedulingResults.outOfBounds) {
+            schedulingReplyTooLate(bot, message, schedulingOptions);
+            return;
+        }
+        if (schedulingResults.warn) {
+            schedulingReplyTooCloseToCutoff(bot, message, schedulingOptions, white, black);
+        }
+        
+        var leagueName = message.league.options.name;
+        schedulingReplyScheduled(bot, message, schedulingResults, white, black);
+        // TODO: test this.
+        subscription.emitter.emit('a-game-is-scheduled',
+            message.league,
+            [white.name, black.name],
+            {
+                'result': schedulingResults,
+                'white': white,
+                'black': black,
+                'leagueName': leagueName
+            }
+        );
+        deferred.resolve();
+    });
+    return deferred.promise;
+}
+
 module.exports.getRoundExtrema = getRoundExtrema;
 module.exports.parseScheduling = parseScheduling;
 module.exports.ScheduleParsingError = ScheduleParsingError;
+module.exports.ambientScheduling = ambientScheduling;
