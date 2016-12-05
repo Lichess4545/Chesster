@@ -12,7 +12,7 @@ format.extend(String.prototype);
 const _league = require("./league.js");
 const games = require('./commands/games.js');
 
-var baseURL = "https://en.lichess.org/api/game-stream?users=";
+var baseURL = "https://en.lichess.org/api/game-stream";
 
 // const CREATED = 10;
 const STARTED = 20;
@@ -36,8 +36,10 @@ function Watcher(bot, league) {
     self.req = null;
     self.usernames = [];
 
-    self.league.onRefreshRosters(function() {
-        var newUsernames = _.map(league._players, "username");
+    self.league.onRefreshPairings(function() {
+        var white = _.map(league._pairings, "white");
+        var black = _.map(league._pairings, "black");
+        var newUsernames = _.uniq(_.concat(white, black));
         newUsernames.sort();
         winston.info("-----------------------------------------------------");
         winston.info("{} old usernames {} incoming usernames".format(
@@ -58,13 +60,14 @@ function Watcher(bot, league) {
         // 1. perfect match any time, try to update.
         // 2. pairing + time control match any time, warn for other mismatches 
         // 3. pairing match during a 4 hour window (+-2 hours), warn for other mismatches
-        winston.info("Watcher received game details: {}".format(details));
+        winston.info("Watcher received game details: {}".format(JSON.stringify(details)));
 
         var result = games.validateGameDetails(self.league, details);
         winston.info("Watcher validation result: {}".format(result));
         // If we don't have a pairing from this information, then it will
         // never be valid. Ignore it.
         if (!result.pairing) {
+            winston.info("No pairing so ignoring!");
             return;
         }
 
@@ -153,14 +156,18 @@ function Watcher(bot, league) {
     //--------------------------------------------------------------------------
     self.watch = function(usernames) {
         if (self.req) {
-            self.req.end();
             self.req.abort();
         }
-        var watchURL = baseURL + usernames.join(",");
-        winston.info("watching " + watchURL);
+        var body = usernames.join(",");
+        winston.info("watching {} with {} users".format(baseURL, body));
         winston.info("============================================================");
-        self.req = _https.get(url.parse(watchURL));
-        return self.req.on('response', function (res) {
+        var options = url.parse(baseURL);
+        options.method = "POST";
+        options.headers = {
+            "Content-Length": Buffer.byteLength(body)
+        };
+        self.req = _https.request(options);
+        self.req.on('response', function (res) {
             res.on('data', function (chunk) {
                 var details = JSON.parse(chunk.toString());
                 self.processGameDetails(details);
@@ -174,6 +181,8 @@ function Watcher(bot, league) {
             self.req = null;
             self.watch(usernames);
         });
+        self.req.write(body);
+        self.req.end();
     };
 }
 
