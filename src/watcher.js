@@ -152,14 +152,12 @@ function Watcher(bot, league) {
     //--------------------------------------------------------------------------
     self.watch = function(usernames) {
         if (self.req) {
-            self.req.end();
             self.req.abort();
         }
-        var watchURL = baseURL;
-        winston.info("watching " + watchURL);
-        winston.info("============================================================");
         var body = usernames.join(",");
-        var options = url.parse(watchURL);
+        winston.info("watching {} with {} users".format(baseURL, body));
+        winston.info("============================================================");
+        var options = url.parse(baseURL);
         options.method = "POST";
         options.headers = {
             "Content-Length": Buffer.byteLength(body)
