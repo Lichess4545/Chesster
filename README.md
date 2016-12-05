@@ -22,7 +22,19 @@ Andrew W. Haddad
 9. update config/config/test_heltour_token.js with a token from the heltour site
 10. Migrate databases: `npm run migrate config/testconfig.js`
 11. Install your bot's token in the start script, start_chesster.
-12. Start the bot. ` > ./bin/start ../config/config.js`
+12. Start the bot. `./bin/start ../config/config.js`
+
+## Useful Commands
+
+Run this to test the bot against the staging site:
+
+- `./bin/start ../config/testconfig.js`
+
+Run these before submitting a PR:
+
+- `npm test`
+- `npm run lint`
+- `npm run hint`
 
 ## Website Integration
 This bot utilizes the heltour api from this repo: https://github.com/cyanfish/heltour/
