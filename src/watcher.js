@@ -33,10 +33,10 @@ function Watcher(bot, league) {
     self.usernames = [];
 
     self.league.onRefreshPairings(function() {
-        var newUsernames = _.concat(
+        var newUsernames = _.uniq(_.concat(
             _.map(league._pairings, "white"),
             _.map(league._pairings, "black")
-        );
+        ));
         newUsernames.sort();
         winston.info("-----------------------------------------------------");
         winston.info("{} old usernames {} incoming usernames".format(
