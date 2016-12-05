@@ -1,11 +1,4 @@
-// extlibs
-var Q = require("q");
-var _ = require("lodash");
-var winston = require("winston");
-
 // Our stuff
-var league = require("./league.js");
-var lichess = require('./lichess.js');
 var slack = require('./slack.js');
 
 const errors = require('./errors.js');

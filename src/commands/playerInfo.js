@@ -53,7 +53,7 @@ function playerPairings(config) {
             });
         });
         return deferred.promise;
-    }
+    };
 }
 
 module.exports.playerRating = playerRating;

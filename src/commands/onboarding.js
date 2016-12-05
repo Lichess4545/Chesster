@@ -20,7 +20,7 @@ function welcomeMessage(config) {
                    + ". Enjoy the league!"); 
             });
         }
-    }
+    };
 }
 
 module.exports.welcomeMessage = welcomeMessage;

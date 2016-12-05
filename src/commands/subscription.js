@@ -356,7 +356,7 @@ function tellMeWhenHandler(config) {
             });
         });
         return deferred.promise;
-    }
+    };
 }
 
 //------------------------------------------------------------------------------
@@ -375,7 +375,7 @@ function helpHandler(config) {
             });
         });
         return deferred.promise;
-    }
+    };
 }
 
 //------------------------------------------------------------------------------
@@ -394,7 +394,7 @@ function listHandler(config) {
             });
         });
         return deferred.promise;
-    }
+    };
 }
 
 //------------------------------------------------------------------------------
@@ -413,7 +413,7 @@ function removeHandler(config) {
             });
         });
         return deferred.promise;
-    }
+    };
 }
 
 module.exports.emitter = emitter;
