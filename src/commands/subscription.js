@@ -100,7 +100,7 @@ function formatInvalidSourceResponse(config, source) {
 //------------------------------------------------------------------------------
 // Format the a-game-is-scheduled response
 //------------------------------------------------------------------------------
-function formatAGameIsSscheduled(target, context) {
+function formatAGameIsScheduled(target, context) {
     // TODO: put these date formats somewhere, probably config?
     var friendlyFormat = "ddd @ HH:mm";
     target = slack.getSlackUserFromNameOrID(target);
@@ -424,6 +424,6 @@ module.exports.tellMeWhenHandler = tellMeWhenHandler;
 module.exports.helpHandler = helpHandler;
 module.exports.listHandler = listHandler;
 module.exports.removeHandler = removeHandler;
-module.exports.formatAGameIsSscheduled = formatAGameIsSscheduled;
+module.exports.formatAGameIsScheduled = formatAGameIsScheduled;
 module.exports.formatAGameStarts = formatAGameStarts;
 module.exports.formatAGameIsOver = formatAGameIsOver;

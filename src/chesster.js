@@ -268,7 +268,7 @@ chesster.hears(
     subscription.removeHandler(chesster.config)
 );
 
-subscription.register(chesster, 'a-game-is-scheduled', subscription.formatAGameIsSscheduled);
+subscription.register(chesster, 'a-game-is-scheduled', subscription.formatAGameIsScheduled);
 subscription.register(chesster, 'a-game-starts', subscription.formatAGameStarts);
 subscription.register(chesster, 'a-game-is-over', subscription.formatAGameIsOver);
 
