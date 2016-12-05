@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Defines a league object which can be used to interact with the spreadsheet
+// Defines a league object which can be used to interact with the website
 // for the given league
 //------------------------------------------------------------------------------
 const _ = require("lodash");
@@ -18,7 +18,7 @@ const slack = require('./slack.js');
 const heltour = require('./heltour.js');
 const db = require("./models.js");
 
-var lichess = require("./lichess");
+const lichess = require("./lichess");
 var LEAGUE_DEFAULTS = {
     "name": "",
     "heltour": {

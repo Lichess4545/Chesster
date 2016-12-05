@@ -1,4 +1,8 @@
-var levenshtein = require('fast-levenshtein');
+//------------------------------------------------------------------------------
+// Utilities for inexactly matching strings to patterns
+// See:  https://en.wikipedia.org/wiki/Approximate_string_matching
+//------------------------------------------------------------------------------
+const levenshtein = require('fast-levenshtein');
 
 function findBestMatches(results, includeDistance) {
     if (results.length === 0) {

@@ -3,10 +3,10 @@
 //------------------------------------------------------------------------------
 // Models for our locally stored data
 //------------------------------------------------------------------------------
-var Sequelize = require('sequelize');
-var Q = require('q');
-var AsyncLock = require('async-lock');
-var winston = require("winston");
+const Sequelize = require('sequelize');
+const Q = require('q');
+const AsyncLock = require('async-lock');
+const winston = require("winston");
 
 
 var exports = (function() {

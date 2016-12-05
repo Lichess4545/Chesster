@@ -1,15 +1,15 @@
 //------------------------------------------------------------------------------
-// Lichess helpers
+// Lichess API helpers
 //------------------------------------------------------------------------------
-var http = require("./http.js");
-var moment = require('moment-timezone');
-var Q = require("q");
-var _ = require("lodash");
-var winston = require("winston");
+const http = require("./http.js");
+const moment = require('moment-timezone');
+const Q = require("q");
+const _ = require("lodash");
+const winston = require("winston");
 // TODO: sequelize-cli requires us to call this models.js or models/index.js
 //       this name conflicts with the parameter that we pass in after getting
 //       the lock, so I'd like to (by convention) always refer to this as db.
-var db = require("./models.js");
+const db = require("./models.js");
 
 var MILISECOND = 1;
 var SECONDS = 1000 * MILISECOND;

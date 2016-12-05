@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Helpers for the scheduling portion of chesster.
+// Commands and helpers for scheduling games
 //------------------------------------------------------------------------------
 const moment = require('moment-timezone');
 const _ = require("lodash");

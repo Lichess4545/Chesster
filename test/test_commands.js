@@ -1,5 +1,5 @@
-var assert = require('chai').assert;
-var commands = require('../src/commands');
+const assert = require('chai').assert;
+const commands = require('../src/commands');
 
 describe('commands', function(){
     describe('#tokenize()', function(){

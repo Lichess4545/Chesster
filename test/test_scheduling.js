@@ -1,6 +1,6 @@
-var assert = require('chai').assert;
-var moment = require("moment-timezone");
-var scheduling = require('../src/commands/scheduling');
+const assert = require('chai').assert;
+const moment = require("moment-timezone");
+const scheduling = require('../src/commands/scheduling');
 
 
 
