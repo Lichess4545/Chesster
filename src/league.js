@@ -17,7 +17,6 @@ ChessLeagueEmitter.prototype  = new EventEmitter();
 const slack = require('./slack.js');
 const heltour = require('./heltour.js');
 const db = require("./models.js");
-const scheduling = require("./commands/scheduling");
 
 var lichess = require("./lichess");
 var LEAGUE_DEFAULTS = {

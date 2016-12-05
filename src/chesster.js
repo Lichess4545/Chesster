@@ -1,16 +1,12 @@
 // extlibs
-var moment = require('moment-timezone');
 var Q = require("q");
 var _ = require("lodash");
 var winston = require("winston");
 
 // Our stuff
-var heltour = require('./heltour.js');
-var http = require("./http.js");
 var league = require("./league.js");
 var lichess = require('./lichess.js');
 var slack = require('./slack.js');
-var commands = require('./commands.js');
 
 const errors = require('./errors.js');
 errors.init();
@@ -26,9 +22,6 @@ const playerInfo = require("./commands/playerInfo.js");
 const subscription = require('./commands/subscription.js');
 
 var users = slack.users;
-var channels = slack.channels;
-
-var SWORDS = '\u2694';
 
 /* static entry point */
 
@@ -36,19 +29,6 @@ var config_file = process.argv[2] || "../config/config.js";
 var chesster = new slack.Bot({
     config_file: config_file
 });
-
-function handleHeltourErrors(bot, message, error){
-    if (_.isEqual(error, "no_matching_rounds")) {
-        replyNoActiveRound(bot, message);
-    } else if (_.isEqual(error, "no_pairing")) {
-        resultReplyMissingPairing(bot, message);
-    } else if (_.isEqual(error, "ambiguous")) {
-        resultReplyTooManyPairings(bot, message);
-    } else {
-        replyGenericFailure(bot, message, "@endrawes0");
-        throw new Error("Error making your update: " + error);
-    }
-}
 
 // A helper for a very common pattern
 function directRequiresLeague(patterns, callback) {
@@ -100,7 +80,6 @@ directRequiresLeague(
     leagueInfo.directResponse('formatStarterGuideResponse')
 );
 
-
 /* availability */
 chesster.hears(
     {
@@ -110,8 +89,6 @@ chesster.hears(
     },
     availability.updateAvailability
 );
-
-
 
 /* alternate assignment */
 chesster.hears(
@@ -141,7 +118,7 @@ chesster.hears(
         messageTypes: ['direct_message']
     },
     nomination.nomination
-)
+);
 
 /* rating */
 
@@ -222,13 +199,6 @@ chesster.hears(
         bot.reply(message, chesster.config.links.source);
     }
 );
-
-
-// There is not active round
-function replyNoActiveRound(bot, message) {
-    var user = "<@"+message.user+">";
-    bot.reply(message, ":x: " + user + " There is currently no active round. If this is a mistake, contact a mod");
-}
 
 /* Scheduling */
 

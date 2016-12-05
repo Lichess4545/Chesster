@@ -7,6 +7,8 @@ var slack = require("../slack");
 var heltour = require('../heltour.js');
 var http = require("../http.js");
 
+var SWORDS = '\u2694';
+
 var VALID_RESULTS = {
     "0-0":"0-0",
     "1-0":"1-0",
@@ -70,6 +72,19 @@ function filterPlayerTokens(tokens){
         //matches slack uer ids: <@[A-Z0-9]>[:]*
         return /^<@[A-Z0-9]+>[:,.-]*$/.test(token);
     });
+}
+
+function handleHeltourErrors(bot, message, error){
+    if (_.isEqual(error, "no_matching_rounds")) {
+        replyNoActiveRound(bot, message);
+    } else if (_.isEqual(error, "no_pairing")) {
+        resultReplyMissingPairing(bot, message);
+    } else if (_.isEqual(error, "ambiguous")) {
+        resultReplyTooManyPairings(bot, message);
+    } else {
+        replyGenericFailure(bot, message, "@endrawes0");
+        throw new Error("Error making your update: " + error);
+    }
 }
 
 function ambientResults(bot, message) {
@@ -207,6 +222,11 @@ function resultReplyMissingPairing(bot, message){
 
 function resultReplyTooManyPairings(bot, message){
     bot.reply(message, "Sorry, I found too many pairings matching this. Please contact a mod.");
+}
+
+function replyNoActiveRound(bot, message) {
+    var user = "<@"+message.user+">";
+    bot.reply(message, ":x: " + user + " There is currently no active round. If this is a mistake, contact a mod");
 }
 
 function resultReplyUpdated(bot, message, result){
@@ -372,15 +392,14 @@ function processGamelink(bot, message, gamelink, options, heltourOptions, userRe
                 return;
             }
         }
-        return processGameDetails(bot, message, details, options, heltourOptions);
+        return processGameDetails(bot, message, details);
     }).catch(function(error) {
-        winston.error("Error in processGamelink: {} {}".format(error, error.stack));
         winston.error(JSON.stringify(error));
         bot.reply(message, "Sorry, I failed to get game details for " + gamelink + ". Try again later or reach out to a moderator to make the update manually.");
     });
 }
 
-function processGameDetails(bot, message, details, options, heltourOptions){
+function processGameDetails(bot, message, details){
     //if no details were found the link was no good
     if(!details){
         gamelinkReplyUnknown(bot, message);
@@ -396,6 +415,12 @@ function processGameDetails(bot, message, details, options, heltourOptions){
     }
     return updateGamelink(message.league, details).then(function(updatePairingResult) {
         resultReplyUpdated(bot, message, updatePairingResult);
+    }).catch(function(error) {
+        if (error instanceof heltour.HeltourError) {
+            handleHeltourErrors(bot, message, error.code);
+        } else {
+            winston.error(JSON.stringify(error));
+        }
     });
 }
 
@@ -429,8 +454,8 @@ function updateGamelink(league, details) {
         result
     ).then(function(updatePairingResult) {
         if (updatePairingResult['error']) {
-            handleHeltourErrors(bot, message, updatePairingResult['error']);
-            return; //if there was a problem with heltour, we should not take further steps 
+            //if there was a problem with heltour, we should not take further steps
+            throw new heltour.HeltourError(updatePairingResult['error']); 
         }
 
         var leagueName = league.options.name;

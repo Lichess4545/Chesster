@@ -48,7 +48,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                "baseEndpoint": "https://staging.lichess4545.com/api/", 
+                "baseEndpoint": "https://www.lichess4545.com/api/", 
                 "leagueTag": "team4545"
             },
             "spreadsheet": {
@@ -60,12 +60,12 @@ var config = {
                 "resultsColname": "result"
             },
             "results": {
-                "channel": "unstable_bot",
-                "channel_id": "C0VCCPMJ8"
+                "channel": "team-results",
+                "channel_id": "C0CSALKL4"
             },
             "gamelinks": {
-                "channel": "unstable_bot",
-                "channel_id": "C0VCCPMJ8",
+                "channel": "team-gamelinks",
+                "channel_id": "C0CSAHD43",
                 "clock": {
                     "initial": 45,
                     "increment": 45
@@ -117,7 +117,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                "baseEndpoint": "https://staging.lichess4545.com/api/", 
+                "baseEndpoint": "https://www.lichess4545.com/api/", 
                 "leagueTag": "lonewolf"
             },
             "spreadsheet": {
@@ -129,12 +129,12 @@ var config = {
                 "resultsColname": "result"
             },
             "results": {
-                "channel": "unstable_bot-lonewolf",
-                "channel_id": "C0XQM31SL"
+                "channel": "lonewolf-results",
+                "channel_id": "C0SD3TGGM"
             },
             "gamelinks": {
-                "channel": "unstable_bot-lonewolf",
-                "channel_id": "C0XQM31SL",
+                "channel": "lonewolf-gamelinks",
+                "channel_id": "C0SD3SCAH",
                 "clock": {
                     "initial": 30,
                     "increment": 30
