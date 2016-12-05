@@ -61,13 +61,14 @@ function Watcher(bot, league) {
         // 1. perfect match any time, try to update.
         // 2. pairing + time control match any time, warn for other mismatches 
         // 3. pairing match during a 4 hour window (+-2 hours), warn for other mismatches
-        winston.info("Watcher received game details: {}".format(details));
+        winston.info("Watcher received game details: {}".format(JSON.stringify(details)));
 
         var result = games.validateGameDetails(self.league, details);
         winston.info("Watcher validation result: {}".format(result));
         // If we don't have a pairing from this information, then it will
         // never be valid. Ignore it.
         if (!result.pairing) {
+            winston.info("No pairing so ignoring!");
             return;
         }
 
