@@ -2,8 +2,8 @@
 // Utilities for command parsing
 // See chesster.js for command definitions.
 //------------------------------------------------------------------------------
-var Q = require("q");
-var _ = require("lodash");
+const Q = require("q");
+const _ = require("lodash");
 
 const VARIABLE = /^\{(int)(text)|:[a-zA-Z]+\}$/;
 const CHOICE_VARIABLE = /^\{([a-zA-Z0-9]+\|?)+\}$/;

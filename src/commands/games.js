@@ -1,14 +1,14 @@
 //------------------------------------------------------------------------------
 // Commands and helpers related to gamelinks and results
 //------------------------------------------------------------------------------
-var _ = require("lodash");
-var moment = require("moment-timezone");
-var winston = require("winston");
-var scheduling = require("./scheduling");
-var subscription = require("./subscription");
-var slack = require("../slack");
-var heltour = require('../heltour.js');
-var http = require("../http.js");
+const _ = require("lodash");
+const moment = require("moment-timezone");
+const winston = require("winston");
+const scheduling = require("./scheduling");
+const subscription = require("./subscription");
+const slack = require("../slack");
+const heltour = require('../heltour.js');
+const http = require("../http.js");
 
 var SWORDS = '\u2694';
 

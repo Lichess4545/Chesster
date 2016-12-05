@@ -1,14 +1,14 @@
 //------------------------------------------------------------------------------
 // Commands and helpers related to subscriptions
 //------------------------------------------------------------------------------
-var Q = require("q");
-var _ = require("lodash");
-var format = require('string-format');
+const Q = require("q");
+const _ = require("lodash");
+const format = require('string-format');
 format.extend(String.prototype);
 
-var league = require("../league.js");
-var slack = require("../slack.js");
-var db = require("../models.js");
+const league = require("../league.js");
+const slack = require("../slack.js");
+const db = require("../models.js");
 
 // The emitter we will use.
 const EventEmitter = require('events');

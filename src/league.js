@@ -18,7 +18,7 @@ const slack = require('./slack.js');
 const heltour = require('./heltour.js');
 const db = require("./models.js");
 
-var lichess = require("./lichess");
+const lichess = require("./lichess");
 var LEAGUE_DEFAULTS = {
     "name": "",
     "heltour": {

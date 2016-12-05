@@ -2,7 +2,7 @@
 // Utilities for inexactly matching strings to patterns
 // See:  https://en.wikipedia.org/wiki/Approximate_string_matching
 //------------------------------------------------------------------------------
-var levenshtein = require('fast-levenshtein');
+const levenshtein = require('fast-levenshtein');
 
 function findBestMatches(results, includeDistance) {
     if (results.length === 0) {

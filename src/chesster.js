@@ -2,11 +2,9 @@
 // Entry point for Chesster
 // Bot commands are defined here with implementations in various modules. 
 //------------------------------------------------------------------------------
-var slack = require('./slack.js');
-
+const slack = require('./slack.js');
 const errors = require('./errors.js');
 errors.init();
-
 const watcher = require('./watcher.js');
 const games = require('./commands/games.js');
 const availability = require("./commands/availability.js");
