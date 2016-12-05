@@ -27,7 +27,7 @@ function patchErrorWith_toJSON_Method() {
 }
 
 function init() {
-    patchErrorWith_toJSON_Method()
+    patchErrorWith_toJSON_Method();
 }
 
 module.exports.patchErrorWith_toJSON_Method = patchErrorWith_toJSON_Method;
