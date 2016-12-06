@@ -12,7 +12,7 @@ format.extend(String.prototype);
 const _league = require("./league.js");
 const games = require('./commands/games.js');
 
-var baseURL = "https://en.stage.lichess.org/api/game-stream";
+var baseURL = "https://en.lichess.org/api/game-stream";
 
 const BACKOFF_TIMEOUT = 10;
 // const CREATED = 10;
