@@ -12,8 +12,9 @@ format.extend(String.prototype);
 const _league = require("./league.js");
 const games = require('./commands/games.js');
 
-var baseURL = "https://en.lichess.org/api/game-stream";
+var baseURL = "https://en.stage.lichess.org/api/game-stream";
 
+const BACKOFF_TIMEOUT = 10;
 // const CREATED = 10;
 const STARTED = 20;
 // const ABORTED = 25;
@@ -35,6 +36,7 @@ function Watcher(bot, league) {
     self.bot = bot;
     self.req = null;
     self.usernames = [];
+    self.started = moment.now();
 
     self.league.onRefreshPairings(function() {
         var white = _.map(league._pairings, "white");
@@ -155,6 +157,9 @@ function Watcher(bot, league) {
 
     //--------------------------------------------------------------------------
     self.watch = function(usernames) {
+        self.lastStarted = self.started;
+        self.started = moment.now();
+
         if (self.req) {
             self.req.abort();
         }
@@ -179,7 +184,9 @@ function Watcher(bot, league) {
         }).on('error', (e) => {
             winston.error(JSON.stringify(e));
             self.req = null;
-            self.watch(usernames);
+            if (Math.abs(self.started.unix() - self.lastStarted.unix()) > BACKOFF_TIMEOUT) {
+                self.watch(usernames);
+            }
         });
         self.req.write(body);
         self.req.end();
