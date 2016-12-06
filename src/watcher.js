@@ -36,7 +36,6 @@ function Watcher(bot, league) {
     self.bot = bot;
     self.req = null;
     self.usernames = [];
-    self.started = moment.now();
 
     self.league.onRefreshPairings(function() {
         var white = _.map(league._pairings, "white");
@@ -158,7 +157,13 @@ function Watcher(bot, league) {
     //--------------------------------------------------------------------------
     self.watch = function(usernames) {
         self.lastStarted = self.started;
-        self.started = moment.now();
+        if (self.lastStarted && self.started.unix() - self.lastStarted.unix() < BACKOFF_TIMEOUT) {
+            winston.warn("Backing off the watcher due to two errors in 10s: {}s".format(
+                self.started.unix() - self.lastStarted.unix()
+            ));
+            return;
+        }
+        self.started = moment.utc();
 
         if (self.req) {
             self.req.abort();
@@ -183,10 +188,8 @@ function Watcher(bot, league) {
             });
         }).on('error', (e) => {
             winston.error(JSON.stringify(e));
-            self.req = null;
-            if (Math.abs(self.started.unix() - self.lastStarted.unix()) > BACKOFF_TIMEOUT) {
-                self.watch(usernames);
-            }
+            // the above res.on('end') gets called even in this case.
+            // So let the above restart the watcher
         });
         self.req.write(body);
         self.req.end();
