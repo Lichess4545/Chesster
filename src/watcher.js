@@ -157,13 +157,15 @@ function Watcher(bot, league) {
     //--------------------------------------------------------------------------
     self.watch = function(usernames) {
         self.lastStarted = self.started;
+        self.started = moment.utc();
         if (self.lastStarted && self.started.unix() - self.lastStarted.unix() < BACKOFF_TIMEOUT) {
-            winston.warn("Backing off the watcher due to two errors in 10s: {}s".format(
+            winston.warn("[Watcher] {} - Backing off the watcher due to two starts in 10s: {}s".format(
+                self.league.options.name,
                 self.started.unix() - self.lastStarted.unix()
             ));
+            self.usernames = [];
             return;
         }
-        self.started = moment.utc();
 
         if (self.req) {
             self.req.abort();
@@ -179,15 +181,21 @@ function Watcher(bot, league) {
         self.req = _https.request(options);
         self.req.on('response', function (res) {
             res.on('data', function (chunk) {
-                var details = JSON.parse(chunk.toString());
-                self.processGameDetails(details);
+                try {
+                    var details = JSON.parse(chunk.toString());
+                    self.processGameDetails(details);
+                } catch (e) {
+                    winston.error("[Watcher]: " + JSON.stringify(e) + " " + e.stack);
+                    self.req = null;
+                    self.watch(usernames);
+                }
             });
             res.on('end', () => {
                 self.req = null;
                 self.watch(usernames);
             });
         }).on('error', (e) => {
-            winston.error(JSON.stringify(e));
+            winston.error("[Watcher]: " + JSON.stringify(e));
             // the above res.on('end') gets called even in this case.
             // So let the above restart the watcher
         });
