@@ -30,7 +30,7 @@ var config = {
         token: logging_token,
         username: "chesster",
         level: "debug",
-        handleExceptions: true
+        handleExceptions: false
     },
     "links": {
         "source": "https://github.com/endrawes0/Chesster"
