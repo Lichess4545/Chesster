@@ -156,6 +156,14 @@ function Watcher(bot, league) {
 
     //--------------------------------------------------------------------------
     self.watch = function(usernames) {
+        // Ensure we close/abort any previous request before starting a new one.
+        if (self.req) {
+            self.req.abort();
+        }
+
+        // Guard against hammering lichess when it's down and feeding us errors.
+        // In this case, if we get two errors in 10s, we'll wait till the next
+        // refressh will will regress to a 2 minute wait.
         self.lastStarted = self.started;
         self.started = moment.utc();
         if (self.lastStarted && self.started.unix() - self.lastStarted.unix() < BACKOFF_TIMEOUT) {
@@ -165,10 +173,6 @@ function Watcher(bot, league) {
             ));
             self.usernames = [];
             return;
-        }
-
-        if (self.req) {
-            self.req.abort();
         }
         var body = usernames.join(",");
         winston.info("watching {} with {} users".format(baseURL, body));
@@ -185,8 +189,7 @@ function Watcher(bot, league) {
                     var details = JSON.parse(chunk.toString());
                     self.processGameDetails(details);
                 } catch (e) {
-                    winston.error("[Watcher]: " + JSON.stringify(e) + " " + e.stack);
-                    self.req = null;
+                    winston.error("[Watcher]: " + JSON.stringify(e));
                     self.watch(usernames);
                 }
             });
