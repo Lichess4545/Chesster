@@ -189,8 +189,10 @@ function Watcher(bot, league) {
                     var details = JSON.parse(chunk.toString());
                     self.processGameDetails(details);
                 } catch (e) {
-                    winston.error("[Watcher]: " + JSON.stringify(e));
-                    self.watch(usernames);
+                    winston.error("[Watcher]: {}".format(JSON.stringify(e)));
+                    winston.error("[Watcher]: Ending request due to error in content");
+                    self.req.abort();
+                    self.req = null;
                 }
             });
             res.on('end', () => {
