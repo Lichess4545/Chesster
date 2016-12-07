@@ -163,7 +163,7 @@ function Watcher(bot, league) {
 
         // Guard against hammering lichess when it's down and feeding us errors.
         // In this case, if we get two errors in 10s, we'll wait till the next
-        // refressh will will regress to a 2 minute wait.
+        // refressh which will eventually wait 2 minutes between requests.
         self.lastStarted = self.started;
         self.started = moment.utc();
         if (self.lastStarted && self.started.unix() - self.lastStarted.unix() < BACKOFF_TIMEOUT) {
