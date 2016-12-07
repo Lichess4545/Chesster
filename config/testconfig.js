@@ -13,7 +13,8 @@ const UNSTABLE_BOT_LONEWOLF_ID = "C0XQM31SL";
 
 var config = require("./config.js");
 config['winston']['token'] = logging_token;
-config['winston']['channel'] = "#modster-logging";
+config['winston']['channel'] = "#modster-logging"; 
+config['winston']['handleExceptions'] = false;
 
 config["welcome"]["channel"] = "unstable_bot-lonewolf";
 

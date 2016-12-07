@@ -14,6 +14,7 @@ const games = require('./commands/games.js');
 
 var baseURL = "https://en.lichess.org/api/game-stream";
 
+const BACKOFF_TIMEOUT = 10;
 // const CREATED = 10;
 const STARTED = 20;
 // const ABORTED = 25;
@@ -155,8 +156,25 @@ function Watcher(bot, league) {
 
     //--------------------------------------------------------------------------
     self.watch = function(usernames) {
+        // Ensure we close/abort any previous request before starting a new one.
         if (self.req) {
             self.req.abort();
+            self.req = null;
+            return; // The .on('end') handler will restart us.
+        }
+
+        // Guard against hammering lichess when it's down and feeding us errors.
+        // In this case, if we get two errors in 10s, we'll wait till the next
+        // refressh which will eventually wait 2 minutes between requests.
+        self.lastStarted = self.started;
+        self.started = moment.utc();
+        if (self.lastStarted && self.started.unix() - self.lastStarted.unix() < BACKOFF_TIMEOUT) {
+            winston.warn("[Watcher] {} - Backing off the watcher due to two starts in 10s: {}s".format(
+                self.league.options.name,
+                self.started.unix() - self.lastStarted.unix()
+            ));
+            self.usernames = [];
+            return;
         }
         var body = usernames.join(",");
         winston.info("watching {} with {} users".format(baseURL, body));
@@ -169,17 +187,24 @@ function Watcher(bot, league) {
         self.req = _https.request(options);
         self.req.on('response', function (res) {
             res.on('data', function (chunk) {
-                var details = JSON.parse(chunk.toString());
-                self.processGameDetails(details);
+                try {
+                    var details = JSON.parse(chunk.toString());
+                    self.processGameDetails(details);
+                } catch (e) {
+                    winston.error("[Watcher]: {}".format(JSON.stringify(e)));
+                    winston.error("[Watcher]: Ending request due to error in content");
+                    self.req.abort();
+                    self.req = null;
+                }
             });
             res.on('end', () => {
                 self.req = null;
                 self.watch(usernames);
             });
         }).on('error', (e) => {
-            winston.error(JSON.stringify(e));
-            self.req = null;
-            self.watch(usernames);
+            winston.error("[Watcher]: " + JSON.stringify(e));
+            // the above res.on('end') gets called even in this case.
+            // So let the above restart the watcher
         });
         self.req.write(body);
         self.req.end();
