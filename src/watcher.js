@@ -159,6 +159,8 @@ function Watcher(bot, league) {
         // Ensure we close/abort any previous request before starting a new one.
         if (self.req) {
             self.req.abort();
+            self.req = null;
+            return; // The .on('end') handler will restart us.
         }
 
         // Guard against hammering lichess when it's down and feeding us errors.
