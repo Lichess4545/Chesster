@@ -64,13 +64,15 @@ function Watcher(bot, league) {
         winston.info("Watcher received game details: {}".format(JSON.stringify(details)));
 
         var result = games.validateGameDetails(self.league, details);
-        winston.info("Watcher validation result: {}".format(result));
+        winston.info("Watcher validation result: {}".format(JSON.stringify(result)));
         // If we don't have a pairing from this information, then it will
         // never be valid. Ignore it.
         if (!result.pairing) {
             winston.info("No pairing so ignoring!");
             return;
         }
+        var white = result.pairing.white.toLowerCase();
+        var black = result.pairing.black.toLowerCase();
 
         var scheduledDate = moment.utc(result.pairing.datetime);
         var now = moment.utc();
@@ -83,7 +85,7 @@ function Watcher(bot, league) {
                 winston.info("Watcher received VALID game but result already exists");
                 if (details.status === STARTED) {
                     self.bot.say({
-                        text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
+                        text: "<@" + white + ">,  <@" + black + ">:"
                             + " There is already a result set for this pairing. If you want "
                             + "the new game to count for the league, please contact a mod.",
                         channel: self.league.options.gamelinks.channel_id
@@ -93,7 +95,7 @@ function Watcher(bot, league) {
                 winston.info("Watcher received VALID game but game link does not match");
                 if (details.status === STARTED) {
                     self.bot.say({
-                        text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
+                        text: "<@" + white + ">,  <@" + black + ">:"
                             + " There is already a gamelink set for this pairing. If you want "
                             + "the new game to count for the league, please contact a mod.",
                         channel: self.league.options.gamelinks.channel_id
@@ -108,7 +110,7 @@ function Watcher(bot, league) {
                     games.updateGamelink(self.league, detailsFromApi).then(function(updatePairingResult) {
                         if (updatePairingResult.gamelinkChanged) {
                             self.bot.say({
-                                text: "<@" + result.pairing.white + "> vs <@" + result.pairing.black + ">: <"
+                                text: "<@" + white + "> vs <@" + black + ">: <"
                                     + updatePairingResult.gamelink +">",
                                 channel: self.league.options.gamelinks.channel_id,
                                 attachments: [] // Needed to activate link parsing in the message
@@ -116,7 +118,7 @@ function Watcher(bot, league) {
                         }
                         if (updatePairingResult.resultChanged) {
                             self.bot.say({
-                                text: "<@" + result.pairing.white + "> " + updatePairingResult.result + " <@" + result.pairing.black + ">",
+                                text: "<@" + white + "> " + updatePairingResult.result + " <@" + black + ">",
                                 channel: self.league.options.results.channel_id
                             });
                         }
@@ -140,7 +142,7 @@ function Watcher(bot, league) {
 
             winston.info("Sending warning");
             self.bot.say({
-                text: "<@" + result.pairing.white + ">,  <@" + result.pairing.black + ">:"
+                text: "<@" + white + ">,  <@" + black + ">:"
                     + " Your game is *not valid* because "
                     + "*" + result.reason + "*",
                 channel: self.league.options.gamelinks.channel_id
