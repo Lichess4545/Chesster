@@ -6,14 +6,6 @@ const slack = require('./slack.js');
 const errors = require('./errors.js');
 errors.init();
 const watcher = require('./watcher.js');
-const games = require('./commands/games.js');
-const availability = require("./commands/availability.js");
-const nomination = require("./commands/nomination.js");
-const scheduling = require("./commands/scheduling.js");
-const leagueInfo = require("./commands/leagueInfo.js");
-const onboarding = require("./commands/onboarding.js");
-const playerInfo = require("./commands/playerInfo.js");
-const subscription = require('./commands/subscription.js');
 
 var users = slack.users;
 
@@ -23,6 +15,15 @@ var config_file = process.argv[2] || "../config/config.js";
 var chesster = new slack.Bot({
     config_file: config_file
 });
+
+const games = require('./commands/games.js')(chesster);
+const availability = require("./commands/availability.js");
+const nomination = require("./commands/nomination.js");
+const scheduling = require("./commands/scheduling.js");
+const leagueInfo = require("./commands/leagueInfo.js");
+const onboarding = require("./commands/onboarding.js");
+const playerInfo = require("./commands/playerInfo.js");
+const subscription = require('./commands/subscription.js');
 
 // A helper for a very common pattern
 function directRequiresLeague(patterns, callback) {
@@ -204,28 +205,6 @@ chesster.on(
         middleware: [slack.withLeagueByChannelName]
     },
     scheduling.ambientScheduling
-);
-
-/* results parsing */
-
-// results processing will occur on any message
-chesster.on(
-    {
-        event: 'ambient',
-        middleware: [slack.withLeagueByChannelName]
-    },
-    games.ambientResults
-);
-
-/* game link parsing */
-
-// gamelink processing will occur on any message
-chesster.on(
-    {
-        event: 'ambient',
-        middleware: [slack.withLeagueByChannelName]
-    },
-    games.ambientGamelinks
 );
 
 /* subscriptions */

@@ -519,10 +519,24 @@ function ambientGamelinks(bot, message) {
     }
 }
 
-module.exports.parseResult = parseResult;
-module.exports.ambientResults = ambientResults;
-module.exports.parseGamelink = parseGamelink;
-module.exports.validateGameDetails = validateGameDetails;
-module.exports.fetchGameDetails = fetchGameDetails;
-module.exports.updateGamelink = updateGamelink;
-module.exports.ambientGamelinks = ambientGamelinks;
+module.exports = function(chesster){
+  /* results parsing */
+  // results processing will occur on any message
+  chesster.on(
+      {
+          event: 'ambient',
+          middleware: [slack.withLeagueByChannelName]
+      },
+      ambientResults
+  );
+
+  /* game link parsing */
+  // gamelink processing will occur on any message
+  chesster.on(
+      {
+          event: 'ambient',
+          middleware: [slack.withLeagueByChannelName]
+      },
+      ambientGamelinks
+  );
+}
