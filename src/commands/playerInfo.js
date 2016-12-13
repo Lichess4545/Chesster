@@ -56,5 +56,20 @@ function playerPairings(config) {
     };
 }
 
-module.exports.playerRating = playerRating;
-module.exports.playerPairings = playerPairings;
+module.exports = function(chesster){
+  chesster.hears(
+      {
+          patterns: [slack.appendPlayerRegex("rating", true)],
+          messageTypes: ['direct_mention', 'direct_message']
+      },
+      playerRating);
+  
+  chesster.hears(
+      {
+          patterns: [
+              slack.appendPlayerRegex("pairing", true)
+          ],
+          messageTypes: ['direct_mention', 'direct_message']
+      },
+      playerPairings(chesster.config));
+}
