@@ -23,4 +23,14 @@ function welcomeMessage(config) {
     };
 }
 
-module.exports.welcomeMessage = welcomeMessage;
+module.exports = function(chesster){
+  chesster.on({event: 'user_channel_join'}, welcomeMessage(chesster.config));
+  chesster.hears(
+      {
+          middleware: [slack.requiresLeague, slack.requiresModerator],
+          patterns: ['^welcome me'],
+          messageTypes: ['direct_mention']
+      },
+      welcomeMessage(chesster.config)
+  );
+}

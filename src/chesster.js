@@ -16,127 +16,16 @@ var chesster = new slack.Bot({
     config_file: config_file
 });
 
-const games = require('./commands/games.js')(chesster);
-const availability = require("./commands/availability.js");
-const nomination = require("./commands/nomination.js");
-const scheduling = require("./commands/scheduling.js");
-const leagueInfo = require("./commands/leagueInfo.js");
-const onboarding = require("./commands/onboarding.js");
-const playerInfo = require("./commands/playerInfo.js");
-const subscription = require('./commands/subscription.js');
-
-// A helper for a very common pattern
-function directRequiresLeague(patterns, callback) {
-    chesster.hears(
-        {
-            middleware: [slack.requiresLeague],
-            patterns: patterns,
-            messageTypes: ['direct_message', 'direct_mention']
-        },
-        callback
-    );
-}
-
-/* league information */
-directRequiresLeague(
-    ['captain guidelines'],
-    leagueInfo.directResponse('formatCaptainGuidelinesResponse')
-);
-directRequiresLeague(
-    ['captains', 'captain list'],
-    leagueInfo.dmResponse('formatCaptainsResponse')
-);
-directRequiresLeague(
-    ["faq"],
-    leagueInfo.directResponse('formatFAQResponse')
-);
-directRequiresLeague(
-    ['notify mods', 'summon mods'],
-    leagueInfo.directResponse('formatSummonModsResponse')
-);
-directRequiresLeague(
-    ['^mods$', '^moderators$'],
-    leagueInfo.directResponse('formatModsResponse')
-);
-directRequiresLeague(
-    ['pairings'],
-    leagueInfo.directResponse('formatPairingsLinkResponse')
-);
-directRequiresLeague(
-    ['rules', 'regulations'],
-    leagueInfo.directResponse('formatRulesLinkResponse')
-);
-directRequiresLeague(
-    ['standings'],
-    leagueInfo.directResponse('formatStandingsLinkResponse')
-);
-directRequiresLeague(
-    ['^welcome$', 'starter guide', 'player handbook'],
-    leagueInfo.directResponse('formatStarterGuideResponse')
-);
-
-/* availability */
-chesster.hears(
-    {
-        middleware: [slack.withLeague],
-        patterns: ['available', 'unavailable'],
-        messageTypes: ['direct_message', 'direct_mention']
-    },
-    availability.updateAvailability
-);
-
-/* alternate assignment */
-chesster.hears(
-    {
-        middleware: [slack.withLeagueByChannelName],
-        patterns: ['^assign'],
-        messageTypes: ['ambient']
-    }, 
-    availability.assignAlternate
-);
-
-/* alternate unassignment */
-chesster.hears(
-    {
-        middleware: [slack.withLeagueByChannelName],
-        patterns: ['^unassign'],
-        messageTypes: ['ambient']
-    }, 
-    availability.unassignAlternate
-);
-
-/* game nomination */
-chesster.hears(
-    {
-        middleware: [slack.requiresLeague],
-        patterns: ['nomination'],
-        messageTypes: ['direct_message']
-    },
-    nomination.nomination
-);
-
-/* rating */
-
-chesster.hears(
-    {
-        patterns: [slack.appendPlayerRegex("rating", true)],
-        messageTypes: ['direct_mention', 'direct_message']
-    },
-    playerInfo.playerRating
-);
-
-chesster.hears(
-    {
-        patterns: [
-            slack.appendPlayerRegex("pairing", true)
-        ],
-        messageTypes: ['direct_mention', 'direct_message']
-    },
-    playerInfo.playerPairings(chesster.config)
-);
+const games = require('./commands/games.js')(chesster, slack);
+const availability = require("./commands/availability.js")(chesster);
+const nomination = require("./commands/nomination.js")(chesster);
+const scheduling = require("./commands/scheduling.js")(chesster);
+const leagueInfo = require("./commands/leagueInfo.js")(chesster);
+const onboarding = require("./commands/onboarding.js")(chesster);
+const playerInfo = require("./commands/playerInfo.js")(chesster);
+const subscription = require('./commands/subscription.js')(chesster);
 
 /* commands */
-
 function prepareCommandsMessage(){
     return "I will respond to the following commands when they are spoken to " + 
 									  users.getIdString("chesster") + ": \n```" +
@@ -170,19 +59,6 @@ function(bot,message) {
     });
 });
 
-
-/* welcome */
-
-chesster.on({event: 'user_channel_join'}, onboarding.welcomeMessage(chesster.config));
-chesster.hears(
-    {
-        middleware: [slack.requiresLeague, slack.requiresModerator],
-        patterns: ['^welcome me'],
-        messageTypes: ['direct_mention']
-    },
-    onboarding.welcomeMessage(chesster.config)
-);
-
 /* source */
 
 chesster.hears(
@@ -194,56 +70,6 @@ chesster.hears(
         bot.reply(message, chesster.config.links.source);
     }
 );
-
-/* Scheduling */
-
-
-// Scheduling will occur on any message
-chesster.on(
-    {
-        event: 'ambient',
-        middleware: [slack.withLeagueByChannelName]
-    },
-    scheduling.ambientScheduling
-);
-
-/* subscriptions */
-
-chesster.hears(
-    {
-        patterns: ['^tell'],
-        messageTypes: ['direct_message']
-    },
-    subscription.tellMeWhenHandler(chesster.config)
-);
-
-chesster.hears(
-    {
-        patterns: ['^subscription help$', '^unsubscribe$'],
-        messageTypes: ['direct_message']
-    },
-    subscription.helpHandler(chesster.config)
-);
-
-chesster.hears(
-    {
-        patterns: ['^subscription list$'],
-        messageTypes: ['direct_message']
-    },
-    subscription.listHandler(chesster.config)
-);
-
-chesster.hears(
-    {
-        patterns: [/^subscription remove (\d+)$/],
-        messageTypes: ['direct_message']
-    },
-    subscription.removeHandler(chesster.config)
-);
-
-subscription.register(chesster, 'a-game-is-scheduled', subscription.formatAGameIsScheduled);
-subscription.register(chesster, 'a-game-starts', subscription.formatAGameStarts);
-subscription.register(chesster, 'a-game-is-over', subscription.formatAGameIsOver);
 
 //------------------------------------------------------------------------------
 // Start the watcher.

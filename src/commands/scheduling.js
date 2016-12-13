@@ -525,7 +525,12 @@ function ambientScheduling(bot, message) {
     return deferred.promise;
 }
 
-module.exports.getRoundExtrema = getRoundExtrema;
-module.exports.parseScheduling = parseScheduling;
-module.exports.ScheduleParsingError = ScheduleParsingError;
-module.exports.ambientScheduling = ambientScheduling;
+module.exports = function(chesster){
+  // Scheduling will occur on any message
+  chesster.on(
+      {
+          event: 'ambient',
+          middleware: [slack.withLeagueByChannelName]
+      },
+      ambientScheduling);
+}

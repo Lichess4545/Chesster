@@ -310,6 +310,30 @@ function unassignAlternate(bot, message){
     });
 }
 
-exports.updateAvailability = updateAvailability;
-exports.assignAlternate = assignAlternate;
-exports.unassignAlternate = unassignAlternate;
+exports = function(chesster){
+  chesster.hears(
+    {
+        middleware: [slack.withLeague],
+        patterns: ['available', 'unavailable'],
+        messageTypes: ['direct_message', 'direct_mention']
+    },
+    updateAvailability);
+
+  /* alternate assignment */
+  chesster.hears(
+    {
+        middleware: [slack.withLeagueByChannelName],
+        patterns: ['^assign'],
+        messageTypes: ['ambient']
+    }, 
+    assignAlternate);
+
+  /* alternate unassignment */
+  chesster.hears(
+    {
+        middleware: [slack.withLeagueByChannelName],
+        patterns: ['^unassign'],
+        messageTypes: ['ambient']
+    }, 
+    unassignAlternate);
+}

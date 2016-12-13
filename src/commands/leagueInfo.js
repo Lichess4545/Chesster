@@ -27,6 +27,54 @@ function dmResponse(responseName) {
     };
 }
 
+module.exports = function(chesster){
+  // A helper for a very common pattern
+  function directRequiresLeague(patterns, callback) {
+      chesster.hears(
+          {
+              middleware: [slack.requiresLeague],
+              patterns: patterns,
+              messageTypes: ['direct_message', 'direct_mention']
+          },
+          callback
+      );
+  }
 
-module.exports.directResponse = directResponse;
-module.exports.dmResponse = dmResponse;
+  directRequiresLeague(
+      ['captain guidelines'],
+      directResponse('formatCaptainGuidelinesResponse')
+  );
+  directRequiresLeague(
+      ['captains', 'captain list'],
+      dmResponse('formatCaptainsResponse')
+  );
+  directRequiresLeague(
+      ["faq"],
+      directResponse('formatFAQResponse')
+  );
+  directRequiresLeague(
+      ['notify mods', 'summon mods'],
+      directResponse('formatSummonModsResponse')
+  );
+  directRequiresLeague(
+      ['^mods$', '^moderators$'],
+      directResponse('formatModsResponse')
+  );
+  directRequiresLeague(
+      ['pairings'],
+      directResponse('formatPairingsLinkResponse')
+  );
+  directRequiresLeague(
+      ['rules', 'regulations'],
+      directResponse('formatRulesLinkResponse')
+  );
+  directRequiresLeague(
+      ['standings'],
+      directResponse('formatStandingsLinkResponse')
+  );
+  directRequiresLeague(
+      ['^welcome$', 'starter guide', 'player handbook'],
+      directResponse('formatStarterGuideResponse')
+  );
+}
+

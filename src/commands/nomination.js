@@ -27,4 +27,12 @@ function nomination(bot, message) {
     });
 }
 
-exports.nomination = nomination;
+exports.nomination = function(chesster){
+  chesster.hears(
+      {
+          middleware: [slack.requiresLeague],
+          patterns: ['nomination'],
+          messageTypes: ['direct_message']
+      },
+      nomination);
+}

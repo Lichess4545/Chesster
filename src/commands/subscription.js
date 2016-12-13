@@ -415,14 +415,39 @@ function removeHandler(config) {
     };
 }
 
-module.exports.emitter = emitter;
-module.exports.getListeners = getListeners;
-module.exports.register = register;
+module.exports = function(chesster){
+  chesster.hears(
+      {
+          patterns: ['^tell'],
+          messageTypes: ['direct_message']
+      },
+      tellMeWhenHandler(chesster.config)
+  );
+  
+  chesster.hears(
+      {
+          patterns: ['^subscription help$', '^unsubscribe$'],
+          messageTypes: ['direct_message']
+      },
+      
+      helpHandler(chesster.config));
 
-module.exports.tellMeWhenHandler = tellMeWhenHandler;
-module.exports.helpHandler = helpHandler;
-module.exports.listHandler = listHandler;
-module.exports.removeHandler = removeHandler;
-module.exports.formatAGameIsScheduled = formatAGameIsScheduled;
-module.exports.formatAGameStarts = formatAGameStarts;
-module.exports.formatAGameIsOver = formatAGameIsOver;
+  chesster.hears(
+      {
+          patterns: ['^subscription list$'],
+          messageTypes: ['direct_message']
+      },
+      listHandler(chesster.config));
+  
+  chesster.hears(
+      {
+          patterns: [/^subscription remove (\d+)$/],
+          messageTypes: ['direct_message']
+      },
+      removeHandler(chesster.config)
+  );
+
+  register(chesster, 'a-game-is-scheduled', subscription.formatAGameIsScheduled);
+  register(chesster, 'a-game-starts', subscription.formatAGameStarts);
+  register(chesster, 'a-game-is-over', subscription.formatAGameIsOver);
+}

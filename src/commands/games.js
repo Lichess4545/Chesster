@@ -519,7 +519,7 @@ function ambientGamelinks(bot, message) {
     }
 }
 
-module.exports = function(chesster){
+module.exports = function(chesster, slack){
   /* results parsing */
   // results processing will occur on any message
   chesster.on(
