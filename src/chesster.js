@@ -17,13 +17,13 @@ var chesster = new slack.Bot({
 });
 
 const games = require('./commands/games.js')(chesster, slack);
-const availability = require("./commands/availability.js")(chesster);
-const nomination = require("./commands/nomination.js")(chesster);
-const scheduling = require("./commands/scheduling.js")(chesster);
-const leagueInfo = require("./commands/leagueInfo.js")(chesster);
-const onboarding = require("./commands/onboarding.js")(chesster);
-const playerInfo = require("./commands/playerInfo.js")(chesster);
-const subscription = require('./commands/subscription.js')(chesster);
+const availability = require("./commands/availability.js")(chesster, slack);
+const nomination = require("./commands/nomination.js")(chesster, slack);
+const scheduling = require("./commands/scheduling.js")(chesster, slack);
+const leagueInfo = require("./commands/leagueInfo.js")(chesster, slack);
+const onboarding = require("./commands/onboarding.js")(chesster, slack);
+const playerInfo = require("./commands/playerInfo.js")(chesster, slack);
+const subscription = require('./commands/subscription.js')(chesster, slack);
 
 /* commands */
 function prepareCommandsMessage(){

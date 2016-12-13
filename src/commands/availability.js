@@ -310,7 +310,7 @@ function unassignAlternate(bot, message){
     });
 }
 
-exports = function(chesster){
+module.exports = function(chesster){
   chesster.hears(
     {
         middleware: [slack.withLeague],

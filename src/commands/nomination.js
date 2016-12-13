@@ -27,7 +27,7 @@ function nomination(bot, message) {
     });
 }
 
-exports.nomination = function(chesster){
+module.exports = function(chesster){
   chesster.hears(
       {
           middleware: [slack.requiresLeague],
