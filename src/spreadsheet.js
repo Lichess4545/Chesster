@@ -25,7 +25,7 @@ module.exports = function(key, creds){
             }, function(err, cells){
                 for (var i = 0; i < data.length; i++){
     	        cells[i].value = data[i];
-    		cells[i].save(function(){});
+    		cells[i].save(_.noop());
     	    }
     	});
         });
