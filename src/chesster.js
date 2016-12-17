@@ -266,6 +266,24 @@ subscription.register(chesster, 'a-game-is-scheduled', subscription.formatAGameI
 subscription.register(chesster, 'a-game-starts', subscription.formatAGameStarts);
 subscription.register(chesster, 'a-game-is-over', subscription.formatAGameIsOver);
 
+/* ladder */
+
+var ladderConfigs = require("../config/ladder_config.js");
+
+var key = ladderConfigs["spreadsheet-key"];
+var creds = ladderConfigs["spreadsheet-creds"];
+var ladderSpreadsheet = require("./spreadsheet")(key, creds);
+var ladderRecorder = require("./ladder_recorder")(ladderSpreadsheet);
+var ladderLogic = require("./ladder_logic")(ladderRecorder);
+var ladder = require('./commands/ladder.js');
+
+chesster.hears(
+    {
+	patterns: ['^add challenge'],
+        messageTypes: ['direct_mention']
+    },
+    ladder.addChallenge(ladderConfigs, ladderLogic));
+
 //------------------------------------------------------------------------------
 // Start the watcher.
 watcher.watchAllLeagues(chesster);
