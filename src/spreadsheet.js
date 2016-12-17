@@ -1,3 +1,5 @@
+const _ = require("lodash");
+
 module.exports = function(key, creds){
     var GoogleSpreadsheet = require('google-spreadsheet');
     var async = require('async');
@@ -10,7 +12,7 @@ module.exports = function(key, creds){
     	      },
     	      function getInfoAndWorksheets(step) {
     		callback();
-    		step()
+    		step();
                   }]);
     }
     
@@ -54,5 +56,5 @@ module.exports = function(key, creds){
     return {
         findFirstBlankLine: findFirstBlankLine,
         writeLine: writeLine
-    }
-}
+    };
+};

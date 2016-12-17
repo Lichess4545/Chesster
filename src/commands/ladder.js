@@ -1,5 +1,4 @@
 const _ = require("lodash");
-const slack = require("../slack");
 
 function addChallenge(config, logic){
     return function(bot, message){

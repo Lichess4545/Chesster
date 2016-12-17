@@ -1,5 +1,3 @@
-var moment = require('moment');
-
 module.exports = function(spreadsheet){
     function recordChallenge(date, status, challenger, challengee, comments){
         spreadsheet.findFirstBlankLine(5, function(line){
@@ -9,5 +7,5 @@ module.exports = function(spreadsheet){
 
     return {
         recordChallenge: recordChallenge
-    }
-}
+    };
+};

@@ -13,5 +13,5 @@ module.exports = function(db){
 
   return {
       addChallenge : addChallenge
-  }
-}
+  };
+};
