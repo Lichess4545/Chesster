@@ -38,7 +38,7 @@ function forwardMessage(chesster, adminSlack) {
                         convo.say(messageToSend);
                     })
                 );
-            } else {
+            } else if (users.length > 1) {
                 var deferred = Q.defer();
                 chesster.api.mpim.open(
                     {users: users.join(',')},
