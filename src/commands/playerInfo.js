@@ -29,7 +29,7 @@ function playerPairings(config) {
         var targetPlayer = bot.getSlackUser(message);
         var deferred = Q.defer();
         var allLeagues = league.getAllLeagues(bot, config);
-        bot.startPrivateConversation(message, function (response, convo) {
+        bot.startPrivateConversation(message.user).then(function (convo) {
             Q.all(
                 _.map(allLeagues, function(l) {
                     return l.getPairingDetails(targetPlayer).then(function(details) {
@@ -50,6 +50,8 @@ function playerPairings(config) {
             }, function(error) {
                 deferred.reject(error);
             });
+        }).catch(function(error) {
+            deferred.reject(error);
         });
         return deferred.promise;
     };
