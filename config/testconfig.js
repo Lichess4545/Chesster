@@ -2,9 +2,9 @@
 //       You must provide your own.
 var token = require("./slack_token.js").token;
 try {
-    var logging_token = require("./test_logging_token.js").token;
+    var test_chesster_slack_token = require("./test_chesster_slack_token.js").token;
 } catch (e) {
-    var logging_token = null;
+    var test_chesster_slack_token = null;
 }
 var heltour_token = require("./test_heltour_token.js").token;
 
@@ -12,7 +12,8 @@ const UNSTABLE_BOT_ID = "C0VCCPMJ8";
 const UNSTABLE_BOT_LONEWOLF_ID = "C0XQM31SL";
 
 var config = require("./config.js");
-config['winston']['token'] = logging_token;
+config['watcherBaseURL'] = "https://en.stage.lichess.org/api/game-stream"
+config['slack_tokens']['chesster'] = test_chesster_slack_token;
 config['winston']['channel'] = "#modster-logging"; 
 config['winston']['handleExceptions'] = false;
 

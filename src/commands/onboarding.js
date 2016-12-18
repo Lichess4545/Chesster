@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
 // Commands for onboarding new folks
 //------------------------------------------------------------------------------
-const slack = require("../slack");
 const _ = require("lodash");
 
 function welcomeMessage(config) {
     return function(bot, message) {
-        if(_.isEqual(message.channel, slack.channels.getId(config["welcome"]["channel"]))){
+        if(_.isEqual(message.channel, bot.channels.getId(config["welcome"]["channel"]))){
             bot.reply(message, "Everyone, please welcome the newest member of the " 
                              + "Lichess 45+45 League, <@" + message.user + ">!");
 

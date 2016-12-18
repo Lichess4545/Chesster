@@ -9,7 +9,7 @@ slack_token.js
 logging_token.js
 coverage
 test_service_account_key.js
-test_logging_token.js
+test_chesster_slack_token.js
 test_heltour_token.js
 test_logging_token.js
 db/database.sqlite

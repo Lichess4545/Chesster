@@ -6,7 +6,6 @@ const _ = require("lodash");
 const format = require('string-format');
 format.extend(String.prototype);
 
-const slack = require('../slack.js');
 const commands = require('../commands.js');
 const heltour = require('../heltour.js');
 
@@ -106,11 +105,11 @@ function updateAvailability(bot, message) {
     return commands.tokenize(message.text, commandDescription).then(function(parameters){
         var available = parameters["available"] ? true : false;
         var roundNumber = parameters["roundNumber"];
-        var speaker = slack.getSlackUserFromNameOrID(message.user);
+        var speaker = bot.getSlackUserFromNameOrID(message.user);
         var playerName = speaker.name;
         if(parameters["playerName"]){
             //playerName is specified as an identifier or clear text, validate it and get the name
-            var slackUser = slack.getSlackUserFromNameOrID(parameters["playerName"]);
+            var slackUser = bot.getSlackUserFromNameOrID(parameters["playerName"]);
             if(!slackUser){
                 //didnt find a user by Name or ID
                replyFailedToUpdate(bot, message, 
@@ -179,7 +178,7 @@ function assignAlternate(bot, message){
         "{on|for|in}",
         "{text:teamName}"
     ]).then(function(parameters){
-        var speaker = slack.getSlackUserFromNameOrID(message.user);
+        var speaker = bot.getSlackUserFromNameOrID(message.user);
         var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
 
         if (!message.league.isModerator(speaker.name)) {
@@ -203,7 +202,7 @@ function assignAlternate(bot, message){
             return;
         }
 
-        var player = slack.getSlackUserFromNameOrID(parameters["player"]);
+        var player = bot.getSlackUserFromNameOrID(parameters["player"]);
         if(!player){
             replyFailedToUpdate(bot, message, "alternate assignment", "unknown player");
         }
@@ -269,7 +268,7 @@ function unassignAlternate(bot, message){
         roundNumber = args[7],
         on          = args[8];
 
-    var speaker = slack.getSlackUserFromNameOrID(message.user);
+    var speaker = bot.getSlackUserFromNameOrID(message.user);
     var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
 
     if (!utils.isCaptainOrModerator(speaker, speakerTeam, teamName, message.league)) {

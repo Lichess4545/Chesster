@@ -7,7 +7,6 @@ const format = require('string-format');
 format.extend(String.prototype);
 
 const league = require("../league.js");
-const slack = require("../slack.js");
 const db = require("../models.js");
 
 // The emitter we will use.
@@ -27,9 +26,9 @@ var events = [
 //------------------------------------------------------------------------------
 // Format the help response message
 //------------------------------------------------------------------------------
-function formatHelpResponse(config) {
+function formatHelpResponse(bot, config) {
     return Q.fcall(function() {
-        var leagueNames = _.map(league.getAllLeagues(config), "options.name");
+        var leagueNames = _.map(league.getAllLeagues(bot, config), "options.name");
 
         return "The subscription system supports the following commands: \n" +
             "`tell me when <event> in <league> for <target-user-or-team>`\n" +
@@ -48,9 +47,9 @@ function formatHelpResponse(config) {
 //------------------------------------------------------------------------------
 // tell them they chose an invalid league
 //------------------------------------------------------------------------------
-function formatInvalidLeagueResponse(config) {
+function formatInvalidLeagueResponse(bot, config) {
     return Q.fcall(function() {
-        var leagueNames = _.map(league.getAllLeagues(config), "options.name");
+        var leagueNames = _.map(league.getAllLeagues(bot, config), "options.name");
 
         return "You didn't specify a valid league. These are your options:\n" +
             "```" + leagueNames.join("\n") + "```";
@@ -99,10 +98,10 @@ function formatInvalidSourceResponse(config, source) {
 //------------------------------------------------------------------------------
 // Format the a-game-is-scheduled response
 //------------------------------------------------------------------------------
-function formatAGameIsScheduled(target, context) {
+function formatAGameIsScheduled(bot, target, context) {
     // TODO: put these date formats somewhere, probably config?
     var friendlyFormat = "ddd @ HH:mm";
-    target = slack.getSlackUserFromNameOrID(target);
+    target = bot.getSlackUserFromNameOrID(target);
     var targetDate = context.result.date.clone().utcOffset(target.tz_offset/60);
     context['yourDate'] = targetDate.format(friendlyFormat);
     var fullFormat = "YYYY-MM-DD @ HH:mm UTC";
@@ -130,9 +129,9 @@ function formatAGameIsOver(target, context) {
 // A tell command is made up like so:
 //      tell <listener> when <event> in <league> for <source>
 //------------------------------------------------------------------------------
-function processTellCommand(config, message) {
+function processTellCommand(bot, config, message) {
     return Q.fcall(function() {
-        var requester = slack.getSlackUserFromNameOrID(message.user);
+        var requester = bot.getSlackUserFromNameOrID(message.user);
         var components = message.text.split(" ");
         var args = _.map(components.slice(0, 7), _.toLower);
         var sourceName = components.splice(7).join(" ");
@@ -146,15 +145,15 @@ function processTellCommand(config, message) {
 
         // Ensure the basic command format is valid
         if (!_.isEqual(["tell", "when", "in", "for"], [tell, when, _in, _for])) {
-            return formatHelpResponse(config).then(function(message) {
+            return formatHelpResponse(bot, config).then(function(message) {
                 return "I didn't understand you.\n" + message;
             });
         }
 
         // Ensure they chose a valid league.
-        var _league = league.getLeague(targetLeague, config);
+        var _league = league.getLeague(bot, targetLeague, config);
         if (_.isUndefined(_league)) {
-            return formatInvalidLeagueResponse(config);
+            return formatInvalidLeagueResponse(bot, config);
         }
         // TODO: this is hacky, but required at the moment. :(
         //       otherwise message.player.isModerator won't work.
@@ -185,7 +184,7 @@ function processTellCommand(config, message) {
         }
 
         // Ensure the source is a valid user or team within slack
-        var source = slack.getSlackUserFromNameOrID(sourceName);
+        var source = bot.getSlackUserFromNameOrID(sourceName);
         return _league.getTeams().then(function(teams) {
             var team = _.find(teams, function(team) { return team.name.toLowerCase() === sourceName.toLowerCase();});
             if (_.isUndefined(source) && _.isUndefined(team)) {
@@ -224,9 +223,9 @@ function processTellCommand(config, message) {
 //
 // subscriptions (by itself) simply lists your subscriptions with ID #s
 //------------------------------------------------------------------------------
-function processSubscriptionListCommand(config, message) {
+function processSubscriptionListCommand(bot, config, message) {
     return Q.fcall(function() {
-        var requester = slack.getSlackUserFromNameOrID(message.user);
+        var requester = bot.getSlackUserFromNameOrID(message.user);
         // TODO: Once we enable WAL - we can remove this lock for this command
         return db.lock().then(function(unlock) {
             return db.Subscription.findAll({
@@ -257,9 +256,9 @@ function processSubscriptionListCommand(config, message) {
 //
 // subscriptions (by itself) simply lists your subscriptions with ID #s
 //------------------------------------------------------------------------------
-function processSubscriptionRemoveCommand(config, message, id) {
+function processSubscriptionRemoveCommand(bot, config, message, id) {
     return Q.fcall(function() {
-        var requester = slack.getSlackUserFromNameOrID(message.user);
+        var requester = bot.getSlackUserFromNameOrID(message.user);
         return db.lock().then(function(unlock) {
             return db.Subscription.findAll({
                 where: {
@@ -294,12 +293,12 @@ function register(bot, eventName, cb) {
     
     // Handle the event when it happens
     emitter.on(eventName, function(league, sources, context) {
-        return getListeners(league.options.name, sources, eventName).then(function(targets) {
+        return getListeners(bot, league.options.name, sources, eventName).then(function(targets) {
             var allDeferreds = [];
             _.each(targets, function(target) {
                 var deferred = Q.defer();
                 bot.startPrivateConversation(target).then(function(convo) {
-                    var message = cb(target, _.clone(context));
+                    var message = cb(bot, target, _.clone(context));
                     convo.say(message);
                     deferred.resolve();
                 });
@@ -313,14 +312,14 @@ function register(bot, eventName, cb) {
 //------------------------------------------------------------------------------
 // Get listeners for a given event and source
 //------------------------------------------------------------------------------
-function getListeners(leagueName, sources, event) {
+function getListeners(bot, leagueName, sources, event) {
     sources = _.map(sources, _.toLower);
     // TODO: when we get WAL enabled, we won't need to lock this query any more.
     return db.lock().then(function(unlock) {
         // These are names of users, not users. So we have to go get the real
         // user and teams. This is somewhat wasteful - but I'm not sure whether
         // this is the right design or if we should pass in users to this point. 
-        var _league = league.getLeague(leagueName);
+        var _league = league.getLeague(bot, leagueName);
         var teamNames = _(sources).map(function(n) { return _league.getTeamByPlayerName(n); }).filter(_.isObject).map("name").map(_.toLower).value();
         var possibleSources = _.concat(sources, teamNames);
         return db.Subscription.findAll({
@@ -346,7 +345,7 @@ function tellMeWhenHandler(config) {
     return function(bot, message) {
         var deferred = Q.defer();
         bot.startPrivateConversation(message, function (response, convo) {
-            processTellCommand(config, message).then(function(response) {
+            processTellCommand(bot, config, message).then(function(response) {
                 convo.say(response);
                 deferred.resolve();
             }).catch(function(error) {
@@ -384,7 +383,7 @@ function listHandler(config) {
     return function(bot, message) {
         var deferred = Q.defer();
         bot.startPrivateConversation(message, function (response, convo) {
-            processSubscriptionListCommand(config, message).then(function(response) {
+            processSubscriptionListCommand(bot, config, message).then(function(response) {
                 convo.say(response);
                 deferred.resolve();
             }).catch(function(error) {
@@ -403,7 +402,7 @@ function removeHandler(config) {
     return function(bot, message) {
         var deferred = Q.defer();
         bot.startPrivateConversation(message, function (response, convo) {
-            processSubscriptionRemoveCommand(config, message, message.match[1]).then(function(response) {
+            processSubscriptionRemoveCommand(bot, config, message, message.match[1]).then(function(response) {
                 convo.say(response);
                 deferred.resolve();
             }).catch(function(error) {

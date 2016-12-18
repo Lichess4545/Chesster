@@ -14,7 +14,6 @@ const EventEmitter = require('events');
 function ChessLeagueEmitter() {}
 ChessLeagueEmitter.prototype  = new EventEmitter();
 
-const slack = require('./slack.js');
 const heltour = require('./heltour.js');
 const db = require("./models.js");
 
@@ -647,7 +646,7 @@ var league_attributes = {
     formatSummonModsResponse: function() {
         var self = this;
         var moderators = _.map(self._moderators, function(name) {
-            return slack.users.getIdString(name);
+            return self.bot.users.getIdString(name);
         });
         return Q.fcall(function() {
             return ("{0} mods: " + moderators.join(", ")).format(self.options.name);
@@ -661,26 +660,26 @@ var league_attributes = {
     }
 };
 
-function League(options) {
+function League(bot, options) {
     this.options = {};
     this.emitter = new ChessLeagueEmitter();
     _.extend(this.options, LEAGUE_DEFAULTS, options || {});
     _.extend(this, league_attributes);
 }
 
-function getAllLeagues(config) {
+function getAllLeagues(bot, config) {
     var all_league_configs = config['leagues'] || {};
     return _(all_league_configs)
         .keys()
         .map(function(key) {
-            return getLeague(key, config);
+            return getLeague(bot, key, config);
         })
         .value();
 }
 
 var getLeague = (function() {
     var _league_cache = {};
-    return function (league_name, config) {
+    return function (bot, league_name, config) {
 
         if(!_league_cache[league_name]) {
             // Else create it if there is a config for it.
@@ -690,7 +689,7 @@ var getLeague = (function() {
                 winston.info("Creating new league for " + league_name);
                 this_league_config = _.clone(this_league_config);
                 this_league_config.name = league_name;
-                var league = new League(this_league_config);
+                var league = new League(bot, this_league_config);
                 _league_cache[league_name] = league;
             } else {
                 return undefined;

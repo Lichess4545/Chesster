@@ -4,9 +4,9 @@ var token = require("./slack_token.js").token;
 var heltour_token = require("./heltour_token.js").token;
 
 try {
-    var logging_token = require("./logging_token.js").token;
+    var chesster_slack_token = require("./chesster_slack_token.js").token;
 } catch (e) {
-    var logging_token = null;
+    var chesster_slack_token = null;
 }
 
 var config = {
@@ -22,12 +22,15 @@ var config = {
 		"idle": 10000
 	},
     "storage": "./db/database.sqlite",
+    "watcherBaseURL": "https://en.lichess.org/api/game-stream",
 
-    "token": token,
+    "slack_tokens": {
+        "lichess4545": token,
+        "chesster": chesster_slack_token,
+    },
     "winston": {
         domain: "chesster",
         channel: "#lichess4545-logging",
-        token: logging_token,
         username: "chesster",
         level: "debug",
         handleExceptions: true
@@ -185,5 +188,8 @@ var config = {
         "captains": "45+45",
         "G0DFRURGQ": "45+45",
     },
+    "messageForwarding": {
+        "channel": "G3D6N2HNF",
+    }
 }
 module.exports = config;
