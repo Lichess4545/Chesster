@@ -1,5 +1,6 @@
 const _ = require("lodash");
 const Q = require("q");
+const winston = require("winston");
 const commands = require("../commands");
 
 function forwardMessage(chesster, adminSlack) {
@@ -18,7 +19,7 @@ function forwardMessage(chesster, adminSlack) {
             var messageToSend = parameters['message'];
             var channels = [];
             var users = [];
-            _(parameters['targets']).split('+').filter().forEach(function(t) {
+            _(targets).split('+').filter().forEach(function(t) {
                 if (_.startsWith(t, '@')) {
                     users.push(chesster.users.getId(t.substr(1)));
                 } else if (_.startsWith(t, '#')) {
@@ -82,6 +83,6 @@ function forwardMessage(chesster, adminSlack) {
                 throw error;
             }
         });
-    }
+    };
 }
 module.exports.forwardMessage = forwardMessage;
