@@ -6,7 +6,6 @@ const _ = require("lodash");
 const winston = require("winston");
 const Q = require("q");
 
-const slack = require('../slack.js');
 const heltour = require('../heltour.js');
 const subscription = require('./subscription.js');
 
@@ -405,7 +404,7 @@ function ambientScheduling(bot, message) {
     }
 
     var schedulingOptions = message.league.options.scheduling;
-    var channel = slack.channels.byId[message.channel];
+    var channel = bot.channels.byId[message.channel];
     if (!channel) {
         return;
     }
@@ -448,8 +447,8 @@ function ambientScheduling(bot, message) {
     }
 
     // Step 2. See if we have valid named players
-    var white = slack.users.getByNameOrID(schedulingResults.white);
-    var black = slack.users.getByNameOrID(schedulingResults.black);
+    var white = bot.users.getByNameOrID(schedulingResults.white);
+    var black = bot.users.getByNameOrID(schedulingResults.black);
     if (white && black) {
         schedulingResults.white = white.name;
         schedulingResults.black = black.name;
@@ -461,7 +460,7 @@ function ambientScheduling(bot, message) {
         return;
     }
 
-    var speaker = slack.users.getByNameOrID(message.user);
+    var speaker = bot.users.getByNameOrID(message.user);
     if (
         !_.isEqual(white.id, speaker.id) &&
         !_.isEqual(black.id, speaker.id) &&

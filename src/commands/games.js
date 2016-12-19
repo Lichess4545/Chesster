@@ -6,7 +6,6 @@ const moment = require("moment-timezone");
 const winston = require("winston");
 const scheduling = require("./scheduling");
 const subscription = require("./subscription");
-const slack = require("../slack");
 const heltour = require('../heltour.js');
 const http = require("../http.js");
 
@@ -95,7 +94,7 @@ function ambientResults(bot, message) {
         return;
     }
     var resultsOptions = message.league.options.results; 
-    var channel = slack.channels.byId[message.channel];
+    var channel = bot.channels.byId[message.channel];
     if (!channel) {
         return;
     }
@@ -121,8 +120,8 @@ function ambientResults(bot, message) {
             return;
         }
 
-        result.white = slack.users.getByNameOrID(result.white.replace(/[<\@>]/g, ''));
-        result.black = slack.users.getByNameOrID(result.black.replace(/[<\@>]/g, ''));
+        result.white = bot.users.getByNameOrID(result.white.replace(/[<\@>]/g, ''));
+        result.black = bot.users.getByNameOrID(result.black.replace(/[<\@>]/g, ''));
 
         if(!result.white || !result.black) {
             replyPlayerNotFound(bot, message);
@@ -162,7 +161,7 @@ function ambientResults(bot, message) {
                     heltourOptions,
                     result);
             }else if(!_.isNil(pairing)){
-                var speaker = slack.getSlackUserFromNameOrID(message.user);
+                var speaker = bot.getSlackUserFromNameOrID(message.user);
                 if(message.league.isModerator(speaker.name)){
                     //current speaker is a moderator for the league
                     //update the pairing with the result bc there was no link found
@@ -214,7 +213,7 @@ function replyPlayerNotFound(bot, message){
 }
 
 function resultReplyMissingGamelink(bot, message){
-    var channel = slack.channels.byName[message.league.options.gamelinks.channel];
+    var channel = bot.channels.byName[message.league.options.gamelinks.channel];
     bot.reply(message, "Sorry, that game does not have a link. I will not update the result without it.");
     bot.reply(message, "Please go to <#" +channel.id + "> and post the gamelink.");
 }
@@ -433,8 +432,8 @@ function updateGamelink(league, details) {
     //get players to update the result in the sheet
     var white = details.players.white;
     var black = details.players.black;
-    result.white = slack.users.getByNameOrID(white.userId);
-    result.black = slack.users.getByNameOrID(black.userId);
+    result.white = league.bot.users.getByNameOrID(white.userId);
+    result.black = league.bot.users.getByNameOrID(black.userId);
     result.gamelinkID = details.id;
     result.gamelink =  "http://en.lichess.org/" + result.gamelinkID;
  
@@ -497,7 +496,7 @@ function ambientGamelinks(bot, message) {
     if (!message.league) {
         return;
     }
-    var channel = slack.channels.byId[message.channel];
+    var channel = bot.channels.byId[message.channel];
     if (!channel) {
         return;
     }

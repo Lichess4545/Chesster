@@ -2,7 +2,6 @@
 // Commands related to game nomination
 //------------------------------------------------------------------------------
 const winston = require("winston");
-const slack = require('../slack.js');
 const heltour = require('../heltour.js');
 
 function nomination(bot, message) {
@@ -12,7 +11,7 @@ function nomination(bot, message) {
         return;
     }
 
-    var speaker = slack.users.getByNameOrID(message.user);
+    var speaker = bot.users.getByNameOrID(message.user);
     heltour.getPrivateURL(
         heltourOptions,
         'nominate', //hardcoding this for now

@@ -12,8 +12,6 @@ format.extend(String.prototype);
 const _league = require("./league.js");
 const games = require('./commands/games.js');
 
-var baseURL = "https://en.lichess.org/api/game-stream";
-
 const BACKOFF_TIMEOUT = 10;
 // const CREATED = 10;
 const STARTED = 20;
@@ -179,9 +177,9 @@ function Watcher(bot, league) {
             return;
         }
         var body = usernames.join(",");
-        winston.info("watching {} with {} users".format(baseURL, body));
+        winston.info("watching {} with {} users".format(self.bot.config.watcherBaseURL, body));
         winston.info("============================================================");
-        var options = url.parse(baseURL);
+        var options = url.parse(self.bot.config.watcherBaseURL);
         options.method = "POST";
         options.headers = {
             "Content-Length": Buffer.byteLength(body)
@@ -217,7 +215,7 @@ var watcherMap = {};
 
 //------------------------------------------------------------------------------
 var watchAllLeagues = function(bot) {
-    _.each(_league.getAllLeagues(bot.config), function(league) {
+    _.each(_league.getAllLeagues(bot, bot.config), function(league) {
         winston.info("Watching: {}".format(league.options.name));
         watcherMap[league.name] = new Watcher(bot, league);
     });

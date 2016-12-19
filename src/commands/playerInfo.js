@@ -5,7 +5,6 @@ const Q = require("q");
 const _ = require("lodash");
 const winston = require("winston");
 
-const slack = require('../slack.js');
 const lichess = require('../lichess.js');
 const league = require('../league.js');
 
@@ -15,7 +14,7 @@ function prepareRatingMessage(_player, rating){
 }
 
 function playerRating(bot,message)  {
-    var playerName = slack.getSlackUser(message).name;
+    var playerName = bot.getSlackUser(message).name;
     return lichess.getPlayerRating(playerName).then(function(rating) {
         if(rating){
             bot.reply(message, prepareRatingMessage(playerName, rating));
@@ -27,10 +26,10 @@ function playerRating(bot,message)  {
 
 function playerPairings(config) {
     return function(bot, message) {
-        var targetPlayer = slack.getSlackUser(message);
+        var targetPlayer = bot.getSlackUser(message);
         var deferred = Q.defer();
-        var allLeagues = league.getAllLeagues(config);
-        bot.startPrivateConversation(message, function (response, convo) {
+        var allLeagues = league.getAllLeagues(bot, config);
+        bot.startPrivateConversation(message.user).then(function (convo) {
             Q.all(
                 _.map(allLeagues, function(l) {
                     return l.getPairingDetails(targetPlayer).then(function(details) {
@@ -51,6 +50,8 @@ function playerPairings(config) {
             }, function(error) {
                 deferred.reject(error);
             });
+        }).catch(function(error) {
+            deferred.reject(error);
         });
         return deferred.promise;
     };

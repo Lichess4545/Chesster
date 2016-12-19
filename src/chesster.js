@@ -6,22 +6,34 @@ const slack = require('./slack.js');
 const errors = require('./errors.js');
 errors.init();
 const watcher = require('./watcher.js');
-const games = require('./commands/games.js');
+
 const availability = require("./commands/availability.js");
-const nomination = require("./commands/nomination.js");
-const scheduling = require("./commands/scheduling.js");
+const games = require('./commands/games.js');
 const leagueInfo = require("./commands/leagueInfo.js");
+const messageForwarding = require('./commands/messageForwarding.js');
+const nomination = require("./commands/nomination.js");
 const onboarding = require("./commands/onboarding.js");
 const playerInfo = require("./commands/playerInfo.js");
+const scheduling = require("./commands/scheduling.js");
 const subscription = require('./commands/subscription.js');
 
-var users = slack.users;
 
 /* static entry point */
 
-var config_file = process.argv[2] || "../config/config.js"; 
+var configFile = process.argv[2] || "../config/config.js"; 
 var chesster = new slack.Bot({
-    config_file: config_file
+    slackName: "lichess4545",
+    configFile: configFile
+});
+// TODO: make this not be globally done.
+var users = chesster.users;
+
+var adminSlack = new slack.Bot({
+    slackName: "chesster",
+    configFile: configFile,
+    connectToModels: false,
+    refreshLeague: false,
+    logToThisSlack: true
 });
 
 // A helper for a very common pattern
@@ -77,7 +89,7 @@ directRequiresLeague(
 /* availability */
 chesster.hears(
     {
-        middleware: [slack.withLeague],
+        middleware: [slack.requiresLeague],
         patterns: ['available', 'unavailable'],
         messageTypes: ['direct_message', 'direct_mention']
     },
@@ -102,6 +114,15 @@ chesster.hears(
         messageTypes: ['ambient']
     }, 
     availability.unassignAlternate
+);
+
+/* Message Forwarding */
+adminSlack.hears(
+    {
+        patterns: ["^forward to"],
+        messageTypes: ['direct_mention', 'bot_message']
+    },
+    messageForwarding.forwardMessage(chesster, adminSlack)
 );
 
 /* game nomination */
@@ -164,7 +185,7 @@ chesster.hears({
     messageTypes: ['direct_mention', 'direct_message']
 },
 function(bot,message) {
-    bot.startPrivateConversation(message, function (response, convo) {
+    bot.startPrivateConversation(message.user).then(function (convo) {
         convo.say(prepareCommandsMessage());
     });
 });
