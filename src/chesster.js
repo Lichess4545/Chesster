@@ -89,7 +89,7 @@ directRequiresLeague(
 /* availability */
 chesster.hears(
     {
-        middleware: [slack.withLeague],
+        middleware: [slack.requiresLeague],
         patterns: ['available', 'unavailable'],
         messageTypes: ['direct_message', 'direct_mention']
     },
