@@ -15,7 +15,7 @@ function directResponse(responseName) {
 function dmResponse(responseName) {
     return function (bot, message) {
         var deferred = Q.defer();
-        bot.startPrivateConversation(message, function (response, convo) {
+        bot.startPrivateConversation(message.user).then(function (convo) {
             message.league[responseName]().then(function(response) {
                 convo.say(response);
                 deferred.resolve();

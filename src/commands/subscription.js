@@ -4,6 +4,7 @@
 const Q = require("q");
 const _ = require("lodash");
 const format = require('string-format');
+const winston = require('winston');
 format.extend(String.prototype);
 
 const league = require("../league.js");
@@ -343,17 +344,14 @@ function getListeners(bot, leagueName, sources, event) {
 //------------------------------------------------------------------------------
 function tellMeWhenHandler(config) {
     return function(bot, message) {
-        var deferred = Q.defer();
-        bot.startPrivateConversation(message, function (response, convo) {
-            processTellCommand(bot, config, message).then(function(response) {
+        return bot.startPrivateConversation(message.user).then(function (convo) {
+            return processTellCommand(bot, config, message).then(function(response) {
                 convo.say(response);
-                deferred.resolve();
             }).catch(function(error) {
                 convo.say("I'm sorry, but an error occurred processing this subscription command");
-                deferred.reject(error);
+                winston.error(JSON.stringify(error));
             });
         });
-        return deferred.promise;
     };
 }
 
@@ -362,17 +360,14 @@ function tellMeWhenHandler(config) {
 //------------------------------------------------------------------------------
 function helpHandler(config) {
     return function(bot, message) {
-        var deferred = Q.defer();
-        bot.startPrivateConversation(message, function (response, convo) {
-            formatHelpResponse(config).then(function(response) {
+        return bot.startPrivateConversation(message.user).then(function (convo) {
+            return formatHelpResponse(bot, config).then(function(response) {
                 convo.say(response);
-                deferred.resolve();
             }).catch(function(error) {
                 convo.say("I'm sorry, but an error occurred processing this subscription command");
-                deferred.reject(error);
+                winston.error(JSON.stringify(error));
             });
         });
-        return deferred.promise;
     };
 }
 
@@ -381,17 +376,14 @@ function helpHandler(config) {
 //------------------------------------------------------------------------------
 function listHandler(config) {
     return function(bot, message) {
-        var deferred = Q.defer();
-        bot.startPrivateConversation(message, function (response, convo) {
-            processSubscriptionListCommand(bot, config, message).then(function(response) {
+        return bot.startPrivateConversation(message.user).then(function (convo) {
+            return processSubscriptionListCommand(bot, config, message).then(function(response) {
                 convo.say(response);
-                deferred.resolve();
             }).catch(function(error) {
                 convo.say("I'm sorry, but an error occurred processing this subscription command");
-                deferred.reject(error);
+                winston.error(JSON.stringify(error));
             });
         });
-        return deferred.promise;
     };
 }
 
@@ -400,17 +392,14 @@ function listHandler(config) {
 //------------------------------------------------------------------------------
 function removeHandler(config) {
     return function(bot, message) {
-        var deferred = Q.defer();
-        bot.startPrivateConversation(message, function (response, convo) {
-            processSubscriptionRemoveCommand(bot, config, message, message.match[1]).then(function(response) {
+        return bot.startPrivateConversation(message.user).then(function (convo) {
+            return processSubscriptionRemoveCommand(bot, config, message, message.match[1]).then(function(response) {
                 convo.say(response);
-                deferred.resolve();
             }).catch(function(error) {
                 convo.say("I'm sorry, but an error occurred processing this subscription command");
-                deferred.reject(error);
+                winston.error(JSON.stringify(error));
             });
         });
-        return deferred.promise;
     };
 }
 

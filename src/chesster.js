@@ -185,7 +185,7 @@ chesster.hears({
     messageTypes: ['direct_mention', 'direct_message']
 },
 function(bot,message) {
-    bot.startPrivateConversation(message, function (response, convo) {
+    bot.startPrivateConversation(message.user).then(function (convo) {
         convo.say(prepareCommandsMessage());
     });
 });
