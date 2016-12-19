@@ -38,7 +38,6 @@ function nomination(bot, message) {
 //------------------------------------------------------------------------------
 function notification(bot, message) {
     getPrivateURL(bot, message, 'notifications').then(function(jsonResult) {
-        var localTime = message.player.localTime(moment.utc(jsonResult.expires));
         bot.reply(message, "Use this link to set your notifications preferences: {}".format(jsonResult.url));
         privateExpiryWarning(bot, message, jsonResult);
     });
