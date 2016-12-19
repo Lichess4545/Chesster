@@ -336,11 +336,10 @@ function hears(options, callback) {
             // within their first 2 minutes of having joined. :)
             // we can fix this by loooking for joins to #general and ensuring
             // our users dict is up to date.
-            if (!message.player) {
-                throw new Error("Couldn't find a valid user??");
+            if (message.player) {
+                message.player.localTime = localTime;
+                message.player.isModerator = isModerator(message);
             }
-            message.player.localTime = localTime;
-            message.player.isModerator = isModerator(message);
             return Q.all(
                 _.map(options.middleware, function(middleware) {
                     return middleware(self, message, self.config);

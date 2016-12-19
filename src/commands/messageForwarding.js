@@ -33,12 +33,27 @@ function forwardMessage(chesster, adminSlack) {
             });
             var promises = [];
             if (users.length === 1) {
-                promises.push(
-                    chesster.startPrivateConversation(users[0]).then(function(convo) {
-                        convo.say(messageToSend);
-                    })
+                var deferred = Q.defer();
+                chesster.api.im.open(
+                    {user: users[0]},
+                    function(err, response) {
+                        if (err) {
+                            deferred.reject(err);
+                        } else {
+                            if (!response.ok) {
+                                deferred.reject(response);
+                            } else {
+                                chesster.say({
+                                    channel: response.channel.id,
+                                    text: messageToSend,
+                                    attachments: []
+                                });
+                            }
+                        }
+                    }
                 );
-            } else {
+                promises.push(deferred.promise);
+            } else if (users.length > 1) {
                 var deferred = Q.defer();
                 chesster.api.mpim.open(
                     {users: users.join(',')},
@@ -51,7 +66,8 @@ function forwardMessage(chesster, adminSlack) {
                             } else {
                                 chesster.say({
                                     channel: response.group.id,
-                                    text: messageToSend
+                                    text: messageToSend,
+                                    attachments: []
                                 });
                             }
                         }
@@ -62,7 +78,8 @@ function forwardMessage(chesster, adminSlack) {
             _.forEach(channels, function(channel) {
                 chesster.say({
                     channel: channel,
-                    text: messageToSend
+                    text: messageToSend,
+                    attachments: []
                 });
             });
             return Q.all(promises);
