@@ -32,8 +32,9 @@ function forwardMessage(chesster, adminSlack) {
                 }
             });
             var promises = [];
+            var deferred = null;
             if (users.length === 1) {
-                var deferred = Q.defer();
+                deferred = Q.defer();
                 chesster.api.im.open(
                     {user: users[0]},
                     function(err, response) {
@@ -54,7 +55,7 @@ function forwardMessage(chesster, adminSlack) {
                 );
                 promises.push(deferred.promise);
             } else if (users.length > 1) {
-                var deferred = Q.defer();
+                deferred = Q.defer();
                 chesster.api.mpim.open(
                     {users: users.join(',')},
                     function(err, response) {
