@@ -11,7 +11,7 @@ const availability = require("./commands/availability.js");
 const games = require('./commands/games.js');
 const leagueInfo = require("./commands/leagueInfo.js");
 const messageForwarding = require('./commands/messageForwarding.js');
-const nomination = require("./commands/nomination.js");
+const privateURLs = require("./commands/privateURLs.js");
 const onboarding = require("./commands/onboarding.js");
 const playerInfo = require("./commands/playerInfo.js");
 const scheduling = require("./commands/scheduling.js");
@@ -125,15 +125,24 @@ adminSlack.hears(
     messageForwarding.forwardMessage(chesster, adminSlack)
 );
 
-/* game nomination */
+/* private urls */
 chesster.hears(
     {
         middleware: [slack.requiresLeague],
-        patterns: ['nomination'],
+        patterns: ['get nomination url', 'nomination'],
         messageTypes: ['direct_message']
     },
-    nomination.nomination
+    privateURLs.nomination
 );
+chesster.hears(
+    {
+        middleware: [slack.requiresLeague],
+        patterns: ['get notification url', 'notification'],
+        messageTypes: ['direct_message']
+    },
+    privateURLs.notification
+);
+
 
 /* rating */
 
