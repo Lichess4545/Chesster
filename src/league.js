@@ -663,6 +663,7 @@ var league_attributes = {
 function League(bot, options) {
     this.options = {};
     this.emitter = new ChessLeagueEmitter();
+    this.bot = bot;
     _.extend(this.options, LEAGUE_DEFAULTS, options || {});
     _.extend(this, league_attributes);
 }
