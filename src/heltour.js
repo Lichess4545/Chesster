@@ -204,6 +204,18 @@ function setAvailability(heltourConfig, playerName, available, roundNumber){
     return fetchJSONandHandleErrors(request);
 }
 
+function sendGameWarning(heltourConfig, white, black, reason) {
+    var request = heltourRequest(heltourConfig, "game_warning");
+    request.method = "POST";
+    request.bodyParameters = {
+        'league': heltourConfig.leagueTag,
+        'white': white,
+        'black': black,
+        'reason': reason
+    };
+    return http.fetchURLIntoJSON(request);
+}
+
 function fetchJSONandHandleErrors(request){
     return http.fetchURLIntoJSON(request).then(function(response){
         if(response["json"]["error"]){
@@ -231,5 +243,6 @@ module.exports.updatePairing = updatePairing;
 module.exports.getRoster = getRoster;
 module.exports.assignAlternate = assignAlternate;
 module.exports.setAvailability = setAvailability;
+module.exports.sendGameWarning = sendGameWarning;
 
 module.exports.HeltourError = HeltourError;

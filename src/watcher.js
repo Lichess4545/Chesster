@@ -11,6 +11,7 @@ const format = require('string-format');
 format.extend(String.prototype);
 const _league = require("./league.js");
 const games = require('./commands/games.js');
+const heltour = require('./heltour.js');
 
 const BACKOFF_TIMEOUT = 10;
 // const CREATED = 10;
@@ -150,6 +151,9 @@ function Watcher(bot, league) {
                      + "try again. If this is not a league game, you "
                      + "may ignore this message. Thank you.",
                 channel: self.league.options.gamelinks.channel_id
+            });
+            heltour.sendGameWarning(league.options.heltour, white, black, result.reason).catch(function(error) {
+                winston.error("Error sending game warning: {}".format(JSON.stringify(error)));
             });
         }
     };
