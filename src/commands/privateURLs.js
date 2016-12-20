@@ -24,7 +24,7 @@ function getPrivateURL(bot, message, name) {
 function privateExpiryWarning(bot, message, jsonResult) {
     var localTime = message.player.localTime(moment.utc(jsonResult.expires));
     bot.reply(message, "NOTE: this is a private link. Do not share it.");
-    bot.reply(message, "This link will expire at: {} in your local time".format(localTime.format("MMM Do YY h:mm a")));
+    bot.reply(message, "This link will expire at: {} in your local time".format(localTime.format("MMM Do YYYY h:mm a")));
 }
 
 //------------------------------------------------------------------------------
