@@ -11,12 +11,11 @@ function forwardMessage(chesster, adminSlack) {
         var commandDescription = [
             "forward",
             "to",
-            "{text:targets}",
-            "{text:message}"
+            "{text:targets}"
         ];
         return commands.tokenize(message.text, commandDescription).then(function(parameters){
             var targets = parameters['targets'];
-            var messageToSend = parameters['message'];
+            var messageToSend = message.attachments[0].text;
             var channels = [];
             var users = [];
             _(targets).split('+').filter().forEach(function(t) {
@@ -90,7 +89,9 @@ function forwardMessage(chesster, adminSlack) {
                 error instanceof commands.InvalidChoiceError ||
                 error instanceof commands.InvalidConstantError ||
                 error instanceof commands.InvalidTypeValueError){
-                bot.reply("Sorry, that format is not valid");
+                winston.error("Internal Error: Invalid format for message forwarding: {}".format(
+                    JSON.stringify(error)
+                ));
             }else if(error instanceof commands.InvalidTokenDescriptionError ||
                     error instanceof commands.InvalidTypeError){
                 winston.error("[AVAILABILITY] Internal Error: Your description is not valid: {}".format(
