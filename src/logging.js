@@ -34,7 +34,7 @@ winston.transports.Slack = Slack;
 
 
 Slack.prototype.log = function (level, msg, meta, callback) {
-    if (!this.bot) {
+    if (!this.controller.bot) {
         return;
     }
     var icon_emoji;
@@ -53,7 +53,7 @@ Slack.prototype.log = function (level, msg, meta, callback) {
             username: this.username,
             icon_emoji: icon_emoji
         };
-    this.bot.say(message);
+    this.controller.bot.say(message);
 
     callback(null, true);
 };
