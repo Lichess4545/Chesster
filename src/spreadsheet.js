@@ -27,7 +27,7 @@ module.exports = function(key, creds){
             }, function(err, cells){
                 for (var i = 0; i < data.length; i++){
     	        cells[i].value = data[i];
-    		cells[i].save(_.noop());
+    		cells[i].save(_.noop);
     	    }
     	});
         });
@@ -36,9 +36,9 @@ module.exports = function(key, creds){
     function findFirstBlankLine(tab, callBack){
       onSpreadsheet(function(){
           doc.getCells(tab, {
-              "min-row": 1,
-    	  "max-row": 50,
-    	  "min-col": 1,
+          "min-row": 1,
+          "max-row": 500,
+          "min-col": 1,
     	  "max-col": 1,
     	  "return-empty": true
           }, function(err, cells){
