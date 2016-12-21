@@ -9,7 +9,7 @@ function welcomeMessage(config) {
             bot.reply(message, "Everyone, please welcome the newest member of the " 
                              + "Lichess 45+45 League, <@" + message.user + ">!");
 
-            bot.startPrivateConversation(message, function(err, convo){
+            bot.startPrivateConversation(message.user).then(function(convo){
                convo.say("Welcome. I am the moderator bot for the Lichess4545 league");
                convo.say("Say 'help' to get help."); 
                convo.say("If you joined for the 45+45 league, read this: " 
