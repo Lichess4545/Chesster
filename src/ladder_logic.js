@@ -11,7 +11,15 @@ module.exports = function(db){
       db.recordChallenge(date, "Pending", challenger, challengee, white + " gets white");
   }
 
+  function addGame(white, black, challenger, link, result){
+      var date = moment().utc().format('MM/DD/YYYY');
+      var challengee = challenger === white ? black : white;
+
+      db.recordGame(date, white, black, challenger, challengee, link, result);
+  }
+
   return {
-      addChallenge : addChallenge
+      addChallenge : addChallenge,
+      addGame : addGame
   };
 };
