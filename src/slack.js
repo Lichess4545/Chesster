@@ -442,7 +442,12 @@ function Bot(options) {
         byName: {},
         byId: {},
         getId: function(name){
-            return this.byName[_.toLower(name)].id;
+            var user = this.byName[_.toLower(name)];
+            if (!user) {
+                winston.error("Couldn't find user by name: " + name);
+                return null;
+            }
+            return user.id;
         },
         getIdString: function(name){
             return "<@"+this.getId(name)+">";
@@ -455,7 +460,12 @@ function Bot(options) {
         byName: {},
         byId: {},
         getId: function(name){
-            return this.byName[name].id;
+            var channel = this.byName[_.toLower(name)];
+            if (!channel) {
+                winston.error("Couldn't find channel by name: " + name);
+                return null;
+            }
+            return channel.id;
         },
         getIdString: function(name){
             return "<#"+this.getId(name)+">";
