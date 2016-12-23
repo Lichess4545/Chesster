@@ -1,2 +1,2 @@
 #!/bin/bash
-node ./src/chesster.js $1 &>> output.log
+node --max_old_space_size=384 ./src/chesster.js $1 &>> output.log
