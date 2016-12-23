@@ -321,6 +321,13 @@ chesster.hears(
     },
     ladder.addGame(ladderConfigs, ladderLogic));
 
+chesster.hears(
+    {
+	patterns: ['^find challenge'],
+        messageTypes: ['direct_mention']
+    },
+    ladder.findChallenge(ladderConfigs, ladderLogic));
+
 //------------------------------------------------------------------------------
 // Start the watcher.
 watcher.watchAllLeagues(chesster);

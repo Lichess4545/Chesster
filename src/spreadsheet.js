@@ -52,9 +52,22 @@ module.exports = function(key, creds){
           });
       });
     }
+    
+    function getCells(tab, minrow, maxrow, mincol, maxcol, callback){
+        onSpreadsheet(function(){
+	    doc.getCells(tab, {
+		"min-row": minrow,
+		"max-row": maxrow,
+		"min-col": mincol,
+		"max-col": maxcol,
+		"return-empty": true
+	    }, callback);
+	});
+    }
 
     return {
         findFirstBlankLine: findFirstBlankLine,
-        writeLine: writeLine
+        writeLine: writeLine,
+        getCells: getCells
     };
 };

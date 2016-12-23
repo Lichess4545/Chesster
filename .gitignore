@@ -10,6 +10,7 @@ logging_token.js
 coverage
 test_service_account_key.js
 test_chesster_slack_token.js
+chesster_slack_token.js
 test_heltour_token.js
 test_logging_token.js
 ladder_config.js
