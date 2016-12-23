@@ -1,5 +1,4 @@
 const _ = require("lodash");
-const winston = require("winston");
 
 function addChallenge(config, logic){
     return function(bot, message){
@@ -36,7 +35,7 @@ function findChallenge(config, logic){
 	    if (words.length !== 4){
                 bot.reply(message, "usage: @chesster find challenge <player> <player>");
             } else {
-		var challenge = logic.findChallenge(words[2], words[3], function(challenge){
+		logic.findChallenge(words[2], words[3], function(challenge){
                     if (challenge && challenge.challenger && challenge.challengee){
                         bot.reply(message, challenge.challenger + " challenged " + challenge.challengee);
                     } else {
