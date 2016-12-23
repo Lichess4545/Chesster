@@ -18,8 +18,15 @@ module.exports = function(db){
       db.recordGame(date, white, black, challenger, challengee, link, result);
   }
 
+  function findChallenge(player1, player2, callback){
+      db.findChallenge(player1, player2, function(result){
+	  callback(result);
+      });
+  }
+
   return {
       addChallenge : addChallenge,
-      addGame : addGame
+      addGame : addGame,
+      findChallenge: findChallenge
   };
 };
