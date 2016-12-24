@@ -32,7 +32,7 @@ var adminSlack = new slack.Bot({
     slackName: "chesster",
     configFile: configFile,
     connectToModels: false,
-    refreshLeague: false,
+    refreshLeagues: false,
     logToThisSlack: true
 });
 
