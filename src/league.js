@@ -179,6 +179,9 @@ var league_attributes = {
                             unlock.resolve();
                         });
                         return player.rating;
+                    }).catch(function(err) {
+                        winston.error(JSON.stringify(err));
+                        unlock.resolve();
                     });
                 });
             });
