@@ -25,6 +25,9 @@ var exports = (function() {
             var unlock = Q.defer();
             lockDeferred.resolve(unlock);
             return unlock.promise;
+        }).catch(function(err) {
+            winston.error(JSON.stringify(err));
+            lockDeferred.reject(err);
         });
         return lockDeferred.promise;
     }
