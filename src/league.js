@@ -183,6 +183,8 @@ var league_attributes = {
                         winston.error(JSON.stringify(err));
                         unlock.resolve();
                     });
+                }).catch(function(err) {
+                    winston.error(JSON.stringify(err));
                 });
             });
             self._playerLookup = newPlayerLookup;
