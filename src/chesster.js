@@ -66,7 +66,7 @@ directRequiresLeague(
     leagueInfo.directResponse('formatSummonModsResponse')
 );
 directRequiresLeague(
-    ['^mods$', '^moderators$'],
+    ['^mods', '^moderators'],
     leagueInfo.directResponse('formatModsResponse')
 );
 directRequiresLeague(
