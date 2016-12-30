@@ -132,11 +132,11 @@ var config = {
                 "resultsColname": "result"
             },
             "results": {
-                "channel": "lonewolf-results",
-                "channel_id": "C0SD3TGGM"
+                "channel": "lonewolf-games",
+                "channel_id": "C0SD3SCAH"
             },
             "gamelinks": {
-                "channel": "lonewolf-gamelinks",
+                "channel": "lonewolf-games",
                 "channel_id": "C0SD3SCAH",
                 "clock": {
                     "initial": 30,
@@ -176,8 +176,7 @@ var config = {
     },
     "channel_map": {
         "lonewolf-general": "lonewolf",
-        "lonewolf-results": "lonewolf",
-        "lonewolf-gamelinks": "lonewolf",
+        "lonewolf-games": "lonewolf",
         "lonewolf-scheduling": "lonewolf",
         "unstable_bot-lonewolf": "lonewolf",
         "general": "45+45",
