@@ -63,11 +63,11 @@ var config = {
                 "resultsColname": "result"
             },
             "results": {
-                "channel": "team-results",
-                "channel_id": "C0CSALKL4"
+                "channel": "team-games",
+                "channel_id": "C0CSAHD43"
             },
             "gamelinks": {
-                "channel": "team-gamelinks",
+                "channel": "team-games",
                 "channel_id": "C0CSAHD43",
                 "clock": {
                     "initial": 45,
@@ -182,8 +182,7 @@ var config = {
         "general": "45+45",
         "team-general": "45+45",
         "team-results": "45+45",
-        "team-gamelinks": "45+45",
-        "team-scheduling": "45+45",
+        "team-games": "45+45",
         "captains": "45+45",
         "G0DFRURGQ": "45+45",
     },
