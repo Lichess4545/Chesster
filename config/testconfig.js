@@ -49,4 +49,6 @@ config["channel_map"]["unstable_bot"] = "45+45";
 config["channel_map"]["unstabled_bot-lonewolf"] = "lonewolf";
 config["channel_map"][UNSTABLE_BOT_LONEWOLF_ID] = "lonewolf";
 
+config["messageForwarding"]["channel"] = "N/A";
+
 module.exports = config;
