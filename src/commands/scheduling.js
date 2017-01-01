@@ -152,7 +152,7 @@ function getPossibleDateStrings(dateString, extrema) {
     var dateNameMappings = {};
 
     var cur = extrema.start.clone();
-    var now = moment.utc();
+    var now = extrema.referenceDate || moment.utc();
     var month;
     while (!cur.isAfter(extrema.end)) {
         var monthDay = cur.format("MM-DD");
@@ -196,7 +196,6 @@ function getPossibleDateStrings(dateString, extrema) {
     dateStrings.push(tokens.join(" "));
 
     // Now make some where we inject the year at the beginning
-    now = moment.utc();
     var year = now.format("YYYY");
     month = now.format("MM");
     dateStrings.slice().forEach(function(dateString) {
@@ -329,7 +328,8 @@ function getRoundExtrema(options) {
     return {
         'start': roundStart,
         'end': roundEnd,
-        'warning': warningEnd
+        'warning': warningEnd,
+        'referenceDate': extrema.referenceDate
     };
 }
 
