@@ -85,7 +85,7 @@ function updateAvailability(bot, message) {
             "{text:playerName}",
             "is",
             "{available|unavailable}",
-            "for",
+            "{for|during}",
             "round",
             "{int:roundNumber}",
             "in",
@@ -94,7 +94,7 @@ function updateAvailability(bot, message) {
     }else{
         commandDescription = [
             "{available|unavailable}",
-            "for",
+            "{for|during}",
             "round",
             "{int:roundNumber}",
             "in",
