@@ -391,7 +391,7 @@ function say(options) {
     var self = this;
     if (options.text) {
         // Replace user links in the form <@user> with <@U12345|user>
-        options.text = options.text.replace(/\<\@(\w+)\>/g, function(match, username) {
+        options.text = options.text.replace(/<\@([\w-\.]+)>/g, function(match, username) {
             var user = self.users.getByNameOrID(username);
             if (user) {
                 return "<@" + user.id + "|" + user.name + ">";
@@ -489,7 +489,7 @@ function Bot(options) {
         if (err) {
             throw new Error(err);
         }
-        
+
         // Store a reference to the bot so that we can use it later.
         self.bot = bot;
 
