@@ -486,6 +486,10 @@ function Bot(options) {
     self.controller.spawn({
         token: self.token
     }).startRTM(function(err, bot) {
+        if (err) {
+            throw new Error(err);
+        }
+        
         // Store a reference to the bot so that we can use it later.
         self.bot = bot;
 
@@ -493,9 +497,6 @@ function Bot(options) {
         self.reply = bot.reply;
         self.api = bot.api;
 
-        if (err) {
-            throw new Error(err);
-        }
         // connect to the database
         if (self.options.connectToModels) {
             models.connect(self.config).then(function() {
