@@ -388,7 +388,18 @@ function on(options, callback) {
     });
 }
 function say(options) {
-    this.bot.say(options);
+    var self = this;
+    if (options.text) {
+        // Replace user links in the form <@user> with <@U12345|user>
+        options.text = options.text.replace(/<\@([\w-\.]+)>/g, function(match, username) {
+            var user = self.users.getByNameOrID(username);
+            if (user) {
+                return "<@" + user.id + "|" + user.name + ">";
+            }
+            return match;
+        });
+    }
+    self.bot.say(options);
 }
 //------------------------------------------------------------------------------
 // A helper method to workaround a bug in botkit. 
@@ -475,6 +486,10 @@ function Bot(options) {
     self.controller.spawn({
         token: self.token
     }).startRTM(function(err, bot) {
+        if (err) {
+            throw new Error(err);
+        }
+
         // Store a reference to the bot so that we can use it later.
         self.bot = bot;
 
@@ -482,9 +497,6 @@ function Bot(options) {
         self.reply = bot.reply;
         self.api = bot.api;
 
-        if (err) {
-            throw new Error(err);
-        }
         // connect to the database
         if (self.options.connectToModels) {
             models.connect(self.config).then(function() {
