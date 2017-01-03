@@ -388,7 +388,18 @@ function on(options, callback) {
     });
 }
 function say(options) {
-    this.bot.say(options);
+    var self = this;
+    if (options.text) {
+        // Replace user links in the form <@user> with <@U12345|user>
+        options.text = options.text.replace(/\<\@(\w+)\>/g, function(match, username) {
+            var user = self.users.getByNameOrID(username);
+            if (user) {
+                return "<@" + user.id + "|" + user.name + ">";
+            }
+            return match;
+        });
+    }
+    self.bot.say(options);
 }
 //------------------------------------------------------------------------------
 // A helper method to workaround a bug in botkit. 
