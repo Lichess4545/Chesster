@@ -48,6 +48,7 @@ function forwardMessage(chesster, adminSlack) {
                                     text: messageToSend,
                                     attachments: []
                                 });
+                                deferred.resolve();
                             }
                         }
                     }
@@ -69,6 +70,7 @@ function forwardMessage(chesster, adminSlack) {
                                     text: messageToSend,
                                     attachments: []
                                 });
+                                deferred.resolve();
                             }
                         }
                     }
@@ -83,7 +85,8 @@ function forwardMessage(chesster, adminSlack) {
                 });
             });
             return Q.all(promises);
-
+        }).then(function() {
+            bot.api.reactions.add({ name: "heavy_check_mark", channel: message.channel, timestamp: message.ts });
         }).catch(function(error){
             if(error instanceof commands.TooFewTokensError ||
                 error instanceof commands.InvalidChoiceError ||
