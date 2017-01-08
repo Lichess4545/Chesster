@@ -54,14 +54,6 @@ var config = {
                 "baseEndpoint": "https://www.lichess4545.com/api/", 
                 "leagueTag": "team4545"
             },
-            "spreadsheet": {
-                "key": "1cTBOQNrbUw9-RWmrC9b6Yyi3i2MtIvUWuXNxzQmGfSs",
-                "serviceAccountAuth": {
-                    "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com"
-                },
-                "scheduleColname": "time (mm/dd @ hh:mm*)",
-                "resultsColname": "result"
-            },
             "results": {
                 "channel": "team-games",
                 "channel_id": "C0CSAHD43"
@@ -123,14 +115,6 @@ var config = {
                 "baseEndpoint": "https://www.lichess4545.com/api/", 
                 "leagueTag": "lonewolf"
             },
-            "spreadsheet": {
-                "key": "1WI4H9DWKSI-q6Omeqh28w1lKaqB0AAFV01wDiOeW6Ho",
-                "serviceAccountAuth": {
-                    "client_email": "chesster@chesster-lichess-4545-bot.iam.gserviceaccount.com"
-                },
-                "scheduleColname": "game scheduled (in gmt)",
-                "resultsColname": "result"
-            },
             "results": {
                 "channel": "lonewolf-games",
                 "channel_id": "C0SD3SCAH"
@@ -173,12 +157,57 @@ var config = {
                 "registration": "https://www.lichess45454.com/lonewolf/register/"
             }
         },
+        "blitzbattle": {
+            "name": "Blitz Battle",
+            "also_known_as": [
+                "blitz",
+                "32",
+            ],
+            "heltour": {
+                "token": heltour_token,
+                "baseEndpoint": "https://www.lichess4545.com/api/", 
+                "leagueTag": "blitzbattle"
+            },
+            "results": {
+                "channel": "blitz-battle-games",
+                "channel_id": "C0SD3SCAH"
+            },
+            "gamelinks": {
+                "channel": "blitz-battle-games",
+                "channel_id": "C0SD3SCAH",
+                "clock": {
+                    "initial": 30,
+                    "increment": 30
+                },
+                "rated": true,
+                "variant" : "standard",
+                "extrema": {
+                    "iso_weekday": 1,
+                    "hour": 22,
+                    "minute": 0,
+                    "warning_hours": 1
+                }
+
+            },
+            "links": {
+                "faq": "https://www.lichess4545.com/blitzbattle/document/faq/",
+                "rules": "https://www.lichess4545.com/blitzbattle/document/rules/",
+                "league": "https://www.lichess4545.com/blitzbattle/",
+                "pairings": "https://www.lichess4545.com/blitzbattle/pairings/",
+                "standings": "https://www.lichess4545.com/blitzbattle/standings/",
+                "registration": "https://www.lichess45454.com/blitzbattle/register/"
+            }
+        },
     },
     "channel_map": {
         "lonewolf-general": "lonewolf",
         "lonewolf-games": "lonewolf",
         "lonewolf-scheduling": "lonewolf",
         "unstable_bot-lonewolf": "lonewolf",
+        "blitz-battle": "blitzbattle",
+        "blitz-battle-games": "blitzbattle",
+        "blitz-battle-scheduling": "blitzbattle",
+        "unstable_bot-blitz": "blitzbattle",
         "general": "45+45",
         "team-general": "45+45",
         "team-games": "45+45",
