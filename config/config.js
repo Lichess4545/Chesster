@@ -176,8 +176,8 @@ var config = {
                 "channel": "blitz-battle-games",
                 "channel_id": "C0SD3SCAH",
                 "clock": {
-                    "initial": 30,
-                    "increment": 30
+                    "initial": 3,
+                    "increment": 2
                 },
                 "rated": true,
                 "variant" : "standard",
@@ -206,7 +206,6 @@ var config = {
         "unstable_bot-lonewolf": "lonewolf",
         "blitz-battle": "blitzbattle",
         "blitz-battle-games": "blitzbattle",
-        "blitz-battle-scheduling": "blitzbattle",
         "unstable_bot-blitz": "blitzbattle",
         "general": "45+45",
         "team-general": "45+45",
