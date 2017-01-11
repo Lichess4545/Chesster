@@ -188,6 +188,7 @@ function Watcher(bot, league) {
         options.headers = {
             "Content-Length": Buffer.byteLength(body)
         };
+        var hasResponse = false;
         self.req = _https.request(options);
         self.req.on('response', function (res) {
             res.on('data', function (chunk) {
@@ -205,10 +206,15 @@ function Watcher(bot, league) {
                 self.req = null;
                 self.watch(usernames);
             });
+            hasResponse = true;
         }).on('error', (e) => {
             winston.error("[Watcher]: " + JSON.stringify(e));
-            // the above res.on('end') gets called even in this case.
+            // If we have a response, the above res.on('end') gets called even in this case.
             // So let the above restart the watcher
+            if (!hasResponse) {
+                self.req = null;
+                self.watch(usernames);
+            }
         });
         self.req.write(body);
         self.req.end();
