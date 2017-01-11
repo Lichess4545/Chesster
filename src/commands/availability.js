@@ -124,7 +124,7 @@ function updateAvailability(bot, message) {
             //get the team associated with the speaker
             var speakerTeam = message.league.getTeamByPlayerName(speaker.name);
             //the speaker must be the captain of the player's team or a moderator
-            if (!utils.isCaptainOrModerator(speaker, speakerTeam, playerTeam, message.league)) {
+            if (!utils.isCaptainOrModerator(speaker, speakerTeam, playerTeam && playerTeam.name, message.league)) {
                 replyOnlyACaptainOrAModeratorCanDoThat(bot, message);
                 return;
             }
