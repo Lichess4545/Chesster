@@ -19,14 +19,6 @@ config['winston']['handleExceptions'] = false;
 
 config["welcome"]["channel"] = "unstable_bot-lonewolf";
 
-config["leagues"]["45+45"]["spreadsheet"]["key"] = "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA";
-config["leagues"]["45+45"]["spreadsheet"]["serviceAccountAuth"] = {
-    "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
-};
-config["leagues"]["lonewolf"]["spreadsheet"]["key"] = "1xBofd1bFIB4OBUOErWqFWTjTc0dFuTf6WlHxZf3FbIU";
-config["leagues"]["lonewolf"]["spreadsheet"]["serviceAccountAuth"] = {
-    "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
-};
 config["leagues"]["45+45"]["heltour"]["token"] = heltour_token;
 config["leagues"]["45+45"]["heltour"]["baseEndpoint"] = "https://staging.lichess4545.com/api/";
 config["leagues"]["lonewolf"]["heltour"]["token"] = heltour_token;

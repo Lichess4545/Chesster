@@ -9,11 +9,6 @@ const slack = require('../src/slack');
 
 var _45_45_LEAGUE_CONF = {
     "name": "45+45",
-    "spreadsheet": {
-        "key": "1BeRN76zaB_uCCrCra2yTEEw_r6C5_b8P59aN_BrJsyA",
-        "serviceAccountAuth": undefined,
-        "scheduleColname": "time (mm/dd @ hh:mm*)"
-    },
     "moderators": ['endrawes0', 'theino', 'mrlegilimens'],
     "channels": [],
     "links": {
@@ -29,23 +24,6 @@ var _45_45_LEAGUE_CONF = {
         "format": "MM/DD @ HH:mm"
     }
 };
-
-
-// NOTE: this key is required for the write tests, but not provided in the repository.
-var private_key = null
-try {
-    private_key = require("../config/test_service_account_key.js").key;
-} catch (e) {
-    if (process.env.TEST_SERVICE_ACCOUNT_KEY) {
-        private_key = process.env.TEST_SERVICE_ACCOUNT_KEY.split("\\n").join("\n");
-    }
-}
-if (private_key) {
-    _45_45_LEAGUE_CONF["spreadsheet"]["serviceAccountAuth"] = {
-        "client_email": "tesster@chesster-lichess-4545-bot.iam.gserviceaccount.com",
-        "private_key": private_key
-    }
-}
 
 describe('league', function() {
     //--------------------------------------------------------------------------
