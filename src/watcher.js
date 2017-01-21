@@ -194,7 +194,9 @@ function Watcher(bot, league) {
             res.on('data', function (chunk) {
                 try {
                     var details = JSON.parse(chunk.toString());
-                    self.processGameDetails(details);
+                    self.league.refreshCurrentRoundSchedules().then(function() {
+                        self.processGameDetails(details);
+                    });
                 } catch (e) {
                     winston.error("[Watcher]: {}".format(JSON.stringify(e)));
                     winston.error("[Watcher]: Ending request due to error in content");
