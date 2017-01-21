@@ -170,11 +170,11 @@ var config = {
             },
             "results": {
                 "channel": "blitz-battle-games",
-                "channel_id": "C0SD3SCAH"
+                "channel_id": "C3TV7T648"
             },
             "gamelinks": {
                 "channel": "blitz-battle-games",
-                "channel_id": "C0SD3SCAH",
+                "channel_id": "C3TV7T648",
                 "clock": {
                     "initial": 3,
                     "increment": 2
