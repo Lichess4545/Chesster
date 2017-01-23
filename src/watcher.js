@@ -143,7 +143,7 @@ function Watcher(bot, league) {
             self.bot.say({
                 text: "<@" + white + ">,  <@" + black + ">:"
                     + " Your game is *not valid* because "
-                    + "*" + result.reason + "*",
+                    + "*" + result.reason + "*" + "@seb32",
                 channel: self.league.options.gamelinks.channel_id
             });
             self.bot.say({
