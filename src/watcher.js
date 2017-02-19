@@ -51,7 +51,7 @@ function Watcher(bot, league) {
         if (self.usernames.length - union.length !== 0) {
             winston.info("[Watcher] {}: Restarting because usernames have changed".format(self.league.options.name));
             self.usernames = newUsernames;
-            self.watch(self.usernames);
+            self.watch();
         }
     });
 
@@ -158,7 +158,7 @@ function Watcher(bot, league) {
     };
 
     //--------------------------------------------------------------------------
-    self.watch = function(usernames) {
+    self.watch = function() {
         // Ensure we close/abort any previous request before starting a new one.
         if (self.req) {
             self.req.abort();
@@ -179,7 +179,7 @@ function Watcher(bot, league) {
             self.usernames = [];
             return;
         }
-        var body = usernames.join(",");
+        var body = self.usernames.join(",");
         winston.info("[Watcher] {}: Watching {} with {} users".format(self.league.options.name, self.bot.config.watcherBaseURL, body));
         var options = url.parse(self.bot.config.watcherBaseURL);
         options.method = "POST";
@@ -208,7 +208,7 @@ function Watcher(bot, league) {
             res.on('end', () => {
                 winston.info("[Watcher] {}: Watcher response ended".format(league.options.name));
                 self.req = null;
-                self.watch(usernames);
+                self.watch();
             });
             hasResponse = true;
         }).on('error', (e) => {
@@ -217,7 +217,7 @@ function Watcher(bot, league) {
             // So let the above restart the watcher
             if (!hasResponse) {
                 self.req = null;
-                self.watch(usernames);
+                self.watch();
             }
         });
         self.req.write(body);
