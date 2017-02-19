@@ -404,6 +404,9 @@ function ambientScheduling(bot, message) {
     }
 
     var schedulingOptions = message.league.options.scheduling;
+    if (!schedulingOptions) {
+        return;
+    }
     var channel = bot.channels.byId[message.channel];
     if (!channel) {
         return;
