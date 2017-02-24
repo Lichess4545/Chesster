@@ -41,17 +41,17 @@ function Watcher(bot, league) {
         var black = _.map(league._pairings, "black");
         var newUsernames = _.uniq(_.concat(white, black));
         newUsernames.sort();
-        winston.info("-----------------------------------------------------");
-        winston.info("{} old usernames {} incoming usernames".format(
-            self.usernames.length,
-            newUsernames.length
-        ));
         var union = _.union(newUsernames, self.usernames);
-        winston.info("{} differences".format(self.usernames.length - union.length));
+        winston.info("[Watcher] {}: {} old usernames {} incoming usernames {} differences".format(
+            self.league.options.name,
+            self.usernames.length,
+            newUsernames.length,
+            self.usernames.length - union.length
+        ));
         if (self.usernames.length - union.length !== 0) {
-            winston.info("Restarting watcher because usernames have changed");
+            winston.info("[Watcher] {}: Restarting because usernames have changed".format(self.league.options.name));
             self.usernames = newUsernames;
-            self.watch(self.usernames);
+            self.watch();
         }
     });
 
@@ -60,14 +60,13 @@ function Watcher(bot, league) {
         // 1. perfect match any time, try to update.
         // 2. pairing + time control match any time, warn for other mismatches 
         // 3. pairing match during a 4 hour window (+-2 hours), warn for other mismatches
-        winston.info("Watcher received game details: {}".format(JSON.stringify(details)));
 
         var result = games.validateGameDetails(self.league, details);
-        winston.info("Watcher validation result: {}".format(JSON.stringify(result)));
+        winston.info("[Watcher] {}: Validation result: {}".format(self.league.options.name, JSON.stringify(result)));
         // If we don't have a pairing from this information, then it will
         // never be valid. Ignore it.
         if (!result.pairing) {
-            winston.info("No pairing so ignoring!");
+            winston.info("[Watcher] {}: No pairing so ignoring!".format(self.league.options.name));
             return;
         }
         var white = result.pairing.white.toLowerCase();
@@ -81,7 +80,7 @@ function Watcher(bot, league) {
 
         if (result.valid) {
             if (result.pairing.result) {
-                winston.info("Watcher received VALID game but result already exists");
+                winston.info("[Watcher] {}: Received VALID game but result already exists".format(self.league.options.name));
                 if (details.status === STARTED) {
                     self.bot.say({
                         text: "<@" + white + ">,  <@" + black + ">:"
@@ -91,7 +90,7 @@ function Watcher(bot, league) {
                     });
                 }
             } else if (result.pairing.game_link && !result.pairing.game_link.endsWith(details.id)) {
-                winston.info("Watcher received VALID game but game link does not match");
+                winston.info("[Watcher] {}: Received VALID game but game link does not match".format(self.league.options.name));
                 if (details.status === STARTED) {
                     self.bot.say({
                         text: "<@" + white + ">,  <@" + black + ">:"
@@ -101,7 +100,7 @@ function Watcher(bot, league) {
                     });
                 }
             } else {
-                winston.info("Watcher received VALID AND NEEDED game!");
+                winston.info("[Watcher] {}: Received VALID AND NEEDED game!".format(self.league.options.name));
                 // Fetch the game details from the lichess games API because updateGamelink is more picky about the details format
                 // This could be obviated by an enhancement to the game-stream API
                 games.fetchGameDetails(details.id).then(function(response) {
@@ -122,14 +121,14 @@ function Watcher(bot, league) {
                             });
                         }
                     }).catch(function(error) {
-                        winston.error("Error updating game in watcher: {}".format(JSON.stringify(error)));
+                        winston.error("[Watcher] {}: Error updating game: {}".format(self.league.options.name, JSON.stringify(error)));
                     });
                 }).catch(function(error) {
-                    winston.error("Error fetching game details in watcher: {}".format(JSON.stringify(error)));
+                    winston.error("[Watcher] {}: Error fetching game details: {}".format(self.league.options.name, JSON.stringify(error)));
                 });
             }
         } else if (details.status === STARTED) {
-            winston.info("Watcher received INVALID game");
+            winston.info("[Watcher] {}: Received INVALID game".format(self.league.options.name));
 
             var hours = Math.abs(now.diff(scheduledDate));
             if ((!scheduledDate || hours >= 2) && result.timeControlIsIncorrect) {
@@ -139,7 +138,7 @@ function Watcher(bot, league) {
                 return;
             }
 
-            winston.info("Sending warning");
+            winston.info("[Watcher] {}: Sending warning".format(self.league.options.name));
             self.bot.say({
                 text: "<@" + white + ">,  <@" + black + ">:"
                     + " Your game is *not valid* because "
@@ -153,13 +152,13 @@ function Watcher(bot, league) {
                 channel: self.league.options.gamelinks.channel_id
             });
             heltour.sendGameWarning(league.options.heltour, white, black, result.reason).catch(function(error) {
-                winston.error("Error sending game warning: {}".format(JSON.stringify(error)));
+                winston.error("[Watcher] {}: Error sending game warning: {}".format(self.league.options.name, JSON.stringify(error)));
             });
         }
     };
 
     //--------------------------------------------------------------------------
-    self.watch = function(usernames) {
+    self.watch = function() {
         // Ensure we close/abort any previous request before starting a new one.
         if (self.req) {
             self.req.abort();
@@ -173,16 +172,15 @@ function Watcher(bot, league) {
         self.lastStarted = self.started;
         self.started = moment.utc();
         if (self.lastStarted && self.started.unix() - self.lastStarted.unix() < BACKOFF_TIMEOUT) {
-            winston.warn("[Watcher] {} - Backing off the watcher due to two starts in 10s: {}s".format(
+            winston.warn("[Watcher] {}: Backing off the watcher due to two starts in 10s: {}s".format(
                 self.league.options.name,
                 self.started.unix() - self.lastStarted.unix()
             ));
             self.usernames = [];
             return;
         }
-        var body = usernames.join(",");
-        winston.info("watching {} with {} users".format(self.bot.config.watcherBaseURL, body));
-        winston.info("============================================================");
+        var body = self.usernames.join(",");
+        winston.info("[Watcher] {}: Watching {} with {} users".format(self.league.options.name, self.bot.config.watcherBaseURL, body));
         var options = url.parse(self.bot.config.watcherBaseURL);
         options.method = "POST";
         options.headers = {
@@ -194,28 +192,32 @@ function Watcher(bot, league) {
             res.on('data', function (chunk) {
                 try {
                     var details = JSON.parse(chunk.toString());
+                    winston.info("[Watcher] {}: Received game details: {}".format(self.league.options.name, JSON.stringify(details)));
                     self.league.refreshCurrentRoundSchedules().then(function() {
                         self.processGameDetails(details);
+                    }).catch(function(error) {
+                        winston.error("[Watcher] {}: Error refreshing pairings: {}".format(self.league.options.name, JSON.stringify(error)));
                     });
                 } catch (e) {
-                    winston.error("[Watcher]: {}".format(JSON.stringify(e)));
-                    winston.error("[Watcher]: Ending request due to error in content");
+                    winston.error("[Watcher] {}: {}".format(self.league.options.name, JSON.stringify(e)));
+                    winston.error("[Watcher] {}: Ending request due to error in content".format(self.league.options.name));
                     self.req.abort();
                     self.req = null;
                 }
             });
             res.on('end', () => {
+                winston.info("[Watcher] {}: Watcher response ended".format(league.options.name));
                 self.req = null;
-                self.watch(usernames);
+                self.watch();
             });
             hasResponse = true;
         }).on('error', (e) => {
-            winston.error("[Watcher]: " + JSON.stringify(e));
+            winston.error("[Watcher] {}: {}".format(self.league.options.name, JSON.stringify(e)));
             // If we have a response, the above res.on('end') gets called even in this case.
             // So let the above restart the watcher
             if (!hasResponse) {
                 self.req = null;
-                self.watch(usernames);
+                self.watch();
             }
         });
         self.req.write(body);
@@ -228,7 +230,7 @@ var watcherMap = {};
 //------------------------------------------------------------------------------
 var watchAllLeagues = function(bot) {
     _.each(_league.getAllLeagues(bot, bot.config), function(league) {
-        winston.info("Watching: {}".format(league.options.name));
+        winston.info("[Watcher] {}: Watching".format(league.options.name));
         watcherMap[league.name] = new Watcher(bot, league);
     });
 };

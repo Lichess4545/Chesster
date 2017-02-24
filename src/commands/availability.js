@@ -88,7 +88,7 @@ function updateAvailability(bot, message) {
             "{for|during}",
             "round",
             "{int:roundNumber}",
-            "in",
+            "{in|of}",
             "{text:league}"
         ];
     }else{
@@ -97,7 +97,7 @@ function updateAvailability(bot, message) {
             "{for|during}",
             "round",
             "{int:roundNumber}",
-            "in",
+            "{in|of}",
             "{text:league}"
         ];
     }
