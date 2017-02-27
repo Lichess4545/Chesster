@@ -2,6 +2,7 @@ const _ = require("lodash");
 const Q = require("q");
 const winston = require("winston");
 const commands = require("../commands");
+const league = require("../league");
 
 function forwardMessage(chesster, adminSlack) {
     return function(bot, message) {
@@ -107,4 +108,41 @@ function forwardMessage(chesster, adminSlack) {
         });
     };
 }
+
+function refreshLeague(chesster, adminSlack) {
+    return function(bot, message) {
+        if (!_.isEqual(message.channel, adminSlack.config.messageForwarding.channel)) {
+            return;
+        }
+        var commandDescription = [
+            "refresh",
+            "{text:type}",
+            "{text:league}"
+        ];
+        return commands.tokenize(message.text, commandDescription).then(function(parameters){
+            var type = parameters['type'];
+            var leagueName = parameters['league'];
+            var _league = league.getLeague(bot, leagueName, chesster.config);
+            
+            if (!_league) {
+                winston.error("No matching league: {}".format(leagueName));
+                return;
+            }
+
+            if (type === "pairings") {
+                _league.refreshCurrentRoundSchedules().then(function(pairings) {
+                    winston.info("Found " + pairings.length + " pairings for " + _league.options.name + " (manual refresh)");
+                }).catch(function(error) {
+                    winston.error("{}: Error refreshing pairings: {}".format(_league.options.name, JSON.stringify(error)));
+                });
+            }
+        }).catch(function(error){
+            winston.error("Error in league refresh command: {}".format(
+                JSON.stringify(error)
+            ));
+        });
+    };
+}
+
 module.exports.forwardMessage = forwardMessage;
+module.exports.refreshLeague = refreshLeague;

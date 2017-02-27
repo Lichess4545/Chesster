@@ -124,6 +124,13 @@ adminSlack.hears(
     },
     messageForwarding.forwardMessage(chesster, adminSlack)
 );
+adminSlack.hears(
+    {
+        patterns: ["^refresh"],
+        messageTypes: ['direct_mention', 'bot_message']
+    },
+    messageForwarding.refreshLeague(chesster, adminSlack)
+);
 
 /* private urls */
 chesster.hears(
