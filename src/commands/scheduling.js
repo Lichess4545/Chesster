@@ -483,7 +483,7 @@ function ambientScheduling(bot, message) {
             if (updateScheduleResults['error'] === 'not_found') {
                 schedulingReplyMissingPairing(bot, message);
                 deferred.resolve();
-            } else if (updateScheduleResults['error'] === 'no_data') {
+            } else if (updateScheduleResults['error'] === 'no_matching_rounds') {
                 replyNoActiveRound(bot, message);
                 deferred.resolve();
             } else if (updateScheduleResults['error'] === 'ambiguous') {
