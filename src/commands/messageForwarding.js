@@ -132,6 +132,7 @@ function refreshLeague(chesster, adminSlack) {
             if (type === "pairings") {
                 _league.refreshCurrentRoundSchedules().then(function(pairings) {
                     winston.info("Found " + pairings.length + " pairings for " + _league.options.name + " (manual refresh)");
+                    _league.emitter.emit('refreshPairings', _league);
                 }).catch(function(error) {
                     winston.error("{}: Error refreshing pairings: {}".format(_league.options.name, JSON.stringify(error)));
                 });
