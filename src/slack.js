@@ -508,6 +508,10 @@ function Bot(options) {
             self.refresh(bot, 120 * SECONDS, self.config);
         }
     });
+    self.controller.on('rtm_close', function(bot, err) {
+        winston.error('RTM connection closed unexpectedly. I am going down.');
+        process.exit(1);
+    });
 
 
     winston.level = 'silly';
