@@ -113,14 +113,14 @@ function formatAGameIsScheduled(bot, target, context) {
 //------------------------------------------------------------------------------
 // Format the A Game Starts response.
 //------------------------------------------------------------------------------
-function formatAGameStarts(target, context) {
+function formatAGameStarts(bot, target, context) {
     return "{white.name} vs {black.name} in {leagueName} has started: {result.gamelink}".format(context);
 }
 
 //------------------------------------------------------------------------------
 // Format the a game is over response.
 //------------------------------------------------------------------------------
-function formatAGameIsOver(target, context) {
+function formatAGameIsOver(bot, target, context) {
     return "{white.name} vs {black.name} in {leagueName} is over. The result is {result.result}.".format(context);
 }
 
@@ -302,6 +302,8 @@ function register(bot, eventName, cb) {
                     var message = cb(bot, target, _.clone(context));
                     convo.say(message);
                     deferred.resolve();
+                }).catch(function(error) {
+                    console.error(error);
                 });
                 allDeferreds.push(deferred.promise);
             });
