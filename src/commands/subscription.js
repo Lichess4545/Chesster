@@ -303,7 +303,7 @@ function register(bot, eventName, cb) {
                     convo.say(message);
                     deferred.resolve();
                 }).catch(function(error) {
-                    console.error(error);
+                    winston.error(error);
                 });
                 allDeferreds.push(deferred.promise);
             });
