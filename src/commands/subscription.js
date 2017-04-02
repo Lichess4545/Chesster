@@ -42,9 +42,9 @@ function formatHelpResponse(bot, config) {
             " `my-team-channel` to subscribe your team channel (_Note: you must be " +
             " be team captain to use `my-team-channel`_).\n" +
             "2. `<event>` is one of:`" + events.join("` or `") + "`\n" +
-            "3. `<target-user-or-team>` is the target username or teamname that you are " +
-            "subscribing to (_Note: You can use `my-team` to target your team_).\n" +
-            "4. `<league>` is one of: `" + leagueNames.join("` or `") + "`";
+            "3. `<league>` is one of: `" + leagueNames.join("` or `") + "`\n" +
+            "4. `<target-user-or-team>` is the target username or teamname that you are " +
+            "subscribing to (_Note: You can use `my-team` to target your team_).";
     });
 }
 
