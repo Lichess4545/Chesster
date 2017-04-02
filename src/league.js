@@ -191,7 +191,7 @@ var league_attributes = {
             _.each(roster.teams, function(team) {
                 _.each(team.players, function(teamPlayer) {
                     var player = self.getPlayer(teamPlayer.username);
-                    player.isCaptain = teamPlayer.is_captain;
+                    player.isCaptain = teamPlayer.isCaptain = teamPlayer.is_captain;
                     if (player.isCaptain) {
                         team.captain = player;
                     }
