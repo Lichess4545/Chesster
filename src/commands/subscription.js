@@ -171,8 +171,8 @@ function processTellCommand(bot, config, message) {
         //       but we are in a DM, not a league specific channel
         message.league = _league;
         var team = message.league.getTeamByPlayerName(message.player.name);
-        var captainName = _(team.players).filter(function(p) { return p.isCaptain; }).map("username").value();
-        var isCaptain = captainName == message.player.name;
+        var captainName = _(team.players).filter('isCaptain').map('username').value();
+        var isCaptain = _.isEqual(captainName[0], message.player.name);
 
         var possibleListeners = ['me', 'my-team-channel'];
 
@@ -190,6 +190,7 @@ function processTellCommand(bot, config, message) {
             return formatInvalidListenerResponse(config, listener);
         }
 
+        var target;
         if (_.isEqual(listener, "me")) {
             listener = 'you';
             target = requester.name;
@@ -203,7 +204,7 @@ function processTellCommand(bot, config, message) {
             return formatInvalidEventResponse(config, event);
         }
 
-        if (sourceName == 'my-team') {
+        if (_.isEqual(sourceName,  'my-team')) {
             sourceName = team.name;
         }
         // Ensure the source is a valid user or team within slack
