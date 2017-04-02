@@ -32,16 +32,19 @@ function formatHelpResponse(bot, config) {
         var leagueNames = _.map(league.getAllLeagues(bot, config), "options.name");
 
         return "The subscription system supports the following commands: \n" +
-            "`tell me when <event> in <league> for <target-user-or-team>`\n" +
-            "Where `<event>` is one of:```" + events.join("\n") + "```" +
-            " and `<target-user-or-team>` is the target user or team that you are " +
-            "subscribing to.\n" +
-            "`<league>` is one of:```" + leagueNames.join("\n") + "``` " +
-            "\n" +
-            "`subscription list` to list your current subscriptions\n" +
-            "\n" +
-            "`subscription remove <id>` to list remove a specific subscription\n" +
-            "\n";
+            "1. `tell <listener> when <event> in <league> for <target-user-or-team>` to " +
+            " subscribe to an event\n" +
+            "2. `subscription list` to list your current subscriptions\n" +
+            "3. `subscription remove <id>` to list remove a specific subscription\n" +
+            "\n--------------------------------------------------------------------\n" +
+            "For command 1, these are the options: \n" + 
+            "1. `<listener>` is either `me` to subscribe yourself or " +
+            " `my-team-channel` to subscribe your team channel (_Note: you must be " +
+            " be team captain to use `my-team-channel`_).\n" +
+            "2. `<event>` is one of:`" + events.join("` or `") + "`\n" +
+            "3. `<target-user-or-team>` is the target username or teamname that you are " +
+            "subscribing to (_Note: You can use `my-team` to target your team_).\n" +
+            "4. `<league>` is one of: `" + leagueNames.join("` or `") + "`";
     });
 }
 
@@ -62,9 +65,15 @@ function formatInvalidLeagueResponse(bot, config) {
 //------------------------------------------------------------------------------
 function formatCanOnlyListenForYouResponse(config, listener) {
     return Q.fcall(function() {
-        return "You can't subscribe " + listener + " because you aren't a moderator." +
-            " As a non-moderator you can only subscribe yourself. Use 'me' as " + 
-            " listener.";
+        if (_.isEqual(listener, 'my-team-channel')) {
+          return "You can't subscribe " + listener + " because you aren't the team captain." +
+              " As a non-captain you can only subscribe yourself. Use 'me' as " + 
+              " listener.";
+        } else {
+          return "You can't subscribe " + listener + " because you aren't a moderator." +
+              " As a non-moderator you can only subscribe yourself. Use 'me' as " + 
+              " listener.";
+        }
     });
 }
 
@@ -161,22 +170,32 @@ function processTellCommand(bot, config, message) {
         //       this is usually set by the requiresLeague middleware,
         //       but we are in a DM, not a league specific channel
         message.league = _league;
+        var team = message.league.getTeamByPlayerName(message.player.name);
+        var captainName = _(team.players).filter(function(p) { return p.isCaptain; }).map("username").value();
+        var isCaptain = captainName == message.player.name;
 
-        // TODO: Allow captains some amount of flexibility of who they can subscribe
-        if (!_.isEqual(listener, "me") && !message.player.isModerator()) {
+        var possibleListeners = ['me', 'my-team-channel'];
+
+        if (
+            !(
+                _.isEqual(listener, "me") ||
+                message.player.isModerator() ||
+                (_.isEqual(listener, "my-team-channel") && isCaptain)
+            )
+        ) {
             return formatCanOnlyListenForYouResponse(config, listener);
         }
 
-        // TODO: Allow more than just 'me' as a listener. For example:
-        //       - captains can subscribe a private channel of less than 10 people 
-        //         so long as they are a part of that channel themselves.
-        //       - moderators should be able to do the same.
-        if (!_.isEqual(listener, "me")) {
+        if (!_.includes(possibleListeners, listener)) {
             return formatInvalidListenerResponse(config, listener);
         }
 
         if (_.isEqual(listener, "me")) {
-            listener = requester.name;
+            listener = 'you';
+            target = requester.name;
+        } else if (_.isEqual(listener, "my-team-channel")) {
+            listener = 'your team channel';
+            target = "channel_id:" + team.slack_channel;
         }
 
         // Ensure the event is valid
@@ -184,6 +203,9 @@ function processTellCommand(bot, config, message) {
             return formatInvalidEventResponse(config, event);
         }
 
+        if (sourceName == 'my-team') {
+            sourceName = team.name;
+        }
         // Ensure the source is a valid user or team within slack
         var source = bot.getSlackUserFromNameOrID(sourceName);
         return _league.getTeams().then(function(teams) {
@@ -203,7 +225,7 @@ function processTellCommand(bot, config, message) {
                         source: sourceName.toLowerCase(),
                         event: event.toLowerCase(),
                         league: _league.options.name.toLowerCase(),
-                        target: listener.toLowerCase()
+                        target: target.toLowerCase()
                     }
                 }).then(function() {
                     unlock.resolve();
@@ -236,10 +258,14 @@ function processSubscriptionListCommand(bot, config, message) {
                 order: [
                     ['id', 'ASC']
                 ]
-			}).then(function(subscriptions) {
+            }).then(function(subscriptions) {
                 var response = "";
                 _.each(subscriptions, function(subscription) {
-                    response += "\nID {id} -> tell {target} when {event} for {source} in {league}".format(subscription.get());
+                    var context = subscription.get();
+                    if (_.startsWith(context['target'], 'channel_id:')) {
+                      context['target'] = 'your team channel';
+                    }
+                    response += "\nID {id} -> tell {target} when {event} for {source} in {league}".format(context);
                 });
                 if (response.length === 0) {
                     response = "You have no subscriptions";
@@ -266,7 +292,7 @@ function processSubscriptionRemoveCommand(bot, config, message, id) {
                     requester: requester.name.toLowerCase(),
                     id: id
                 }
-			}).then(function(subscriptions) {
+            }).then(function(subscriptions) {
                 if (subscriptions.length === 0) {
                     unlock.resolve();
                     return "That is not a valid subscription id";
@@ -298,13 +324,22 @@ function register(bot, eventName, cb) {
             var allDeferreds = [];
             _.each(targets, function(target) {
                 var deferred = Q.defer();
-                bot.startPrivateConversation(target).then(function(convo) {
-                    var message = cb(bot, target, _.clone(context));
-                    convo.say(message);
-                    deferred.resolve();
-                }).catch(function(error) {
-                    winston.error(JSON.stringify(error));
-                });
+                var message = cb(bot, target, _.clone(context));
+                if (_.startsWith(target, 'channel_id:')) {
+                    var channelID = _.toUpper(target.substr(11));
+                    bot.say({
+                        channel: channelID,
+                        text: message,
+                        attachments: []
+                    });
+                } else {
+                    bot.startPrivateConversation(target).then(function(convo) {
+                        convo.say(message);
+                        deferred.resolve();
+                    }).catch(function(error) {
+                        winston.error(JSON.stringify(error));
+                    });
+                }
                 allDeferreds.push(deferred.promise);
             });
             return Q.all(allDeferreds);
