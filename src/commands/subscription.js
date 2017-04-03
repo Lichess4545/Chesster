@@ -264,7 +264,7 @@ function processSubscriptionListCommand(bot, config, message) {
                 _.each(subscriptions, function(subscription) {
                     var context = subscription.get();
                     if (_.startsWith(context['target'], 'channel_id:')) {
-                      context['target'] = 'your team channel';
+                        context['target'] = 'your team channel';
                     }
                     response += "\nID {id} -> tell {target} when {event} for {source} in {league}".format(context);
                 });
