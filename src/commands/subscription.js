@@ -172,7 +172,7 @@ function processTellCommand(bot, config, message) {
         message.league = _league;
         var team = message.league.getTeamByPlayerName(message.player.name);
         var captainName = _(team.players).filter('isCaptain').map('username').value();
-        var isCaptain = _.isEqual(captainName[0], message.player.name);
+        var isCaptain = _.isEqual(_.toLower(captainName[0]), _.toLower(message.player.name));
 
         var possibleListeners = ['me', 'my-team-channel'];
 
