@@ -149,6 +149,14 @@ chesster.hears(
     },
     privateURLs.notification
 );
+chesster.hears(
+    {
+        middleware: [slack.requiresLeague],
+        patterns: ['availability', 'edit availability', 'availability edit'],
+        messageTypes: ['direct_message']
+    },
+    privateURLs.availability
+);
 
 
 /* rating */

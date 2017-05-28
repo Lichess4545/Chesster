@@ -43,5 +43,14 @@ function notification(bot, message) {
     });
 }
 
+//------------------------------------------------------------------------------
+function availability(bot, message) {
+    getPrivateURL(bot, message, 'availability').then(function(jsonResult) {
+        bot.reply(message, "Use this link to set your availability: {}".format(jsonResult.url));
+        privateExpiryWarning(bot, message, jsonResult);
+    });
+}
+
 exports.nomination = nomination;
 exports.notification = notification;
+exports.availability = availability;
