@@ -127,7 +127,7 @@ function Watcher(bot, league) {
                     winston.error("[Watcher] {}: Error fetching game details: {}".format(self.league.options.name, JSON.stringify(error)));
                 });
             }
-        } else if (details.status === STARTED) {
+        } else if (details.status === STARTED || result.claimVictoryNotAllowed) {
             winston.info("[Watcher] {}: Received INVALID game".format(self.league.options.name));
 
             var hours = Math.abs(now.diff(scheduledDate));
