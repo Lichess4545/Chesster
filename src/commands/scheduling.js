@@ -362,8 +362,10 @@ function schedulingReplyAmbiguous(bot, message){
 
 // Game has been scheduled.
 function schedulingReplyScheduled(bot, message, results, white, black) {
-    var whiteDate = results.date.clone().utcOffset(white.tz_offset / 60);
-    var blackDate = results.date.clone().utcOffset(black.tz_offset / 60);
+    var whiteDate = results.date.clone();
+    var blackDate = results.date.clone();
+    whiteDate = white.tz ? whiteDate.tz(white.tz) : whiteDate.utcOffset(white.tz_offset / 60);
+    blackDate = black.tz ? blackDate.tz(black.tz) : blackDate.utcOffset(black.tz_offset / 60);
     var format = "YYYY-MM-DD @ HH:mm UTC";
     var friendly_format = "ddd @ HH:mm";
     var dates = [
