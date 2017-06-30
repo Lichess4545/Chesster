@@ -523,7 +523,10 @@ function ambientScheduling(bot, message) {
             }
         );
         deferred.resolve();
-    });
+    }).catch(function(error) {
+        winston.error(JSON.stringify(error));
+        bot.reply(message, "Sorry, I couldn't update the scheduling. Try again later or reach out to a moderator to make the update manually.");
+    });;
     return deferred.promise;
 }
 
