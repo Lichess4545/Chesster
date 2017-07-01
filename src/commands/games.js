@@ -10,6 +10,7 @@ const heltour = require('../heltour.js');
 const http = require("../http.js");
 
 const TIMEOUT = 33;
+const CHEAT = 36;
 var SWORDS = '\u2694';
 
 var VALID_RESULTS = {
@@ -273,6 +274,7 @@ function validateGameDetails(league, details) {
         variantIsIncorrect: false,
         gameOutsideOfCurrentRound: false,
         claimVictoryNotAllowed: false,
+        cheatDetected: false,
         reason: ""
     };
     var options = league.options.gamelinks;
@@ -315,6 +317,11 @@ function validateGameDetails(league, details) {
         result.valid = false;
         result.claimVictoryNotAllowed = true;
         result.reason = "using \"Claim Victory\" is not permitted. Contact a mod.";
+    }else if(_.isEqual(details.status, CHEAT)) {
+        // Cheating is not allowed.
+        result.valid = false;
+        result.cheatDetected = true;
+        result.reason = "The game ended with a \"Cheat Detected\". Contact a mod.";
     }else{
         //the link is too old or too new
         var extrema = scheduling.getRoundExtrema(options);
