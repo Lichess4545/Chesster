@@ -362,8 +362,10 @@ function schedulingReplyAmbiguous(bot, message){
 
 // Game has been scheduled.
 function schedulingReplyScheduled(bot, message, results, white, black) {
-    var whiteDate = results.date.clone().tz(white.tz);
-    var blackDate = results.date.clone().tz(black.tz);
+    var whiteDate = results.date.clone();
+    var blackDate = results.date.clone();
+    whiteDate = white.tz ? whiteDate.tz(white.tz) : whiteDate.utcOffset(white.tz_offset / 60);
+    blackDate = black.tz ? blackDate.tz(black.tz) : blackDate.utcOffset(black.tz_offset / 60);
     var format = "YYYY-MM-DD @ HH:mm UTC";
     var friendly_format = "ddd @ HH:mm";
     var dates = [
@@ -523,6 +525,9 @@ function ambientScheduling(bot, message) {
             }
         );
         deferred.resolve();
+    }).catch(function(error) {
+        winston.error(JSON.stringify(error));
+        bot.reply(message, "Sorry, I couldn't update the scheduling. Try again later or reach out to a moderator to make the update manually.");
     });
     return deferred.promise;
 }
