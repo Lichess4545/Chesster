@@ -123,6 +123,24 @@ function updateChannels(bot){
         }
         winston.info("info: got channels");
     });
+    
+    // @ https://api.slack.com/methods/mpim.list
+    bot.api.mpim.list({}, function (err, response) {
+        if (err) {
+            throw new Error(err);
+        }
+
+        if (response.hasOwnProperty('groups') && response.ok) {
+            var byId = {};
+            var total = response.groups.length;
+            for (var i = 0; i < total; i++) {
+                var channel = response.groups[i];
+                byId[channel.id] = channel;
+            }
+            self.mpims.byId = byId;
+        }
+        winston.info("info: got mpims");
+    });
 
 }
 
@@ -460,6 +478,14 @@ function Bot(options) {
             }
             return user.id;
         },
+        getName: function(id){
+            var user = this.byId[id];
+            if (!user) {
+                winston.error("Couldn't find user by id: " + id);
+                return null;
+            }
+            return user.name;
+        },
         getIdString: function(name){
             return "<@"+this.getId(name)+">";
         },
@@ -482,10 +508,13 @@ function Bot(options) {
             return "<#"+this.getId(name)+">";
         }
     };
+    self.mpims = {
+        byId: {}
+    };
     self.controller = Botkit.slackbot(bot_options);
     self.controller.spawn({
         token: self.token
-    }).startRTM(function(err, bot) {
+    }).startRTM(function(err, bot, response) {
         if (err) {
             throw new Error(err);
         }
@@ -496,6 +525,8 @@ function Bot(options) {
         // Make chesster and the bot a bit more interchangeable.
         self.reply = bot.reply;
         self.api = bot.api;
+
+        self.user_id = response.self.id;
 
         // connect to the database
         if (self.options.connectToModels) {

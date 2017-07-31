@@ -16,6 +16,7 @@ const onboarding = require("./commands/onboarding.js");
 const playerInfo = require("./commands/playerInfo.js");
 const scheduling = require("./commands/scheduling.js");
 const subscription = require('./commands/subscription.js');
+const presence = require('./commands/presence.js');
 
 
 /* static entry point */
@@ -305,6 +306,14 @@ chesster.hears(
         messageTypes: ['direct_message']
     },
     subscription.removeHandler(chesster.config)
+);
+
+chesster.hears(
+    {
+        patterns: [''],
+        messageTypes: ['ambient']
+    },
+    presence.ambientPresence(chesster.config)
 );
 
 subscription.register(chesster, 'a-game-is-scheduled', subscription.formatAGameIsScheduled);
