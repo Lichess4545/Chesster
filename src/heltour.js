@@ -216,6 +216,16 @@ function sendGameWarning(heltourConfig, white, black, reason) {
     return http.fetchURLIntoJSON(request);
 }
 
+function playerContact(heltourConfig, sender, recip) {
+    var request = heltourRequest(heltourConfig, "player_contact");
+    request.method = "POST";
+    request.bodyParameters = {
+        'sender': sender,
+        'recip': recip
+    };
+    return http.fetchURLIntoJSON(request);
+}
+
 function fetchJSONandHandleErrors(request){
     return http.fetchURLIntoJSON(request).then(function(response){
         if(response["json"]["error"]){
@@ -244,5 +254,6 @@ module.exports.getRoster = getRoster;
 module.exports.assignAlternate = assignAlternate;
 module.exports.setAvailability = setAvailability;
 module.exports.sendGameWarning = sendGameWarning;
+module.exports.playerContact = playerContact;
 
 module.exports.HeltourError = HeltourError;
