@@ -191,14 +191,15 @@ function prepareCommandsMessage(){
         "    [ pairings ]                   ! get pairings link\n" +
         "    [ standings ]                  ! get standings link\n" +
         "    [ commands | \n"  +
-        "        command list ]             ! this list\n" +
+	"        command list | help ]      ! this list\n" +
         "    [ rating <player> ]            ! get the player's classical rating.\n" +
         "    [ captain guidelines ]         ! get the team captain guidelines\n" +
         "    [ mods (lonewolf)| \n"  +
         "        mod list (lonewolf)|       ! list the mods (without summoning)\n" +
         "        mods summon (lonewolf)]    ! summon the mods\n" +
-        "    [ faq (lonewolf)]                        ! a document of frequently asked questions\n" + 
+        "    [ faq (lonewolf)]              ! a document of frequently asked questions\n" + 
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
+	"    [ availability <league> ]      ! set your availability for <league>, {4545|lonewolf}" +    
         "    [ source ]                     ! github repo for Chesster \n" +
         "    [ subscription help ]          ! help for chesster's subscription system\n" +
         "    [ nomination <league> ]        ! get a private nomination link for <league>, {45|lonewolf}, of your choosing\n" +
