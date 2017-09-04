@@ -13,7 +13,7 @@ var EXTREMA_DEFAULTS = {
     'isoWeekday': 2,
     'hour': 0,
     'minute': 0,
-    'warningHours': 1
+    'warningHours': 1.5
 };
 var BASE_DATE_FORMATS = [
     "YYYY-MM-DD MM DD",
