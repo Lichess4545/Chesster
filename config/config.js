@@ -97,7 +97,10 @@ var config = {
                 "standings": "https://www.lichess4545.com/team4545/standings/",
                 "guide": "https://www.lichess4545.com/team4545/document/player-handbook/",
                 "captains": "https://www.lichess4545.com/team4545/document/captains/",
-                "registration": "https://www.lichess4545.com/team4545/register/"
+                "registration": "https://www.lichess4545.com/team4545/register/",
+                "availability": "https://www.lichess4545.com/team4545/availability/edit/",
+                "nominate": "https://www.lichess4545.com/team4545/nominate/",
+                "notifications": "https://www.lichess4545.com/team4545/notifications/"
             }
         },
         "lonewolf": {
@@ -154,7 +157,10 @@ var config = {
                 "league": "https://www.lichess4545.com/lonewolf/",
                 "pairings": "https://www.lichess4545.com/lonewolf/pairings/",
                 "standings": "https://www.lichess4545.com/lonewolf/standings/",
-                "registration": "https://www.lichess45454.com/lonewolf/register/"
+                "registration": "https://www.lichess45454.com/lonewolf/register/",
+                "availability": "https://www.lichess4545.com/lonewolf/availability/edit/",
+                "nominate": "https://www.lichess4545.com/lonewolf/nominate/",
+                "notifications": "https://www.lichess4545.com/lonewolf/notifications/"
             }
         },
         "blitzbattle": {
@@ -195,7 +201,10 @@ var config = {
                 "league": "https://www.lichess4545.com/blitzbattle/",
                 "pairings": "https://www.lichess4545.com/blitzbattle/pairings/",
                 "standings": "https://www.lichess4545.com/blitzbattle/standings/",
-                "registration": "https://www.lichess45454.com/blitzbattle/register/"
+                "registration": "https://www.lichess45454.com/blitzbattle/register/",
+                "availability": "https://www.lichess4545.com/blitzbattle/availability/edit/",
+                "nominate": "https://www.lichess4545.com/blitzbattle/nominate/",
+                "notifications": "https://www.lichess4545.com/blitzbattle/notifications/"
             }
         },
     },
