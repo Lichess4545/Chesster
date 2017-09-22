@@ -91,7 +91,6 @@ function updatesUsers(bot, config){
         heltour.getUserMap(
             heltourOptions
         ).then(function(idByName) {
-            console.log(JSON.stringify(bot.identity));
             idByName['chesster'] = bot.identity.id;
             var nameById = {};
             _.forOwn(idByName, function(id, name) {
@@ -109,8 +108,6 @@ function updatesUsers(bot, config){
                 _.forOwn(idByName, function(id, name) {
                     byName[name.toLowerCase()] = byId[id];
                 });
-                console.log(byName);
-                console.log(byId);
                 self.users.byName = byName;
                 self.users.byId = byId;
             }
