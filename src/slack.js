@@ -5,6 +5,7 @@ const Q = require("q");
 const Botkit = require('botkit');
 const _ = require("lodash");
 const league = require("./league.js");
+const heltour = require("./heltour.js");
 const fuzzy = require("./fuzzy_match.js");
 const models = require("./models.js");
 const winston = require('winston');
@@ -77,7 +78,7 @@ function getSlackUserFromNameOrID(nameOrId) {
     return player;
 }
 
-function updatesUsers(bot){
+function updatesUsers(bot, config){
     var self = this;
     // @ https://api.slack.com/methods/users.list
     bot.api.users.list({}, function (err, response) {
@@ -85,19 +86,38 @@ function updatesUsers(bot){
             throw new Error(err);
         }
 
-        if (response.hasOwnProperty('members') && response.ok) {
-            var byName = {};
-            var byId = {};
-            var total = response.members.length;
-            for (var i = 0; i < total; i++) {
-                var member = response.members[i];
-                byName[member.name] = member;
-                byId[member.id] = member;
+        var leagues = league.getAllLeagues(bot, config);
+        var heltourOptions = leagues[0].options.heltour;
+        heltour.getUserMap(
+            heltourOptions
+        ).then(function(idByName) {
+            console.log(JSON.stringify(bot.identity));
+            idByName['chesster'] = bot.identity.id;
+            var nameById = {};
+            _.forOwn(idByName, function(id, name) {
+                nameById[id] = name.toLowerCase();
+            });
+            if (response.hasOwnProperty('members') && response.ok) {
+                var byName = {};
+                var byId = {};
+                var total = response.members.length;
+                for (var i = 0; i < total; i++) {
+                    var member = response.members[i];
+                    member.name = nameById[member.id];
+                    byId[member.id] = member;
+                }
+                _.forOwn(idByName, function(id, name) {
+                    byName[name.toLowerCase()] = byId[id];
+                });
+                console.log(byName);
+                console.log(byId);
+                self.users.byName = byName;
+                self.users.byId = byId;
             }
-            self.users.byName = byName;
-            self.users.byId = byId;
-        }
-        winston.info("info: got users");
+            winston.info("info: got users");
+        }).catch(function(error) {
+            winston.error(JSON.stringify(error));
+        });
     });
 }
 
@@ -160,7 +180,7 @@ function refresh(bot, delay, config) {
         winston.info("doing refresh " + count++);
         bot.rtm.ping();
         
-        self.updatesUsers(bot);
+        self.updatesUsers(bot, config);
         self.updateChannels(bot);
         if (self.options.refreshLeagues) {
             _.each(league.getAllLeagues(bot, config), function(l) {

@@ -159,6 +159,20 @@ function getRoster(heltourConfig, leagueTag) {
     return deferred.promise;
 }
 
+function getUserMap(heltourConfig) {
+    var deferred = Q.defer();
+    var request = heltourRequest(heltourConfig, "get_slack_user_map");
+    request.parameters = {};
+    http.fetchURLIntoJSON(request).then(function(result) {
+        var result = result['json'];
+        deferred.resolve(result.users);
+    }).catch(function(error) {
+        winston.error("Unable to getSlackUserMap: {}".format(error));
+        deferred.reject(error);
+    });
+    return deferred.promise;
+}
+
 function getPrivateURL(heltourConfig, page, user){
     var request = heltourRequest(heltourConfig, "get_private_url");
     request.parameters = {
@@ -251,6 +265,7 @@ module.exports.getLeagueModerators = getLeagueModerators;
 module.exports.updateSchedule = updateSchedule;
 module.exports.updatePairing = updatePairing;
 module.exports.getRoster = getRoster;
+module.exports.getUserMap = getUserMap;
 module.exports.assignAlternate = assignAlternate;
 module.exports.setAvailability = setAvailability;
 module.exports.sendGameWarning = sendGameWarning;
