@@ -2,7 +2,6 @@
 // Commands and helpers for detecting presence
 //------------------------------------------------------------------------------
 const _ = require("lodash");
-const winston = require("winston");
 const Q = require("q");
 
 const heltour = require('../heltour.js');

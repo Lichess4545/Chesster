@@ -164,8 +164,7 @@ function getUserMap(heltourConfig) {
     var request = heltourRequest(heltourConfig, "get_slack_user_map");
     request.parameters = {};
     http.fetchURLIntoJSON(request).then(function(result) {
-        var result = result['json'];
-        deferred.resolve(result.users);
+        deferred.resolve(result['json'].users);
     }).catch(function(error) {
         winston.error("Unable to getSlackUserMap: {}".format(error));
         deferred.reject(error);
@@ -178,8 +177,7 @@ function linkSlack(heltourConfig, user_id, display_name) {
     var request = heltourRequest(heltourConfig, "link_slack");
     request.parameters = { user_id: user_id, display_name: display_name };
     http.fetchURLIntoJSON(request).then(function(result) {
-        var result = result['json'];
-        deferred.resolve(result);
+        deferred.resolve(result['json']);
     }).catch(function(error) {
         winston.error("Unable to linkSlack: {}".format(error));
         deferred.reject(error);

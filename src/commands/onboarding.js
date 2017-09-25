@@ -15,7 +15,7 @@ function welcomeMessage(config) {
                 bot.api.im.open({ user: message.user }, function(err, channel) {
                     if (err) return;
         
-                    var channel = channel.channel.id;
+                    var channelId = channel.channel.id;
 
                     var text = "Welcome. I am the moderator bot for the Lichess4545 League.\n"
                                + "Say 'help' to get help.\n"
@@ -25,10 +25,10 @@ function welcomeMessage(config) {
                                + config["leagues"]["45+45"].links.faq 
                                + ". If you joined for Lone Wolf, read this: " 
                                + config["leagues"]["lonewolf"].links.faq 
-                               + ". Enjoy the league!"
+                               + ". Enjoy the league!";
 
                     bot.say({
-                        channel: channel,
+                        channel: channelId,
                         text: text,
                         attachments: []
                     });

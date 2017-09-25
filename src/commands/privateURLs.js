@@ -1,8 +1,6 @@
 //------------------------------------------------------------------------------
 // Commands related to game nomination
 //------------------------------------------------------------------------------
-const moment = require('moment-timezone');
-const winston = require("winston");
 const heltour = require('../heltour.js');
 const _ = require('lodash');
 
@@ -28,7 +26,7 @@ function linkAccounts(bot, message) {
         bot.api.im.open({ user: message.user }, function(err, channel) {
             if (err) return;
     
-            var channel = channel.channel.id;
+            var channelId = channel.channel.id;
             var text = "";
             
             _.each(result.already_linked, function(username) {
@@ -42,7 +40,7 @@ function linkAccounts(bot, message) {
             }
     
             bot.say({
-                channel: channel,
+                channel: channelId,
                 text: text,
                 attachments: []
             });
