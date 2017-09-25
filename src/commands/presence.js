@@ -2,11 +2,9 @@
 // Commands and helpers for detecting presence
 //------------------------------------------------------------------------------
 const _ = require("lodash");
-const winston = require("winston");
 const Q = require("q");
 
 const heltour = require('../heltour.js');
-const league = require('../league.js');
 
 function ambientPresence(config) {
     return function(bot, message) {
@@ -22,17 +20,8 @@ function ambientPresence(config) {
             deferred.resolve();
             return deferred.promise;
         }
-        
-        var leagues = league.getAllLeagues(bot, config);
-        // TODO: This is potentially fragile.
-        var heltourOptions = leagues[0].options.heltour;
-        if (!heltourOptions) {
-            winston.error("[PRESENCE] {} league doesn't have heltour options!?".format(leagues[0].options.name));
-            deferred.resolve();
-            return deferred.promise;
-        } 
 
-        return heltour.playerContact(heltourOptions, bot.users.getName(sender), bot.users.getName(recips[0]));
+        return heltour.playerContact(config.heltour, bot.users.getName(sender), bot.users.getName(recips[0]));
     };
 }
 

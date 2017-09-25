@@ -158,6 +158,13 @@ chesster.hears(
     },
     privateURLs.availability
 );
+chesster.hears(
+    {
+        patterns: ['link'],
+        messageTypes: ['direct_message']
+    },
+    privateURLs.linkAccounts
+);
 
 
 /* rating */
@@ -201,7 +208,7 @@ function prepareCommandsMessage(){
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
         "    [ source ]                     ! github repo for Chesster \n" +
         "    [ subscription help ]          ! help for chesster's subscription system\n" +
-        "    [ nomination <league> ]        ! get a private nomination link for <league>, {45|lonewolf}, of your choosing\n" +
+        "    [ link ]                       ! link your slack and lichess accounts\n" +
         "```\n";
 }
 
