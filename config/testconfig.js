@@ -19,6 +19,8 @@ config['winston']['handleExceptions'] = false;
 
 config["welcome"]["channel"] = "unstable_bot-lonewolf";
 
+config["heltour"]["token"] = heltour_token;
+config["heltour"]["baseEndpoint"] = "https://staging.lichess4545.com/api/";
 config["leagues"]["45+45"]["heltour"]["token"] = heltour_token;
 config["leagues"]["45+45"]["heltour"]["baseEndpoint"] = "https://staging.lichess4545.com/api/";
 config["leagues"]["lonewolf"]["heltour"]["token"] = heltour_token;

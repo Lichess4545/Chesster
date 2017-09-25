@@ -159,14 +159,30 @@ function getRoster(heltourConfig, leagueTag) {
     return deferred.promise;
 }
 
-function getPrivateURL(heltourConfig, page, user){
-    var request = heltourRequest(heltourConfig, "get_private_url");
-    request.parameters = {
-        'league': heltourConfig.leagueTag,
-        'page': page,
-        'user': user
-    };
-    return fetchJSONandHandleErrors(request);
+function getUserMap(heltourConfig) {
+    var deferred = Q.defer();
+    var request = heltourRequest(heltourConfig, "get_slack_user_map");
+    request.parameters = {};
+    http.fetchURLIntoJSON(request).then(function(result) {
+        deferred.resolve(result['json'].users);
+    }).catch(function(error) {
+        winston.error("Unable to getSlackUserMap: {}".format(error));
+        deferred.reject(error);
+    });
+    return deferred.promise;
+}
+
+function linkSlack(heltourConfig, user_id, display_name) {
+    var deferred = Q.defer();
+    var request = heltourRequest(heltourConfig, "link_slack");
+    request.parameters = { user_id: user_id, display_name: display_name };
+    http.fetchURLIntoJSON(request).then(function(result) {
+        deferred.resolve(result['json']);
+    }).catch(function(error) {
+        winston.error("Unable to linkSlack: {}".format(error));
+        deferred.reject(error);
+    });
+    return deferred.promise;
 }
 
 function assignAlternate(heltourConfig, round, team, board, player){
@@ -242,7 +258,6 @@ function HeltourError(code){
 }
 
 /* GET Requests */
-module.exports.getPrivateURL = getPrivateURL;
 module.exports.findPairing = findPairing;
 module.exports.getAllPairings = getAllPairings;
 module.exports.getLeagueModerators = getLeagueModerators;
@@ -251,6 +266,8 @@ module.exports.getLeagueModerators = getLeagueModerators;
 module.exports.updateSchedule = updateSchedule;
 module.exports.updatePairing = updatePairing;
 module.exports.getRoster = getRoster;
+module.exports.getUserMap = getUserMap;
+module.exports.linkSlack = linkSlack;
 module.exports.assignAlternate = assignAlternate;
 module.exports.setAvailability = setAvailability;
 module.exports.sendGameWarning = sendGameWarning;
