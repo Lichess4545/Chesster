@@ -85,11 +85,9 @@ function updatesUsers(bot, config){
         if (err) {
             throw new Error(err);
         }
-
-        var leagues = league.getAllLeagues(bot, config);
-        var heltourOptions = leagues[0].options.heltour;
+        
         heltour.getUserMap(
-            heltourOptions
+            config.heltour
         ).then(function(idByName) {
             idByName['chesster'] = bot.identity.id;
             var nameById = {};

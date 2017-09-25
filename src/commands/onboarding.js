@@ -3,15 +3,12 @@
 //------------------------------------------------------------------------------
 const _ = require("lodash");
 const heltour = require('../heltour.js');
-const league = require('../league.js');
 
 function welcomeMessage(config) {
     return function(bot, message) {
         if(_.isEqual(message.channel, bot.channels.getId(config["welcome"]["channel"]))){
             var slackUser = bot.getSlackUserFromNameOrID(message.user);
-            var leagues = league.getAllLeagues(bot, config);
-            var heltourOptions = leagues[0].options.heltour;
-            heltour.linkSlack(heltourOptions, message.user, slackUser.profile['display_name'] || slackUser.profile['real_name']).then(function(result) {
+            heltour.linkSlack(config.heltour, message.user, slackUser.profile['display_name'] || slackUser.profile['real_name']).then(function(result) {
                 bot.reply(message, "Everyone, please welcome the newest member of the " 
                                  + "Lichess 45+45 League, <@" + message.user + ">!");
                 

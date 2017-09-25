@@ -4,7 +4,6 @@
 const moment = require('moment-timezone');
 const winston = require("winston");
 const heltour = require('../heltour.js');
-const league = require('../league.js');
 const _ = require('lodash');
 
 //------------------------------------------------------------------------------
@@ -25,9 +24,7 @@ function availability(bot, message) {
 //------------------------------------------------------------------------------
 function linkAccounts(bot, message) {
     var slackUser = bot.getSlackUserFromNameOrID(message.user);
-    var leagues = league.getAllLeagues(bot, bot.config);
-    var heltourOptions = leagues[0].options.heltour;
-    heltour.linkSlack(heltourOptions, message.user, slackUser.profile['display_name'] || slackUser.profile['real_name']).then(function(result) {
+    heltour.linkSlack(bot.config.heltour, message.user, slackUser.profile['display_name'] || slackUser.profile['real_name']).then(function(result) {
         bot.api.im.open({ user: message.user }, function(err, channel) {
             if (err) return;
     

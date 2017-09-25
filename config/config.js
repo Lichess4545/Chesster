@@ -41,6 +41,10 @@ var config = {
     "welcome": {
         "channel": "general"
     },
+    "heltour": {
+        "token": heltour_token,
+        "baseEndpoint": "https://www.lichess4545.com/api/"
+    },
     "leagues": {
         "45+45": {
             "name": "45+45",
