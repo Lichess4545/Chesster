@@ -7,8 +7,7 @@ const heltour = require('../heltour.js');
 function welcomeMessage(config) {
     return function(bot, message) {
         if(_.isEqual(message.channel, bot.channels.getId(config["welcome"]["channel"]))){
-            var slackUser = bot.getSlackUserFromNameOrID(message.user);
-            heltour.linkSlack(config.heltour, message.user, slackUser.profile['display_name'] || slackUser.profile['real_name']).then(function(result) {
+            heltour.linkSlack(config.heltour, message.user, "").then(function(result) {
                 bot.reply(message, "Everyone, please welcome the newest member of the " 
                                  + "Lichess 45+45 League, <@" + message.user + ">!");
                 
