@@ -26,6 +26,8 @@ function forwardMessage(chesster, adminSlack) {
                     channels.push(t);
                 } else if (_.startsWith(t, 'g') || _.startsWith(t, 'c')) {
                     channels.push(_.toUpper(t));
+                } else if (_.startsWith(t, 'u')) {
+                    users.push(_.toUpper(t));
                 } else if (_.startsWith(t, '<@') && _.endsWith(t, '>')) {
                     var name = adminSlack.users.getByNameOrID(t.substr(2, t.length-3)).name;
                     users.push(chesster.users.getId(name));
