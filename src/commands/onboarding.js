@@ -16,15 +16,11 @@ function welcomeMessage(config) {
         
                     var channelId = channel.channel.id;
 
-                    var text = "Welcome. I am the moderator bot for the Lichess4545 League.\n"
-                               + "Say 'help' to get help.\n"
-                               + "Before you can participate, you need to link your Slack and Lichess accounts.\n"
-                               + "<{}|Click here> to do that now.\n".format(result.url)
-                               + "If you joined for the 45+45 league, read this: " 
-                               + config["leagues"]["45+45"].links.faq 
-                               + ". If you joined for Lone Wolf, read this: " 
-                               + config["leagues"]["lonewolf"].links.faq 
-                               + ". Enjoy the league!";
+                    var text = "Welcome. I am the league moderator bot.\n"
+                               + "*Before you can participate, you must <{}|click here to link your Slack and Lichess accounts.>*\n".format(result.url)
+                               + "After that, read the FAQ for your league: "
+                               + "<{}|4545 League FAQ> | <{}|LoneWolf FAQ>\n".format(config["leagues"]["45+45"].links.faq, config["leagues"]["lonewolf"].links.faq)
+                               + "Say 'help' to get help. Enjoy the league!";
 
                     bot.say({
                         channel: channelId,
