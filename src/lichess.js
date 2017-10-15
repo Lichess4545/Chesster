@@ -117,7 +117,7 @@ var makeRequest = (function() {
 }());
 
 function getPlayerByName(name, isBackground){
-    var url = "http://en.lichess.org/api/user/" + name;
+    var url = "https://lichess.org/api/user/" + name;
     return makeRequest(url, true, isBackground);
 }
 

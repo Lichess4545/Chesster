@@ -331,7 +331,7 @@ function validateGameDetails(league, details) {
 //given a gamelinkID, use the lichess api to get the game details
 //pass the details to the callback as a JSON object
 function fetchGameDetails(gamelinkID){
-    return http.fetchURLIntoJSON("http://en.lichess.org/api/game/" + gamelinkID);
+    return http.fetchURLIntoJSON("https://lichess.org/api/game/" + gamelinkID);
 }
 
 function gamelinkReplyInvalid(bot, message, reason){
@@ -442,7 +442,7 @@ function updateGamelink(league, details) {
     result.white = league.bot.users.getByNameOrID(white.userId);
     result.black = league.bot.users.getByNameOrID(black.userId);
     result.gamelinkID = details.id;
-    result.gamelink =  "http://en.lichess.org/" + result.gamelinkID;
+    result.gamelink =  "https://lichess.org/" + result.gamelinkID;
  
     //get the result in the correct format
     if(_.isEqual(details.status, "draw") || _.isEqual(details.status, "stalemate") || details.winner){
