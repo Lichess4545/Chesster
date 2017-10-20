@@ -171,8 +171,8 @@ function processTellCommand(bot, config, message) {
         //       but we are in a DM, not a league specific channel
         message.league = _league;
         var team = message.league.getTeamByPlayerName(message.player.name);
-        var captainName = _(team.players).filter('isCaptain').map('username').value();
-        var isCaptain = _.isEqual(_.toLower(captainName[0]), _.toLower(message.player.name));
+        var captainName = team && _(team.players).filter('isCaptain').map('username').value();
+        var isCaptain = captainName && _.isEqual(_.toLower(captainName[0]), _.toLower(message.player.name));
 
         var possibleListeners = ['me', 'my-team-channel'];
 
