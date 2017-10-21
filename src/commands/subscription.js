@@ -106,6 +106,15 @@ function formatInvalidSourceResponse(config, source) {
 }
 
 //------------------------------------------------------------------------------
+// Format the response for when the user is not on a team
+//------------------------------------------------------------------------------
+function formatNoTeamResponse() {
+    return Q.fcall(function() {
+        return "You can't use my-team or my-team-channel since you don't have a team right now.";
+    });
+}
+
+//------------------------------------------------------------------------------
 // Format the a-game-is-scheduled response
 //------------------------------------------------------------------------------
 function formatAGameIsScheduled(bot, target, context) {
@@ -171,8 +180,8 @@ function processTellCommand(bot, config, message) {
         //       but we are in a DM, not a league specific channel
         message.league = _league;
         var team = message.league.getTeamByPlayerName(message.player.name);
-        var captainName = _(team.players).filter('isCaptain').map('username').value();
-        var isCaptain = _.isEqual(_.toLower(captainName[0]), _.toLower(message.player.name));
+        var captainName = team && _(team.players).filter('isCaptain').map('username').value();
+        var isCaptain = captainName && _.isEqual(_.toLower(captainName[0]), _.toLower(message.player.name));
 
         var possibleListeners = ['me', 'my-team-channel'];
 
@@ -195,6 +204,9 @@ function processTellCommand(bot, config, message) {
             listener = 'you';
             target = requester.name;
         } else if (_.isEqual(listener, "my-team-channel")) {
+            if (!team) {
+                return formatNoTeamResponse();
+            }
             listener = 'your team channel';
             target = "channel_id:" + team.slack_channel;
         }
@@ -205,6 +217,9 @@ function processTellCommand(bot, config, message) {
         }
 
         if (_.isEqual(sourceName,  'my-team')) {
+            if (!team) {
+                return formatNoTeamResponse();
+            }
             sourceName = team.name;
         }
         // Ensure the source is a valid user or team within slack

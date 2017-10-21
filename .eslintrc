@@ -221,3 +221,4 @@ rules:
   lodash/prefer-includes: 0
   lodash/preferred-alias: 0
   lodash/collection-method-value: 0
+  lodash/prefer-constant: 0
