@@ -108,7 +108,7 @@ function formatInvalidSourceResponse(config, source) {
 //------------------------------------------------------------------------------
 // Format the response for when the user is not on a team
 //------------------------------------------------------------------------------
-function formatNoTeamResponse(config) {
+function formatNoTeamResponse() {
     return Q.fcall(function() {
         return "You can't use my-team or my-team-channel since you don't have a team right now.";
     });
@@ -205,7 +205,7 @@ function processTellCommand(bot, config, message) {
             target = requester.name;
         } else if (_.isEqual(listener, "my-team-channel")) {
             if (!team) {
-                return formatNoTeamResponse(config);
+                return formatNoTeamResponse();
             }
             listener = 'your team channel';
             target = "channel_id:" + team.slack_channel;
@@ -218,7 +218,7 @@ function processTellCommand(bot, config, message) {
 
         if (_.isEqual(sourceName,  'my-team')) {
             if (!team) {
-                return formatNoTeamResponse(config);
+                return formatNoTeamResponse();
             }
             sourceName = team.name;
         }
