@@ -654,7 +654,7 @@ var league_attributes = {
             return self.bot.users.getIdString(name);
         });
         return Q.fcall(function() {
-            return ("{0} mods: " + moderators.join(", ")).format(self.options.name);
+            return ("{0} mods: " + moderators.join(", ") + " Please wait for the mods to contact you. Do not send messages directly.").format(self.options.name);
         });
     },
     formatFAQResponse: function() {
