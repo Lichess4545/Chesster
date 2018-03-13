@@ -42,13 +42,13 @@ function Watcher(bot, league) {
         var newUsernames = _.uniq(_.concat(white, black));
         newUsernames.sort();
         var union = _.union(newUsernames, self.usernames);
-        winston.info("[Watcher] {}: {} old usernames {} incoming usernames {} differences".format(
-            self.league.options.name,
-            self.usernames.length,
-            newUsernames.length,
-            self.usernames.length - union.length
-        ));
         if (self.usernames.length - union.length !== 0) {
+            winston.info("[Watcher] {}: {} old usernames {} incoming usernames {} differences".format(
+                self.league.options.name,
+                self.usernames.length,
+                newUsernames.length,
+                self.usernames.length - union.length
+            ));
             winston.info("[Watcher] {}: Restarting because usernames have changed".format(self.league.options.name));
             self.usernames = newUsernames;
             self.watch();
