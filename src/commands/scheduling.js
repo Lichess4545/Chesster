@@ -481,7 +481,7 @@ function ambientScheduling(bot, message) {
         schedulingReplyCantScheduleOthers(bot, message); return;
     }
 
-    winston.debug("[SCHEDULING] Attempting to update the website.");
+    winston.debug("[SCHEDULING] Attempting to update the website: {}".format(JSON.stringify(schedulingResults)));
     // Step 3. attempt to update the website
     heltour.updateSchedule(
         heltourOptions,
