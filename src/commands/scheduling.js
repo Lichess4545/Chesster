@@ -461,8 +461,6 @@ function ambientScheduling(bot, message) {
     var white = bot.users.getByNameOrID(schedulingResults.white);
     var black = bot.users.getByNameOrID(schedulingResults.black);
     if (white && black) {
-        schedulingResults.white = white.name;
-        schedulingResults.black = black.name;
         referencesSlackUsers = true;
     }
 
