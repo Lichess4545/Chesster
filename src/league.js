@@ -121,26 +121,22 @@ var league_attributes = {
         var self = this;
         return Q.all([
             self.refreshRosters().then(function() {
-                winston.info("Found " + self._players.length + " players for " + self.options.name);
-                if (self._teams.length > 0) {
-                    winston.info("Found " + self._teams.length + " teams for " + self.options.name);
-                }
                 self._lastUpdated = moment.utc();
                 self.emitter.emit('refreshRosters', self);
             }).catch(function(error) {
                 winston.error("{}: Unable to refresh rosters: {}".format(self.options.name, error));
                 throw new Error(error);
             }),
-            self.refreshCurrentRoundSchedules().then(function(pairings) {
-                winston.info("Found " + pairings.length + " pairings for " + self.options.name);
+            self.refreshCurrentRoundSchedules().then(function() {
                 self._lastUpdated = moment.utc();
                 self.emitter.emit('refreshPairings', self);
             }).catch(function(error) {
-                winston.error("{}: Unable to refresh pairings: {}".format(self.options.name, error));
+                if (error !== "no_matching_rounds") {
+                    winston.error("{}: Unable to refresh pairings: {}".format(self.options.name, error));
+                }
                 throw new Error(error);
             }),
             self.refreshLeagueModerators().then(function(){
-                winston.info("Found " + self._moderators.length + " moderators for " + self.options.name);
                 self._lastUpdated = moment.utc();
             }).catch(function(error) {
                 winston.error("{}: Unable to refresh moderators: {}".format(self.options.name, error));

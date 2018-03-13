@@ -374,6 +374,12 @@ function schedulingReplyScheduled(bot, message, results, white, black) {
         blackDate.format(friendly_format) + " for " + black.name
     ];
     var date_formats  = dates.join("\n\t");
+    if (white.tz && moment().tz(white.tz).utcOffset() !== whiteDate.utcOffset()) {
+        date_formats += "\n*<@" + white.id + ">: A daylight savings transition is in effect. Double check your time.*";
+    }
+    if (black.tz && moment().tz(black.tz).utcOffset() !== blackDate.utcOffset()) {
+        date_formats += "\n*<@" + black.id + ">: A daylight savings transition is in effect. Double check your time.*";
+    }
 
     bot.reply(message, 
         ":heavy_check_mark: @" + white.name + " (_white pieces_) vs @" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats
@@ -461,6 +467,7 @@ function ambientScheduling(bot, message) {
     }
 
     if (!referencesSlackUsers) {
+        winston.warn("[SCHEDULING] Couldn't find slack users: {}".format(JSON.stringify(schedulingResults)));
         schedulingReplyCantFindUser(bot, message);
         return;
     }

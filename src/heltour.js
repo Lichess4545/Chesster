@@ -57,7 +57,6 @@ function getAllPairings(heltourConfig, leagueTag) {
     http.fetchURLIntoJSON(request).then(function(response) {
         var pairings = response['json'];
         if (!_.isNil(pairings.error)) {
-            winston.error("[{}] - Error getting pairings: {}".format(leagueTag, pairings.error));
             deferred.reject(pairings.error);
         } else {
             if (!_.isNil(pairings.pairings)) {
