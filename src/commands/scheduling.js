@@ -467,6 +467,7 @@ function ambientScheduling(bot, message) {
     }
 
     if (!referencesSlackUsers) {
+        winston.warn("[SCHEDULING] Couldn't find slack users: {}".format(JSON.stringify(schedulingResults)));
         schedulingReplyCantFindUser(bot, message);
         return;
     }
