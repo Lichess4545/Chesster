@@ -361,7 +361,7 @@ function schedulingReplyAmbiguous(bot, message){
 }
 
 // Game has been scheduled.
-function schedulingReplyScheduled(bot, message, results, white, black) {
+function schedulingReplyScheduled(bot, message, results, white, black, white_name, black_name) {
     var whiteDate = results.date.clone();
     var blackDate = results.date.clone();
     whiteDate = white.tz ? whiteDate.tz(white.tz) : whiteDate.utcOffset(white.tz_offset / 60);
@@ -382,7 +382,7 @@ function schedulingReplyScheduled(bot, message, results, white, black) {
     }
 
     bot.reply(message, 
-        ":heavy_check_mark: @" + white.name + " (_white pieces_) vs @" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats
+        ":heavy_check_mark: @" + white_name + " (_white pieces_) vs @" + black_name + " (_black pieces_) scheduled for: \n\t" + date_formats
     );
 }
 
@@ -517,7 +517,9 @@ function ambientScheduling(bot, message) {
         }
         
         var leagueName = message.league.options.name;
-        schedulingReplyScheduled(bot, message, schedulingResults, white, black);
+        var white_name = updateScheduleResults['white'];
+        var black_name = updateScheduleResults['black'];
+        schedulingReplyScheduled(bot, message, schedulingResults, white, black, white_name, black_name);
         // TODO: test this.
         subscription.emitter.emit('a-game-is-scheduled',
             message.league,
