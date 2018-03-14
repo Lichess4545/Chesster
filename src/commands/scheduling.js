@@ -370,8 +370,8 @@ function schedulingReplyScheduled(bot, message, results, white, black, white_nam
     var friendly_format = "ddd @ HH:mm";
     var dates = [
         results.date.format(format) + " ",
-        whiteDate.format(friendly_format) + " for " + white.name,
-        blackDate.format(friendly_format) + " for " + black.name
+        whiteDate.format(friendly_format) + " for " + white_name,
+        blackDate.format(friendly_format) + " for " + black_name
     ];
     var date_formats  = dates.join("\n\t");
     if (white.tz && moment().tz(white.tz).utcOffset() !== whiteDate.utcOffset()) {
