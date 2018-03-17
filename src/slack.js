@@ -109,7 +109,6 @@ function updatesUsers(bot, config){
                 self.users.byName = byName;
                 self.users.byId = byId;
             }
-            winston.info("info: got users");
         }).catch(function(error) {
             winston.error(JSON.stringify(error));
         });
@@ -136,7 +135,6 @@ function updateChannels(bot){
             self.channels.byName = byName;
             self.channels.byId = byId;
         }
-        winston.info("info: got channels");
     });
     
     // @ https://api.slack.com/methods/mpim.list
@@ -154,7 +152,6 @@ function updateChannels(bot){
             }
             self.mpims.byId = byId;
         }
-        winston.info("info: got mpims");
     });
 
 }

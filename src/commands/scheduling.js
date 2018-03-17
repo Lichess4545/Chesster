@@ -361,7 +361,7 @@ function schedulingReplyAmbiguous(bot, message){
 }
 
 // Game has been scheduled.
-function schedulingReplyScheduled(bot, message, results, white, black) {
+function schedulingReplyScheduled(bot, message, results, white, black, white_name, black_name) {
     var whiteDate = results.date.clone();
     var blackDate = results.date.clone();
     whiteDate = white.tz ? whiteDate.tz(white.tz) : whiteDate.utcOffset(white.tz_offset / 60);
@@ -370,13 +370,19 @@ function schedulingReplyScheduled(bot, message, results, white, black) {
     var friendly_format = "ddd @ HH:mm";
     var dates = [
         results.date.format(format) + " ",
-        whiteDate.format(friendly_format) + " for " + white.name,
-        blackDate.format(friendly_format) + " for " + black.name
+        whiteDate.format(friendly_format) + " for " + white_name,
+        blackDate.format(friendly_format) + " for " + black_name
     ];
     var date_formats  = dates.join("\n\t");
+    if (white.tz && moment().tz(white.tz).utcOffset() !== whiteDate.utcOffset()) {
+        date_formats += "\n*<@" + white.id + ">: A daylight savings transition is in effect. Double check your time.*";
+    }
+    if (black.tz && moment().tz(black.tz).utcOffset() !== blackDate.utcOffset()) {
+        date_formats += "\n*<@" + black.id + ">: A daylight savings transition is in effect. Double check your time.*";
+    }
 
     bot.reply(message, 
-        ":heavy_check_mark: @" + white.name + " (_white pieces_) vs @" + black.name + " (_black pieces_) scheduled for: \n\t" + date_formats
+        ":heavy_check_mark: @" + white_name + " (_white pieces_) vs @" + black_name + " (_black pieces_) scheduled for: \n\t" + date_formats
     );
 }
 
@@ -455,12 +461,11 @@ function ambientScheduling(bot, message) {
     var white = bot.users.getByNameOrID(schedulingResults.white);
     var black = bot.users.getByNameOrID(schedulingResults.black);
     if (white && black) {
-        schedulingResults.white = white.name;
-        schedulingResults.black = black.name;
         referencesSlackUsers = true;
     }
 
     if (!referencesSlackUsers) {
+        winston.warn("[SCHEDULING] Couldn't find slack users: {}".format(JSON.stringify(schedulingResults)));
         schedulingReplyCantFindUser(bot, message);
         return;
     }
@@ -474,7 +479,7 @@ function ambientScheduling(bot, message) {
         schedulingReplyCantScheduleOthers(bot, message); return;
     }
 
-    winston.debug("[SCHEDULING] Attempting to update the website.");
+    winston.debug("[SCHEDULING] Attempting to update the website: {}".format(JSON.stringify(schedulingResults)));
     // Step 3. attempt to update the website
     heltour.updateSchedule(
         heltourOptions,
@@ -512,7 +517,9 @@ function ambientScheduling(bot, message) {
         }
         
         var leagueName = message.league.options.name;
-        schedulingReplyScheduled(bot, message, schedulingResults, white, black);
+        var white_name = updateScheduleResults['white'];
+        var black_name = updateScheduleResults['black'];
+        schedulingReplyScheduled(bot, message, schedulingResults, white, black, white_name, black_name);
         // TODO: test this.
         subscription.emitter.emit('a-game-is-scheduled',
             message.league,
