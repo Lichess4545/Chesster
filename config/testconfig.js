@@ -12,7 +12,7 @@ const UNSTABLE_BOT_ID = "C0VCCPMJ8";
 const UNSTABLE_BOT_LONEWOLF_ID = "C0XQM31SL";
 
 var config = require("./config.js");
-config['watcherBaseURL'] = "https://en.stage.lichess.org/api/game-stream"
+config['watcherBaseURL'] = "https://en.stage.lichess.org/api/stream/games-by-users"
 config['slack_tokens']['chesster'] = test_chesster_slack_token;
 config['winston']['channel'] = "#modster-logging"; 
 config['winston']['handleExceptions'] = false;
