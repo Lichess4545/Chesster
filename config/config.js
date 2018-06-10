@@ -22,7 +22,7 @@ var config = {
 		"idle": 10000
 	},
     "storage": "./db/database.sqlite",
-    "watcherBaseURL": "https://www.lichess.org/api/stream/games-by-users",
+    "watcherBaseURL": "https://lichess.org/api/stream/games-by-users",
 
     "slack_tokens": {
         "lichess4545": token,
