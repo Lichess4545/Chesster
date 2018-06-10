@@ -234,7 +234,7 @@ var config = {
                     "increment": 10
                 },
                 "rated": true,
-                "variant" : "rapid",
+                "variant" : "chess960",
                 "extrema": {
                     "iso_weekday": 1,
                     "hour": 22,
