@@ -211,6 +211,62 @@ var config = {
                 "notifications": "https://www.lichess4545.com/blitzbattle/notifications/"
             }
         },
+        "chess960": {
+            "name": "Lichess 960",
+            "also_known_as": [
+                "960",
+                "1510"
+            ],
+            "heltour": {
+                "token": heltour_token,
+                "baseEndpoint": "https://www.lichess4545.com/api/",
+                "leagueTag": "chess960"
+            },
+            "results": {
+                "channel": "chess960games",
+                "channel_id": "CAG3R6HL6"
+            },
+            "gamelinks": {
+                "channel": "chess960games",
+                "channel_id": "CAG3R6HL6",
+                "clock": {
+                    "initial": 15,
+                    "increment": 10
+                },
+                "rated": true,
+                "variant" : "chess960",
+                "extrema": {
+                    "iso_weekday": 1,
+                    "hour": 22,
+                    "minute": 0,
+                    "warning_hours": 1
+                }
+
+            },
+            "scheduling": {
+                "extrema": {
+                    "isoWeekday": 1,
+                    "hour": 17,
+                    "minute": 0,
+                    "warningHours": 1
+                },
+                "warningMessage": "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
+                "lateMessage": "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
+                "format": "MM/DD HH:mm",
+                "channel": "chess960scheduling"
+            },
+            "links": {
+                "faq": "https://www.lichess4545.com/chess960/document/faq/",
+                "rules": "https://www.lichess4545.com/chess960/document/rules/",
+                "league": "https://www.lichess4545.com/chess960/",
+                "pairings": "https://www.lichess4545.com/chess960/pairings/",
+                "standings": "https://www.lichess4545.com/chess960/standings/",
+                "registration": "https://www.lichess45454.com/chess960/register/",
+                "availability": "https://www.lichess4545.com/chess960/availability/edit/",
+                "nominate": "https://www.lichess4545.com/chess960/nominate/",
+                "notifications": "https://www.lichess4545.com/chess960/notifications/"
+            }
+        },
     },
     "channel_map": {
         "lonewolf-general": "lonewolf",
@@ -226,6 +282,10 @@ var config = {
         "team-scheduling": "45+45",
         "captains": "45+45",
         "G0DFRURGQ": "45+45",
+        "chess960": "chess960",
+        "chess960games": "chess960",
+        "chess960scheduling": "chess960",
+        "unstable_bot-chess960": "chess960",
     },
     "messageForwarding": {
         "channel": "G3D6N2HNF",
