@@ -49,7 +49,7 @@ function directRequiresLeague(patterns, callback) {
     );
 }
 
-/* league information */
+// league information
 directRequiresLeague(
     ['captain guidelines'],
     leagueInfo.directResponse('formatCaptainGuidelinesResponse')
@@ -87,7 +87,7 @@ directRequiresLeague(
     leagueInfo.directResponse('formatStarterGuideResponse')
 );
 
-/* availability */
+// availability
 chesster.hears(
     {
         middleware: [slack.requiresLeague],
@@ -97,17 +97,17 @@ chesster.hears(
     availability.updateAvailability
 );
 
-/* alternate assignment */
+// alternate assignment
 chesster.hears(
     {
         middleware: [slack.withLeagueByChannelName],
         patterns: ['^assign'],
         messageTypes: ['ambient']
-    }, 
+    },
     availability.assignAlternate
 );
 
-/* alternate unassignment */
+// alternate unassignment
 chesster.hears(
     {
         middleware: [slack.withLeagueByChannelName],
@@ -117,7 +117,7 @@ chesster.hears(
     availability.unassignAlternate
 );
 
-/* Message Forwarding */
+// Message Forwarding
 adminSlack.hears(
     {
         patterns: ["^forward to"],
@@ -133,7 +133,7 @@ adminSlack.hears(
     messageForwarding.refreshLeague(chesster, adminSlack)
 );
 
-/* private urls */
+// private urls
 chesster.hears(
     {
         middleware: [slack.requiresLeague],
@@ -167,7 +167,7 @@ chesster.hears(
 );
 
 
-/* rating */
+// rating
 
 chesster.hears(
     {
@@ -187,7 +187,7 @@ chesster.hears(
     playerInfo.playerPairings(chesster.config)
 );
 
-/* commands */
+// commands
 
 function prepareCommandsMessage(){
     return "I will respond to the following commands when they are spoken to " + 
@@ -223,7 +223,7 @@ function(bot,message) {
 });
 
 
-/* welcome */
+// welcome
 
 chesster.on({event: 'user_channel_join'}, onboarding.welcomeMessage(chesster.config));
 chesster.hears(
@@ -235,7 +235,7 @@ chesster.hears(
     onboarding.welcomeMessage(chesster.config)
 );
 
-/* source */
+// source
 
 chesster.hears(
     {
@@ -247,7 +247,7 @@ chesster.hears(
     }
 );
 
-/* Scheduling */
+// Scheduling
 
 
 // Scheduling will occur on any message
@@ -259,7 +259,7 @@ chesster.on(
     scheduling.ambientScheduling
 );
 
-/* results parsing */
+// results parsing
 
 // results processing will occur on any message
 chesster.on(
@@ -270,7 +270,7 @@ chesster.on(
     games.ambientResults
 );
 
-/* game link parsing */
+// game link parsing
 
 // gamelink processing will occur on any message
 chesster.on(
@@ -281,7 +281,7 @@ chesster.on(
     games.ambientGamelinks
 );
 
-/* subscriptions */
+// subscriptions
 
 chesster.hears(
     {
@@ -326,38 +326,6 @@ chesster.hears(
 subscription.register(chesster, 'a-game-is-scheduled', subscription.formatAGameIsScheduled);
 subscription.register(chesster, 'a-game-starts', subscription.formatAGameStarts);
 subscription.register(chesster, 'a-game-is-over', subscription.formatAGameIsOver);
-
-/* ladder */
-
-var ladderConfigs = require("../config/ladder_config.js");
-
-var key = ladderConfigs["spreadsheet-key"];
-var creds = ladderConfigs["spreadsheet-creds"];
-var ladderSpreadsheet = require("./spreadsheet")(key, creds);
-var ladderRecorder = require("./ladder_recorder")(ladderSpreadsheet);
-var ladderLogic = require("./ladder_logic")(ladderRecorder);
-var ladder = require('./commands/ladder.js');
-
-chesster.hears(
-    {
-	patterns: ['^add challenge'],
-        messageTypes: ['direct_mention']
-    },
-    ladder.addChallenge(ladderConfigs, ladderLogic));
-
-chesster.hears(
-    {
-	patterns: ['^add game'],
-        messageTypes: ['direct_mention']
-    },
-    ladder.addGame(ladderConfigs, ladderLogic));
-
-chesster.hears(
-    {
-	patterns: ['^find challenge'],
-        messageTypes: ['direct_mention']
-    },
-    ladder.findChallenge(ladderConfigs, ladderLogic));
 
 //------------------------------------------------------------------------------
 // Start the watcher.
