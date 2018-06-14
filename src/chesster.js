@@ -206,7 +206,7 @@ function prepareCommandsMessage(){
         "        mods summon (lonewolf)]    ! summon the mods\n" +
         "    [ faq (lonewolf)]                        ! a document of frequently asked questions\n" + 
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
-	"    [ nomination (4545) ]          ! get a nomination link for up to 3 games.\n" +
+ 	"    [ nomination (4545) ]          ! get a nomination link for up to 3 games.\n" +
         "    [ source ]                     ! github repo for Chesster \n" +
         "    [ subscription help ]          ! help for chesster's subscription system\n" +
         "    [ link ]                       ! link your slack and lichess accounts\n" +
