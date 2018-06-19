@@ -102,7 +102,7 @@ chesster.hears(
     {
         middleware: [slack.withLeagueByChannelName],
         patterns: ['^assign'],
-        messageTypes: ['ambient']
+        messageTypes: ['ambient', 'direct_mention']
     },
     availability.assignAlternate
 );
@@ -112,7 +112,7 @@ chesster.hears(
     {
         middleware: [slack.withLeagueByChannelName],
         patterns: ['^unassign'],
-        messageTypes: ['ambient']
+        messageTypes: ['ambient', 'direct_mention']
     }, 
     availability.unassignAlternate
 );
