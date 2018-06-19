@@ -483,7 +483,7 @@ var league_attributes = {
     getTeamByPlayerName:function(playerName) {
         var self = this;
         return self._playerLookup[playerName.toLowerCase()] &&
-		self._playerLookup[playerName.toLowerCase()].team;
+               self._playerLookup[playerName.toLowerCase()].team;
     },
     //--------------------------------------------------------------------------
     // Get the team for a given team name
