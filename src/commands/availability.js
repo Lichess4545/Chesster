@@ -165,7 +165,7 @@ function assignAlternate(bot, message){
         winston.error("{} league doesn't have heltour options!?".format(message.league.options.name));
         return;
     }
-    
+
     return commands.tokenize(message.text, [
         "assign", 
         "{text:player}", 
