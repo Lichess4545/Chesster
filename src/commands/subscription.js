@@ -121,11 +121,17 @@ function formatAGameIsScheduled(bot, target, context) {
     // TODO: put these date formats somewhere, probably config?
     var friendlyFormat = "ddd @ HH:mm";
     target = bot.getSlackUserFromNameOrID(target);
-    var targetDate = context.result.date.clone().utcOffset(target.tz_offset/60);
-    context['yourDate'] = targetDate.format(friendlyFormat);
+    var message = "";
+    if (target && target.tz_offset) {
+        var targetDate = context.result.date.clone().utcOffset(target.tz_offset/60);
+        context['yourDate'] = targetDate.format(friendlyFormat);
+        message = "{white.name} vs {black.name} in {leagueName} has been scheduled for {realDate}, which is {yourDate} for you.";
+    } else {
+        message = "{white.name} vs {black.name} in {leagueName} has been scheduled for {realDate}.";
+    }
     var fullFormat = "YYYY-MM-DD @ HH:mm UTC";
     context['realDate'] = context.result.date.format(fullFormat);
-    return "{white.name} vs {black.name} in {leagueName} has been scheduled for {realDate}, which is {yourDate} for you.".format(context);
+    return message.format(context);
 }
 
 //------------------------------------------------------------------------------
