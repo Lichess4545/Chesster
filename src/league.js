@@ -487,7 +487,7 @@ var league_attributes = {
         if (team) return team;
         // Try to find the team by looking through the pairings for this
         // playername.  This will find alternates.
-        var team = _(self._pairings)
+        team = _(self._pairings)
             .map(function(p) {
                 if (p['white'].toLowerCase() === playerName.toLowerCase()) {
                     return self._teamLookup[p['white_team'].toLowerCase()];
