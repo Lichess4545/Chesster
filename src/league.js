@@ -73,7 +73,7 @@ var league_attributes = {
     _teams: [],
 
     //--------------------------------------------------------------------------
-    // A lookup from a player name to their team.
+    // A lookup from a team name to the team object.
     //--------------------------------------------------------------------------
     _teamLookup: {},
 
@@ -482,8 +482,26 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     getTeamByPlayerName:function(playerName) {
         var self = this;
-        return self._playerLookup[playerName.toLowerCase()] &&
-               self._playerLookup[playerName.toLowerCase()].team;
+        var team = self._playerLookup[playerName.toLowerCase()] &&
+                   self._playerLookup[playerName.toLowerCase()].team;
+        if (team) return team;
+        // Try to find the team by looking through the pairings for this
+        // playername.  This will find alternates.
+        var team = _(self._pairings)
+            .map(function(p) {
+                if (p['white'].toLowerCase() === playerName.toLowerCase()) {
+                    return self._teamLookup[p['white_team'].toLowerCase()];
+                } else if (p['black'].toLowerCase() === playerName.toLowerCase()) {
+                    return self._teamLookup[p['black_team'].toLowerCase()];
+                } else {
+                    return undefined;
+                }
+            })
+            .filter(_.isObject).value();
+        if (team.length > 0) {
+            return team[0];
+        }
+        return undefined;
     },
     //--------------------------------------------------------------------------
     // Get the team for a given team name
