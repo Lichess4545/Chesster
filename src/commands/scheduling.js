@@ -469,7 +469,7 @@ function ambientScheduling(bot, message) {
     } else {
         var pairings = message.league.findPairing(speaker.name);
         if (pairings.length === 1) {
-            var pairing = pairings[0]
+            var pairing = pairings[0];
             schedulingResults.white = pairing.white;
             schedulingResults.black = pairing.black;
             white = bot.users.getByNameOrID(pairing.white);
