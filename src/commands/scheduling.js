@@ -421,23 +421,11 @@ function ambientScheduling(bot, message) {
     }
 
     var schedulingOptions = message.league.options.scheduling;
-    if (!schedulingOptions) {
-        return;
-    }
     var channel = bot.channels.byId[message.channel];
-    if (!channel) {
-        return;
-    }
-    if (!_.isEqual(channel.name, schedulingOptions.channel)) {
+    if (!schedulingOptions || !channel || !_.isEqual(channel.name, schedulingOptions.channel)) {
         deferred.resolve();
         return deferred.promise;
     }
-
-    if (!schedulingOptions) {
-        winston.error("[SCHEDULING] {} league doesn't have scheduling options!?".format(message.league.options.name));
-        deferred.resolve();
-        return deferred.promise;
-    } 
 
     var heltourOptions = message.league.options.heltour;
     if (!heltourOptions) {
@@ -446,12 +434,7 @@ function ambientScheduling(bot, message) {
         return deferred.promise;
     } 
 
-    var referencesSlackUsers = false;
-
-    var schedulingResults = {
-        white: '',
-        black: ''
-    };
+    var schedulingResults = null;
 
     // Step 1. See if we can parse the dates
     try {
@@ -473,6 +456,7 @@ function ambientScheduling(bot, message) {
     if (schedulingResults.white && schedulingResults.black) {
         white = bot.users.getByNameOrID(schedulingResults.white);
         black = bot.users.getByNameOrID(schedulingResults.black);
+        var referencesSlackUsers = false;
         if (white && black) {
             referencesSlackUsers = true;
         }
@@ -484,7 +468,7 @@ function ambientScheduling(bot, message) {
         }
     } else {
         var pairings = message.league.findPairing(speaker.name);
-        if (pairings.length == 1) {
+        if (pairings.length === 1) {
             var pairing = pairings[0]
             schedulingResults.white = pairing.white;
             schedulingResults.black = pairing.black;
