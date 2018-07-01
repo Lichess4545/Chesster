@@ -9,7 +9,6 @@ format.extend(String.prototype);
 
 const league = require("../league.js");
 const db = require("../models.js");
-const slack = require("../slack.js");
 
 // The emitter we will use.
 const EventEmitter = require('events');
@@ -401,7 +400,7 @@ function getListeners(bot, leagueName, sources, event) {
 //------------------------------------------------------------------------------
 // Format the not a moderator response
 //------------------------------------------------------------------------------
-function formatHelpResponse(bot, config) {
+function formatNotModerator() {
     return Q.fcall(function() {
         return "You are not a moderator and so you can't run this command";
     });
@@ -419,14 +418,14 @@ function processTeamSubscribeCommand(bot, config, message) {
         // Needed for isModerator to work
         message.league = _league;
         if (!message.player.isModerator()) {
-            return formatNotModerator(bot, config);
+            return formatNotModerator();
         }
         return _league.getTeams().then(function(teams) {
             var processed = 0;
             var missing_captains = 0;
             var missing_channel = 0;
             var promises = [];
-            _(teams).forEach(function(team) {
+            _.forEach(teams, function(team) {
                 var captainName = team && _(team.players).filter('isCaptain').map('username').value();
                 if (!captainName) {
                     missing_captains++;
