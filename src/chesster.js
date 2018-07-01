@@ -318,6 +318,14 @@ chesster.hears(
 
 chesster.hears(
     {
+        patterns: [/^subscribe teams$/],
+        messageTypes: ['direct_message']
+    },
+    subscription.subscribeTeams(chesster.config)
+);
+
+chesster.hears(
+    {
         patterns: [''],
         messageTypes: ['ambient']
     },

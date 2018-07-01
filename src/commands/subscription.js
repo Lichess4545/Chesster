@@ -9,6 +9,7 @@ format.extend(String.prototype);
 
 const league = require("../league.js");
 const db = require("../models.js");
+const slack = require("../slack.js");
 
 // The emitter we will use.
 const EventEmitter = require('events');
@@ -397,6 +398,77 @@ function getListeners(bot, leagueName, sources, event) {
     });
 }
 
+//------------------------------------------------------------------------------
+// Format the not a moderator response
+//------------------------------------------------------------------------------
+function formatHelpResponse(bot, config) {
+    return Q.fcall(function() {
+        return "You are not a moderator and so you can't run this command";
+    });
+}
+
+//------------------------------------------------------------------------------
+// Process the subscribe teams command.
+//
+// A tell command is made up like so:
+//      tell <listener> when <event> in <league> for <source>
+//------------------------------------------------------------------------------
+function processTeamSubscribeCommand(bot, config, message) {
+    return Q.fcall(function() {
+        var _league = league.getLeague(bot, "45+45", config);
+        // Needed for isModerator to work
+        message.league = _league;
+        if (!message.player.isModerator()) {
+            return formatNotModerator(bot, config);
+        }
+        return _league.getTeams().then(function(teams) {
+            var processed = 0;
+            var missing_captains = 0;
+            var missing_channel = 0;
+            var promises = [];
+            _(teams).forEach(function(team) {
+                var captainName = team && _(team.players).filter('isCaptain').map('username').value();
+                if (!captainName) {
+                    missing_captains++;
+                } else if (!team.slack_channel) {
+                    missing_channel++;
+                } else {
+                    captainName = captainName[0];
+                    var target = "channel_id:" + team.slack_channel;
+                    processed++;
+                    ["a-game-starts", "a-game-is-over"].forEach(function(event) {
+                        promises.push(db.lock().then(function(unlock) {
+                            return db.Subscription.findOrCreate({
+                                where: {
+                                    requester: captainName.toLowerCase(),
+                                    source: team.name.toLowerCase(),
+                                    event: event.toLowerCase(),
+                                    league: _league.options.name.toLowerCase(),
+                                    target: target.toLowerCase()
+                                }
+                            }).then(function() {
+                                unlock.resolve();
+                            });
+                        }));
+                    });
+                }
+            });
+            return Q.all(promises).then(function() {
+                console.log("Processed {processed} teams. {missing_captains} didn't have captains. {missing_channel} are missing channels.".format({
+                    processed: processed,
+                    missing_captains: missing_captains,
+                    missing_channel: missing_channel
+                }));
+                return "Processed {processed} teams. {missing_captains} didn't have captains. {missing_channel} are missing channels.".format({
+                    processed: processed,
+                    missing_captains: missing_captains,
+                    missing_channel: missing_channel
+                });
+            });
+        });
+    });
+}
+
 
 //------------------------------------------------------------------------------
 // Handler the tell me when command
@@ -462,6 +534,22 @@ function removeHandler(config) {
     };
 }
 
+//------------------------------------------------------------------------------
+// Handle the subscribe teams command
+//------------------------------------------------------------------------------
+function subscribeTeams(config) {
+    return function(bot, message) {
+        return bot.startPrivateConversation(message.user).then(function (convo) {
+            return processTeamSubscribeCommand(bot, config, message).then(function(response) {
+                convo.say(response);
+            }).catch(function(error) {
+                convo.say("I'm sorry, but an error occurred processing this subscription command");
+                winston.error(JSON.stringify(error));
+            });
+        });
+    };
+}
+
 module.exports.emitter = emitter;
 module.exports.getListeners = getListeners;
 module.exports.register = register;
@@ -470,6 +558,7 @@ module.exports.tellMeWhenHandler = tellMeWhenHandler;
 module.exports.helpHandler = helpHandler;
 module.exports.listHandler = listHandler;
 module.exports.removeHandler = removeHandler;
+module.exports.subscribeTeams = subscribeTeams;
 module.exports.formatAGameIsScheduled = formatAGameIsScheduled;
 module.exports.formatAGameStarts = formatAGameStarts;
 module.exports.formatAGameIsOver = formatAGameIsOver;
