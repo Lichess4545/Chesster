@@ -217,15 +217,18 @@ function parseScheduling(inputString, options) {
     var parts = getTokensScheduling(inputString);
 
     // Filter out word that we know we want to ignore.
-    if (parts.length < 3) {
-        winston.error("Unable to parse date: " + inputString);
-        throw new ScheduleParsingError();
+    var date_parts = parts;
+    var name_parts = [];
+    // If it's longer than 3, then they provided names, so use them.
+    if (parts.length >= 3) {
+        date_parts = parts.slice(2);
+        name_parts = parts.slice(0, 2);
     }
 
     // Now build up some possible strings and try a bunch of patterns
     // to find a date in our range.
     var extrema = getRoundExtrema(options);
-    var dateStrings = getPossibleDateStrings(parts.slice(2).join(" "), extrema);
+    var dateStrings = getPossibleDateStrings(date_parts.join(" "), extrema);
 
     var validInBoundsDate = [];
     var validOutOfBoundsDate = [];
@@ -260,8 +263,14 @@ function parseScheduling(inputString, options) {
     }
 
     // strip out any punctuation from the usernames
-    var white = parts[0].replace(/[@\.,\(\):]/g, '');
-    var black = parts[1].replace(/[@\.,\(\):]/g, '');
+    var white = null;
+    var black = null;
+    if (name_parts.length > 0) {
+        white = name_parts[0].replace(/[@\.,\(\):]/g, '');
+    }
+    if (name_parts.length > 1) {
+        black = name_parts[1].replace(/[@\.,\(\):]/g, '');
+    }
 
     var date;
     var outOfBounds = false;
@@ -412,23 +421,11 @@ function ambientScheduling(bot, message) {
     }
 
     var schedulingOptions = message.league.options.scheduling;
-    if (!schedulingOptions) {
-        return;
-    }
     var channel = bot.channels.byId[message.channel];
-    if (!channel) {
-        return;
-    }
-    if (!_.isEqual(channel.name, schedulingOptions.channel)) {
+    if (!schedulingOptions || !channel || !_.isEqual(channel.name, schedulingOptions.channel)) {
         deferred.resolve();
         return deferred.promise;
     }
-
-    if (!schedulingOptions) {
-        winston.error("[SCHEDULING] {} league doesn't have scheduling options!?".format(message.league.options.name));
-        deferred.resolve();
-        return deferred.promise;
-    } 
 
     var heltourOptions = message.league.options.heltour;
     if (!heltourOptions) {
@@ -437,12 +434,7 @@ function ambientScheduling(bot, message) {
         return deferred.promise;
     } 
 
-    var referencesSlackUsers = false;
-
-    var schedulingResults = {
-        white: '',
-        black: ''
-    };
+    var schedulingResults = null;
 
     // Step 1. See if we can parse the dates
     try {
@@ -458,19 +450,36 @@ function ambientScheduling(bot, message) {
     }
 
     // Step 2. See if we have valid named players
-    var white = bot.users.getByNameOrID(schedulingResults.white);
-    var black = bot.users.getByNameOrID(schedulingResults.black);
-    if (white && black) {
-        referencesSlackUsers = true;
-    }
+    var white = null;
+    var black = null;
+    var speaker = bot.users.getByNameOrID(message.user);
+    if (schedulingResults.white && schedulingResults.black) {
+        white = bot.users.getByNameOrID(schedulingResults.white);
+        black = bot.users.getByNameOrID(schedulingResults.black);
+        var referencesSlackUsers = false;
+        if (white && black) {
+            referencesSlackUsers = true;
+        }
 
-    if (!referencesSlackUsers) {
-        winston.warn("[SCHEDULING] Couldn't find slack users: {}".format(JSON.stringify(schedulingResults)));
-        schedulingReplyCantFindUser(bot, message);
+        if (!referencesSlackUsers) {
+            winston.warn("[SCHEDULING] Couldn't find slack users: {}".format(JSON.stringify(schedulingResults)));
+            schedulingReplyCantFindUser(bot, message);
+            return;
+        }
+    } else {
+        var pairings = message.league.findPairing(speaker.name);
+        if (pairings.length === 1) {
+            var pairing = pairings[0];
+            schedulingResults.white = pairing.white;
+            schedulingResults.black = pairing.black;
+            white = bot.users.getByNameOrID(pairing.white);
+            black = bot.users.getByNameOrID(pairing.black);
+        }
+    }
+    if (!white || !black) {
         return;
     }
 
-    var speaker = bot.users.getByNameOrID(message.user);
     if (
         !_.isEqual(white.id, speaker.id) &&
         !_.isEqual(black.id, speaker.id) &&
