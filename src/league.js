@@ -165,18 +165,20 @@ var league_attributes = {
                         var lichessRating = lichessRatings[0];
                         lichessRating.set('rating', player.rating);
                         lichessRating.set('lastCheckedAt', moment.utc().format());
-                        lichessRating.save().then(function() {
-                            unlock.resolve();
-                        }).catch(function(error) {
-                            winston.error("{}.refreshRosters.saveRating Error: {}".format(
-                                self.options.name,
-                                error
-                            ));
-                            unlock.resolve();
+                        db.lock().then(function(unlock) {
+                            lichessRating.save().catch(function(error) {
+                                winston.error("{}.refreshRosters.saveRating Error: {}".format(
+                                    self.options.name,
+                                    error
+                                ));
+                            }).finally(function() {
+                                unlock.resolve();
+                            });
                         });
                         return player.rating;
                     }).catch(function(err) {
                         winston.error(JSON.stringify(err));
+                    }).finally(function() {
                         unlock.resolve();
                     });
                 }).catch(function(err) {

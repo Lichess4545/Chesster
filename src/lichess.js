@@ -157,8 +157,7 @@ var ratingFunctions = (function() {
                             name: name,
                             rating: rating
                         }));
-                        unlock.resolve();
-                    }).catch(function() {
+                    }).finally(function() {
                         unlock.resolve();
                     });
                     return rating;
@@ -183,7 +182,6 @@ var ratingFunctions = (function() {
             return db.LichessRating.findOrCreate({
                 where: { lichessUserName: name }
             }).then(function(lichessRating) {
-                unlock.resolve();
                 lichessRating = lichessRating[0];
 
                 var promise;
@@ -213,6 +211,8 @@ var ratingFunctions = (function() {
                 }
             }).catch(function(error) {
                 winston.error("Error querying for rating: " + error);
+            }).finally(function() {
+                unlock.resolve();
             });
         });
     }
