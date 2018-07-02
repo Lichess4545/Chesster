@@ -422,24 +422,19 @@ function processTeamSubscribeCommand(bot, config, message) {
         }
         return _league.getTeams().then(function(teams) {
             var processed = 0;
-            var missing_captains = 0;
             var missing_channel = 0;
             var promises = [];
             _.forEach(teams, function(team) {
-                var captainName = team && _(team.players).filter('isCaptain').map('username').value();
-                if (!captainName) {
-                    missing_captains++;
-                } else if (!team.slack_channel) {
+                if (!team.slack_channel) {
                     missing_channel++;
                 } else {
-                    captainName = captainName[0];
                     var target = "channel_id:" + team.slack_channel;
                     processed++;
                     ["a-game-starts", "a-game-is-over"].forEach(function(event) {
                         promises.push(db.lock().then(function(unlock) {
                             return db.Subscription.findOrCreate({
                                 where: {
-                                    requester: captainName.toLowerCase(),
+                                    requester: "chesster",
                                     source: team.name.toLowerCase(),
                                     event: event.toLowerCase(),
                                     league: _league.options.name.toLowerCase(),
@@ -453,14 +448,8 @@ function processTeamSubscribeCommand(bot, config, message) {
                 }
             });
             return Q.all(promises).then(function() {
-                console.log("Processed {processed} teams. {missing_captains} didn't have captains. {missing_channel} are missing channels.".format({
+                return "Processed {processed} teams. {missing_channel} are missing channels.".format({
                     processed: processed,
-                    missing_captains: missing_captains,
-                    missing_channel: missing_channel
-                }));
-                return "Processed {processed} teams. {missing_captains} didn't have captains. {missing_channel} are missing channels.".format({
-                    processed: processed,
-                    missing_captains: missing_captains,
                     missing_channel: missing_channel
                 });
             });
