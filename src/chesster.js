@@ -191,7 +191,7 @@ chesster.hears(
 
 function prepareCommandsMessage(){
     return "I will respond to the following commands when they are spoken to " + 
-									  users.getIdString("chesster") + ": \n```" +
+        users.getIdString("chesster") + ": \n```" +
         "    [ starter guide ]              ! get the starter guide link; thanks GnarlyGoat!\n" +
         "    [ rules | regulations ]        ! get the rules and regulations.\n" + 
         "    [ pairing | pairing <player> ] ! get your (or given <player>) latest pairings with scheduled time\n" +

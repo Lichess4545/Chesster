@@ -250,13 +250,14 @@ function processTellCommand(bot, config, message) {
                         target: target.toLowerCase()
                     }
                 }).then(function() {
-                    unlock.resolve();
                     return "Great! I will tell {target} when {event} for {source} in {league}".format({
                         source: sourceName,
                         event: event,
                         league: _league.options.name,
                         target: listener
                     });
+                }).finally(function() {
+                    unlock.resolve();
                 });
             });
         });
@@ -293,8 +294,9 @@ function processSubscriptionListCommand(bot, config, message) {
                     response = "You have no subscriptions";
                 }
 
-                unlock.resolve();
                 return response;
+            }).finally(function() {
+                unlock.resolve();
             });
         });
     });
@@ -316,18 +318,17 @@ function processSubscriptionRemoveCommand(bot, config, message, id) {
                 }
             }).then(function(subscriptions) {
                 if (subscriptions.length === 0) {
-                    unlock.resolve();
                     return "That is not a valid subscription id";
                 } else if (subscriptions.length === 1) {
                     return subscriptions[0].destroy().then(function() {
-                        unlock.resolve();
                         return "Subscription deleted";
                     });
                 } else {
                     // This should never happen
-                    unlock.resolve();
                     throw Error("This should never occur");
                 }
+            }).finally(function() {
+                unlock.resolve();
             });
         });
     });
@@ -391,8 +392,9 @@ function getListeners(bot, leagueName, sources, event) {
                 event: event.toLowerCase()
             }
         }).then(function(subscriptions) {
-            unlock.resolve();
             return _(subscriptions).map("target").uniq().value();
+        }).finally(function() {
+            unlock.resolve();
         });
     });
 }
@@ -440,7 +442,7 @@ function processTeamSubscribeCommand(bot, config, message) {
                                     league: _league.options.name.toLowerCase(),
                                     target: target.toLowerCase()
                                 }
-                            }).then(function() {
+                            }).finally(function() {
                                 unlock.resolve();
                             });
                         }));
