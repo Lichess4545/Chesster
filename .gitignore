@@ -14,6 +14,7 @@ chesster_slack_token.js
 test_heltour_token.js
 test_logging_token.js
 ladder_config.js
+lakinconfig.js
 db/database.sqlite
 npm-debug.log
 .vscode
