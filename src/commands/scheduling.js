@@ -391,7 +391,7 @@ function schedulingReplyScheduled(bot, message, results, white, black, white_nam
     }
 
     bot.reply(message, 
-        ":heavy_check_mark: @" + white_name + " (_white pieces_) vs @" + black_name + " (_black pieces_) scheduled for: \n\t" + date_formats
+        ":heavy_check_mark: <@" + white.id + "> (_white pieces_) vs <@" + black.id + "> (_black pieces_) scheduled for: \n\t" + date_formats
     );
 }
 
