@@ -464,7 +464,7 @@ function updateGamelink(league, details) {
 
     //gamelinks only come from played games, so ignoring forfeit result types
 
-    //update the spreadsheet with results from gamelink
+    //update the website with results from gamelink
     return heltour.updatePairing(
         league.options.heltour,
         result
