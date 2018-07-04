@@ -158,29 +158,19 @@ var league_attributes = {
             roster.players.forEach(function(player) {
                 var name = _.toLower(player.username);
                 newPlayerLookup[name] = player;
-                db.lock().then(function(unlock) {
-                    return db.LichessRating.findOrCreate({
-                        where: { lichessUserName: name }
-                    }).then(function(lichessRatings) {
-                        var lichessRating = lichessRatings[0];
-                        lichessRating.set('rating', player.rating);
-                        lichessRating.set('lastCheckedAt', moment.utc().format());
-                        db.lock().then(function(unlock) {
-                            lichessRating.save().catch(function(error) {
-                                winston.error("{}.refreshRosters.saveRating Error: {}".format(
-                                    self.options.name,
-                                    error
-                                ));
-                            }).finally(function() {
-                                unlock.resolve();
-                            });
-                        });
-                        return player.rating;
-                    }).catch(function(err) {
-                        winston.error(JSON.stringify(err));
-                    }).finally(function() {
-                        unlock.resolve();
+                return db.LichessRating.findOrCreate({
+                    where: { lichessUserName: name }
+                }).then(function(lichessRatings) {
+                    var lichessRating = lichessRatings[0];
+                    lichessRating.set('rating', player.rating);
+                    lichessRating.set('lastCheckedAt', moment.utc().format());
+                    lichessRating.save().catch(function(error) {
+                        winston.error("{}.refreshRosters.saveRating Error: {}".format(
+                            self.options.name,
+                            error
+                        ));
                     });
+                    return player.rating;
                 }).catch(function(err) {
                     winston.error(JSON.stringify(err));
                 });

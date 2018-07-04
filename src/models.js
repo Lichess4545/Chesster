@@ -4,34 +4,10 @@
 // Models for our locally stored data
 //------------------------------------------------------------------------------
 const Sequelize = require('sequelize');
-const Q = require('q');
-const AsyncLock = require('async-lock');
 const winston = require("winston");
 
 
 var exports = (function() {
-    var _lock = new AsyncLock();
-
-    //--------------------------------------------------------------------------
-    // A lock that we can use to ensure that any writing to the database is 
-    // finished before another writer starts.
-    //
-    // A donePromise will be passed into the deferred, this donePromise should
-    // always be resolved when you are done with the database.
-    //--------------------------------------------------------------------------
-    function lock() {
-        var lockDeferred = Q.defer();
-        _lock.acquire("chesster", function() {
-            var unlock = Q.defer();
-            lockDeferred.resolve(unlock);
-            return unlock.promise;
-        }).catch(function(err) {
-            winston.error(JSON.stringify(err));
-            lockDeferred.reject(err);
-        });
-        return lockDeferred.promise;
-    }
-
     //--------------------------------------------------------------------------
     function defineModels(sequelize) {
         module.exports.LichessRating = sequelize.define('LichessRating', {
@@ -85,11 +61,11 @@ var exports = (function() {
             defineModels(sequelize);
         }).catch(function(error) {
             winston.error("Unable to connect to database: " + error);
+            throw error;
         });
     }
     return {
-        connect: connect,
-        lock: lock
+        connect: connect
     };
 }());
 

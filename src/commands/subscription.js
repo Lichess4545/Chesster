@@ -240,24 +240,20 @@ function processTellCommand(bot, config, message) {
             } else if (!_.isUndefined(team)) {
                 sourceName = team.name;
             }
-            return db.lock().then(function(unlock) {
-                return db.Subscription.findOrCreate({
-                    where: {
-                        requester: requester.name.toLowerCase(),
-                        source: sourceName.toLowerCase(),
-                        event: event.toLowerCase(),
-                        league: _league.options.name.toLowerCase(),
-                        target: target.toLowerCase()
-                    }
-                }).then(function() {
-                    return "Great! I will tell {target} when {event} for {source} in {league}".format({
-                        source: sourceName,
-                        event: event,
-                        league: _league.options.name,
-                        target: listener
-                    });
-                }).finally(function() {
-                    unlock.resolve();
+            return db.Subscription.findOrCreate({
+                where: {
+                    requester: requester.name.toLowerCase(),
+                    source: sourceName.toLowerCase(),
+                    event: event.toLowerCase(),
+                    league: _league.options.name.toLowerCase(),
+                    target: target.toLowerCase()
+                }
+            }).then(function() {
+                return "Great! I will tell {target} when {event} for {source} in {league}".format({
+                    source: sourceName,
+                    event: event,
+                    league: _league.options.name,
+                    target: listener
                 });
             });
         });
@@ -272,32 +268,27 @@ function processTellCommand(bot, config, message) {
 function processSubscriptionListCommand(bot, config, message) {
     return Q.fcall(function() {
         var requester = bot.getSlackUserFromNameOrID(message.user);
-        // TODO: Once we enable WAL - we can remove this lock for this command
-        return db.lock().then(function(unlock) {
-            return db.Subscription.findAll({
-                where: {
-                    requester: requester.name.toLowerCase()
-                },
-                order: [
-                    ['id', 'ASC']
-                ]
-            }).then(function(subscriptions) {
-                var response = "";
-                _.each(subscriptions, function(subscription) {
-                    var context = subscription.get();
-                    if (_.startsWith(context['target'], 'channel_id:')) {
-                        context['target'] = 'your team channel';
-                    }
-                    response += "\nID {id} -> tell {target} when {event} for {source} in {league}".format(context);
-                });
-                if (response.length === 0) {
-                    response = "You have no subscriptions";
+        return db.Subscription.findAll({
+            where: {
+                requester: requester.name.toLowerCase()
+            },
+            order: [
+                ['id', 'ASC']
+            ]
+        }).then(function(subscriptions) {
+            var response = "";
+            _.each(subscriptions, function(subscription) {
+                var context = subscription.get();
+                if (_.startsWith(context['target'], 'channel_id:')) {
+                    context['target'] = 'your team channel';
                 }
-
-                return response;
-            }).finally(function() {
-                unlock.resolve();
+                response += "\nID {id} -> tell {target} when {event} for {source} in {league}".format(context);
             });
+            if (response.length === 0) {
+                response = "You have no subscriptions";
+            }
+
+            return response;
         });
     });
 }
@@ -310,26 +301,22 @@ function processSubscriptionListCommand(bot, config, message) {
 function processSubscriptionRemoveCommand(bot, config, message, id) {
     return Q.fcall(function() {
         var requester = bot.getSlackUserFromNameOrID(message.user);
-        return db.lock().then(function(unlock) {
-            return db.Subscription.findAll({
-                where: {
-                    requester: requester.name.toLowerCase(),
-                    id: id
-                }
-            }).then(function(subscriptions) {
-                if (subscriptions.length === 0) {
-                    return "That is not a valid subscription id";
-                } else if (subscriptions.length === 1) {
-                    return subscriptions[0].destroy().then(function() {
-                        return "Subscription deleted";
-                    });
-                } else {
-                    // This should never happen
-                    throw Error("This should never occur");
-                }
-            }).finally(function() {
-                unlock.resolve();
-            });
+        return db.Subscription.findAll({
+            where: {
+                requester: requester.name.toLowerCase(),
+                id: id
+            }
+        }).then(function(subscriptions) {
+            if (subscriptions.length === 0) {
+                return "That is not a valid subscription id";
+            } else if (subscriptions.length === 1) {
+                return subscriptions[0].destroy().then(function() {
+                    return "Subscription deleted";
+                });
+            } else {
+                // This should never happen
+                throw Error("This should never occur");
+            }
         });
     });
 }
@@ -375,27 +362,22 @@ function register(bot, eventName, cb) {
 //------------------------------------------------------------------------------
 function getListeners(bot, leagueName, sources, event) {
     sources = _.map(sources, _.toLower);
-    // TODO: when we get WAL enabled, we won't need to lock this query any more.
-    return db.lock().then(function(unlock) {
-        // These are names of users, not users. So we have to go get the real
-        // user and teams. This is somewhat wasteful - but I'm not sure whether
-        // this is the right design or if we should pass in users to this point. 
-        var _league = league.getLeague(bot, leagueName);
-        var teamNames = _(sources).map(function(n) { return _league.getTeamByPlayerName(n); }).filter(_.isObject).map("name").map(_.toLower).value();
-        var possibleSources = _.concat(sources, teamNames);
-        return db.Subscription.findAll({
-            where: {
-                league: leagueName.toLowerCase(),
-                source: {
-                    $in: possibleSources
-                },
-                event: event.toLowerCase()
-            }
-        }).then(function(subscriptions) {
-            return _(subscriptions).map("target").uniq().value();
-        }).finally(function() {
-            unlock.resolve();
-        });
+    // These are names of users, not users. So we have to go get the real
+    // user and teams. This is somewhat wasteful - but I'm not sure whether
+    // this is the right design or if we should pass in users to this point. 
+    var _league = league.getLeague(bot, leagueName);
+    var teamNames = _(sources).map(function(n) { return _league.getTeamByPlayerName(n); }).filter(_.isObject).map("name").map(_.toLower).value();
+    var possibleSources = _.concat(sources, teamNames);
+    return db.Subscription.findAll({
+        where: {
+            league: leagueName.toLowerCase(),
+            source: {
+                $in: possibleSources
+            },
+            event: event.toLowerCase()
+        }
+    }).then(function(subscriptions) {
+        return _(subscriptions).map("target").uniq().value();
     });
 }
 
@@ -433,19 +415,15 @@ function processTeamSubscribeCommand(bot, config, message) {
                     var target = "channel_id:" + team.slack_channel;
                     processed++;
                     ["a-game-starts", "a-game-is-over"].forEach(function(event) {
-                        promises.push(db.lock().then(function(unlock) {
-                            return db.Subscription.findOrCreate({
-                                where: {
-                                    requester: "chesster",
-                                    source: team.name.toLowerCase(),
-                                    event: event.toLowerCase(),
-                                    league: _league.options.name.toLowerCase(),
-                                    target: target.toLowerCase()
-                                }
-                            }).finally(function() {
-                                unlock.resolve();
-                            });
-                        }));
+                        return db.Subscription.findOrCreate({
+                            where: {
+                                requester: "chesster",
+                                source: team.name.toLowerCase(),
+                                event: event.toLowerCase(),
+                                league: _league.options.name.toLowerCase(),
+                                target: target.toLowerCase()
+                            }
+                        });
                     });
                 }
             });

@@ -145,23 +145,19 @@ var ratingFunctions = (function() {
             _playerPromises[name] = undefined;
             var rating = result.json.perfs.classical.rating;
             // Get the writable lock for the database.
-            return db.lock().then(function(unlock) {
-                return db.LichessRating.findOrCreate({
-                    where: { lichessUserName: name }
-                }).then(function(lichessRatings) {
-                    var lichessRating = lichessRatings[0];
-                    lichessRating.set('rating', rating);
-                    lichessRating.set('lastCheckedAt', moment.utc().format());
-                    lichessRating.save().then(function() {
-                        winston.info("Got updated rating for {name}: {rating}".format({
-                            name: name,
-                            rating: rating
-                        }));
-                    }).finally(function() {
-                        unlock.resolve();
-                    });
-                    return rating;
+            return db.LichessRating.findOrCreate({
+                where: { lichessUserName: name }
+            }).then(function(lichessRatings) {
+                var lichessRating = lichessRatings[0];
+                lichessRating.set('rating', rating);
+                lichessRating.set('lastCheckedAt', moment.utc().format());
+                lichessRating.save().then(function() {
+                    winston.info("Got updated rating for {name}: {rating}".format({
+                        name: name,
+                        rating: rating
+                    }));
                 });
+                return rating;
             });
         }).catch(function(error) {
             winston.error("Error getting player by name: " + error);
@@ -176,44 +172,39 @@ var ratingFunctions = (function() {
     function getPlayerRating(name, isBackground){
         name = name.toLowerCase();
 
-        // Get the writable lock for the database.
-        return db.lock().then(function(unlock) {
-            // Ensure we have a record.
-            return db.LichessRating.findOrCreate({
-                where: { lichessUserName: name }
-            }).then(function(lichessRating) {
-                lichessRating = lichessRating[0];
+        // Ensure we have a record.
+        return db.LichessRating.findOrCreate({
+            where: { lichessUserName: name }
+        }).then(function(lichessRating) {
+            lichessRating = lichessRating[0];
 
-                var promise;
+            var promise;
 
-                //if a promise exists, then the player is already queued
-                var isInQueue = !_.isNil(_playerPromises[name]);
-                var rating = lichessRating.get('rating');
+            //if a promise exists, then the player is already queued
+            var isInQueue = !_.isNil(_playerPromises[name]);
+            var rating = lichessRating.get('rating');
 
-                // Only update the rating if we don't have one - we won't update
-                // ratings that are out of date via this mechanism anymore.
-                // the website will do that and we will just ingest the ratings
-                // given to us by the website everytime we refresh.
-                if (_.isNil(rating))  {
-                    // If we don't have a rating, use whatever queue they asked for.
-                    promise = _updateRating(name, isBackground);
-                }else if(isInQueue){
-                    // player rating is already incoming. wait for it.
-                    promise = _playerPromises[name];
-                }
+            // Only update the rating if we don't have one - we won't update
+            // ratings that are out of date via this mechanism anymore.
+            // the website will do that and we will just ingest the ratings
+            // given to us by the website everytime we refresh.
+            if (_.isNil(rating))  {
+                // If we don't have a rating, use whatever queue they asked for.
+                promise = _updateRating(name, isBackground);
+            }else if(isInQueue){
+                // player rating is already incoming. wait for it.
+                promise = _playerPromises[name];
+            }
 
-                if (!_.isNil(rating))  {
-                    // Return the cached rating if we have it.
-                    return lichessRating.get('rating');
-                } else {
-                    // Otherwise wait until we get it
-                    return promise;
-                }
-            }).catch(function(error) {
-                winston.error("Error querying for rating: " + error);
-            }).finally(function() {
-                unlock.resolve();
-            });
+            if (!_.isNil(rating))  {
+                // Return the cached rating if we have it.
+                return lichessRating.get('rating');
+            } else {
+                // Otherwise wait until we get it
+                return promise;
+            }
+        }).catch(function(error) {
+            winston.error("Error querying for rating: " + error);
         });
     }
     return {
