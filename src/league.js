@@ -481,9 +481,9 @@ var league_attributes = {
         // playername.  This will find alternates.
         team = _(self._pairings)
             .map(function(p) {
-                if (p['white'].toLowerCase() === playerName.toLowerCase()) {
+                if (p['white_team'] && p['white'].toLowerCase() === playerName.toLowerCase()) {
                     return self._teamLookup[p['white_team'].toLowerCase()];
-                } else if (p['black'].toLowerCase() === playerName.toLowerCase()) {
+                } else if (p['black_team'] && p['black'].toLowerCase() === playerName.toLowerCase()) {
                     return self._teamLookup[p['black_team'].toLowerCase()];
                 } else {
                     return undefined;
