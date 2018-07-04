@@ -361,23 +361,25 @@ function register(bot, eventName, cb) {
 // Get listeners for a given event and source
 //------------------------------------------------------------------------------
 function getListeners(bot, leagueName, sources, event) {
-    sources = _.map(sources, _.toLower);
-    // These are names of users, not users. So we have to go get the real
-    // user and teams. This is somewhat wasteful - but I'm not sure whether
-    // this is the right design or if we should pass in users to this point. 
-    var _league = league.getLeague(bot, leagueName);
-    var teamNames = _(sources).map(function(n) { return _league.getTeamByPlayerName(n); }).filter(_.isObject).map("name").map(_.toLower).value();
-    var possibleSources = _.concat(sources, teamNames);
-    return db.Subscription.findAll({
-        where: {
-            league: leagueName.toLowerCase(),
-            source: {
-                $in: possibleSources
-            },
-            event: event.toLowerCase()
-        }
-    }).then(function(subscriptions) {
-        return _(subscriptions).map("target").uniq().value();
+    return  Q.fcall(function() {
+        sources = _.map(sources, _.toLower);
+        // These are names of users, not users. So we have to go get the real
+        // user and teams. This is somewhat wasteful - but I'm not sure whether
+        // this is the right design or if we should pass in users to this point. 
+        var _league = league.getLeague(bot, leagueName);
+        var teamNames = _(sources).map(function(n) { return _league.getTeamByPlayerName(n); }).filter(_.isObject).map("name").map(_.toLower).value();
+        var possibleSources = _.concat(sources, teamNames);
+        return db.Subscription.findAll({
+            where: {
+                league: leagueName.toLowerCase(),
+                source: {
+                    $in: possibleSources
+                },
+                event: event.toLowerCase()
+            }
+        }).then(function(subscriptions) {
+            return _(subscriptions).map("target").uniq().value();
+        });
     });
 }
 
