@@ -4,7 +4,6 @@
 // Models for our locally stored data
 //------------------------------------------------------------------------------
 const Sequelize = require('sequelize');
-const Q = require('q');
 const winston = require("winston");
 
 
