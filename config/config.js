@@ -14,13 +14,14 @@ var config = {
     "database": "",
     "username": "",
     "password": "",
-    "dialect": "sqlite",
+    "host": "localhost",
+    "dialect": "postgres",
     "logging": false,
-	"pool": {
-		"max": 5,
-		"min": 0,
-		"idle": 10000
-	},
+    "pool": {
+        "max": 5,
+        "min": 0,
+        "idle": 10000
+    },
     "storage": "./db/database.sqlite",
     "watcherBaseURL": "https://lichess.org/api/stream/games-by-users",
 
