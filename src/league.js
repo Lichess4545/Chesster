@@ -15,7 +15,6 @@ function ChessLeagueEmitter() {}
 ChessLeagueEmitter.prototype  = new EventEmitter();
 
 const heltour = require('./heltour.js');
-const db = require("./models.js");
 
 const lichess = require("./lichess");
 var LEAGUE_DEFAULTS = {
@@ -158,22 +157,6 @@ var league_attributes = {
             roster.players.forEach(function(player) {
                 var name = _.toLower(player.username);
                 newPlayerLookup[name] = player;
-                return db.LichessRating.findOrCreate({
-                    where: { lichessUserName: name }
-                }).then(function(lichessRatings) {
-                    var lichessRating = lichessRatings[0];
-                    lichessRating.set('rating', player.rating);
-                    lichessRating.set('lastCheckedAt', moment.utc().format());
-                    lichessRating.save().catch(function(error) {
-                        winston.error("{}.refreshRosters.saveRating Error: {}".format(
-                            self.options.name,
-                            error
-                        ));
-                    });
-                    return player.rating;
-                }).catch(function(err) {
-                    winston.error(JSON.stringify(err));
-                });
             });
             self._playerLookup = newPlayerLookup;
             _.each(roster.teams, function(team) {
