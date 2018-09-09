@@ -178,19 +178,25 @@ var ratingFunctions = (function() {
         }).then(function(lichessRating) {
             lichessRating = lichessRating[0];
 
+            var _30MinsAgo = moment.utc().subtract(30, 'minutes');
+            var lastCheckedAt = lichessRating.get('lastCheckedAt');
+            if (lastCheckedAt) {
+                lastCheckedAt = moment.utc(lastCheckedAt);
+            }
             var promise;
 
             //if a promise exists, then the player is already queued
             var isInQueue = !_.isNil(_playerPromises[name]);
             var rating = lichessRating.get('rating');
 
-            // Only update the rating if we don't have one - we won't update
-            // ratings that are out of date via this mechanism anymore.
-            // the website will do that and we will just ingest the ratings
-            // given to us by the website everytime we refresh.
+            // Only update the rating if it's older than 30 minutes
+            // or if we don't have one a rating
             if (_.isNil(rating))  {
                 // If we don't have a rating, use whatever queue they asked for.
                 promise = _updateRating(name, isBackground);
+            } else if (!isInQueue && (!lastCheckedAt || lastCheckedAt.isBefore(_30MinsAgo))) {
+                // If the rating is just out of date, use the background queue
+                promise = _updateRating(name, true);
             }else if(isInQueue){
                 // player rating is already incoming. wait for it.
                 promise = _playerPromises[name];
