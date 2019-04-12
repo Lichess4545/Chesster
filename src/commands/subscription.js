@@ -35,7 +35,7 @@ function formatHelpResponse(bot, config) {
             "1. `tell <listener> when <event> in <league> for <target-user-or-team>` to " +
             " subscribe to an event\n" +
             "2. `subscription list` to list your current subscriptions\n" +
-            "3. `subscription remove <id>` to list remove a specific subscription\n" +
+            "3. `subscription remove <id>` to remove a specific subscription\n" +
             "\n--------------------------------------------------------------------\n" +
             "For command 1, these are the options: \n" + 
             "1. `<listener>` is either `me` to subscribe yourself or " +
@@ -263,7 +263,7 @@ function processTellCommand(bot, config, message) {
 //------------------------------------------------------------------------------
 // Processes the subscriptions command
 //
-// subscriptions (by itself) simply lists your subscriptions with ID #s
+// `subscription list` (by itself) simply lists your subscriptions with ID #s
 //------------------------------------------------------------------------------
 function processSubscriptionListCommand(bot, config, message) {
     return Q.fcall(function() {
@@ -296,7 +296,7 @@ function processSubscriptionListCommand(bot, config, message) {
 //------------------------------------------------------------------------------
 // Processes the remove subscription command
 //
-// subscriptions (by itself) simply lists your subscriptions with ID #s
+// `subscription remove <id>` removes subscription with ID: <id>
 //------------------------------------------------------------------------------
 function processSubscriptionRemoveCommand(bot, config, message, id) {
     return Q.fcall(function() {
