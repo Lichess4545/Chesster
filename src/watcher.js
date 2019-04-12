@@ -220,6 +220,9 @@ function Watcher(bot, league) {
                 self.watch();
             }
         });
+        // Setting 0 for initialDelay (2nd param) will leave the value
+        // unchanged from the default (or previous) setting.
+        self.req.setSocketKeepAlive(true, 0);
         self.req.write(body);
         self.req.end();
     };
