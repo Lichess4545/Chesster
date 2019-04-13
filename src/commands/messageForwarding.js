@@ -19,7 +19,7 @@ function forwardMessage(chesster, adminSlack) {
             var messageToSend = message.attachments[0].text;
             var channels = [];
             var users = [];
-            _(targets).split('+').filter().forEach(function(t) {
+            _(targets).split('+').compact().forEach(function(t) {
                 if (_.startsWith(t, '@')) {
                     users.push(chesster.users.getId(t.substr(1)));
                 } else if (_.startsWith(t, '#')) {

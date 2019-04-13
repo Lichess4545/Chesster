@@ -222,3 +222,5 @@ rules:
   lodash/preferred-alias: 0
   lodash/collection-method-value: 0
   lodash/prefer-constant: 0
+  lodash/import-scope: 0
+  lodash/chaining: 0

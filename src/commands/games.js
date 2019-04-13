@@ -49,7 +49,8 @@ function getTokensResult(inputString){
 function findResult(tokens){
     var result;
     _.some(tokens, function(token){
-        return (result = VALID_RESULTS[token.toUpperCase()]) ? true : false;
+        result = VALID_RESULTS[token.toUpperCase()];
+        return result ? true : false;
     });
     return result;
 }
