@@ -2,6 +2,7 @@
 // Entry point for Chesster
 // Bot commands are defined here with implementations in various modules. 
 //------------------------------------------------------------------------------
+const winston = require('winston');
 const slack = require('./slack.js');
 const errors = require('./errors.js');
 errors.init();
@@ -26,6 +27,12 @@ var chesster = new slack.Bot({
     slackName: "lichess4545",
     configFile: configFile
 });
+
+if (process.env.NODE_ENV !== 'production') {
+    winston.add(new winston.transports.Console({
+        format: winston.format.simple()
+    }));
+}
 // TODO: make this not be globally done.
 var users = chesster.users;
 

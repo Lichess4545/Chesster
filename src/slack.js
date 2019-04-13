@@ -16,9 +16,7 @@ var slackIDRegex = module.exports.slackIDRegex = /<@([^\s]+)>/;
 function StopControllerError (error) { this.error = error; }
 StopControllerError.prototype = new Error();
 
-//
-var MILISECOND = 1;
-var SECONDS = 1000 * MILISECOND;
+var SECONDS = 1000; // ms
 
 function appendPlayerRegex(command, optional) {
     /*
@@ -562,7 +560,7 @@ function Bot(options) {
         // setup logging
         // Pass in a reference to ourselves.
         self.config.winston.controller = self;
-        winston.add(logging.Slack, self.config.winston);
+        winston.add(new logging.Slack(self.config.winston));
     }
 
     self.hears = hears;

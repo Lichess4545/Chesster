@@ -22,7 +22,7 @@ var config = {
         "min": 0,
         "idle": 10000
     },
-    "storage": "./db/database.sqlite",
+    "storage": "",
     "watcherBaseURL": "https://lichess.org/api/stream/games-by-users",
 
     "slack_tokens": {
