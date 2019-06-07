@@ -216,7 +216,7 @@ var config = {
             "name": "Lichess 960",
             "also_known_as": [
                 "960",
-                "1510"
+                "1515"
             ],
             "heltour": {
                 "token": heltour_token,
@@ -232,7 +232,7 @@ var config = {
                 "channel_id": "CAG3R6HL6",
                 "clock": {
                     "initial": 15,
-                    "increment": 10
+                    "increment": 15
                 },
                 "rated": true,
                 "variant" : "chess960",
