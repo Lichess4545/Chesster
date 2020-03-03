@@ -20,3 +20,4 @@ liveconfig.js
 db/database.sqlite
 npm-debug.log
 .vscode
+build

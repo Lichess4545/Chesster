@@ -12,7 +12,7 @@ format.extend(String.prototype);
 // An emitter for league events
 const EventEmitter = require('events');
 function ChessLeagueEmitter() {}
-ChessLeagueEmitter.prototype  = new EventEmitter();
+ChessLeagueEmitter.prototype = new EventEmitter();
 
 const heltour = require('./heltour.js');
 
@@ -89,55 +89,55 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Canonicalize the username
     //--------------------------------------------------------------------------
-    canonicalUsername: function(username) {
+    canonicalUsername: function (username) {
         username = username.split(" ")[0];
         return username.replace("*", "");
     },
-    
+
     //--------------------------------------------------------------------------
     // Lookup a player by playerName
     //--------------------------------------------------------------------------
-    getPlayer: function(username) {
+    getPlayer: function (username) {
         return this._playerLookup[_.toLower(username)];
     },
     //--------------------------------------------------------------------------
     // Register a refreshRosters event
     //--------------------------------------------------------------------------
-    onRefreshRosters: function(fn) {
+    onRefreshRosters: function (fn) {
         this.emitter.on('refreshRosters', fn);
     },
     //--------------------------------------------------------------------------
     // Register a refreshPairings event
     //--------------------------------------------------------------------------
-    onRefreshPairings: function(fn) {
+    onRefreshPairings: function (fn) {
         this.emitter.on('refreshPairings', fn);
     },
 
     //--------------------------------------------------------------------------
     // Refreshes everything
     //--------------------------------------------------------------------------
-    refresh: function() {
+    refresh: function () {
         var self = this;
         return Q.all([
-            self.refreshRosters().then(function() {
+            self.refreshRosters().then(function () {
                 self._lastUpdated = moment.utc();
                 self.emitter.emit('refreshRosters', self);
-            }).catch(function(error) {
+            }).catch(function (error) {
                 winston.error("{}: Unable to refresh rosters: {}".format(self.options.name, error));
                 throw new Error(error);
             }),
-            self.refreshCurrentRoundSchedules().then(function() {
+            self.refreshCurrentRoundSchedules().then(function () {
                 self._lastUpdated = moment.utc();
                 self.emitter.emit('refreshPairings', self);
-            }).catch(function(error) {
+            }).catch(function (error) {
                 if (error !== "no_matching_rounds") {
                     winston.error("{}: Unable to refresh pairings: {}".format(self.options.name, error));
                 }
                 throw new Error(error);
             }),
-            self.refreshLeagueModerators().then(function(){
+            self.refreshLeagueModerators().then(function () {
                 self._lastUpdated = moment.utc();
-            }).catch(function(error) {
+            }).catch(function (error) {
                 winston.error("{}: Unable to refresh moderators: {}".format(self.options.name, error));
                 throw new Error(error);
             })
@@ -147,20 +147,20 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Refreshes the latest roster information
     //--------------------------------------------------------------------------
-    refreshRosters: function() {
+    refreshRosters: function () {
         var self = this;
-        return heltour.getRoster(self.options.heltour, self.options.heltour.leagueTag).then(function(roster) {
+        return heltour.getRoster(self.options.heltour, self.options.heltour.leagueTag).then(function (roster) {
             self._players = roster.players;
             var newPlayerLookup = {};
             var newTeams = [];
             var newLookup = {};
-            roster.players.forEach(function(player) {
+            roster.players.forEach(function (player) {
                 var name = _.toLower(player.username);
                 newPlayerLookup[name] = player;
             });
             self._playerLookup = newPlayerLookup;
-            _.each(roster.teams, function(team) {
-                _.each(team.players, function(teamPlayer) {
+            _.each(roster.teams, function (team) {
+                _.each(team.players, function (teamPlayer) {
                     var player = self.getPlayer(teamPlayer.username);
                     player.isCaptain = teamPlayer.isCaptain = teamPlayer.is_captain;
                     if (player.isCaptain) {
@@ -177,14 +177,14 @@ var league_attributes = {
             self._teamLookup = newLookup;
         });
     },
-    
+
     //--------------------------------------------------------------------------
     // Calls into the website moderators endpoint to get the list of moderators
     // for the league.
     //--------------------------------------------------------------------------
-    refreshLeagueModerators: function(){
+    refreshLeagueModerators: function () {
         var self = this;
-        return heltour.getLeagueModerators(self.options.heltour).then(function(moderators){
+        return heltour.getLeagueModerators(self.options.heltour).then(function (moderators) {
             self._moderators = _.map(moderators, _.toLower);
         });
     },
@@ -192,11 +192,11 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Figures out the current scheduling information for the round.
     //--------------------------------------------------------------------------
-    refreshCurrentRoundSchedules: function() {
+    refreshCurrentRoundSchedules: function () {
         var self = this;
-        return heltour.getAllPairings(self.options.heltour, self.options.heltour.leagueTag).then(function(pairings) {
+        return heltour.getAllPairings(self.options.heltour, self.options.heltour.leagueTag).then(function (pairings) {
             var newPairings = [];
-            _.each(pairings, function(pairing) {
+            _.each(pairings, function (pairing) {
                 var date = moment.utc(pairing.datetime);
                 if (!date.isValid()) {
                     date = undefined;
@@ -216,14 +216,14 @@ var league_attributes = {
     // Finds the pairing for this current round given either a black or a white
     // username.
     //--------------------------------------------------------------------------
-    findPairing: function(white, black) {
+    findPairing: function (white, black) {
         if (!white) {
             throw new Error("findPairing requires at least one username.");
         }
         var possibilities = this._pairings;
         function filter(playerName) {
             if (playerName) {
-                possibilities = _.filter(possibilities, function(item) {
+                possibilities = _.filter(possibilities, function (item) {
                     return (
                         item.white.toLowerCase().includes(playerName) ||
                         item.black.toLowerCase().includes(playerName)
@@ -238,17 +238,17 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Returns whether someone is a moderator or not.
     //--------------------------------------------------------------------------
-    isModerator: function(name) {
+    isModerator: function (name) {
         return _.includes(this._moderators, _.toLower(name));
     },
     //--------------------------------------------------------------------------
     // Prepare a debug message for this league
     //--------------------------------------------------------------------------
-    formatDebugResponse: function() {
+    formatDebugResponse: function () {
         var self = this;
 
-        return Q.fcall(function() {
-            return  'DEBUG:\nLeague: {name}\nTotal Pairings: {pairingsCount}\nLast Updated: {lastUpdated} [{since} ago]'.format({
+        return Q.fcall(function () {
+            return 'DEBUG:\nLeague: {name}\nTotal Pairings: {pairingsCount}\nLast Updated: {lastUpdated} [{since} ago]'.format({
                 name: self.options.name,
                 pairingsCount: self._pairings.length,
                 lastUpdated: self._lastUpdated.format("YYYY-MM-DD HH:mm UTC"),
@@ -259,9 +259,9 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Generates the appropriate data format for pairing result for this league.
     //--------------------------------------------------------------------------
-    getPairingDetails: function(targetPlayer) {
+    getPairingDetails: function (targetPlayer) {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             var pairings = self.findPairing(targetPlayer.name);
             if (pairings.length < 1) {
                 return {};
@@ -269,9 +269,9 @@ var league_attributes = {
             // TODO: determine what to do if multiple pairings are returned. ?
             var pairing = pairings[0];
             var details = {
-                "player": targetPlayer.name, 
+                "player": targetPlayer.name,
                 "color": "white",
-                "opponent":  pairing.black,
+                "opponent": pairing.black,
                 "date": pairing.date
             };
             if (!_.isEqual(pairing.white.toLowerCase(), targetPlayer.name.toLowerCase())) {
@@ -279,13 +279,13 @@ var league_attributes = {
                 details.opponent = pairing.white;
             }
             return details;
-        }).then(function(details) {
+        }).then(function (details) {
             var deferred = Q.defer();
             if (details.opponent) {
-                lichess.getPlayerRating(details.opponent).then(function(rating) {
+                lichess.getPlayerRating(details.opponent).then(function (rating) {
                     details['rating'] = rating;
                     deferred.resolve(details);
-                }, function(error) {
+                }, function (error) {
                     winston.error(JSON.stringify(error));
                     deferred.resolve(details);
                 });
@@ -298,15 +298,15 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the pairing result for this league
     //--------------------------------------------------------------------------
-    formatPairingResponse: function(requestingPlayer, details) {
-        function getRatingString(rating){
-            return ( rating ? "(" + rating + ")" : "" );
+    formatPairingResponse: function (requestingPlayer, details) {
+        function getRatingString(rating) {
+            return (rating ? "(" + rating + ")" : "");
         }
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             var localTime;
             if (details.date) {
-               localTime = requestingPlayer.localTime(details.date);
+                localTime = requestingPlayer.localTime(details.date);
             }
             var schedule_phrase = "";
             var played_phrase = "";
@@ -343,9 +343,9 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the captains Guidelines
     //--------------------------------------------------------------------------
-    formatCaptainGuidelinesResponse: function() {
+    formatCaptainGuidelinesResponse: function () {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             if (self.options.links && self.options.links.captains) {
                 return "Here are the captain's guidelines:\n" + self.options.links.captains;
             } else {
@@ -358,13 +358,13 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the pairings response
     //--------------------------------------------------------------------------
-    formatPairingsLinkResponse: function() {
+    formatPairingsLinkResponse: function () {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             if (self.options.links && self.options.links.league) {
-                return "The pairings can be found on the website:\n" + 
-                        self.options.links.pairings + 
-                        "\nAlternatively, try [ @chesster pairing [competitor] ]";
+                return "The pairings can be found on the website:\n" +
+                    self.options.links.pairings +
+                    "\nAlternatively, try [ @chesster pairing [competitor] ]";
             } else {
                 return "The {name} league does not have a pairings link.".format({
                     name: self.options.name
@@ -375,12 +375,12 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the standings response
     //--------------------------------------------------------------------------
-    formatStandingsLinkResponse: function() {
+    formatStandingsLinkResponse: function () {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             if (self.options.links && self.options.links.league) {
-                return "The standings can be found on the website:\n" + 
-                        self.options.links.standings;
+                return "The standings can be found on the website:\n" +
+                    self.options.links.standings;
             } else {
                 return "The {name} league does not have a standings link.".format({
                     name: self.options.name
@@ -391,9 +391,9 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the rules link response
     //--------------------------------------------------------------------------
-    formatRulesLinkResponse: function() {
+    formatRulesLinkResponse: function () {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             if (self.options.links && self.options.links.rules) {
                 return "Here are the rules and regulations:\n" +
                     self.options.links.rules;
@@ -407,9 +407,9 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the starter guide message
     //--------------------------------------------------------------------------
-    formatStarterGuideResponse: function() {
+    formatStarterGuideResponse: function () {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             if (self.options.links && self.options.links.guide) {
                 return "Here is everything you need to know:\n" + self.options.links.guide;
             } else {
@@ -422,9 +422,9 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Formats the signup response
     //--------------------------------------------------------------------------
-    formatRegistrationResponse: function() {
+    formatRegistrationResponse: function () {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             if (self.options.links && self.options.links.registration) {
                 return "You can sign up here:\n" + self.options.links.registration;
             } else {
@@ -437,33 +437,33 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Get a list of captain names
     //--------------------------------------------------------------------------
-    getCaptains:function() {
+    getCaptains: function () {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             return _.map(self._teams, "captain");
         });
     },
     //--------------------------------------------------------------------------
     // Get the list of teams
     //--------------------------------------------------------------------------
-    getTeams:function() {
+    getTeams: function () {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             return self._teams;
         });
     },
     //--------------------------------------------------------------------------
     // Get the team for a given player name
     //--------------------------------------------------------------------------
-    getTeamByPlayerName:function(playerName) {
+    getTeamByPlayerName: function (playerName) {
         var self = this;
         var team = self._playerLookup[playerName.toLowerCase()] &&
-                   self._playerLookup[playerName.toLowerCase()].team;
+            self._playerLookup[playerName.toLowerCase()].team;
         if (team) return team;
         // Try to find the team by looking through the pairings for this
         // playername.  This will find alternates.
         team = _(self._pairings)
-            .map(function(p) {
+            .map(function (p) {
                 if (p['white_team'] && p['white'].toLowerCase() === playerName.toLowerCase()) {
                     return self._teamLookup[p['white_team'].toLowerCase()];
                 } else if (p['black_team'] && p['black'].toLowerCase() === playerName.toLowerCase()) {
@@ -481,20 +481,20 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Get the team for a given team name
     //--------------------------------------------------------------------------
-    getTeam:function(teamName) {
+    getTeam: function (teamName) {
         var self = this;
         return self._teamLookup[teamName.toLowerCase()];
     },
     //--------------------------------------------------------------------------
     // Get the the players from a particular board
     //--------------------------------------------------------------------------
-    getBoard:function(boardNumber) {
+    getBoard: function (boardNumber) {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             var players = [];
-            _.each(self._teams, function(team) {
-                if (boardNumber-1 < team.players.length) {
-                    players.push(team.players[boardNumber-1]);
+            _.each(self._teams, function (team) {
+                if (boardNumber - 1 < team.players.length) {
+                    players.push(team.players[boardNumber - 1]);
                 }
             });
             return players;
@@ -503,9 +503,9 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format the response for the list of captains
     //--------------------------------------------------------------------------
-    formatCaptainsResponse:function() {
+    formatCaptainsResponse: function () {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             if (self._teams.length === 0) {
                 return "The {name} league does not have captains".format({
                     name: self.options.name
@@ -513,14 +513,14 @@ var league_attributes = {
             }
             var message = "Team Captains:\n";
             var teamIndex = 1;
-            self._teams.forEach(function(team){
+            self._teams.forEach(function (team) {
                 var captain = team.captain;
                 if (captain) {
                     captain = captain.username;
                 } else {
                     captain = "Unchosen";
                 }
-                message += "\t" + (teamIndex++) + ". " + team.name + ": " + captain  + "\n";
+                message += "\t" + (teamIndex++) + ". " + team.name + ": " + captain + "\n";
             });
             return message;
         });
@@ -528,15 +528,15 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format the response for the list of captains
     //--------------------------------------------------------------------------
-    formatTeamCaptainResponse:function(teamName) {
+    formatTeamCaptainResponse: function (teamName) {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             if (self._teams.length === 0) {
                 return "The {name} league does not have captains".format({
                     name: self.options.name
                 });
             }
-            var teams = _.filter(self._teams, function(t) {
+            var teams = _.filter(self._teams, function (t) {
                 return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase());
             });
             if (teams.length === 0) {
@@ -546,9 +546,9 @@ var league_attributes = {
                 return "Too many teams by that name";
             }
             var team = teams[0];
-            if(team && team.captain){
+            if (team && team.captain) {
                 return "Captain of " + team.name + " is " + team.captain.username;
-            }else{
+            } else {
                 return team.name + " has not chosen a team captain. ";
             }
         });
@@ -556,16 +556,16 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format the teams response
     //--------------------------------------------------------------------------
-    formatTeamsResponse:function() {
+    formatTeamsResponse: function () {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             if (self._teams.length === 0) {
                 return "The {name} league does not have teams".format({
                     name: self.options.name
                 });
             }
             var message = "There are currently " + self._teams.length + " teams competing. \n";
-            self._teams.forEach(function(team){
+            self._teams.forEach(function (team) {
                 message += "\t" + team.number + ". " + team.name + "\n";
             });
             return message;
@@ -574,20 +574,20 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format board response
     //--------------------------------------------------------------------------
-    formatBoardResponse: function(boardNumber) {
+    formatBoardResponse: function (boardNumber) {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             if (self._teams.length === 0) {
                 return "The {name} league does not have teams".format({
                     name: self.options.name
                 });
             }
-            return self.getBoard(boardNumber).then(function(players) {
+            return self.getBoard(boardNumber).then(function (players) {
                 var message = "Board " + boardNumber + " consists of... \n";
-                players.sort(function(e1, e2){
+                players.sort(function (e1, e2) {
                     return e1.rating > e2.rating ? -1 : e1.rating < e2.rating ? 1 : 0;
                 });
-                players.forEach(function(member){
+                players.forEach(function (member) {
                     message += "\t" + member.username + ": (Rating: " + member.rating + "; Team: " + member.team.name + ")\n";
                 });
                 return message;
@@ -597,15 +597,15 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format team members response
     //--------------------------------------------------------------------------
-    formatTeamMembersResponse: function(teamName) {
+    formatTeamMembersResponse: function (teamName) {
         var self = this;
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             if (self._teams.length === 0) {
                 return "The {name} league does not have teams".format({
                     name: self.options.name
                 });
             }
-            var teams = _.filter(self._teams, function(t) {
+            var teams = _.filter(self._teams, function (t) {
                 return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase());
             });
             if (teams.length === 0) {
@@ -616,8 +616,8 @@ var league_attributes = {
             }
             var team = teams[0];
             var message = "The members of " + team.name + " are \n";
-            team.players.forEach(function(member, index){
-                message += "\tBoard " + (index+1) + ": " + member.username + " (" + self.getPlayer(member.username).rating + ")\n";
+            team.players.forEach(function (member, index) {
+                message += "\tBoard " + (index + 1) + ": " + member.username + " (" + self.getPlayer(member.username).rating + ")\n";
             });
             return message;
         });
@@ -625,30 +625,30 @@ var league_attributes = {
     //--------------------------------------------------------------------------
     // Format the mods message
     //--------------------------------------------------------------------------
-    formatModsResponse: function() {
+    formatModsResponse: function () {
         var self = this;
-        var moderators = _.map(self._moderators, function(name) {
+        var moderators = _.map(self._moderators, function (name) {
             return name[0] + "\u200B" + name.slice(1);
         });
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             return ("{0} mods: " + moderators.join(", ") + " (**Note**: this does not ping the moderators. Use: `@chesster: summon mods` to ping them)").format(self.options.name);
         });
     },
     //--------------------------------------------------------------------------
     // Format the summon mods message
     //--------------------------------------------------------------------------
-    formatSummonModsResponse: function() {
+    formatSummonModsResponse: function () {
         var self = this;
-        var moderators = _.map(self._moderators, function(name) {
+        var moderators = _.map(self._moderators, function (name) {
             return self.bot.users.getIdString(name);
         });
-        return Q.fcall(function() {
+        return Q.fcall(function () {
             return ("{0} mods: " + moderators.join(", ") + " Please wait for the mods to contact you. Do not send messages directly.").format(self.options.name);
         });
     },
-    formatFAQResponse: function() {
+    formatFAQResponse: function () {
         var self = this;
-        return Q.fcall(function(){
+        return Q.fcall(function () {
             return "The FAQ for {} can be found: {}".format(self.options.name, self.options.links.faq);
         });
     }
@@ -666,17 +666,17 @@ function getAllLeagues(bot, config) {
     var all_league_configs = config['leagues'] || {};
     return _(all_league_configs)
         .keys()
-        .map(function(key) {
+        .map(function (key) {
             return getLeague(bot, key, config);
         })
         .value();
 }
 
-var getLeague = (function() {
+var getLeague = (function () {
     var _league_cache = {};
     return function (bot, league_name, config) {
 
-        if(!_league_cache[league_name]) {
+        if (!_league_cache[league_name]) {
             // Else create it if there is a config for it.
             var all_league_configs = config['leagues'] || {};
             var this_league_config = all_league_configs[league_name] || undefined;
