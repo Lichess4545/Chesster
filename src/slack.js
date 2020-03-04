@@ -13,7 +13,7 @@ const logging = require('./logging.js');
 
 var slackIDRegex = module.exports.slackIDRegex = /<@([^\s]+)>/;
 
-function StopControllerError (error) { this.error = error; }
+function StopControllerError(error) {this.error = error;}
 StopControllerError.prototype = new Error();
 
 var SECONDS = 1000; // ms
@@ -49,7 +49,7 @@ function getSlackUser(message) {
     var player = self.getSlackUserFromNameOrID(nameOrId);
 
     if (!player) {
-        player = self.users.getByNameOrID(message.user); 
+        player = self.users.getByNameOrID(message.user);
     }
 
     return player;
@@ -76,20 +76,20 @@ function getSlackUserFromNameOrID(nameOrId) {
     return player;
 }
 
-function updatesUsers(bot, config){
+function updatesUsers(bot, config) {
     var self = this;
     // @ https://api.slack.com/methods/users.list
     bot.api.users.list({}, function (err, response) {
         if (err) {
             throw new Error(err);
         }
-        
+
         heltour.getUserMap(
             config.heltour
-        ).then(function(idByName) {
+        ).then(function (idByName) {
             idByName['chesster'] = bot.identity.id;
             var nameById = {};
-            _.forOwn(idByName, function(id, name) {
+            _.forOwn(idByName, function (id, name) {
                 nameById[id] = name.toLowerCase();
             });
             if (response.hasOwnProperty('members') && response.ok) {
@@ -101,19 +101,19 @@ function updatesUsers(bot, config){
                     member.name = nameById[member.id];
                     byId[member.id] = member;
                 }
-                _.forOwn(idByName, function(id, name) {
+                _.forOwn(idByName, function (id, name) {
                     byName[name.toLowerCase()] = byId[id];
                 });
                 self.users.byName = byName;
                 self.users.byId = byId;
             }
-        }).catch(function(error) {
+        }).catch(function (error) {
             winston.error(JSON.stringify(error));
         });
     });
 }
 
-function updateChannels(bot){
+function updateChannels(bot) {
     var self = this;
     // @ https://api.slack.com/methods/channels.list
     bot.api.channels.list({}, function (err, response) {
@@ -134,7 +134,7 @@ function updateChannels(bot){
             self.channels.byId = byId;
         }
     });
-    
+
     // @ https://api.slack.com/methods/mpim.list
     bot.api.mpim.list({}, function (err, response) {
         if (err) {
@@ -166,25 +166,25 @@ function updateChannels(bot){
 var count = 0;
 function refresh(bot, delay, config) {
     var self = this;
-    return criticalPath(Q.fcall(function(){
+    return criticalPath(Q.fcall(function () {
         winston.info("doing refresh " + count++);
         bot.rtm.ping();
-        
+
         self.updatesUsers(bot, config);
         self.updateChannels(bot);
         if (self.options.refreshLeagues) {
-            _.each(league.getAllLeagues(bot, config), function(l) {
+            _.each(league.getAllLeagues(bot, config), function (l) {
                 l.refresh();
             });
-            setTimeout(function(){ 
+            setTimeout(function () {
                 self.refresh(bot, delay, config);
             }, delay);
         }
     }));
 }
 
-function criticalPath(promise){
-    exceptionLogger(promise).catch(function() {
+function criticalPath(promise) {
+    exceptionLogger(promise).catch(function () {
         winston.error("An exception was caught in a critical code-path. I am going down.");
         process.exit(1);
     });
@@ -192,9 +192,9 @@ function criticalPath(promise){
 }
 
 // a promise and ensures that uncaught exceptions are logged.
-function exceptionLogger(promise){
+function exceptionLogger(promise) {
     var deferred = Q.defer();
-    promise.catch(function(e) {
+    promise.catch(function (e) {
         var error_log = "An error occurred:" +
             "\nDatetime: " + new Date() +
             "\nError: " + JSON.stringify(e) +
@@ -205,11 +205,11 @@ function exceptionLogger(promise){
     return deferred.promise;
 }
 
-function botExceptionHandler(bot, message, promise){
-    exceptionLogger(promise).catch(function(){
+function botExceptionHandler(bot, message, promise) {
+    exceptionLogger(promise).catch(function () {
         winston.error("Message: " + JSON.stringify(message));
         bot.reply(message, "Something has gone terribly terribly wrong. Please forgive me.");
-        
+
     });
     return promise;
 }
@@ -222,7 +222,7 @@ function localTime(datetime) {
 // A helper to determine if the user is a moderator
 //------------------------------------------------------------------------------
 function isModerator(message) {
-    return function() {
+    return function () {
         if (!message.league) {
             throw new Error("isModerator requires a league to be attached to the message. Use the withLeague middleware");
         }
@@ -235,7 +235,7 @@ function isModerator(message) {
 // Various middleware
 //------------------------------------------------------------------------------
 function requiresModerator(bot, message) {
-    return Q.fcall(function() {
+    return Q.fcall(function () {
         if (_.isUndefined(message.league)) {
             throw new Error("requiresModerator MUST be called after withLeague.");
         }
@@ -259,9 +259,9 @@ function findLeagueByMessageText(bot, message, config) {
         leagueTargets.push(target);
         targetToLeague[target] = l;
     }
-    _.each(allLeagues, function(l) {
+    _.each(allLeagues, function (l) {
         add_target(l, l.options.name);
-        _.each(l.options.also_known_as, function(aka) {
+        _.each(l.options.also_known_as, function (aka) {
             add_target(l, aka);
         });
     });
@@ -269,13 +269,13 @@ function findLeagueByMessageText(bot, message, config) {
     // Now fuzzy match them based on each arg in the message
     var matches = [];
     var args = message.text.split(" ");
-    _.each(args, function(arg) {
+    _.each(args, function (arg) {
         var results = fuzzy.rank_choices(arg.toLowerCase(), leagueTargets, true);
         matches.push.apply(matches, results);
     });
     var bestMatches = fuzzy.findBestMatches(matches, true);
     var possibleLeagues = {};
-    _.each(bestMatches, function(match) {
+    _.each(bestMatches, function (match) {
         var l = targetToLeague[match[1]];
         possibleLeagues[l.options.name] = l;
     });
@@ -290,7 +290,7 @@ function findLeagueByMessageText(bot, message, config) {
 }
 
 function _withLeagueImplementation(bot, message, config, channelOnly) {
-    return Q.fcall(function() {
+    return Q.fcall(function () {
         message.league = null;
 
         // See if the person asked for a specific league first
@@ -322,9 +322,9 @@ function _withLeagueImplementation(bot, message, config, channelOnly) {
         // it makes me sad ... :(
         var channelId = message.channel;
         targetLeague = config["channel_map"][channelId];
-        if (targetLeague){
+        if (targetLeague) {
             l = league.getLeague(bot, targetLeague, config);
-            if (l){
+            if (l) {
                 message.league = l;
                 return l;
             }
@@ -339,7 +339,7 @@ function withLeagueByChannelName(bot, message, config) {
     return _withLeagueImplementation(bot, message, config, true);
 }
 function requiresLeague(bot, message, config) {
-    return withLeague(bot, message, config).then(function(l) {
+    return withLeague(bot, message, config).then(function (l) {
         if (!l || !message.league) {
             bot.reply(message, "This command requires you to specify the league you are interested in. Please include that next time");
             throw new StopControllerError("No league specified");
@@ -357,8 +357,8 @@ var DEFAULT_HEARS_OPTIONS = {
 function hears(options, callback) {
     var self = this;
     options = _.extend({}, DEFAULT_HEARS_OPTIONS, options);
-    self.controller.hears(options.patterns, options.messageTypes, function(bot, message) {
-        return botExceptionHandler(bot, message, Q.fcall(function() {
+    self.controller.hears(options.patterns, options.messageTypes, function (bot, message) {
+        return botExceptionHandler(bot, message, Q.fcall(function () {
             message.player = self.users.getByNameOrID(message.user);
             // This will occur if a new player uses a chesster command
             // within their first 2 minutes of having joined. :)
@@ -369,13 +369,13 @@ function hears(options, callback) {
                 message.player.isModerator = isModerator(message);
             }
             return Q.all(
-                _.map(options.middleware, function(middleware) {
+                _.map(options.middleware, function (middleware) {
                     return middleware(self, message, self.config);
                 })
-            ).then(function() {
+            ).then(function () {
                 return callback(self, message);
-            }, function(error) {
-                if(error instanceof StopControllerError) {
+            }, function (error) {
+                if (error instanceof StopControllerError) {
                     winston.error("Middleware asked to not process controller callback: " + JSON.stringify(error));
                 } else {
                     throw error;
@@ -391,21 +391,21 @@ var DEFAULT_ON_OPTIONS = {
 function on(options, callback) {
     var self = this;
     options = _.extend({}, DEFAULT_ON_OPTIONS, options);
-    self.controller.on(options.event, function(bot, message) {
-        return botExceptionHandler(bot, message, Q.fcall(function() {
+    self.controller.on(options.event, function (bot, message) {
+        return botExceptionHandler(bot, message, Q.fcall(function () {
             message.player = self.users.getByNameOrID(message.user);
             if (message.player) {
                 message.player.localTime = localTime;
                 message.player.isModerator = isModerator(message);
             }
             return Q.all(
-                _.map(options.middleware, function(middleware) {
+                _.map(options.middleware, function (middleware) {
                     return middleware(self, message, self.config);
                 })
-            ).then(function() {
+            ).then(function () {
                 return callback(self, message);
-            }, function(error) {
-                if(error instanceof StopControllerError) {
+            }, function (error) {
+                if (error instanceof StopControllerError) {
                     winston.error("Middleware asked to not process controller callback: " + JSON.stringify(error));
                 } else {
                     throw error;
@@ -419,7 +419,7 @@ function say(options) {
     var self = this;
     if (options.text) {
         // Replace user links in the form <@user> with <@U12345|user>
-        options.text = options.text.replace(/<\@([\w-\.]+)>/g, function(match, username) {
+        options.text = options.text.replace(/<\@([\w-\.]+)>/g, function (match, username) {
             var user = self.users.getByNameOrID(username);
             if (user) {
                 return "<@" + user.id + "|" + user.name + ">";
@@ -442,7 +442,7 @@ function startPrivateConversation(nameOrId) {
     if (_.isNil(target)) {
         deferred.reject("Unable to find user");
     } else {
-        self.bot.startPrivateConversation({user: target.id}, function(err, convo) {
+        self.bot.startPrivateConversation({user: target.id}, function (err, convo) {
             if (err) {
                 deferred.reject(err);
             }
@@ -480,7 +480,7 @@ function Bot(options) {
     self.users = {
         byName: {},
         byId: {},
-        getId: function(name){
+        getId: function (name) {
             var user = this.byName[_.toLower(name)];
             if (!user) {
                 winston.error("Couldn't find user by name: " + name);
@@ -488,7 +488,7 @@ function Bot(options) {
             }
             return user.id;
         },
-        getName: function(id){
+        getName: function (id) {
             var user = this.byId[id];
             if (!user) {
                 winston.error("Couldn't find user by id: " + id);
@@ -496,17 +496,17 @@ function Bot(options) {
             }
             return user.name;
         },
-        getIdString: function(name){
-            return "<@"+this.getId(name)+">";
+        getIdString: function (name) {
+            return "<@" + this.getId(name) + ">";
         },
-        getByNameOrID: function(nameOrId) {
+        getByNameOrID: function (nameOrId) {
             return this.byId[_.toUpper(nameOrId)] || this.byName[_.toLower(nameOrId)];
         }
     };
     self.channels = {
         byName: {},
         byId: {},
-        getId: function(name){
+        getId: function (name) {
             var channel = this.byName[_.toLower(name)];
             if (!channel) {
                 winston.error("Couldn't find channel by name: " + name);
@@ -514,8 +514,8 @@ function Bot(options) {
             }
             return channel.id;
         },
-        getIdString: function(name){
-            return "<#"+this.getId(name)+">";
+        getIdString: function (name) {
+            return "<#" + this.getId(name) + ">";
         }
     };
     self.mpims = {
@@ -524,7 +524,7 @@ function Bot(options) {
     self.controller = Botkit.slackbot(bot_options);
     self.controller.spawn({
         token: self.token
-    }).startRTM(function(err, bot, response) {
+    }).startRTM(function (err, bot, response) {
         if (err) {
             throw new Error(err);
         }
@@ -540,7 +540,7 @@ function Bot(options) {
 
         // connect to the database
         if (self.options.connectToModels) {
-            models.connect(self.config).then(function() {
+            models.connect(self.config).then(function () {
                 //refresh your user and channel list every 2 minutes
                 //would be nice if this was push model, not poll but oh well.
                 self.refresh(bot, 120 * SECONDS, self.config);
@@ -549,7 +549,7 @@ function Bot(options) {
             self.refresh(bot, 120 * SECONDS, self.config);
         }
     });
-    self.controller.on('rtm_close', function() {
+    self.controller.on('rtm_close', function () {
         winston.error('RTM connection closed unexpectedly. I am going down.');
         process.exit(1);
     });

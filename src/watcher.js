@@ -36,7 +36,7 @@ function Watcher(bot, league) {
     self.req = null;
     self.usernames = [];
 
-    self.league.onRefreshPairings(function() {
+    self.league.onRefreshPairings(function () {
         var white = _.map(league._pairings, "white");
         var black = _.map(league._pairings, "black");
         var newUsernames = _.uniq(_.concat(white, black));
@@ -103,13 +103,13 @@ function Watcher(bot, league) {
                 winston.info("[Watcher] {}: Received VALID AND NEEDED game!".format(self.league.options.name));
                 // Fetch the game details from the lichess games API because updateGamelink is more picky about the details format
                 // This could be obviated by an enhancement to the game-stream API
-                games.fetchGameDetails(details.id).then(function(response) {
+                games.fetchGameDetails(details.id).then(function (response) {
                     var detailsFromApi = response['json'];
-                    games.updateGamelink(self.league, detailsFromApi).then(function(updatePairingResult) {
+                    games.updateGamelink(self.league, detailsFromApi).then(function (updatePairingResult) {
                         if (updatePairingResult.gamelinkChanged) {
                             self.bot.say({
                                 text: "<@" + white + "> vs <@" + black + ">: <"
-                                    + updatePairingResult.gamelink +">",
+                                    + updatePairingResult.gamelink + ">",
                                 channel: self.league.options.gamelinks.channel_id,
                                 attachments: [] // Needed to activate link parsing in the message
                             });
@@ -120,10 +120,10 @@ function Watcher(bot, league) {
                                 channel: self.league.options.results.channel_id
                             });
                         }
-                    }).catch(function(error) {
+                    }).catch(function (error) {
                         winston.error("[Watcher] {}: Error updating game: {}".format(self.league.options.name, JSON.stringify(error)));
                     });
-                }).catch(function(error) {
+                }).catch(function (error) {
                     winston.error("[Watcher] {}: Error fetching game details: {}".format(self.league.options.name, JSON.stringify(error)));
                 });
             }
@@ -147,18 +147,18 @@ function Watcher(bot, league) {
             });
             self.bot.say({
                 text: "If this was a mistake, please correct it and "
-                     + "try again. If this is not a league game, you "
-                     + "may ignore this message. Thank you.",
+                    + "try again. If this is not a league game, you "
+                    + "may ignore this message. Thank you.",
                 channel: self.league.options.gamelinks.channel_id
             });
-            heltour.sendGameWarning(league.options.heltour, white, black, result.reason).catch(function(error) {
+            heltour.sendGameWarning(league.options.heltour, white, black, result.reason).catch(function (error) {
                 winston.error("[Watcher] {}: Error sending game warning: {}".format(self.league.options.name, JSON.stringify(error)));
             });
         }
     };
 
     //--------------------------------------------------------------------------
-    self.watch = function() {
+    self.watch = function () {
         // Ensure we close/abort any previous request before starting a new one.
         if (self.req) {
             self.req.abort();
@@ -193,9 +193,9 @@ function Watcher(bot, league) {
                 try {
                     var details = JSON.parse(chunk.toString());
                     winston.info("[Watcher] {}: Received game details: {}".format(self.league.options.name, JSON.stringify(details)));
-                    self.league.refreshCurrentRoundSchedules().then(function() {
+                    self.league.refreshCurrentRoundSchedules().then(function () {
                         self.processGameDetails(details);
-                    }).catch(function(error) {
+                    }).catch(function (error) {
                         winston.error("[Watcher] {}: Error refreshing pairings: {}".format(self.league.options.name, JSON.stringify(error)));
                     });
                 } catch (e) {
@@ -231,14 +231,14 @@ function Watcher(bot, league) {
 var watcherMap = {};
 
 //------------------------------------------------------------------------------
-var watchAllLeagues = function(bot) {
-    _.each(_league.getAllLeagues(bot, bot.config), function(league) {
+var watchAllLeagues = function (bot) {
+    _.each(_league.getAllLeagues(bot, bot.config), function (league) {
         winston.info("[Watcher] {}: Watching".format(league.options.name));
         watcherMap[league.name] = new Watcher(bot, league);
     });
 };
 
-var getWatcher = function(league) {
+var getWatcher = function (league) {
     return watcherMap[league.name];
 };
 
