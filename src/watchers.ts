@@ -215,7 +215,7 @@ class Watcher {
                         }
                         if (updatePairingResult.resultChanged) {
                             self.bot.say({
-                                text: "<@" + white + "> " + updatePairingResult.result + " <@" + black + ">",
+                                text: `<@${white}> ${updatePairingResult.result} <@${black}>`,
                                 channel: self.league.options.results.channel_id
                             });
                         }

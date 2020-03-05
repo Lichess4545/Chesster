@@ -22,7 +22,7 @@ const presence = require('./commands/presence.js');
 
 /* static entry point */
 
-var configFile = process.argv[2] || "../config/config.js"; 
+var configFile = process.argv[2] || "../config/config.js";
 var chesster = new slack.Bot({
     slackName: "lichess4545",
     configFile: configFile
@@ -120,7 +120,7 @@ chesster.hears(
         middleware: [slack.withLeagueByChannelName],
         patterns: ['^unassign'],
         messageTypes: ['ambient', 'direct_mention']
-    }, 
+    },
     availability.unassignAlternate
 );
 
@@ -196,22 +196,22 @@ chesster.hears(
 
 // commands
 
-function prepareCommandsMessage(){
-    return "I will respond to the following commands when they are spoken to " + 
+function prepareCommandsMessage() {
+    return "I will respond to the following commands when they are spoken to " +
         users.getIdString("chesster") + ": \n```" +
         "    [ starter guide ]              ! get the starter guide link; thanks GnarlyGoat!\n" +
-        "    [ rules | regulations ]        ! get the rules and regulations.\n" + 
+        "    [ rules | regulations ]        ! get the rules and regulations.\n" +
         "    [ pairing | pairing <player> ] ! get your (or given <player>) latest pairings with scheduled time\n" +
         "    [ pairings ]                   ! get pairings link\n" +
         "    [ standings ]                  ! get standings link\n" +
-        "    [ commands | \n"  +
+        "    [ commands | \n" +
         "        command list ]             ! this list\n" +
         "    [ rating <player> ]            ! get the player's classical rating.\n" +
         "    [ captain guidelines ]         ! get the team captain guidelines\n" +
-        "    [ mods (lonewolf)| \n"  +
+        "    [ mods (lonewolf)| \n" +
         "        mod list (lonewolf)|       ! list the mods (without summoning)\n" +
         "        mods summon (lonewolf)]    ! summon the mods\n" +
-        "    [ faq (lonewolf)]                        ! a document of frequently asked questions\n" + 
+        "    [ faq (lonewolf)]                        ! a document of frequently asked questions\n" +
         "    [ registration | sign up ]     ! registration form to play in our league\n" +
         "    [ nomination (4545) ]          ! get a nomination link for up to 3 games.\n" +
         "    [ source ]                     ! github repo for Chesster \n" +
@@ -224,11 +224,11 @@ chesster.hears({
     patterns: ['commands', 'command list', '^help$'],
     messageTypes: ['direct_mention', 'direct_message']
 },
-function(bot,message) {
-    bot.startPrivateConversation(message.user).then(function (convo) {
-        convo.say(prepareCommandsMessage());
+    function (bot, message) {
+        bot.startPrivateConversation(message.user).then(function (convo) {
+            convo.say(prepareCommandsMessage());
+        });
     });
-});
 
 
 // welcome
@@ -250,7 +250,7 @@ chesster.hears(
         patterns: "source",
         messageTypes: ['direct_message', 'direct_mention']
     },
-    function(bot, message){
+    function (bot, message) {
         bot.reply(message, chesster.config.links.source);
     }
 );
