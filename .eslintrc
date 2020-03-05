@@ -1,3 +1,6 @@
+parserOptions:
+  ecmaVersion: 2019
+
 ecmaFeatures:
   modules: true
   jsx: true

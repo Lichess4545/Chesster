@@ -149,7 +149,7 @@ class Watcher {
         self.req.setSocketKeepAlive(true, 0);
         self.req.write(body);
         self.req.end();
-    };
+    }
 
     //--------------------------------------------------------------------------
     processGameDetails(details: GameDetails) {
@@ -254,8 +254,8 @@ class Watcher {
                 self.error(`Error sending game warning: ${JSON.stringify(error)}`);
             });
         }
-    };
-};
+    }
+}
 
 
 var watcherMap: {[key: string]: Watcher} = {};
@@ -265,8 +265,8 @@ export function watchAllLeagues(bot: SlackBot) {
     _.each(_league.getAllLeagues(bot, bot.config), function (league) {
         watcherMap[league.name] = new Watcher(bot, league);
     });
-};
+}
 
 export function getWatcher(league: League) {
     return watcherMap[league.name];
-};
+}

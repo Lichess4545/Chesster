@@ -10,16 +10,16 @@ import logform from "logform";
 import {hasKey} from "./utils";
 
 interface MessageParams {
-    channel: String,
-    username: String,
-};
+    channel: String
+    username: String
+}
 
 type EmojiLookup = {
-    debug: ":grey_question:",
-    info: ":information_source:",
-    warning: ":warning:",
+    debug: ":grey_question:"
+    info: ":information_source:"
+    warning: ":warning:"
     error: ":interrobang:"
-};
+}
 
 
 export default class Slack extends Transport {
@@ -33,7 +33,7 @@ export default class Slack extends Transport {
         public format?: logform.Format,
         public level?: string,
         public silent?: boolean,
-        public handleExceptions?: boolean,
+        public handleExceptions?: boolean
     ) {
         super({format, level, silent, handleExceptions});
         this.level = this.level || "debug";
@@ -41,7 +41,7 @@ export default class Slack extends Transport {
         this.handleExceptions = this.silent || false;
         this.message_params = {
             channel: this.channel,
-            username: this.username,
+            username: this.username
         };
     }
 
@@ -64,4 +64,4 @@ export default class Slack extends Transport {
 
         next();
     }
-};
+}

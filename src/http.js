@@ -8,7 +8,7 @@ const Q = require("q");
 const winston = require("winston");
 const _ = require("lodash");
 
-function fetchURL(options){
+function fetchURL(options) {
     var deferred = Q.defer();
     var http = _http;
     if (_.isString(options)) {
@@ -49,9 +49,9 @@ function fetchURL(options){
     req.end();
     return deferred.promise;
 }
-function fetchURLIntoJSON(options){
+function fetchURLIntoJSON(options) {
     var deferred = Q.defer();
-    fetchURL(options).then(function(result) {
+    fetchURL(options).then(function (result) {
         try {
             var json = JSON.parse(result['body']);
             if (json) {
@@ -73,7 +73,7 @@ function fetchURLIntoJSON(options){
             winston.error("[HTTP] Status Message: " + result["response"]["statusMessage"]);
             deferred.reject(e);
         }
-    }, function(error) {
+    }, function (error) {
         deferred.reject(error);
     });
     return deferred.promise;
