@@ -1,8 +1,9 @@
 language: node_js
 node_js: "8"
-install: npm install
+install: yarn install --dev
 script:
+  - yarn run build
   - istanbul cover node_modules/mocha/bin/_mocha -- --exit
-  - npm run lint
-  - npm run hint
-  - npm run send-coverage
+  - yarn run lint
+  - yarn run hint
+  - yarn run send-coverage
