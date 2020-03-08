@@ -9,7 +9,8 @@ const heltour = require("./heltour.js");
 const fuzzy = require("./fuzzy_match.js");
 const models = require("./models.js");
 const winston = require('winston');
-const logging = require('./logging.js');
+
+import SlackLogger from "./logging"
 
 var slackIDRegex = module.exports.slackIDRegex = /<@([^\s]+)>/;
 
@@ -470,8 +471,9 @@ function Bot(options) {
 
     self.token = self.config.slack_tokens[self.options.slackName];
     if (!self.token) {
-        winston.error('Failed to load token from: ' + self.options.configFile);
-        throw new Error("A token must be specified in the configuration file");
+        let error = `Failed to load token for ${self.config.slackName} from ${self.options.configFile}`;
+        winston.error(error);
+        throw new Error(error);
     }
 
     var bot_options = {
@@ -560,7 +562,7 @@ function Bot(options) {
         // setup logging
         // Pass in a reference to ourselves.
         self.config.winston.controller = self;
-        winston.add(new logging.Slack(self.config.winston));
+        winston.add(new SlackLogger(self.config.winston));
     }
 
     self.hears = hears;

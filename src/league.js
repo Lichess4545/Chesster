@@ -10,9 +10,9 @@ const format = require('string-format');
 format.extend(String.prototype);
 
 // An emitter for league events
-const EventEmitter = require('events');
-function ChessLeagueEmitter() {}
-ChessLeagueEmitter.prototype = new EventEmitter();
+import EventEmitter from "events";
+class ChessLeagueEmitter extends EventEmitter {
+}
 
 const heltour = require('./heltour.js');
 

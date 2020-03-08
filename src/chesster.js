@@ -6,7 +6,8 @@ const winston = require('winston');
 const slack = require('./slack.js');
 const errors = require('./errors.js');
 errors.init();
-const watcher = require('./watcher.js');
+import Watcher from "./watcher"
+import {getAllLeagues} from "./league"
 
 const availability = require("./commands/availability.js");
 const games = require('./commands/games.js');
@@ -345,4 +346,5 @@ subscription.register(chesster, 'a-game-is-over', subscription.formatAGameIsOver
 
 //------------------------------------------------------------------------------
 // Start the watcher.
-watcher.watchAllLeagues(chesster);
+let watcher = new Watcher(chesster, getAllLeagues(chesster, chesster.config));
+watcher.watch();
