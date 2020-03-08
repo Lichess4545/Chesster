@@ -6,8 +6,8 @@ const winston = require('winston');
 const slack = require('./slack.js');
 const errors = require('./errors.js');
 errors.init();
-import Watcher from "./watcher"
-import {getAllLeagues} from "./league"
+const Watcher = require("./watcher").default;
+const getAllLeagues = require("./league").getAllLeagues;
 
 const availability = require("./commands/availability.js");
 const games = require('./commands/games.js');

@@ -10,7 +10,7 @@ const format = require('string-format');
 format.extend(String.prototype);
 
 // An emitter for league events
-import EventEmitter from "events";
+const EventEmitter = require("events");
 class ChessLeagueEmitter extends EventEmitter {
 }
 

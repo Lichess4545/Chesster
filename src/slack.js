@@ -10,7 +10,7 @@ const fuzzy = require("./fuzzy_match.js");
 const models = require("./models.js");
 const winston = require('winston');
 
-import SlackLogger from "./logging"
+const SlackLogger = require("./logging").default;
 
 var slackIDRegex = module.exports.slackIDRegex = /<@([^\s]+)>/;
 
