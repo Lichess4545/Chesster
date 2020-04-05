@@ -11,9 +11,9 @@ try {
 
 var config = {
     // Unfortunately this all has to be at the top level due to sequelize-cli
-    "database": "",
-    "username": "",
-    "password": "",
+    "database": "chesster",
+    "username": "chesster",
+    "password": "asdfasdf",
     "host": "localhost",
     "dialect": "postgres",
     "logging": false,
@@ -44,7 +44,7 @@ var config = {
     },
     "heltour": {
         "token": heltour_token,
-        "baseEndpoint": "https://www.lichess4545.com/api/"
+        "baseEndpoint": "http://localhost:8000/api/"
     },
     "leagues": {
         "45+45": {
@@ -56,7 +56,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                "baseEndpoint": "https://www.lichess4545.com/api/", 
+                "baseEndpoint": "http://localhost:8000/api/",
                 "leagueTag": "team4545"
             },
             "results": {
@@ -71,7 +71,7 @@ var config = {
                     "increment": 45
                 },
                 "rated": true,
-                "variant" : "standard",
+                "variant": "standard",
                 "extrema": {
                     "iso_weekday": 1,
                     "hour": 11,
@@ -120,7 +120,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                "baseEndpoint": "https://www.lichess4545.com/api/", 
+                "baseEndpoint": "http://localhost:8000/api/",
                 "leagueTag": "lonewolf"
             },
             "results": {
@@ -135,7 +135,7 @@ var config = {
                     "increment": 30
                 },
                 "rated": true,
-                "variant" : "standard",
+                "variant": "standard",
                 "extrema": {
                     "iso_weekday": 1,
                     "hour": 22,
@@ -176,7 +176,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                "baseEndpoint": "https://www.lichess4545.com/api/", 
+                "baseEndpoint": "http://localhost:8000/api/",
                 "leagueTag": "blitzbattle"
             },
             "results": {
@@ -191,7 +191,7 @@ var config = {
                     "increment": 2
                 },
                 "rated": true,
-                "variant" : "standard",
+                "variant": "standard",
                 "extrema": {
                     "iso_weekday": 1,
                     "hour": 22,
@@ -220,7 +220,7 @@ var config = {
             ],
             "heltour": {
                 "token": heltour_token,
-                "baseEndpoint": "https://www.lichess4545.com/api/",
+                "baseEndpoint": "http://localhost:8000/api/",
                 "leagueTag": "chess960"
             },
             "results": {
@@ -235,7 +235,7 @@ var config = {
                     "increment": 15
                 },
                 "rated": true,
-                "variant" : "chess960",
+                "variant": "chess960",
                 "extrema": {
                     "iso_weekday": 1,
                     "hour": 22,

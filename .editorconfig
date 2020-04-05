@@ -14,7 +14,7 @@ insert_final_newline = true
 charset = utf-8
 
 # Indentation override for all JS under lib directory
-[{src,config}/**.js]
+[{src,config}/**.{js, ts}]
 indent_style = space
 indent_size = 4
 
