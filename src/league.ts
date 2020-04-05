@@ -111,6 +111,7 @@ export class League {
         public also_known_as: string[],
         public heltour: heltour.Config,
         public links: LeagueLinks,
+        public welcome: Record<string, string>,
         public alternate?: Record<string, string>,
         public results?: Record<string, string>,
         public gamelinks?: Record<string, any>, // TODO: remove any.
@@ -231,8 +232,8 @@ export class League {
                     newPlayerLookup[_.toLower(name)] = player
                 })
                 this._playerLookup = newPlayerLookup
-                _.each(roster.teams, team => {
-                    _.each(team.players, teamPlayer => {
+                _.each(roster.teams, (team) => {
+                    _.each(team.players, (teamPlayer) => {
                         var player = this.getPlayer(teamPlayer.username)
                         if (!player) return
                         player.isCaptain = teamPlayer.isCaptain =
@@ -261,7 +262,7 @@ export class League {
         return heltour
             .getLeagueModerators(this.heltour)
             .then((moderators: String[]) => {
-                this._moderators = moderators.map(m => m.toLowerCase())
+                this._moderators = moderators.map((m) => m.toLowerCase())
             })
     }
 
@@ -273,7 +274,7 @@ export class League {
             .getAllPairings(this.heltour, this.heltour.leagueTag)
             .then((pairings: heltour.Pairing[]) => {
                 var newPairings: Pairing[] = []
-                _.each(pairings, heltourPairing => {
+                _.each(pairings, (heltourPairing) => {
                     var date = moment.utc(heltourPairing.datetime)
                     newPairings.push({
                         white: heltourPairing.white,
@@ -299,7 +300,7 @@ export class League {
         var possibilities = this._pairings
         let filter = (playerName: string) => {
             if (playerName) {
-                possibilities = _.filter(possibilities, item => {
+                possibilities = _.filter(possibilities, (item) => {
                     return (
                         item.white.toLowerCase().includes(playerName) ||
                         item.black.toLowerCase().includes(playerName)
@@ -485,7 +486,7 @@ export class League {
     // Get a list of captain names
     //--------------------------------------------------------------------------
     getCaptains() {
-        return this._teams.map(t => t.captain)
+        return this._teams.map((t) => t.captain)
     }
 
     //--------------------------------------------------------------------------
@@ -506,9 +507,9 @@ export class League {
         if (teamName) return teamName
         // Try to find the team by looking through the pairings for this
         // playername.  This will find alternates.
-        let teams: Team[] = this._teams.filter(t => {
-            let playerIds = t.players.map(p => p.username.toLowerCase())
-            return playerIds.filter(n => n === playerName)
+        let teams: Team[] = this._teams.filter((t) => {
+            let playerIds = t.players.map((p) => p.username.toLowerCase())
+            return playerIds.filter((n) => n === playerName)
         })
         if (teams.length > 0) {
             return teams[0]
@@ -528,7 +529,7 @@ export class League {
     //--------------------------------------------------------------------------
     getBoard(boardNumber: number) {
         var players: Player[] = []
-        _.each(this._teams, team => {
+        _.each(this._teams, (team) => {
             if (boardNumber - 1 < team.players.length) {
                 players.push(team.players[boardNumber - 1])
             }
@@ -545,7 +546,7 @@ export class League {
         }
         var message = 'Team Captains:\n'
         var teamIndex = 1
-        this._teams.forEach(team => {
+        this._teams.forEach((team) => {
             let captainName = team.captain?.username || 'Unchosen'
             message +=
                 '\t' +
@@ -566,7 +567,7 @@ export class League {
         if (this._teams.length === 0) {
             return `The {this.name} league does not have captains`
         }
-        var teams = _.filter(this._teams, t =>
+        var teams = _.filter(this._teams, (t) =>
             _.isEqual(t.name.toLowerCase(), teamName.toLowerCase())
         )
         if (teams.length === 0) {
@@ -592,7 +593,7 @@ export class League {
         }
         var message =
             'There are currently ' + this._teams.length + ' teams competing. \n'
-        this._teams.forEach(team => {
+        this._teams.forEach((team) => {
             message += '\t' + team.number + '. ' + team.name + '\n'
         })
         return message
@@ -610,7 +611,7 @@ export class League {
         players.sort((e1, e2) => {
             return e1.rating > e2.rating ? -1 : e1.rating < e2.rating ? 1 : 0
         })
-        players.forEach(member => {
+        players.forEach((member) => {
             message +=
                 '\t' +
                 member.username +
@@ -630,7 +631,7 @@ export class League {
         if (this._teams.length === 0) {
             return `The ${this.name} league does not have teams`
         }
-        var teams = _.filter(this._teams, t => {
+        var teams = _.filter(this._teams, (t) => {
             return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase())
         })
         if (teams.length === 0) {
@@ -658,7 +659,7 @@ export class League {
     // Format the mods message
     //--------------------------------------------------------------------------
     formatModsResponse() {
-        var moderators = _.map(this._moderators, name => {
+        var moderators = _.map(this._moderators, (name) => {
             return name[0] + '\u200B' + name.slice(1)
         })
         return (
@@ -672,7 +673,7 @@ export class League {
     // Format the summon mods message
     //--------------------------------------------------------------------------
     formatSummonModsResponse() {
-        var moderators = _.map(this._moderators, name => {
+        var moderators = _.map(this._moderators, (name) => {
             return this.bot.users.getIdString(name)
         })
         return (
@@ -695,12 +696,12 @@ export function getAllLeagues(bot: SlackBot): League[] {
     var all_league_configs = bot.config['leagues'] || {}
     return _(all_league_configs)
         .keys()
-        .map(key => getLeague(bot, key))
+        .map((key) => getLeague(bot, key))
         .filter(isLeague)
         .value()
 }
 
-export let getLeague = (function() {
+export let getLeague = (function () {
     var _league_cache: Record<string, League> = {}
     return (bot: SlackBot, leagueName: string): League | undefined => {
         if (!_league_cache[leagueName]) {
@@ -718,6 +719,7 @@ export let getLeague = (function() {
                     this_league_config.heltour,
                     this_league_config.links,
                     this_league_config.alternate,
+                    this_league_config.welcome,
                     this_league_config.results,
                     this_league_config.gamelinks
                 )
