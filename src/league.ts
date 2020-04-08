@@ -72,6 +72,9 @@ export interface LeagueLinks {
     source: string
     pairings: string
     standings: string
+    nominate: string
+    notifications: string
+    availability: string
 }
 export interface Team {
     name: string

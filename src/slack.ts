@@ -220,13 +220,13 @@ export interface SlackRTMEventListenerOptions {
     callback: CallbackFn
 }
 function wantsDirectMessage(options: SlackRTMEventListenerOptions) {
-    return options.messageTypes.findIndex(t => t === 'direct_message') !== -1
+    return options.messageTypes.findIndex((t) => t === 'direct_message') !== -1
 }
 function wantsDirectMention(options: SlackRTMEventListenerOptions) {
-    return options.messageTypes.findIndex(t => t === 'direct_mention') !== -1
+    return options.messageTypes.findIndex((t) => t === 'direct_mention') !== -1
 }
 function wantsAmbient(options: SlackRTMEventListenerOptions) {
-    return options.messageTypes.findIndex(t => t === 'ambient') !== -1
+    return options.messageTypes.findIndex((t) => t === 'ambient') !== -1
 }
 
 var SECONDS = 1000 // ms
@@ -267,7 +267,7 @@ export function appendPlayerRegex(command: string, optional: boolean) {
    if it encounters an error it will exit the process with exit code 1
 */
 function criticalPath<T>(promise: Promise<T>) {
-    exceptionLogger(promise).catch(function() {
+    exceptionLogger(promise).catch(function () {
         winston.error(
             'An exception was caught in a critical code-path. I am going down.'
         )
@@ -279,7 +279,7 @@ function criticalPath<T>(promise: Promise<T>) {
 // a promise and ensures that uncaught exceptions are logged.
 let exceptionLogger = <T>(promise: Promise<T>) =>
     new Promise((_, reject) => {
-        promise.catch(function(e) {
+        promise.catch(function (e) {
             var error_log =
                 'An error occurred:' +
                 '\nDatetime: ' +
@@ -336,9 +336,9 @@ function findLeagueByMessageText(bot: SlackBot, message: ChessterMessage) {
         leagueTargets.push(target)
         targetToLeague[target] = l
     }
-    _.each(allLeagues, function(l) {
+    _.each(allLeagues, function (l) {
         add_target(l, l.name)
-        _.each(l.also_known_as, function(aka) {
+        _.each(l.also_known_as, function (aka) {
             add_target(l, aka)
         })
     })
@@ -346,13 +346,13 @@ function findLeagueByMessageText(bot: SlackBot, message: ChessterMessage) {
     // Now fuzzy match them based on each arg in the message
     var matches: fuzzy.Result[][] = []
     var args = message.text.split(' ')
-    _.each(args, function(arg) {
+    _.each(args, function (arg) {
         var results = fuzzy.rankChoices(arg.toLowerCase(), leagueTargets)
         matches.push(results)
     })
     var bestMatches = fuzzy.findBestMatches(_.flatten(matches))
     var possibleLeagues: Record<string, league.League> = {}
-    _.each(bestMatches, match => {
+    _.each(bestMatches, (match) => {
         var l = targetToLeague[match.value]
         possibleLeagues[l.name] = l
     })
@@ -498,11 +498,11 @@ export class SlackBot {
     private token: string
     public users: SlackEntityLookup<LeagueMember>
     public channels: SlackEntityLookup<SlackChannel>
-    private mpims: SlackEntityLookup<SlackChannel>
-    private dms: SlackEntityLookup<SlackChannel>
+    public mpims: SlackEntityLookup<SlackChannel>
+    public dms: SlackEntityLookup<SlackChannel>
     public rtm: RTMClient
     public web: WebClient
-    private controller?: SlackBotSelf
+    public controller?: SlackBotSelf
     private team?: SlackTeam
     private refreshCount = 0
     private listeners: SlackRTMEventListenerOptions[] = []
@@ -619,7 +619,7 @@ export class SlackBot {
             'users.list'
         ) as unknown) as AsyncIterable<SlackUserListResponse>) {
             if (page.ok) {
-                page.members.map(slackUser => {
+                page.members.map((slackUser) => {
                     newUsers.add({
                         ...slackUser,
                         lichess_username:
@@ -654,7 +654,7 @@ export class SlackBot {
             exclude_archived: true,
         }) as unknown) as AsyncIterable<SlackChannelListResponse>) {
             if (page.ok) {
-                page.channels.map(c => {
+                page.channels.map((c) => {
                     if (c.is_channel) newChannels.add(c)
                     if (c.is_im) newDMs.add(c)
                     else newMPIMs.add(c)
@@ -700,7 +700,7 @@ export class SlackBot {
     }
     async refresh(delay: number) {
         return criticalPath(
-            new Promise(resolve => {
+            new Promise((resolve) => {
                 this.refreshCount++
                 this.log.info(`doing refresh ${this.refreshCount}`)
 
@@ -711,7 +711,7 @@ export class SlackBot {
                 this.updateChannels()
                 if (this.refreshLeagues) {
                     this.log.info('Refreshing Leagues')
-                    league.getAllLeagues(this).map(l => l.refresh())
+                    league.getAllLeagues(this).map((l) => l.refresh())
                     setTimeout(() => {
                         this.refresh(delay)
                     }, delay)
@@ -725,9 +725,11 @@ export class SlackBot {
         nameOrId: string[]
     ): Promise<SlackConversation> {
         let targetUsers = nameOrId
-            .map(u => this.getSlackUserFromNameOrID(u))
+            .map((u) => this.getSlackUserFromNameOrID(u))
             .filter(isDefined)
+            .map((u) => u.id)
             .join(',')
+        console.log(targetUsers)
         if (_.isNil(targetUsers)) {
             throw new Error('Unable to find user')
         } else {
@@ -827,7 +829,7 @@ export class SlackBot {
             let isDirectMention =
                 chessterMessage.text.indexOf(`<@${this.controller?.id}>`) != -1
             let isAmbient = !(isDirectMention || isDirectMessage)
-            this.listeners.map(async listener => {
+            this.listeners.map(async (listener) => {
                 let isWanted = false
                 let text = event.text
                 if (isDirectMessage && wantsDirectMessage(listener)) {
@@ -842,7 +844,7 @@ export class SlackBot {
 
                 if (!isWanted) return
 
-                listener.patterns.some(p => {
+                listener.patterns.some((p) => {
                     let matches = text.match(p)
                     if (!matches) return false
                     let message = {
@@ -852,7 +854,7 @@ export class SlackBot {
                     }
                     try {
                         try {
-                            _.map(listener.middleware, m => m(this, message))
+                            _.map(listener.middleware, (m) => m(this, message))
                             listener.callback(this, message)
                         } catch (error) {
                             if (error instanceof StopControllerError) {

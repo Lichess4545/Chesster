@@ -33,8 +33,8 @@ export function welcomeMessage(bot: SlackBot, message: CommandMessage) {
                 let lonewolfFAQ = bot.config.leagues['lonewolf'].links.faq
                 let text =
                     'Welcome. I am the league moderator bot.\n' +
-                    `*Before you can participate, you must <${result.url}|click here to link your Slack and Lichess accounts.>*\n`
-                'After that, read the FAQ for your league: ' +
+                    `*Before you can participate, you must <${result.url}|click here to link your Slack and Lichess accounts.>*\n` +
+                    'After that, read the FAQ for your league: ' +
                     `<${_4545FAQ}|4545 League FAQ>` +
                     `| <${lonewolfFAQ}|LoneWolf FAQ>\n` +
                     "Say 'help' to get help. Enjoy the league!"

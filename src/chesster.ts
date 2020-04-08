@@ -11,7 +11,7 @@ import * as availability from './commands/availability'
 //import games from './commands/games'
 import * as leagueInfo from './commands/leagueInfo'
 //import messageForwarding from './commands/messageForwarding'
-//import privateURLs from './commands/privateURLs'
+import * as privateURLs from './commands/privateURLs'
 //import onboarding from './commands/onboarding'
 import * as playerInfo from './commands/playerInfo'
 //import scheduling from './commands/scheduling'
@@ -56,39 +56,39 @@ export function directRequiresLeague(
 // league information
 directRequiresLeague(
     [/captain guidelines/],
-    leagueInfo.directResponse(l => l.formatCaptainGuidelinesResponse())
+    leagueInfo.directResponse((l) => l.formatCaptainGuidelinesResponse())
 )
 directRequiresLeague(
     [/captains/, /captain list/],
-    leagueInfo.dmResponse(l => l.formatCaptainsResponse())
+    leagueInfo.dmResponse((l) => l.formatCaptainsResponse())
 )
 directRequiresLeague(
     [/faq/],
-    leagueInfo.directResponse(l => l.formatFAQResponse())
+    leagueInfo.directResponse((l) => l.formatFAQResponse())
 )
 directRequiresLeague(
     [/notify mods/, /summon mods/],
-    leagueInfo.directResponse(l => l.formatSummonModsResponse())
+    leagueInfo.directResponse((l) => l.formatSummonModsResponse())
 )
 directRequiresLeague(
     [/^mods/, /^moderators/],
-    leagueInfo.directResponse(l => l.formatModsResponse())
+    leagueInfo.directResponse((l) => l.formatModsResponse())
 )
 directRequiresLeague(
     [/pairings/],
-    leagueInfo.directResponse(l => l.formatPairingsLinkResponse())
+    leagueInfo.directResponse((l) => l.formatPairingsLinkResponse())
 )
 directRequiresLeague(
     [/rules/, /regulations/],
-    leagueInfo.directResponse(l => l.formatRulesLinkResponse())
+    leagueInfo.directResponse((l) => l.formatRulesLinkResponse())
 )
 directRequiresLeague(
     [/standings/],
-    leagueInfo.directResponse(l => l.formatStandingsLinkResponse())
+    leagueInfo.directResponse((l) => l.formatStandingsLinkResponse())
 )
 directRequiresLeague(
     [/welcome$/, /starter guide/, /player handbook/],
-    leagueInfo.directResponse(l => l.formatStarterGuideResponse())
+    leagueInfo.directResponse((l) => l.formatStarterGuideResponse())
 )
 
 // availability
@@ -131,40 +131,32 @@ adminSlack.hears(
     },
     messageForwarding.refreshLeague(chesster, adminSlack)
 )
+*/
 
 // private urls
-chesster.hears(
-    {
-        middleware: [slack.requiresLeague],
-        patterns: ['get nomination url', 'nomination'],
-        messageTypes: ['direct_message'],
-    },
-    privateURLs.nomination
-)
-chesster.hears(
-    {
-        middleware: [slack.requiresLeague],
-        patterns: ['get notification url', 'notification'],
-        messageTypes: ['direct_message'],
-    },
-    privateURLs.notification
-)
-chesster.hears(
-    {
-        middleware: [slack.requiresLeague],
-        patterns: ['availability', 'edit availability', 'availability edit'],
-        messageTypes: ['direct_message'],
-    },
-    privateURLs.availability
-)
-chesster.hears(
-    {
-        patterns: ['link'],
-        messageTypes: ['direct_message'],
-    },
-    privateURLs.linkAccounts
-)
-*/
+chesster.hears({
+    middleware: [slack.requiresLeague],
+    patterns: [/get nomination url/, /nomination/],
+    messageTypes: ['direct_message'],
+    callback: privateURLs.nomination,
+})
+chesster.hears({
+    middleware: [slack.requiresLeague],
+    patterns: [/get notification url/, /notification/],
+    messageTypes: ['direct_message'],
+    callback: privateURLs.notification,
+})
+chesster.hears({
+    middleware: [slack.requiresLeague],
+    patterns: [/availability/, /edit availability/, /availability edit/],
+    messageTypes: ['direct_message'],
+    callback: privateURLs.availability,
+})
+chesster.hears({
+    patterns: [/link/],
+    messageTypes: ['direct_message'],
+    callback: privateURLs.linkAccounts,
+})
 
 // rating
 chesster.hears({
