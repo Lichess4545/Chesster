@@ -5,7 +5,7 @@ import _ from 'lodash'
 import moment from 'moment-timezone'
 import winston from 'winston'
 import * as scheduling from './scheduling'
-import subscription from './subscription'
+import * as subscription from './subscription'
 import * as heltour from '../heltour.js'
 import * as http from '../http.js'
 import { SlackBot, CommandMessage, LeagueMember } from '../slack.js'
@@ -75,7 +75,7 @@ function getTokensResult(inputString: string): string[] {
 
 function findResult(tokens: string[]): string | undefined {
     var result: string | undefined = undefined
-    _.some(tokens, token => {
+    _.some(tokens, (token) => {
         result = VALID_RESULTS[token.toUpperCase()]
         return result ? true : false
     })
@@ -101,7 +101,7 @@ function findPlayers(tokens: string[]): Players | undefined {
 }
 
 function filterPlayerTokens(tokens: string[]): string[] {
-    return _.filter(tokens, function(token) {
+    return _.filter(tokens, function (token) {
         //matches slack uer ids: <@[A-Z0-9]>[:]*
         return /^<@[A-Z0-9]+>[:,.-]*$/.test(token)
     })
@@ -220,7 +220,7 @@ export function ambientResults(bot: SlackBot, message: CommandMessage) {
                         //update the pairing with the result bc there was no link found
                         heltour
                             .updatePairing(heltourOptions, result)
-                            .then(function(updatePairingResult) {
+                            .then(function (updatePairingResult) {
                                 if (updatePairingResult['error']) {
                                     handleHeltourErrors(
                                         bot,
@@ -339,7 +339,7 @@ export function parseGamelink(messageText: string): GameLinkResult {
     var gamelinkID
 
     //for each token, walk the list looking for a lichess url
-    tokens.some(function(token) {
+    tokens.some(function (token) {
         //if previously token was a lichess url
         //this token should be the gamelinkID
         if (foundBaseURL) {
@@ -559,7 +559,7 @@ function processGamelink(
     }
     //get the game details
     return fetchGameDetails(result.gamelinkID)
-        .then(response => {
+        .then((response) => {
             var details = response['json']
             //validate the game details vs the user specified result
             if (isDefined(userResult)) {
@@ -571,7 +571,7 @@ function processGamelink(
             }
             return processGameDetails(bot, message, details)
         })
-        .catch(error => {
+        .catch((error) => {
             winston.error(JSON.stringify(error))
             bot.reply(
                 message,
@@ -604,10 +604,10 @@ function processGameDetails(
         return
     }
     return updateGamelink(message.league, details)
-        .then(function(updatePairingResult) {
+        .then(function (updatePairingResult) {
             resultReplyUpdated(bot, message, updatePairingResult)
         })
-        .catch(function(error) {
+        .catch(function (error) {
             if (error instanceof heltour.HeltourError) {
                 handleHeltourErrors(bot, message, error.code)
             } else {
@@ -650,7 +650,7 @@ export async function updateGamelink(
     //update the website with results from gamelink
     return heltour
         .updatePairing(league.heltour, result)
-        .then(function(updatePairingResult) {
+        .then(function (updatePairingResult) {
             if (updatePairingResult['error']) {
                 //if there was a problem with heltour, we should not take further steps
                 throw new heltour.HeltourError(updatePairingResult['error'])
@@ -720,4 +720,3 @@ export function ambientGamelinks(bot: SlackBot, message: CommandMessage) {
         throw e
     }
 }
-

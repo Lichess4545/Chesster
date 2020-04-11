@@ -10,6 +10,7 @@ import * as lichess from './lichess'
 import { EventEmitter } from 'events'
 import { SlackBot, LeagueMember, localTime } from './slack'
 import { LogWithPrefix } from './logging'
+import { PartialBy } from '../utils'
 
 // An emitter for league events
 class ChessLeagueEmitter extends EventEmitter {}
@@ -81,9 +82,43 @@ export interface Team {
     players: Player[]
     captain: Player
     number: number
+    slack_channel: string
 }
 type RefreshRostersCallback = () => void
 type RefreshPairingsCallback = () => void
+
+export interface SchedulingOptions {
+    referenceDate: moment.Moment
+    warningMessage: string
+    lateMessage: string
+    isoWeekday: number
+    hour: number
+    minute: number
+    warningHours: number
+    channel: string
+}
+
+type SchedulingOptionsParameters = PartialBy<SchedulingOptions, 'referenceDate'>
+
+export function makeSchedulingOptions({
+    isoWeekday = 2,
+    hour = 0,
+    minute = 0,
+    warningHours = 1.5,
+    referenceDate,
+    ...rest
+}: SchedulingOptionsParameters) {
+    return {
+        isoWeekday,
+        hour,
+        minute,
+        warningHours,
+        referenceDate: referenceDate
+            ? moment(referenceDate).clone()
+            : moment.utc(),
+        ...rest,
+    }
+}
 
 function resultFromString(results: string | undefined): ResultsEnum {
     if (results === undefined) return ResultsEnum.UNKNOWN
@@ -118,6 +153,7 @@ export class League {
         public alternate?: Record<string, string>,
         public results?: Record<string, string>,
         public gamelinks?: Record<string, any>, // TODO: remove any.
+        public scheduling?: SchedulingOptions, // TODO: remove any.
         public channels: Channel[] = [],
         private _players: Player[] = [],
         private _pairings: Pairing[] = [],
@@ -724,7 +760,8 @@ export let getLeague = (function () {
                     this_league_config.alternate,
                     this_league_config.welcome,
                     this_league_config.results,
-                    this_league_config.gamelinks
+                    this_league_config.gamelinks,
+                    this_league_config.scheduling
                 )
                 _league_cache[leagueName] = league
             } else {

@@ -4,3 +4,5 @@ export function hasKey<O>(obj: O, key: keyof any): key is keyof O {
 export function isDefined<T>(obj: T | undefined): obj is T {
     return obj !== undefined
 }
+
+export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>

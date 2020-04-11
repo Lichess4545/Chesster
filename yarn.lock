@@ -149,11 +149,6 @@
   resolved "https://registry.yarnpkg.com/@types/retry/-/retry-0.12.0.tgz#2b35eccfcee7d38cd72ad99232fbd58bffb3c84d"
   integrity sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==
 
-"@types/string-format@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@types/string-format/-/string-format-2.0.0.tgz#c1588f507be7b8ef5eb5074a41e48e4538f3f6d5"
-  integrity sha512-mMwtmgN0ureESnJ3SuMM4W9lsi4CgOxs43YxNo14SDHgzJ+OPYO3yM7nOTJTh8x5YICseBdtrySUbvxnpb+NYQ==
-
 "@types/triple-beam@^1.3.0":
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/@types/triple-beam/-/triple-beam-1.3.0.tgz#56d9a2d9e4fbd7bc363825d2521868537e4606ee"
@@ -3669,6 +3664,11 @@ util-deprecate@^1.0.1, util-deprecate@~1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha1-RQ1Nyfpw3nMnYvvS1KKJgUGaDM8=
+
+utility-types@^3.10.0:
+  version "3.10.0"
+  resolved "https://registry.yarnpkg.com/utility-types/-/utility-types-3.10.0.tgz#ea4148f9a741015f05ed74fd615e1d20e6bed82b"
+  integrity sha512-O11mqxmi7wMKCo6HKFt5AhO4BwY3VV68YU07tgxfz8zJTIxr4BpsezN49Ffwy9j3ZpwwJp4fkRwjRzq3uWE6Rg==
 
 utils-merge@1.0.1:
   version "1.0.1"
