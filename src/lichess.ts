@@ -38,7 +38,7 @@ type QueuedRequest = {
 // a max of one request every 2 seconds (this is actually a bit slower), and
 // it will wait a minute if it receives a 429.
 //------------------------------------------------------------------------------
-var makeRequest = (function() {
+let { makeRequest, processRequests } = (function () {
     // The background queue will be processed when there is nothing else to process
     var backgroundQueue: QueuedRequest[] = []
     // The mainQueue will be processed first.
@@ -52,7 +52,8 @@ var makeRequest = (function() {
             }
         })
     }
-    function processRequest() {
+    function processRequests() {
+        console.log(new Error().stack)
         var request = null
         // The default delay between requests is 2 seconds
         var requestDelay = 2 * SECONDS
@@ -76,7 +77,7 @@ var makeRequest = (function() {
             try {
                 promise = http.fetchURL(url)
                 promise.then(
-                    function(result) {
+                    function (result) {
                         try {
                             if (result.response.statusCode === 429) {
                                 requestDelay = 60 * SECONDS
@@ -108,20 +109,20 @@ var makeRequest = (function() {
                                     resolve(result)
                                 }
                             }
-                            setTimeout(processRequest, requestDelay)
+                            setTimeout(processRequests, requestDelay)
                         } catch (e) {
                             winston.error('[LICHESS] Exception: ' + e)
                             winston.error('[LICHESS] Stack: ' + e.stack)
                             winston.error('[LICHESS] URL: ' + url)
                             reject(e)
-                            setTimeout(processRequest, requestDelay)
+                            setTimeout(processRequests, requestDelay)
                         }
                     },
-                    function(error) {
+                    function (error) {
                         winston.error(
                             `[LICHESS] Request failed: ${JSON.stringify(error)}`
                         )
-                        setTimeout(processRequest, requestDelay)
+                        setTimeout(processRequests, requestDelay)
                         reject(error)
                     }
                 )
@@ -129,15 +130,18 @@ var makeRequest = (function() {
                 winston.error('[LICHESS] Exception: ' + e)
                 winston.error('[LICHESS] Stack: ' + e.stack)
                 reject(e)
-                setTimeout(processRequest, requestDelay)
+                setTimeout(processRequests, requestDelay)
             }
         } else {
-            setTimeout(processRequest, requestDelay)
+            setTimeout(processRequests, requestDelay)
         }
     }
-    processRequest()
-    return makeRequest
+    return { makeRequest, processRequests }
 })()
+
+export function startLichessQueue() {
+    processRequests()
+}
 
 export async function getPlayerByName(name: string, isBackground: boolean) {
     var url = 'https://lichess.org/api/user/' + name
@@ -164,7 +168,7 @@ async function _updateRating(name: string, isBackground: boolean) {
         var lichessRating = lichessRatings[0]
         lichessRating.set('rating', rating)
         lichessRating.set('lastCheckedAt', moment.utc().toDate())
-        lichessRating.save().then(function() {
+        lichessRating.save().then(function () {
             winston.info(`Got updated rating for ${name}: ${rating}`)
         })
         return rating

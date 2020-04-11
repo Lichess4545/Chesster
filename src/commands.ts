@@ -84,10 +84,7 @@ export function tokenize(command: string, descriptions: string[]): Parameters {
  * " " separated words is returned without concatenation
  */
 function getTokens(text: string, numTokens: number) {
-    var words = _(text)
-        .split(' ')
-        .compact()
-        .value()
+    var words = _(text).split(' ').compact().value()
     if (words.length <= numTokens) return words
 
     var tokens = _.slice(words, 0, numTokens - 1)
@@ -174,11 +171,12 @@ function parameterizeConstantToken(
 /*
  * commands error types
  */
-class CommandError {
+class CommandError extends Error {
     type: string = ''
     name: string = ''
     stack: string | undefined
     constructor() {
+        super()
         this.stack = new Error().stack
     }
 }
@@ -224,4 +222,3 @@ export class InvalidConstantError extends CommandError {
         super()
     }
 }
-

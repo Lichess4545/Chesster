@@ -5,12 +5,12 @@
 import _ from 'lodash'
 import winston from 'winston'
 import moment from 'moment-timezone'
-import * as heltour from './heltour.js'
+import * as heltour from './heltour'
 import * as lichess from './lichess'
 import { EventEmitter } from 'events'
 import { SlackBot, LeagueMember, localTime } from './slack'
 import { LogWithPrefix } from './logging'
-import { PartialBy } from '../utils'
+import { PartialBy } from './utils'
 
 // An emitter for league events
 class ChessLeagueEmitter extends EventEmitter {}
@@ -19,7 +19,6 @@ class ChessLeagueEmitter extends EventEmitter {}
 type Channel = any
 type RefreshError = any
 type Roster = any
-type RatingError = any
 
 export interface Player {
     username: string
@@ -88,7 +87,7 @@ type RefreshRostersCallback = () => void
 type RefreshPairingsCallback = () => void
 
 export interface SchedulingOptions {
-    referenceDate: moment.Moment
+    referenceDate?: moment.Moment
     warningMessage: string
     lateMessage: string
     isoWeekday: number
@@ -155,9 +154,9 @@ export class League {
         public gamelinks?: Record<string, any>, // TODO: remove any.
         public scheduling?: SchedulingOptions, // TODO: remove any.
         public channels: Channel[] = [],
-        private _players: Player[] = [],
-        private _pairings: Pairing[] = [],
-        private _teams: Team[] = []
+        public _players: Player[] = [],
+        public _pairings: Pairing[] = [],
+        public _teams: Team[] = []
     ) {
         this.emitter = new ChessLeagueEmitter()
         this.log = new LogWithPrefix(`[League(${this.name})]`)
@@ -258,39 +257,38 @@ export class League {
     //--------------------------------------------------------------------------
     // Refreshes the latest roster information
     //--------------------------------------------------------------------------
-    refreshRosters() {
-        return heltour
-            .getRoster(this.heltour, this.heltour.leagueTag)
-            .then((roster: Roster) => {
-                this._players = roster.players
-                var newPlayerLookup: Record<string, Player> = {}
-                var newTeams: Team[] = []
-                var newLookup: Record<string, Team> = {}
-                roster.players.forEach((player: Player) => {
-                    var name = _.toLower(player.username)
-                    newPlayerLookup[_.toLower(name)] = player
-                })
-                this._playerLookup = newPlayerLookup
-                _.each(roster.teams, (team) => {
-                    _.each(team.players, (teamPlayer) => {
-                        var player = this.getPlayer(teamPlayer.username)
-                        if (!player) return
-                        player.isCaptain = teamPlayer.isCaptain =
-                            teamPlayer.is_captain
-                        if (player.isCaptain) {
-                            team.captain = player
-                        }
-                        teamPlayer.rating = player.rating
-                        player.boardNumber = teamPlayer.board_number
-                        teamPlayer.team = player.team = team
-                    })
-                    newTeams.push(team)
-                    newLookup[_.toLower(team.name)] = team
-                })
-                this.log.info('Setting new teams')
-                this._teams = newTeams
-                this._teamLookup = newLookup
+    async refreshRosters() {
+        let roster: Roster = await heltour.getRoster(
+            this.heltour,
+            this.heltour.leagueTag
+        )
+        this._players = roster.players
+        var newPlayerLookup: Record<string, Player> = {}
+        var newTeams: Team[] = []
+        var newLookup: Record<string, Team> = {}
+        roster.players.forEach((player: Player) => {
+            var name = _.toLower(player.username)
+            newPlayerLookup[_.toLower(name)] = player
+        })
+        this._playerLookup = newPlayerLookup
+        _.each(roster.teams, (team) => {
+            _.each(team.players, (teamPlayer) => {
+                var player = this.getPlayer(teamPlayer.username)
+                if (!player) return
+                player.isCaptain = teamPlayer.isCaptain = teamPlayer.is_captain
+                if (player.isCaptain) {
+                    team.captain = player
+                }
+                teamPlayer.rating = player.rating
+                player.boardNumber = teamPlayer.board_number
+                teamPlayer.team = player.team = team
             })
+            newTeams.push(team)
+            newLookup[_.toLower(team.name)] = team
+        })
+        this.log.info('Setting new teams')
+        this._teams = newTeams
+        this._teamLookup = newLookup
     }
 
     //--------------------------------------------------------------------------
@@ -761,7 +759,7 @@ export let getLeague = (function () {
                     this_league_config.welcome,
                     this_league_config.results,
                     this_league_config.gamelinks,
-                    this_league_config.scheduling
+                    this_league_config.scheduling.extrema
                 )
                 _league_cache[leagueName] = league
             } else {

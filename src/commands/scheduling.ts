@@ -131,7 +131,7 @@ let WORDS_TO_IGNORE = [
 ]
 
 // A scheduling error (as opposed to other errors)
-class ScheduleParsingError extends Error {}
+export class ScheduleParsingError extends Error {}
 
 // Get an appropriate set of base tokens for the scheduling messages
 function getTokensScheduling(inputString: string) {
@@ -241,7 +241,7 @@ function getPossibleDateStrings(dateString: string, extrema: Extrema) {
 //         getRoundExtrema options
 //     options.warningHours: an integer specifying how many hours
 //         before the round end that we want to warn people about.
-function parseScheduling(
+export function parseScheduling(
     inputString: string,
     options: SchedulingOptions
 ): SchedulingResult {
@@ -339,10 +339,10 @@ function parseScheduling(
 //     extrema.hour: The weekday on which the pairings are released.
 //     extrema.warningHours: The amount of hours before the final scheduling
 //       cutoff during which we will warn users they are cutting it close.
-function getRoundExtrema(options: SchedulingOptions): Extrema {
+export function getRoundExtrema(options: SchedulingOptions): Extrema {
     // Get the reference date, which is either today or the referenceDate
     // from the options
-    let roundStart = options.referenceDate
+    let roundStart = (options.referenceDate || moment.utc()).clone()
     let referenceDate = roundStart.clone()
     // Make it the right time of day.
     roundStart.hour(options.hour).minute(options.minute).second(0)
@@ -505,7 +505,10 @@ function schedulingReplyCantFindUser(bot: SlackBot, message: CommandMessage) {
     )
 }
 
-async function ambientScheduling(bot: SlackBot, message: CommandMessage) {
+export async function ambientScheduling(
+    bot: SlackBot,
+    message: CommandMessage
+) {
     if (!isDefined(message.league)) {
         return
     }
@@ -673,7 +676,3 @@ async function ambientScheduling(bot: SlackBot, message: CommandMessage) {
     }
 }
 
-module.exports.getRoundExtrema = getRoundExtrema
-module.exports.parseScheduling = parseScheduling
-module.exports.ScheduleParsingError = ScheduleParsingError
-module.exports.ambientScheduling = ambientScheduling

@@ -56,7 +56,7 @@
   "scripts": {
     "build": "tsc",
     "start": "tsc && node build/chesster.js",
-    "test": "mocha --exit",
+    "test": "mocha -r ts-node/register test/**/*.ts",
     "send-coverage": "tsc && node_modules/.bin/codeclimate-test-reporter < coverage/lcov.info; exit 0",
     "lint": "tsc && node_modules/.bin/eslint .",
     "hint": "tsc && node_modules/.bin/jshint src",

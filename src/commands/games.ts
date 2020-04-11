@@ -6,15 +6,15 @@ import moment from 'moment-timezone'
 import winston from 'winston'
 import * as scheduling from './scheduling'
 import * as subscription from './subscription'
-import * as heltour from '../heltour.js'
-import * as http from '../http.js'
-import { SlackBot, CommandMessage, LeagueMember } from '../slack.js'
+import * as heltour from '../heltour'
+import * as http from '../http'
+import { SlackBot, CommandMessage, LeagueMember } from '../slack'
 import { isDefined } from '../utils'
-import { League } from '../league'
+import { League, SchedulingOptions } from '../league'
 
 type FindPairingResult = any
 type Pairing = any
-type GameDetails = any
+export type GameDetails = any
 type HeltourResultDetails = any
 type HeltourUserResult = any
 type HeltourResultPost = any
@@ -357,7 +357,7 @@ export function parseGamelink(messageText: string): GameLinkResult {
     return { gamelinkID: gamelinkID }
 }
 
-interface GameValidationResult {
+export interface GameValidationResult {
     valid: boolean
     pairing: Pairing | undefined
     pairingWasNotFound: boolean
@@ -390,6 +390,12 @@ export function validateGameDetails(league: League, details: GameDetails) {
         result.valid = false
         return result
     }
+    let schedulingOptionsOr = league.scheduling
+    if (!isDefined(schedulingOptionsOr)) {
+        result.valid = false
+        return result
+    }
+    let schedulingOptions: SchedulingOptions = schedulingOptionsOr
 
     var white = details.players.white.userId
     var black = details.players.black.userId
@@ -440,11 +446,11 @@ export function validateGameDetails(league: League, details: GameDetails) {
         result.reason = 'The game ended with a "Cheat Detected". Contact a mod.'
     } else {
         //the link is too old or too new
-        var extrema = scheduling.getRoundExtrema(options)
-        var game_start = moment.utc(details.createdAt)
+        var extrema = scheduling.getRoundExtrema(schedulingOptions)
+        var gameStart = moment.utc(details.createdAt)
         if (
-            game_start.isBefore(extrema.start) ||
-            game_start.isAfter(extrema.end)
+            gameStart.isBefore(extrema.start) ||
+            gameStart.isAfter(extrema.end)
         ) {
             result.valid = false
             result.gameOutsideOfCurrentRound = true
