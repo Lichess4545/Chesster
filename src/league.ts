@@ -296,11 +296,8 @@ export class League {
     // for the league.
     //--------------------------------------------------------------------------
     async refreshLeagueModerators() {
-        return heltour
-            .getLeagueModerators(this.heltour)
-            .then((moderators: String[]) => {
-                this._moderators = moderators.map((m) => m.toLowerCase())
-            })
+        let response = await heltour.getLeagueModerators(this.heltour)
+        this._moderators = response.moderators.map((m) => m.toLowerCase())
     }
 
     //--------------------------------------------------------------------------

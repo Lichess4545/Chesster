@@ -603,26 +603,11 @@ export async function ambientScheduling(
     )
     // Step 3. attempt to update the website
     try {
-        let response = await heltour.updateSchedule(
+        let updateScheduleResults = await heltour.updateSchedule(
             heltourOptions,
             schedulingResults
         )
 
-        let updateScheduleResults = response['json']
-        if (updateScheduleResults['updated'] === 0) {
-            if (updateScheduleResults['error'] === 'not_found') {
-                schedulingReplyMissingPairing(bot, message)
-            } else if (
-                updateScheduleResults['error'] === 'no_matching_rounds'
-            ) {
-                replyNoActiveRound(bot, message)
-            } else if (updateScheduleResults['error'] === 'ambiguous') {
-                schedulingReplyAmbiguous(bot, message)
-            } else {
-                bot.reply(message, 'Something went wrong. Notify a mod')
-            }
-            return
-        }
         if (updateScheduleResults['reversed']) {
             let tmp = white
             white = black
@@ -668,6 +653,15 @@ export async function ambientScheduling(
             }
         )
     } catch (error) {
+        if (error.code === 'not_found') {
+            schedulingReplyMissingPairing(bot, message)
+        } else if (error.code === 'no_matching_rounds') {
+            replyNoActiveRound(bot, message)
+        } else if (error.code === 'ambiguous') {
+            schedulingReplyAmbiguous(bot, message)
+        } else {
+            bot.reply(message, 'Something went wrong. Notify a mod')
+        }
         winston.error(JSON.stringify(error))
         bot.reply(
             message,

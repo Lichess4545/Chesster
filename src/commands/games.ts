@@ -12,8 +12,7 @@ import { SlackBot, CommandMessage, LeagueMember } from '../slack'
 import { isDefined } from '../utils'
 import { League, SchedulingOptions, Pairing as LeaguePairing } from '../league'
 
-export type GameDetails = any
-type HeltourResultDetails = any
+export type LichessGameDetails = any
 type HeltourUserResult = any
 type HeltourResultPost = any
 
@@ -201,38 +200,29 @@ export async function ambientResults(bot: SlackBot, message: CommandMessage) {
         if (isModerator) {
             //current speaker is a moderator for the league
             //update the pairing with the result bc there was no link found
-            heltour
-                .updatePairing(heltourOptions, result)
-                .then(function (updatePairingResult) {
-                    if (updatePairingResult['error']) {
-                        handleHeltourErrors(
-                            bot,
-                            message,
-                            updatePairingResult['error']
-                        )
-                        return
-                    }
-                    resultReplyUpdated(bot, message, updatePairingResult)
+            // TODO: update error handling
+            let updatePairingResult = await heltour.updatePairing(
+                heltourOptions,
+                result
+            )
+            resultReplyUpdated(bot, message, result)
 
-                    var white = resultPlayer.white
-                    var black = resultPlayer.black
-                    if (
-                        updatePairingResult['resultChanged'] &&
-                        !_.isEmpty(updatePairingResult.result)
-                    ) {
-                        subscription.emitter.emit(
-                            'a-game-is-over',
-                            message.league,
-                            [white.name, black.name],
-                            {
-                                result: updatePairingResult,
-                                white: white,
-                                black: black,
-                                leagueName: league.name,
-                            }
-                        )
+            if (
+                updatePairingResult.result_changed &&
+                !_.isEmpty(resultPlayer.result)
+            ) {
+                subscription.emitter.emit(
+                    'a-game-is-over',
+                    message.league,
+                    [white.name, black.name],
+                    {
+                        result: updatePairingResult,
+                        white: white,
+                        black: black,
+                        leagueName: league.name,
                     }
-                })
+                )
+            }
         } else {
             resultReplyMissingGamelink(bot, message)
         }
@@ -286,16 +276,16 @@ function replyNoActiveRound(bot: SlackBot, message: CommandMessage) {
 function resultReplyUpdated(
     bot: SlackBot,
     message: CommandMessage,
-    result: ResultPlayer
+    result: Result
 ) {
     bot.reply(
         message,
         'Got it. @' +
-            result.white.name +
+            result.white +
             ' ' +
             (result.result || SWORDS) +
             ' @' +
-            result.black.name
+            result.black
     )
 }
 
@@ -343,7 +333,10 @@ export interface GameValidationResult {
     reason: string
 }
 
-export function validateGameDetails(league: League, details: GameDetails) {
+export function validateGameDetails(
+    league: League,
+    details: LichessGameDetails
+) {
     var result: GameValidationResult = {
         valid: true,
         pairing: undefined,
@@ -478,7 +471,7 @@ function gamelinkReplyUnknown(bot: SlackBot, message: CommandMessage) {
     )
 }
 
-function validateUserResult(details: HeltourResultDetails, result: Result) {
+function validateUserResult(details: LichessGameDetails, result: Result) {
     //if colors are reversed, in the game link, we will catch that later
     //we know the players are correct or we would not already be here
     //the only way we can validate the result is if the order is 100% correct.
@@ -562,10 +555,10 @@ function processGamelink(
         })
 }
 
-function processGameDetails(
+async function processGameDetails(
     bot: SlackBot,
     message: CommandMessage,
-    details: HeltourResultDetails
+    details: LichessGameDetails
 ) {
     if (!isDefined(message.league)) {
         return
@@ -583,22 +576,17 @@ function processGameDetails(
         gamelinkReplyInvalid(bot, message, validity.reason)
         return
     }
-    return updateGamelink(message.league, details)
-        .then(function (updatePairingResult) {
-            resultReplyUpdated(bot, message, updatePairingResult)
-        })
-        .catch(function (error) {
-            if (error instanceof heltour.HeltourError) {
-                handleHeltourErrors(bot, message, error.code)
-            } else {
-                winston.error(JSON.stringify(error))
-            }
-        })
+    let updatePairingResult = await updateGamelink(message.league, details)
+    resultReplyUpdated(bot, message, {
+        white: updatePairingResult.white,
+        black: updatePairingResult.black,
+        result: details.result,
+    })
 }
 
 export async function updateGamelink(
     league: League,
-    details: HeltourResultDetails
+    details: LichessGameDetails
 ) {
     var result: HeltourResultPost = {}
     //our game is valid
@@ -628,49 +616,42 @@ export async function updateGamelink(
     //gamelinks only come from played games, so ignoring forfeit result types
 
     //update the website with results from gamelink
-    return heltour
-        .updatePairing(league.heltour, result)
-        .then(function (updatePairingResult) {
-            if (updatePairingResult['error']) {
-                //if there was a problem with heltour, we should not take further steps
-                throw new heltour.HeltourError(updatePairingResult['error'])
-            }
+    let updatePairingResult = await heltour.updatePairing(
+        league.heltour,
+        result
+    )
 
-            var leagueName = league.name
-            var white = result.white
-            var black = result.black
-            if (
-                updatePairingResult['resultChanged'] &&
-                !_.isEmpty(updatePairingResult.result)
-            ) {
-                // TODO: Test this.
-                subscription.emitter.emit(
-                    'a-game-is-over',
-                    league,
-                    [white.name, black.name],
-                    {
-                        result: updatePairingResult,
-                        white: white,
-                        black: black,
-                        leagueName: leagueName,
-                    }
-                )
-            } else if (updatePairingResult['gamelinkChanged']) {
-                // TODO: Test this.
-                subscription.emitter.emit(
-                    'a-game-starts',
-                    league,
-                    [white.name, black.name],
-                    {
-                        result: result,
-                        white: white,
-                        black: black,
-                        leagueName: leagueName,
-                    }
-                )
+    var leagueName = league.name
+    var white = result.white
+    var black = result.black
+    if (updatePairingResult.result_changed && !_.isEmpty(result.result)) {
+        // TODO: Test this.
+        subscription.emitter.emit(
+            'a-game-is-over',
+            league,
+            [white.name, black.name],
+            {
+                result: updatePairingResult,
+                white: white,
+                black: black,
+                leagueName: leagueName,
             }
-            return updatePairingResult
-        })
+        )
+    } else if (updatePairingResult.game_link_changed) {
+        // TODO: Test this.
+        subscription.emitter.emit(
+            'a-game-starts',
+            league,
+            [white.name, black.name],
+            {
+                result: result,
+                white: white,
+                black: black,
+                leagueName: leagueName,
+            }
+        )
+    }
+    return updatePairingResult
 }
 
 export function ambientGamelinks(bot: SlackBot, message: CommandMessage) {

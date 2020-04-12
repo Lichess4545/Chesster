@@ -141,7 +141,7 @@ describe('games', function () {
             if (mockLeague.scheduling)
                 mockLeague.scheduling.referenceDate = moment('2016-10-15')
             function testValidateGameDetails(
-                details: games.GameDetails,
+                details: games.LichessGameDetails,
                 pairings: league.Pairing[],
                 expected: games.GameValidationResult
             ) {

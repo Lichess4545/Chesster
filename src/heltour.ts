@@ -5,7 +5,6 @@ import _ from 'lodash'
 import moment from 'moment'
 import url from 'url'
 import * as http from './http'
-import winston from 'winston'
 import {
     Decoder,
     at,
@@ -13,9 +12,11 @@ import {
     object,
     number,
     string,
+    boolean,
     andThen,
     oneOf,
     union,
+    dict,
 } from 'type-safe-json-decoder'
 
 // TODO: Fix all of these
@@ -28,6 +29,9 @@ export interface Config {
     leagueTag: string
 }
 
+//------------------------------------------------------------------------------
+// Error
+//------------------------------------------------------------------------------
 export interface Error {
     error: string
 }
@@ -39,6 +43,9 @@ export function isValid<T extends object>(obj: T | Error): obj is T {
     return !obj.hasOwnProperty('error')
 }
 
+//------------------------------------------------------------------------------
+// Pairings
+//------------------------------------------------------------------------------
 export interface IndividualPairing {
     league: string
     season: string
@@ -131,6 +138,159 @@ export function isTeamPairing(obj: Pairing): obj is TeamPairing {
 }
 
 //------------------------------------------------------------------------------
+// Pairings
+//------------------------------------------------------------------------------
+
+export interface UpdatePairingResult {
+    updated: number
+    white: string
+    black: string
+    game_link_changed: boolean
+    result_changed: boolean
+    reversed: boolean
+}
+export const UpdatePairingResultDecoder: Decoder<UpdatePairingResult> = object(
+    ['updated', number()],
+    ['white', string()],
+    ['black', string()],
+    ['game_link_changed', boolean()],
+    ['result_changed', boolean()],
+    ['reversed', boolean()],
+    (updated, white, black, game_link_changed, result_changed, reversed) => ({
+        updated,
+        white,
+        black,
+        game_link_changed,
+        result_changed,
+        reversed,
+    })
+)
+
+//------------------------------------------------------------------------------
+// Rosters
+//------------------------------------------------------------------------------
+export interface Player {
+    username: string
+    rating: number
+}
+export const PlayerDecoder: Decoder<Player> = object(
+    ['username', string()],
+    ['rating', number()],
+    (username, rating) => ({ username, rating })
+)
+export interface TeamPlayer {
+    username: string
+    is_captain: boolean
+    board_number: number
+}
+export const TeamPlayerDecoder: Decoder<TeamPlayer> = object(
+    ['username', string()],
+    ['is_captain', boolean()],
+    ['board_number', number()],
+    (username, is_captain, board_number) => ({
+        username,
+        is_captain,
+        board_number,
+    })
+)
+export interface Team {
+    name: string
+    number: number
+    slack_channel: string
+    players: TeamPlayer[]
+}
+export const TeamDecoder: Decoder<Team> = object(
+    ['name', string()],
+    ['number', number()],
+    ['slack_channel', string()],
+    ['players', array(TeamPlayerDecoder)],
+    (name, number, slack_channel, players) => ({
+        name,
+        number,
+        slack_channel,
+        players,
+    })
+)
+export interface BoardAlternates {
+    board_number: number
+    usernames: string[]
+}
+export const BoardAlternatesDecoder: Decoder<BoardAlternates> = object(
+    ['board_number', number()],
+    ['usernames', array(string())],
+    (board_number, usernames) => ({ board_number, usernames })
+)
+export interface Roster {
+    league: string
+    season: string
+    players: Player[]
+    teams: Team[]
+    alternates: BoardAlternates[]
+}
+export const RosterDecoder: Decoder<Roster> = object(
+    ['league', string()],
+    ['season', string()],
+    ['players', array(PlayerDecoder)],
+    ['teams', array(TeamDecoder)],
+    ['alternates', array(BoardAlternatesDecoder)],
+    (league, season, players, teams, alternates) => ({
+        league,
+        season,
+        players,
+        teams,
+        alternates,
+    })
+)
+
+//------------------------------------------------------------------------------
+// UserMap
+//------------------------------------------------------------------------------
+export interface UserMap {
+    users: Record<string, string>
+}
+export const UserMapDecoder: Decoder<UserMap> = object(
+    ['users', dict(string())],
+    (users) => ({ users })
+)
+
+//------------------------------------------------------------------------------
+// Link Slack
+//------------------------------------------------------------------------------
+export interface SlackLink {
+    url: string
+    already_linked: boolean
+    expires: string
+}
+export const SlackLinkDecoder: Decoder<SlackLink> = object(
+    ['url', string()],
+    ['already_linked', boolean()],
+    ['expires', string()],
+    (url, already_linked, expires) => ({ url, already_linked, expires })
+)
+
+//------------------------------------------------------------------------------
+// UpdateSucceeded
+//------------------------------------------------------------------------------
+export interface UpdateSucceeded {
+    updated: number
+}
+export const UpdateSucceededDecoder: Decoder<UpdateSucceeded> = object(
+    ['updated', number()],
+    (updated) => ({ updated })
+)
+
+//------------------------------------------------------------------------------
+// League Moderators
+//------------------------------------------------------------------------------
+export interface LeagueModerators {
+    moderators: string[]
+}
+export const LeagueModeratorsDecoder: Decoder<LeagueModerators> = object(
+    ['moderators', array(string())],
+    (moderators) => ({ moderators })
+)
+
+//------------------------------------------------------------------------------
 export function heltourRequest(
     heltourConfig: Config,
     endpoint: string
@@ -142,6 +302,18 @@ export function heltourRequest(
             Authorization: 'Token ' + heltourConfig.token,
         },
     }
+}
+
+async function heltourApiCall<T extends object>(
+    request: http.RequestOptions,
+    decoder: Decoder<T>
+) {
+    let response = await http.fetchURL(request)
+    let result = union(ErrorDecoder, decoder).decodeJSON(response.body)
+    if (!isValid<T>(result)) {
+        throw new HeltourError(result.error)
+    }
+    return result
 }
 
 /*
@@ -163,13 +335,7 @@ export async function findPairing(
     if (!_.isNil(leagueTag)) {
         request.parameters.league = leagueTag
     }
-
-    let response = await http.fetchURL(request)
-    let result = union(ErrorDecoder, PairingsDecoder).decodeJSON(response.body)
-    if (!isValid(result)) {
-        throw new HeltourError(result.error)
-    }
-    return result
+    return heltourApiCall(request, PairingsDecoder)
 }
 
 /*
@@ -178,39 +344,17 @@ export async function findPairing(
  * refreshCurrentSchedules which gets all of the pairings for the league
  *
  * I wasn't sure how to merge the two concepts into a coherent API
+ * TODO: With typescript this should be easier.
  */
 export async function getAllPairings(
     heltourConfig: Config,
     leagueTag: string
 ): Promise<Pairing[]> {
     var request = heltourRequest(heltourConfig, 'find_pairing')
-    request.parameters = {}
-    return new Promise((resolve, reject) => {
-        if (!_.isNil(leagueTag)) {
-            request.parameters = request.parameters || {}
-            request.parameters.league = leagueTag
-        } else {
-            return reject(
-                'leagueTag is a required parameter for heltour.getAllPairings'
-            )
-        }
-
-        http.fetchURLIntoJSON(request)
-            .then((response) => {
-                var pairings = response['json']
-                if (!_.isNil(pairings.error)) {
-                    reject(pairings.error)
-                } else {
-                    if (!_.isNil(pairings.pairings)) {
-                        resolve(pairings.pairings)
-                    } else {
-                        winston.error(`Error getting pairings for ${leagueTag}`)
-                        reject('No Pairings')
-                    }
-                }
-            })
-            .catch(reject)
-    })
+    request.parameters = {
+        league: leagueTag,
+    }
+    return heltourApiCall(request, PairingsDecoder)
 }
 
 // Update the schedule
@@ -227,7 +371,7 @@ export async function updateSchedule(
         datetime: schedule.date.format(),
     }
 
-    return http.fetchURLIntoJSON(request)
+    return heltourApiCall(request, UpdatePairingResultDecoder)
 }
 
 // Update the pairing with a result or link
@@ -238,13 +382,9 @@ export async function updatePairing(heltourConfig: Config, result: Result) {
         result.black.name
     )
     if (pairings.length < 1) {
-        return {
-            error: 'no_pairing',
-        }
+        throw new HeltourError('no_pairing')
     } else if (pairings.length > 1) {
-        return {
-            error: 'ambiguous',
-        }
+        throw new HeltourError('ambiguous')
     }
     var request = heltourRequest(heltourConfig, 'update_pairing')
     request.method = 'POST'
@@ -260,66 +400,34 @@ export async function updatePairing(heltourConfig: Config, result: Result) {
         request.bodyParameters['game_link'] = result.gamelink
     }
 
-    return http.fetchURLIntoJSON(request).then(function (response) {
-        var newResult = response['json']
-        newResult['gamelink'] = result['gamelink']
-        newResult['gamelinkChanged'] = newResult['game_link_changed']
-        newResult['resultChanged'] = newResult['result_changed']
-        newResult['result'] = result['result']
-        if (newResult['reversed']) {
-            newResult['white'] = result['black']
-            newResult['black'] = result['white']
-        } else {
-            newResult['white'] = result['white']
-            newResult['black'] = result['black']
-        }
-        return newResult
-    })
+    let response = await http.fetchURL(request)
+    let heltourResult = union(
+        ErrorDecoder,
+        UpdatePairingResultDecoder
+    ).decodeJSON(response.body)
+    if (!isValid(heltourResult)) {
+        throw new HeltourError(heltourResult.error)
+    }
+    if (heltourResult.reversed) {
+        let white = heltourResult.white
+        heltourResult.white = heltourResult.black
+        heltourResult.black = white
+    }
+    return heltourResult
 }
 
 export async function getRoster(heltourConfig: Config, leagueTag: string) {
-    return new Promise((resolve, reject) => {
-        var request = heltourRequest(heltourConfig, 'get_roster')
-        request.parameters = {}
-        if (!_.isNil(leagueTag)) {
-            request.parameters.league = leagueTag
-        } else {
-            return reject(
-                'leagueTag is a required parameter for heltour.getRoster'
-            )
-        }
-        http.fetchURLIntoJSON(request)
-            .then(function (result) {
-                var roster = result['json']
-                if (!_.isNil(roster.error)) {
-                    winston.error(`Error getting rosters: ${roster.error}`)
-                    reject(roster.error)
-                } else {
-                    resolve(roster)
-                }
-            })
-            .catch(function (error) {
-                winston.error(`Unable to getRoster: ${error}`)
-                reject(error)
-            })
-    })
+    var request = heltourRequest(heltourConfig, 'get_roster')
+    request.parameters = {
+        league: leagueTag,
+    }
+    return heltourApiCall(request, RosterDecoder)
 }
 
-export async function getUserMap(
-    heltourConfig: Config
-): Promise<Record<string, string>> {
-    return new Promise((resolve, reject) => {
-        var request = heltourRequest(heltourConfig, 'get_slack_user_map')
-        request.parameters = {}
-        http.fetchURLIntoJSON(request)
-            .then(function (result) {
-                resolve(result['json'].users)
-            })
-            .catch(function (error) {
-                winston.error(`Unable to getSlackUserMap: ${error}`)
-                reject(error)
-            })
-    })
+export async function getUserMap(heltourConfig: Config): Promise<UserMap> {
+    var request = heltourRequest(heltourConfig, 'get_slack_user_map')
+    request.parameters = {}
+    return heltourApiCall(request, UserMapDecoder)
 }
 
 export async function linkSlack(
@@ -327,18 +435,9 @@ export async function linkSlack(
     user_id: string,
     display_name: string
 ) {
-    return new Promise((resolve, reject) => {
-        var request = heltourRequest(heltourConfig, 'link_slack')
-        request.parameters = { user_id: user_id, display_name: display_name }
-        http.fetchURLIntoJSON(request)
-            .then(function (result) {
-                resolve(result['json'])
-            })
-            .catch(function (error) {
-                winston.error(`Unable to linkSlack: ${error}`)
-                reject(error)
-            })
-    })
+    var request = heltourRequest(heltourConfig, 'link_slack')
+    request.parameters = { user_id: user_id, display_name: display_name }
+    return heltourApiCall(request, SlackLinkDecoder)
 }
 
 export async function assignAlternate(
@@ -357,7 +456,7 @@ export async function assignAlternate(
         board: board,
         player: player,
     }
-    return fetchJSONandHandleErrors(request)
+    return heltourApiCall(request, UpdateSucceededDecoder)
 }
 
 export async function getLeagueModerators(heltourConfig: Config) {
@@ -365,7 +464,7 @@ export async function getLeagueModerators(heltourConfig: Config) {
     request.parameters = {
         league: heltourConfig.leagueTag,
     }
-    return fetchJSONandHandleErrors(request).then((json) => json['moderators'])
+    return heltourApiCall(request, LeagueModeratorsDecoder)
 }
 
 export async function setAvailability(
@@ -382,7 +481,7 @@ export async function setAvailability(
         round: roundNumber,
         available: available,
     }
-    return fetchJSONandHandleErrors(request)
+    return heltourApiCall(request, UpdateSucceededDecoder)
 }
 
 export async function sendGameWarning(
@@ -399,7 +498,7 @@ export async function sendGameWarning(
         black: black,
         reason: reason,
     }
-    return http.fetchURLIntoJSON(request)
+    return heltourApiCall(request, UpdateSucceededDecoder)
 }
 
 export async function playerContact(
@@ -413,16 +512,7 @@ export async function playerContact(
         sender: sender,
         recip: recip,
     }
-    return http.fetchURLIntoJSON(request)
-}
-
-export async function fetchJSONandHandleErrors(request: http.RequestOptions) {
-    return http.fetchURLIntoJSON(request).then(function (response) {
-        if (response['json']['error']) {
-            throw new Error(response['json']['error'])
-        }
-        return response['json']
-    })
+    return heltourApiCall(request, UpdateSucceededDecoder)
 }
 
 export class HeltourError {
