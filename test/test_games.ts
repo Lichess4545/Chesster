@@ -156,11 +156,11 @@ describe('games', function () {
             ): league.Pairing => ({
                 white,
                 black,
-                results: league.ResultsEnum.UNKNOWN,
+                result: league.ResultsEnum.UNKNOWN,
             })
             let mockValidationResult: games.GameValidationResult = {
                 valid: false,
-                pairing: null,
+                pairing: undefined,
                 pairingWasNotFound: false,
                 colorsAreReversed: false,
                 gameIsUnrated: false,

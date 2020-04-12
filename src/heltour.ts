@@ -2,9 +2,21 @@
 // Heltour related facilities
 //------------------------------------------------------------------------------
 import _ from 'lodash'
+import moment from 'moment'
 import url from 'url'
 import * as http from './http'
 import winston from 'winston'
+import {
+    Decoder,
+    at,
+    array,
+    object,
+    number,
+    string,
+    andThen,
+    oneOf,
+    union,
+} from 'type-safe-json-decoder'
 
 // TODO: Fix all of these
 type Schedule = any
@@ -16,12 +28,106 @@ export interface Config {
     leagueTag: string
 }
 
-export interface Pairing {
+export interface Error {
+    error: string
+}
+export const ErrorDecoder: Decoder<Error> = object(
+    ['error', string()],
+    (error) => ({ error })
+)
+export function isValid<T extends object>(obj: T | Error): obj is T {
+    return !obj.hasOwnProperty('error')
+}
+
+export interface IndividualPairing {
+    league: string
+    season: string
+    round: number
     white: string
+    white_rating: number
     black: string
-    datetime: string
+    black_rating: number
     game_link?: string
-    results: string
+    result: string
+    datetime: moment.Moment
+}
+
+export const IndividualPairingDecoder: Decoder<IndividualPairing> = object(
+    ['league', string()],
+    ['season', string()],
+    ['round', number()],
+    ['white', string()],
+    ['white_rating', number()],
+    ['black', string()],
+    ['black_rating', number()],
+    ['game_link', string()],
+    ['result', string()],
+    ['datetime', string()],
+    (
+        league,
+        season,
+        round,
+        white,
+        white_rating,
+        black,
+        black_rating,
+        game_link,
+        result,
+        datetime
+    ) => ({
+        league,
+        season,
+        round,
+        white,
+        white_rating,
+        black,
+        black_rating,
+        game_link,
+        result,
+        datetime: moment(datetime),
+    })
+)
+
+export interface TeamPairing extends IndividualPairing {
+    white_team: string
+    white_team_number: number
+    black_team: string
+    black_team_number: number
+}
+export const TeamPairingDecoder: Decoder<TeamPairing> = andThen(
+    IndividualPairingDecoder,
+    (pairing: IndividualPairing) => {
+        return object(
+            ['white_team', string()],
+            ['white_team_number', number()],
+            ['black_team', string()],
+            ['black_team_number', number()],
+            (white_team, white_team_number, black_team, black_team_number) => ({
+                ...pairing,
+                white_team,
+                white_team_number,
+                black_team,
+                black_team_number,
+            })
+        )
+    }
+)
+export const PairingDecoder: Decoder<Pairing> = oneOf(
+    TeamPairingDecoder,
+    IndividualPairingDecoder
+)
+
+export const PairingsDecoder: Decoder<Pairing[]> = at(
+    ['pairings'],
+    array(PairingDecoder)
+)
+
+export type Pairing = IndividualPairing | TeamPairing
+export function isIndividualPairing(obj: Pairing): obj is IndividualPairing {
+    return !obj.hasOwnProperty('white_team')
+}
+export function isTeamPairing(obj: Pairing): obj is TeamPairing {
+    return obj.hasOwnProperty('white_team')
 }
 
 //------------------------------------------------------------------------------
@@ -58,7 +164,12 @@ export async function findPairing(
         request.parameters.league = leagueTag
     }
 
-    return http.fetchURLIntoJSON(request)
+    let response = await http.fetchURL(request)
+    let result = union(ErrorDecoder, PairingsDecoder).decodeJSON(response.body)
+    if (!isValid(result)) {
+        throw new HeltourError(result.error)
+    }
+    return result
 }
 
 /*
@@ -85,7 +196,7 @@ export async function getAllPairings(
         }
 
         http.fetchURLIntoJSON(request)
-            .then(response => {
+            .then((response) => {
                 var pairings = response['json']
                 if (!_.isNil(pairings.error)) {
                     reject(pairings.error)
@@ -121,51 +232,48 @@ export async function updateSchedule(
 
 // Update the pairing with a result or link
 export async function updatePairing(heltourConfig: Config, result: Result) {
-    return findPairing(
+    let pairings = await findPairing(
         heltourConfig,
         result.white.name,
         result.black.name
-    ).then(function(response) {
-        var pairingResult = response['json']
-        var pairings = pairingResult['pairings']
-        if (pairings.length < 1) {
-            return {
-                error: 'no_pairing',
-            }
-        } else if (pairings.length > 1) {
-            return {
-                error: 'ambiguous',
-            }
+    )
+    if (pairings.length < 1) {
+        return {
+            error: 'no_pairing',
         }
-        var request = heltourRequest(heltourConfig, 'update_pairing')
-        request.method = 'POST'
-        request.bodyParameters = {
-            league: heltourConfig.leagueTag,
-            white: result.white.name,
-            black: result.black.name,
+    } else if (pairings.length > 1) {
+        return {
+            error: 'ambiguous',
         }
-        if (result.result) {
-            request.bodyParameters['result'] = result.result
-        }
-        if (result.gamelink) {
-            request.bodyParameters['game_link'] = result.gamelink
-        }
+    }
+    var request = heltourRequest(heltourConfig, 'update_pairing')
+    request.method = 'POST'
+    request.bodyParameters = {
+        league: heltourConfig.leagueTag,
+        white: result.white.name,
+        black: result.black.name,
+    }
+    if (result.result) {
+        request.bodyParameters['result'] = result.result
+    }
+    if (result.gamelink) {
+        request.bodyParameters['game_link'] = result.gamelink
+    }
 
-        return http.fetchURLIntoJSON(request).then(function(response) {
-            var newResult = response['json']
-            newResult['gamelink'] = result['gamelink']
-            newResult['gamelinkChanged'] = newResult['game_link_changed']
-            newResult['resultChanged'] = newResult['result_changed']
-            newResult['result'] = result['result']
-            if (newResult['reversed']) {
-                newResult['white'] = result['black']
-                newResult['black'] = result['white']
-            } else {
-                newResult['white'] = result['white']
-                newResult['black'] = result['black']
-            }
-            return newResult
-        })
+    return http.fetchURLIntoJSON(request).then(function (response) {
+        var newResult = response['json']
+        newResult['gamelink'] = result['gamelink']
+        newResult['gamelinkChanged'] = newResult['game_link_changed']
+        newResult['resultChanged'] = newResult['result_changed']
+        newResult['result'] = result['result']
+        if (newResult['reversed']) {
+            newResult['white'] = result['black']
+            newResult['black'] = result['white']
+        } else {
+            newResult['white'] = result['white']
+            newResult['black'] = result['black']
+        }
+        return newResult
     })
 }
 
@@ -181,7 +289,7 @@ export async function getRoster(heltourConfig: Config, leagueTag: string) {
             )
         }
         http.fetchURLIntoJSON(request)
-            .then(function(result) {
+            .then(function (result) {
                 var roster = result['json']
                 if (!_.isNil(roster.error)) {
                     winston.error(`Error getting rosters: ${roster.error}`)
@@ -190,7 +298,7 @@ export async function getRoster(heltourConfig: Config, leagueTag: string) {
                     resolve(roster)
                 }
             })
-            .catch(function(error) {
+            .catch(function (error) {
                 winston.error(`Unable to getRoster: ${error}`)
                 reject(error)
             })
@@ -204,10 +312,10 @@ export async function getUserMap(
         var request = heltourRequest(heltourConfig, 'get_slack_user_map')
         request.parameters = {}
         http.fetchURLIntoJSON(request)
-            .then(function(result) {
+            .then(function (result) {
                 resolve(result['json'].users)
             })
-            .catch(function(error) {
+            .catch(function (error) {
                 winston.error(`Unable to getSlackUserMap: ${error}`)
                 reject(error)
             })
@@ -223,10 +331,10 @@ export async function linkSlack(
         var request = heltourRequest(heltourConfig, 'link_slack')
         request.parameters = { user_id: user_id, display_name: display_name }
         http.fetchURLIntoJSON(request)
-            .then(function(result) {
+            .then(function (result) {
                 resolve(result['json'])
             })
-            .catch(function(error) {
+            .catch(function (error) {
                 winston.error(`Unable to linkSlack: ${error}`)
                 reject(error)
             })
@@ -257,7 +365,7 @@ export async function getLeagueModerators(heltourConfig: Config) {
     request.parameters = {
         league: heltourConfig.leagueTag,
     }
-    return fetchJSONandHandleErrors(request).then(json => json['moderators'])
+    return fetchJSONandHandleErrors(request).then((json) => json['moderators'])
 }
 
 export async function setAvailability(
@@ -309,7 +417,7 @@ export async function playerContact(
 }
 
 export async function fetchJSONandHandleErrors(request: http.RequestOptions) {
-    return http.fetchURLIntoJSON(request).then(function(response) {
+    return http.fetchURLIntoJSON(request).then(function (response) {
         if (response['json']['error']) {
             throw new Error(response['json']['error'])
         }

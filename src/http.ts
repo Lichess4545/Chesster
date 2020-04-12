@@ -58,16 +58,16 @@ export function fetchURL(
             )
         }
         var req = http
-            .request(options, res => {
+            .request(options, (res) => {
                 var body = ''
-                res.on('data', function(chunk) {
+                res.on('data', function (chunk) {
                     body += chunk
                 })
                 res.on('end', () => {
                     resolve({ response: res, body: body })
                 })
             })
-            .on('error', e => {
+            .on('error', (e) => {
                 winston.error(JSON.stringify(e))
                 reject('failed to get a response from url: ' + options.href)
             })
@@ -83,7 +83,7 @@ export function fetchURLIntoJSON(
 ): Promise<JSONResponse> {
     return new Promise((resolve, reject) => {
         fetchURL(options).then(
-            function(result) {
+            function (result) {
                 try {
                     var json = JSON.parse(result['body'])
                     if (json) {
@@ -122,10 +122,9 @@ export function fetchURLIntoJSON(
                     reject(e)
                 }
             },
-            function(error) {
+            function (error) {
                 reject(error)
             }
         )
     })
 }
-

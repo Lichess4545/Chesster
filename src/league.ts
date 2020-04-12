@@ -45,7 +45,7 @@ export interface Pairing {
     black_team?: string
     scheduledDate?: moment.Moment
     url?: string
-    results: ResultsEnum
+    result: ResultsEnum
 }
 export interface PairingDetails extends Pairing {
     color: 'white' | 'black'
@@ -119,20 +119,20 @@ export function makeSchedulingOptions({
     }
 }
 
-function resultFromString(results: string | undefined): ResultsEnum {
-    if (results === undefined) return ResultsEnum.UNKNOWN
-    results = results.toLowerCase()
-    if (results === '1-0') {
+function resultFromString(result: string | undefined): ResultsEnum {
+    if (result === undefined) return ResultsEnum.UNKNOWN
+    result = result.toLowerCase()
+    if (result === '1-0') {
         return ResultsEnum.WHITE_WIN
-    } else if (results === '0-1') {
+    } else if (result === '0-1') {
         return ResultsEnum.BLACK_WIN
-    } else if (results === '1/2-1/2') {
+    } else if (result === '1/2-1/2') {
         return ResultsEnum.DRAW
-    } else if (results === '1/2z-1/2z') {
+    } else if (result === '1/2z-1/2z') {
         return ResultsEnum.SCHEDULING_DRAW
-    } else if (results === '0F-1X') {
+    } else if (result === '0F-1X') {
         return ResultsEnum.BLACK_FORFEIT_WIN
-    } else if (results === '1X-0F') {
+    } else if (result === '1X-0F') {
         return ResultsEnum.WHITE_FORFEIT_WIN
     } else {
         return ResultsEnum.UNKNOWN
@@ -318,7 +318,7 @@ export class League {
                         black: heltourPairing.black,
                         scheduledDate: date.isValid() ? date : undefined,
                         url: heltourPairing.game_link,
-                        results: resultFromString(heltourPairing.results),
+                        result: resultFromString(heltourPairing.result),
                     })
                 })
                 this._pairings = newPairings
@@ -759,7 +759,7 @@ export let getLeague = (function () {
                     this_league_config.welcome,
                     this_league_config.results,
                     this_league_config.gamelinks,
-                    this_league_config.scheduling.extrema
+                    this_league_config.scheduling?.extrema
                 )
                 _league_cache[leagueName] = league
             } else {

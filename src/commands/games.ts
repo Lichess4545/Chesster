@@ -10,10 +10,8 @@ import * as heltour from '../heltour'
 import * as http from '../http'
 import { SlackBot, CommandMessage, LeagueMember } from '../slack'
 import { isDefined } from '../utils'
-import { League, SchedulingOptions } from '../league'
+import { League, SchedulingOptions, Pairing as LeaguePairing } from '../league'
 
-type FindPairingResult = any
-type Pairing = any
 export type GameDetails = any
 type HeltourResultDetails = any
 type HeltourUserResult = any
@@ -124,15 +122,13 @@ function handleHeltourErrors(
     }
 }
 
-export function ambientResults(bot: SlackBot, message: CommandMessage) {
-    if (!message.league) {
+export async function ambientResults(bot: SlackBot, message: CommandMessage) {
+    if (!isDefined(message.league)) {
         return
     }
+    let league: League = message.league
     var resultsOptions = message.league.results
-    var channel = bot.channels.byId[message.channel.id]
-    if (!channel) {
-        return
-    }
+    var channel = message.channel
     if (!resultsOptions || !_.isEqual(channel.name, resultsOptions.channel)) {
         return
     }
@@ -150,120 +146,96 @@ export function ambientResults(bot: SlackBot, message: CommandMessage) {
         return
     }
 
-    try {
-        let speaker = message.member
-        var result = parseResult(message.text)
-        if (!isDefined(result)) {
-            return
-        }
-        if (!isDefined(message.league)) {
-            return
-        }
-        let leagueName = message.league
-        let white = bot.users.getByNameOrID(result.white.replace(/[<\@>]/g, ''))
-        let black = bot.users.getByNameOrID(result.black.replace(/[<\@>]/g, ''))
-        if (!isDefined(white) || !isDefined(black)) {
-            return
-        }
+    let speaker = message.member
+    var result = parseResult(message.text)
+    if (!isDefined(result)) {
+        return
+    }
+    let white = bot.users.getByNameOrID(result.white.replace(/[<\@>]/g, ''))
+    let black = bot.users.getByNameOrID(result.black.replace(/[<\@>]/g, ''))
+    if (!isDefined(white) || !isDefined(black)) {
+        return
+    }
 
-        var resultPlayer: ResultPlayer = {
-            ...result,
-            white: white,
-            black: black,
-        }
+    var resultPlayer: ResultPlayer = {
+        ...result,
+        white: white,
+        black: black,
+    }
 
-        if (!result.white || !result.black) {
-            replyPlayerNotFound(bot, message)
-            return
-        }
+    if (!result.white || !result.black) {
+        replyPlayerNotFound(bot, message)
+        return
+    }
 
-        let isModerator = message.league.isModerator(speaker.name)
-        if (
-            !_.isEqual(resultPlayer.white.id, message.user) &&
-            !_.isEqual(resultPlayer.black.id, message.user) &&
-            !isModerator
-        ) {
-            replyPermissionFailure(bot, message)
-            return
-        }
+    let isModerator = message.league.isModerator(speaker.name)
+    if (
+        !_.isEqual(resultPlayer.white.id, message.user) &&
+        !_.isEqual(resultPlayer.black.id, message.user) &&
+        !isModerator
+    ) {
+        replyPermissionFailure(bot, message)
+        return
+    }
 
-        return heltour
-            .findPairing(
-                heltourOptions,
-                resultPlayer.white.name,
-                resultPlayer.black.name,
-                heltourOptions.leagueTag
-            )
-            .then((findPairingResult: FindPairingResult) => {
-                if (findPairingResult['error']) {
-                    handleHeltourErrors(
-                        bot,
-                        message,
-                        findPairingResult['error']
-                    )
-                    return
-                }
-
-                var pairing: Pairing = _.head(
-                    findPairingResult['json'].pairings
-                )
-                if (
-                    !_.isNil(pairing) &&
-                    !_.isNil(pairing.game_link) &&
-                    !_.isEqual(pairing.game_link, '')
-                ) {
-                    //process game details
-                    processGamelink(bot, message, pairing.game_link, result)
-                } else if (!_.isNil(pairing)) {
-                    if (isModerator) {
-                        //current speaker is a moderator for the league
-                        //update the pairing with the result bc there was no link found
-                        heltour
-                            .updatePairing(heltourOptions, result)
-                            .then(function (updatePairingResult) {
-                                if (updatePairingResult['error']) {
-                                    handleHeltourErrors(
-                                        bot,
-                                        message,
-                                        updatePairingResult['error']
-                                    )
-                                    return
-                                }
-                                resultReplyUpdated(
-                                    bot,
-                                    message,
-                                    updatePairingResult
-                                )
-
-                                var white = resultPlayer.white
-                                var black = resultPlayer.black
-                                if (
-                                    updatePairingResult['resultChanged'] &&
-                                    !_.isEmpty(updatePairingResult.result)
-                                ) {
-                                    subscription.emitter.emit(
-                                        'a-game-is-over',
-                                        message.league,
-                                        [white.name, black.name],
-                                        {
-                                            result: updatePairingResult,
-                                            white: white,
-                                            black: black,
-                                            leagueName: leagueName,
-                                        }
-                                    )
-                                }
-                            })
-                    } else {
-                        resultReplyMissingGamelink(bot, message)
+    let pairingsOrError = await heltour.findPairing(
+        heltourOptions,
+        resultPlayer.white.name,
+        resultPlayer.black.name,
+        heltourOptions.leagueTag
+    )
+    if (!heltour.isValid(pairingsOrError)) {
+        handleHeltourErrors(bot, message, pairingsOrError['error'])
+        return
+    }
+    let pairings: heltour.Pairing[] = pairingsOrError
+    if (pairings.length < 1) {
+        resultReplyMissingPairing(bot, message)
+        return
+    }
+    var pairing: heltour.Pairing = pairings[0]
+    if (!_.isNil(pairing.game_link) && !_.isEqual(pairing.game_link, '')) {
+        //process game details
+        processGamelink(bot, message, pairing.game_link, result)
+    } else {
+        if (isModerator) {
+            //current speaker is a moderator for the league
+            //update the pairing with the result bc there was no link found
+            heltour
+                .updatePairing(heltourOptions, result)
+                .then(function (updatePairingResult) {
+                    if (updatePairingResult['error']) {
+                        handleHeltourErrors(
+                            bot,
+                            message,
+                            updatePairingResult['error']
+                        )
+                        return
                     }
-                } else {
-                    resultReplyMissingPairing(bot, message)
-                }
-            })
-    } catch (e) {
-        //at the moment, we do not throw from inside the api - rethrow
-        throw e
+                    resultReplyUpdated(bot, message, updatePairingResult)
+
+                    var white = resultPlayer.white
+                    var black = resultPlayer.black
+                    if (
+                        updatePairingResult['resultChanged'] &&
+                        !_.isEmpty(updatePairingResult.result)
+                    ) {
+                        subscription.emitter.emit(
+                            'a-game-is-over',
+                            message.league,
+                            [white.name, black.name],
+                            {
+                                result: updatePairingResult,
+                                white: white,
+                                black: black,
+                                leagueName: league.name,
+                            }
+                        )
+                    }
+                })
+        } else {
+            resultReplyMissingGamelink(bot, message)
+        }
     }
 }
 
@@ -359,7 +331,7 @@ export function parseGamelink(messageText: string): GameLinkResult {
 
 export interface GameValidationResult {
     valid: boolean
-    pairing: Pairing | undefined
+    pairing: LeaguePairing | undefined
     pairingWasNotFound: boolean
     colorsAreReversed: boolean
     gameIsUnrated: boolean
@@ -374,7 +346,7 @@ export interface GameValidationResult {
 export function validateGameDetails(league: League, details: GameDetails) {
     var result: GameValidationResult = {
         valid: true,
-        pairing: null,
+        pairing: undefined,
         pairingWasNotFound: false,
         colorsAreReversed: false,
         gameIsUnrated: false,
@@ -401,12 +373,14 @@ export function validateGameDetails(league: League, details: GameDetails) {
     var black = details.players.black.userId
 
     var potentialPairings = league.findPairing(white, black)
-    var pairing = (result.pairing = _.head(potentialPairings))
-    if (potentialPairings.length === 0) {
+    if (potentialPairings.length < 1) {
         result.valid = false
         result.pairingWasNotFound = true
         result.reason = 'the pairing was not found.'
-    } else if (
+        return result
+    }
+    let pairing = (result.pairing = potentialPairings[0])
+    if (
         !details.clock || // no clock - unlimited or coorespondence
         (details.clock && //clock
             (!_.isEqual(details.clock.initial, options.clock.initial * 60) || // initial time
