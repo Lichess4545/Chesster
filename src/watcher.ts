@@ -9,15 +9,17 @@ import fp from 'lodash/fp'
 import { ClientRequest } from 'http'
 import _https from 'https'
 import url from 'url'
-import winston from 'winston'
 import moment from 'moment-timezone'
 import Q from 'q'
-import { LogWithPrefix } from './logging'
-import { SlackBot } from './slack'
 
 // local imports
 import * as games from './commands/games'
 import * as heltour from './heltour'
+import * as lichess from './lichess'
+import { League, Pairing } from './league'
+import { LogWithPrefix } from './logging'
+import { SlackBot } from './slack'
+import { isDefined } from './utils'
 
 const WATCHER_MAX_USERNAMES = 300
 
@@ -35,13 +37,6 @@ const STARTED = 20
 // const NO_START = 37;
 // const UNKNOWN_FINISH = 38;
 // const VARIANT_END = 60;
-
-// TODO: make all of these typed.
-type League = any
-type GameDetails = any
-type RandomError = any
-type Player = any
-type Logger = (msg: string) => void
 
 class WatcherRequest {
     req: undefined | ClientRequest = undefined
@@ -69,8 +64,9 @@ class WatcherRequest {
             this.started.unix() - lastStarted.unix() < BACKOFF_TIMEOUT
         ) {
             this.log.warn(
-                `Backing off the watcher due to two starts in 10s: ${this.started.unix() -
-                    lastStarted.unix()}s`
+                `Backing off the watcher due to two starts in 10s: ${
+                    this.started.unix() - lastStarted.unix()
+                }s`
             )
             this.usernames = []
             return
@@ -89,22 +85,24 @@ class WatcherRequest {
             ...options,
         })
         this.req
-            .on('response', res => {
-                res.on('data', chunk => {
+            .on('response', (res) => {
+                res.on('data', (chunk) => {
                     try {
-                        const details = JSON.parse(chunk.toString())
+                        let details = lichess.GameDetailsDecoder.decodeJSON(
+                            chunk.toString()
+                        )
                         this.log.info(
                             `Received game details: ${JSON.stringify(details)}`
                         )
                         Q.all(
-                            this.leagues.map(l =>
+                            this.leagues.map((l) =>
                                 l.refreshCurrentRoundSchedules()
                             )
                         ).then(
                             () => {
                                 this.processGameDetails(details)
                             },
-                            error => {
+                            (error) => {
                                 this.log.error(
                                     `Error refreshing pairings: ${JSON.stringify(
                                         error
@@ -128,7 +126,7 @@ class WatcherRequest {
                 })
                 hasResponse = true
             })
-            .on('error', (e: RandomError) => {
+            .on('error', (e) => {
                 this.log.error(JSON.stringify(e))
                 // If we have a response, the above res.on('end') gets called even in this case.
                 // So let the above restart the watcher
@@ -155,12 +153,16 @@ class WatcherRequest {
     }
 
     //--------------------------------------------------------------------------
-    processGameDetails(details: GameDetails) {
-        /*
-        fp.each(league => {
+    async processGameDetails(details: lichess.GameDetails) {
+        fp.each(async (league) => {
             // 1. perfect match any time, try to update.
             // 2. pairing + time control match any time, warn for other mismatches
             // 3. pairing match during a 4 hour window (+-2 hours), warn for other mismatches
+            if (!isDefined(league.gamelinks) || !isDefined(league.results)) {
+                return
+            }
+            let gamelinks: Record<string, any> = league.gamelinks
+            let results: Record<string, string> = league.results
 
             const result = games.validateGameDetails(league, details)
             this.log.info(`Validation result: ${JSON.stringify(result)}`)
@@ -173,7 +175,9 @@ class WatcherRequest {
             const white = result.pairing.white.toLowerCase()
             const black = result.pairing.black.toLowerCase()
 
-            let scheduledDate = moment.utc(result.pairing.datetime)
+            let scheduledDate: moment.Moment | undefined = moment.utc(
+                result.pairing.scheduledDate
+            )
             const now = moment.utc()
             if (!scheduledDate.isValid()) {
                 scheduledDate = undefined
@@ -190,12 +194,12 @@ class WatcherRequest {
                                 `<@${white}>,  <@${black}>:` +
                                 ' There is already a result set for this pairing. If you want ' +
                                 'the new game to count for the league, please contact a mod.',
-                            channel: league.options.gamelinks.channel_id,
+                            channel: gamelinks?.channel_id,
                         })
                     }
                 } else if (
-                    result.pairing.game_link &&
-                    !result.pairing.game_link.endsWith(details.id)
+                    result.pairing.url &&
+                    !result.pairing.url.endsWith(details.id)
                 ) {
                     this.log.info(
                         `Received VALID game but game link does not match`
@@ -206,60 +210,54 @@ class WatcherRequest {
                                 `<@${white}>,  <@${black}>:` +
                                 ' There is already a gamelink set for this pairing. If you want ' +
                                 'the new game to count for the league, please contact a mod.',
-                            channel: league.options.gamelinks.channel_id,
+                            channel: gamelinks.channel_id,
                         })
                     }
                 } else {
                     this.log.info('Received VALID AND NEEDED game!')
                     // Fetch the game details from the lichess games API because updateGamelink is more picky about the details format
                     // This could be obviated by an enhancement to the game-stream API
-                    games
-                        .fetchGameDetails(details.id)
-                        .then((response: any) => {
-                            const detailsFromApi = response['json']
-                            games
-                                .updateGamelink(league, detailsFromApi)
-                                .then(updatePairingResult => {
-                                    if (updatePairingResult.gamelinkChanged) {
-                                        this.bot.say({
-                                            text:
-                                                '<@' +
-                                                white +
-                                                '> vs <@' +
-                                                black +
-                                                '>: <' +
-                                                updatePairingResult.gamelink +
-                                                '>',
-                                            channel:
-                                                league.options.gamelinks
-                                                    .channel_id,
-                                            attachments: [], // Needed to activate link parsing in the message
-                                        })
-                                    }
-                                    if (updatePairingResult.resultChanged) {
-                                        this.bot.say({
-                                            text: `<@${white}> ${updatePairingResult.result} <@${black}>`,
-                                            channel:
-                                                league.options.results
-                                                    .channel_id,
-                                        })
-                                    }
-                                })
-                                .catch((error: any) => {
-                                    this.log.error(
-                                        `Error updating game: ${JSON.stringify(
-                                            error
-                                        )}`
-                                    )
-                                })
-                        })
-                        .catch((error: any) => {
-                            this.log.error(
-                                `Error fetching game details: ${JSON.stringify(
-                                    error
-                                )}`
+                    try {
+                        let detailsFromApi = await lichess.fetchGameDetails(
+                            details.id
+                        )
+                        try {
+                            let updatePairingResult = await games.updateGamelink(
+                                league,
+                                detailsFromApi
                             )
-                        })
+                            if (updatePairingResult.game_link_changed) {
+                                this.bot.say({
+                                    text:
+                                        '<@' +
+                                        white +
+                                        '> vs <@' +
+                                        black +
+                                        '>: <' +
+                                        detailsFromApi.game_link +
+                                        '>',
+                                    channel: gamelinks.channel_id,
+                                    attachments: [], // Needed to activate link parsing in the message
+                                })
+                            }
+                            if (updatePairingResult.result_changed) {
+                                this.bot.say({
+                                    text: `<@${white}> ${detailsFromApi.result} <@${black}>`,
+                                    channel: results.channel_id,
+                                })
+                            }
+                        } catch (error) {
+                            this.log.error(
+                                `Error updating game: ${JSON.stringify(error)}`
+                            )
+                        }
+                    } catch (error) {
+                        this.log.error(
+                            `Error fetching game details: ${JSON.stringify(
+                                error
+                            )}`
+                        )
+                    }
                 }
             } else if (
                 details.status === STARTED ||
@@ -291,23 +289,23 @@ class WatcherRequest {
                         '*' +
                         result.reason +
                         '*',
-                    channel: league.options.gamelinks.channel_id,
+                    channel: gamelinks.channel_id,
                 })
                 this.bot.say({
                     text:
                         'If this was a mistake, please correct it and ' +
                         'try again. If this is not a league game, you ' +
                         'may ignore this message. Thank you.',
-                    channel: league.options.gamelinks.channel_id,
+                    channel: gamelinks.channel_id,
                 })
                 heltour
                     .sendGameWarning(
-                        league.options.heltour,
+                        league.heltour,
                         white,
                         black,
                         result.reason
                     )
-                    .catch(error => {
+                    .catch((error) => {
                         this.log.error(
                             `Error sending game warning: ${JSON.stringify(
                                 error
@@ -316,7 +314,6 @@ class WatcherRequest {
                     })
             }
         }, this.leagues)
-        */
     }
 }
 
@@ -325,19 +322,16 @@ export default class Watcher {
     usernames: string[] = []
     private refreshesCount = 0
 
-    private info: Logger
-    private logPreMatter: string
+    private log: LogWithPrefix = new LogWithPrefix('WatcherRequest')
 
     constructor(public bot: SlackBot, public leagues: League[]) {
         this.watcherRequests = []
-        this.logPreMatter = `[Watcher]`
-        this.info = (msg: string) => winston.info(`${this.logPreMatter} ${msg}`)
-        this.info('Starting watcher')
+        this.log.info('Starting watcher')
 
         // Whenever any of the leagues refresh, potentially restart watcher requests
-        this.leagues.map(l =>
+        this.leagues.map((l) =>
             l.onRefreshPairings(() => {
-                this.info(
+                this.log.info(
                     `${l.name} refreshed with ${l._pairings.length} pairings`
                 )
                 this.refreshesCount++
@@ -349,22 +343,22 @@ export default class Watcher {
     }
 
     clear() {
-        this.watcherRequests.map(r => r.stop())
+        this.watcherRequests.map((r) => r.stop())
         this.watcherRequests = []
     }
 
     watch() {
         const newUsernames = _.uniq(
             fp
-                .flatMap(l => l._pairings, this.leagues)
-                .flatMap((p: Player) => [p.white, p.black])
+                .flatMap((l) => l._pairings, this.leagues)
+                .flatMap((p: Pairing) => [p.white, p.black])
                 .sort()
         )
         if (!_.isEqual(newUsernames, this.usernames)) {
-            this.info(`Restarting because usernames have changed`)
+            this.log.info(`Restarting because usernames have changed`)
             this.clear()
             this.usernames = newUsernames
-            this.info(`Watching with ${this.usernames.length} names`)
+            this.log.info(`Watching with ${this.usernames.length} names`)
             let i = 0
             while (i < this.usernames.length) {
                 const watcherUsernames = _.slice(
@@ -381,7 +375,9 @@ export default class Watcher {
                 this.watcherRequests.push(req)
                 i += WATCHER_MAX_USERNAMES
             }
-            this.info(`Watching with ${this.watcherRequests.length} requests`)
+            this.log.info(
+                `Watching with ${this.watcherRequests.length} requests`
+            )
         }
     }
 }

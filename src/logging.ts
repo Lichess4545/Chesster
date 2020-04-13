@@ -9,10 +9,11 @@ import Transport from 'winston-transport'
 import { MESSAGE } from 'triple-beam'
 import logform from 'logform'
 import { hasKey } from './utils'
+import { SlackBot } from './slack'
 
 interface MessageParams {
-    channel: String
-    username: String
+    channel: string
+    username: string
 }
 
 let EmojiLookup = {
@@ -25,10 +26,10 @@ let EmojiLookup = {
 export default class Slack extends Transport {
     private message_params: MessageParams
     constructor(
-        public controller: any, // TODO: type this
-        public channel: String,
-        //public domain: String,
-        public username: String,
+        public bot: SlackBot,
+        public channel: string,
+        //public domain: string,
+        public username: string,
         public format?: logform.Format,
         public level?: string,
         public silent?: boolean,
@@ -50,7 +51,7 @@ export default class Slack extends Transport {
             this.emit('logged', info)
         })
 
-        if (!this.controller.bot) {
+        if (!this.bot) {
             return
         }
 
@@ -59,7 +60,7 @@ export default class Slack extends Transport {
             icon_emoji = EmojiLookup[this.level]
         }
 
-        this.controller.bot.say({
+        this.bot.say({
             text: `${icon_emoji} [${this.level}] ${info[MESSAGE]}`,
             icon_emoji: icon_emoji,
             ...this.message_params,

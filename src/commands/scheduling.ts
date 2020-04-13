@@ -586,6 +586,17 @@ export async function ambientScheduling(
     if (!white || !black) {
         return
     }
+    if (
+        !isDefined(schedulingResults.white) ||
+        !isDefined(schedulingResults.black)
+    ) {
+        return
+    }
+    let updateScheduleRequest: heltour.UpdateScheduleRequest = {
+        white: schedulingResults.white,
+        black: schedulingResults.black,
+        date: schedulingResults.date,
+    }
 
     if (
         !_.isEqual(white.id, speaker.id) &&
@@ -605,7 +616,7 @@ export async function ambientScheduling(
     try {
         let updateScheduleResults = await heltour.updateSchedule(
             heltourOptions,
-            schedulingResults
+            updateScheduleRequest
         )
 
         if (updateScheduleResults['reversed']) {

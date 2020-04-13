@@ -7,14 +7,10 @@ import winston from 'winston'
 import * as scheduling from './scheduling'
 import * as subscription from './subscription'
 import * as heltour from '../heltour'
-import * as http from '../http'
-import { SlackBot, CommandMessage, LeagueMember } from '../slack'
+import * as lichess from '../lichess'
+import { SlackBot, CommandMessage } from '../slack'
 import { isDefined } from '../utils'
 import { League, SchedulingOptions, Pairing as LeaguePairing } from '../league'
-
-export type LichessGameDetails = any
-type HeltourUserResult = any
-type HeltourResultPost = any
 
 const TIMEOUT = 33
 const CHEAT = 36
@@ -42,11 +38,6 @@ interface Players {
 }
 
 interface Result extends Players {
-    result: string
-}
-interface ResultPlayer {
-    white: LeagueMember
-    black: LeagueMember
     result: string
 }
 
@@ -153,24 +144,20 @@ export async function ambientResults(bot: SlackBot, message: CommandMessage) {
     let white = bot.users.getByNameOrID(result.white.replace(/[<\@>]/g, ''))
     let black = bot.users.getByNameOrID(result.black.replace(/[<\@>]/g, ''))
     if (!isDefined(white) || !isDefined(black)) {
+        replyPlayerNotFound(bot, message)
         return
     }
 
-    var resultPlayer: ResultPlayer = {
+    var updateRequest: heltour.UpdatePairingRequest = {
         ...result,
         white: white,
         black: black,
     }
 
-    if (!result.white || !result.black) {
-        replyPlayerNotFound(bot, message)
-        return
-    }
-
     let isModerator = message.league.isModerator(speaker.name)
     if (
-        !_.isEqual(resultPlayer.white.id, message.user) &&
-        !_.isEqual(resultPlayer.black.id, message.user) &&
+        !_.isEqual(white.id, message.user) &&
+        !_.isEqual(black.id, message.user) &&
         !isModerator
     ) {
         replyPermissionFailure(bot, message)
@@ -179,8 +166,8 @@ export async function ambientResults(bot: SlackBot, message: CommandMessage) {
 
     let pairingsOrError = await heltour.findPairing(
         heltourOptions,
-        resultPlayer.white.name,
-        resultPlayer.black.name,
+        updateRequest.white.name,
+        updateRequest.black.name,
         heltourOptions.leagueTag
     )
     if (!heltour.isValid(pairingsOrError)) {
@@ -203,14 +190,11 @@ export async function ambientResults(bot: SlackBot, message: CommandMessage) {
             // TODO: update error handling
             let updatePairingResult = await heltour.updatePairing(
                 heltourOptions,
-                result
+                updateRequest
             )
             resultReplyUpdated(bot, message, result)
 
-            if (
-                updatePairingResult.result_changed &&
-                !_.isEmpty(resultPlayer.result)
-            ) {
+            if (updatePairingResult.result_changed) {
                 subscription.emitter.emit(
                     'a-game-is-over',
                     message.league,
@@ -335,7 +319,7 @@ export interface GameValidationResult {
 
 export function validateGameDetails(
     league: League,
-    details: LichessGameDetails
+    details: lichess.GameDetails
 ) {
     var result: GameValidationResult = {
         valid: true,
@@ -362,8 +346,8 @@ export function validateGameDetails(
     }
     let schedulingOptions: SchedulingOptions = schedulingOptionsOr
 
-    var white = details.players.white.userId
-    var black = details.players.black.userId
+    var white = details.players.white.user.id
+    var black = details.players.black.user.id
 
     var potentialPairings = league.findPairing(white, black)
     if (potentialPairings.length < 1) {
@@ -427,12 +411,6 @@ export function validateGameDetails(
     return result
 }
 
-//given a gamelinkID, use the lichess api to get the game details
-//pass the details to the callback as a JSON object
-export function fetchGameDetails(gamelinkID: string) {
-    return http.fetchURLIntoJSON('https://lichess.org/api/game/' + gamelinkID)
-}
-
 function gamelinkReplyInvalid(
     bot: SlackBot,
     message: CommandMessage,
@@ -471,7 +449,7 @@ function gamelinkReplyUnknown(bot: SlackBot, message: CommandMessage) {
     )
 }
 
-function validateUserResult(details: LichessGameDetails, result: Result) {
+function validateUserResult(details: lichess.GameDetails, result: Result) {
     //if colors are reversed, in the game link, we will catch that later
     //we know the players are correct or we would not already be here
     //the only way we can validate the result is if the order is 100% correct.
@@ -518,11 +496,11 @@ function validateUserResult(details: LichessGameDetails, result: Result) {
     return validity
 }
 
-function processGamelink(
+async function processGamelink(
     bot: SlackBot,
     message: CommandMessage,
     gamelink: string,
-    userResult?: HeltourUserResult
+    userResult?: Result
 ) {
     //get the gamelink id if one is in the message
     var result = parseGamelink(gamelink)
@@ -531,34 +509,32 @@ function processGamelink(
         return
     }
     //get the game details
-    return fetchGameDetails(result.gamelinkID)
-        .then((response) => {
-            var details = response['json']
-            //validate the game details vs the user specified result
-            if (isDefined(userResult)) {
-                var validity = validateUserResult(details, userResult)
-                if (!validity.valid) {
-                    gamelinkReplyInvalid(bot, message, validity.reason)
-                    return
-                }
+    let details = await lichess.fetchGameDetails(result.gamelinkID)
+    try {
+        //validate the game details vs the user specified result
+        if (isDefined(userResult)) {
+            var validity = validateUserResult(details, userResult)
+            if (!validity.valid) {
+                gamelinkReplyInvalid(bot, message, validity.reason)
+                return
             }
-            return processGameDetails(bot, message, details)
-        })
-        .catch((error) => {
-            winston.error(JSON.stringify(error))
-            bot.reply(
-                message,
-                'Sorry, I failed to get game details for ' +
-                    gamelink +
-                    '. Try again later or reach out to a moderator to make the update manually.'
-            )
-        })
+        }
+        return processGameDetails(bot, message, details)
+    } catch (error) {
+        winston.error(JSON.stringify(error))
+        bot.reply(
+            message,
+            'Sorry, I failed to get game details for ' +
+                gamelink +
+                '. Try again later or reach out to a moderator to make the update manually.'
+        )
+    }
 }
 
 async function processGameDetails(
     bot: SlackBot,
     message: CommandMessage,
-    details: LichessGameDetails
+    details: lichess.GameDetails
 ) {
     if (!isDefined(message.league)) {
         return
@@ -586,17 +562,16 @@ async function processGameDetails(
 
 export async function updateGamelink(
     league: League,
-    details: LichessGameDetails
+    details: lichess.GameDetails
 ) {
-    var result: HeltourResultPost = {}
     //our game is valid
     //get players to update the result in the sheet
-    var white = details.players.white
-    var black = details.players.black
-    result.white = league.bot.users.getByNameOrID(white.userId)
-    result.black = league.bot.users.getByNameOrID(black.userId)
-    result.gamelinkID = details.id
-    result.gamelink = 'https://lichess.org/' + result.gamelinkID
+    var result: heltour.UpdatePairingRequest = {
+        white: details.players.white.user,
+        black: details.players.black.user,
+        result: details.result,
+        game_link: `https://lichess.org/${details.id}`,
+    }
 
     //get the result in the correct format
     if (

@@ -124,7 +124,10 @@ export interface SlackConversation extends WebAPICallResult {
     ok: boolean
     channel: SlackConversationChannel
 }
-type SlackEntityWithNameAndId = any
+interface SlackEntityWithNameAndId {
+    id: string
+    name?: string
+}
 export interface SlackTeam {
     domain: string
     id: string

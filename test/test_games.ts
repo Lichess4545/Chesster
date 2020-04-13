@@ -3,6 +3,7 @@ import moment from 'moment'
 import * as games from '../src/commands/games'
 import * as slack from '../src/slack'
 import * as league from '../src/league'
+import * as lichess from '../src/lichess'
 import { isDefined } from '../src/utils'
 import winston from 'winston'
 winston.add(
@@ -141,7 +142,7 @@ describe('games', function () {
             if (mockLeague.scheduling)
                 mockLeague.scheduling.referenceDate = moment('2016-10-15')
             function testValidateGameDetails(
-                details: games.LichessGameDetails,
+                details: lichess.GameDetails,
                 pairings: league.Pairing[],
                 expected: games.GameValidationResult
             ) {
@@ -174,16 +175,24 @@ describe('games', function () {
             testValidateGameDetails(
                 {
                     id: 'gVbuwhK3',
+                    game_link: 'https://lichess.org/gVbuwhK3',
                     rated: true,
                     variant: 'standard',
                     speed: 'classical',
                     perf: 'classical',
                     createdAt: 1476567724919,
-                    status: 35,
-                    clock: { initial: 2700, increment: 45 },
+                    status: lichess.GameStatus.draw,
+                    result: league.ResultsEnum.DRAW,
+                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
                     players: {
-                        white: { userId: 'happy0', rating: 1680 },
-                        black: { userId: 'tephra', rating: 1418 },
+                        white: {
+                            user: { id: 'happy0', name: 'happy0' },
+                            rating: 1680,
+                        },
+                        black: {
+                            user: { id: 'tephra', name: 'tephra' },
+                            rating: 1418,
+                        },
                     },
                 },
                 [mockPairing('happy0', 'tephra')],
@@ -192,16 +201,24 @@ describe('games', function () {
             testValidateGameDetails(
                 {
                     id: 'gVbuwhK3',
+                    game_link: 'https://lichess.org/gVbuwhK3',
                     rated: true,
                     variant: 'standard',
                     speed: 'classical',
                     perf: 'classical',
                     createdAt: 1476567724919,
-                    status: 35,
-                    clock: { initial: 2700, increment: 45 },
+                    status: lichess.GameStatus.draw,
+                    result: league.ResultsEnum.DRAW,
+                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
                     players: {
-                        white: { userId: 'happy0', rating: 1680 },
-                        black: { userId: 'tephra', rating: 1418 },
+                        white: {
+                            user: { id: 'happy0', name: 'happy0' },
+                            rating: 1680,
+                        },
+                        black: {
+                            user: { id: 'tephra', name: 'tephra' },
+                            rating: 1418,
+                        },
                     },
                 },
                 [],
@@ -215,16 +232,24 @@ describe('games', function () {
             testValidateGameDetails(
                 {
                     id: 'gVbuwhK3',
+                    game_link: 'https://lichess.org/gVbuwhK3',
                     rated: true,
                     variant: 'standard',
                     speed: 'classical',
                     perf: 'classical',
                     createdAt: 1476567724919,
-                    status: 35,
-                    clock: { initial: 2700, increment: 45 },
+                    status: lichess.GameStatus.draw,
+                    result: league.ResultsEnum.DRAW,
+                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
                     players: {
-                        white: { userId: 'happy0', rating: 1680 },
-                        black: { userId: 'tephra', rating: 1418 },
+                        white: {
+                            user: { id: 'happy0', name: 'happy0' },
+                            rating: 1680,
+                        },
+                        black: {
+                            user: { id: 'tephra', name: 'tephra' },
+                            rating: 1418,
+                        },
                     },
                 },
                 [mockPairing('tephra', 'happy0')],
@@ -238,16 +263,24 @@ describe('games', function () {
             testValidateGameDetails(
                 {
                     id: 'gVbuwhK3',
+                    game_link: 'https://lichess.org/gVbuwhK3',
                     rated: false,
                     variant: 'standard',
                     speed: 'classical',
                     perf: 'classical',
                     createdAt: 1476567724919,
-                    status: 35,
-                    clock: { initial: 2700, increment: 45 },
+                    status: lichess.GameStatus.draw,
+                    result: league.ResultsEnum.DRAW,
+                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
                     players: {
-                        white: { userId: 'happy0', rating: 1680 },
-                        black: { userId: 'tephra', rating: 1418 },
+                        white: {
+                            user: { id: 'happy0', name: 'happy0' },
+                            rating: 1680,
+                        },
+                        black: {
+                            user: { id: 'tephra', name: 'tephra' },
+                            rating: 1418,
+                        },
                     },
                 },
                 [mockPairing('happy0', 'tephra')],
@@ -261,16 +294,24 @@ describe('games', function () {
             testValidateGameDetails(
                 {
                     id: 'gVbuwhK4',
+                    game_link: 'https://lichess.org/gVbuwhK3',
                     rated: true,
                     variant: 'standard',
                     speed: 'correspondence',
                     perf: 'correspondence',
                     createdAt: 1476567724919,
-                    status: 35,
-                    daysPerTurn: 5,
+                    status: lichess.GameStatus.draw,
+                    result: league.ResultsEnum.DRAW,
+                    clock: undefined,
                     players: {
-                        white: { userId: 'happy0', rating: 1680 },
-                        black: { userId: 'tephra', rating: 1418 },
+                        white: {
+                            user: { id: 'happy0', name: 'happy0' },
+                            rating: 1680,
+                        },
+                        black: {
+                            user: { id: 'tephra', name: 'tephra' },
+                            rating: 1418,
+                        },
                     },
                 },
                 [mockPairing('happy0', 'tephra')],
@@ -284,16 +325,24 @@ describe('games', function () {
             testValidateGameDetails(
                 {
                     id: 'gVbuwhK3',
+                    game_link: 'https://lichess.org/gVbuwhK3',
                     rated: true,
                     variant: 'chess960',
                     speed: 'classical',
                     perf: 'classical',
                     createdAt: 1476567724919,
-                    status: 35,
-                    clock: { initial: 2700, increment: 45 },
+                    status: lichess.GameStatus.draw,
+                    result: league.ResultsEnum.DRAW,
+                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
                     players: {
-                        white: { userId: 'happy0', rating: 1680 },
-                        black: { userId: 'tephra', rating: 1418 },
+                        white: {
+                            user: { id: 'happy0', name: 'happy0' },
+                            rating: 1680,
+                        },
+                        black: {
+                            user: { id: 'tephra', name: 'tephra' },
+                            rating: 1418,
+                        },
                     },
                 },
                 [mockPairing('happy0', 'tephra')],
@@ -307,16 +356,24 @@ describe('games', function () {
             testValidateGameDetails(
                 {
                     id: 'gVbuwhK3',
+                    game_link: 'https://lichess.org/gVbuwhK3',
                     rated: true,
                     variant: 'standard',
                     speed: 'classical',
                     perf: 'classical',
                     createdAt: 1477567724919,
-                    status: 35,
-                    clock: { initial: 2700, increment: 45 },
+                    status: lichess.GameStatus.draw,
+                    result: league.ResultsEnum.DRAW,
+                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
                     players: {
-                        white: { userId: 'happy0', rating: 1680 },
-                        black: { userId: 'tephra', rating: 1418 },
+                        white: {
+                            user: { id: 'happy0', name: 'happy0' },
+                            rating: 1680,
+                        },
+                        black: {
+                            user: { id: 'tephra', name: 'tephra' },
+                            rating: 1418,
+                        },
                     },
                 },
                 [mockPairing('happy0', 'tephra')],

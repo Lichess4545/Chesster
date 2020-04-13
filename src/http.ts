@@ -21,7 +21,7 @@ export interface RequestOptions extends _http.RequestOptions {
 function isString(uri: RequestOptions | string): uri is string {
     return _.isString(uri)
 }
-function requestFromString(uri: string): RequestOptions {
+export function requestFromString(uri: string): RequestOptions {
     return url.parse(uri)
 }
 export interface JSONResponse extends Response {

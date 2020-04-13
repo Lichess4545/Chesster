@@ -19,10 +19,6 @@ import {
     dict,
 } from 'type-safe-json-decoder'
 
-// TODO: Fix all of these
-type Schedule = any
-type Result = any
-
 export interface Config {
     token: string
     baseEndpoint: string
@@ -41,6 +37,15 @@ export const ErrorDecoder: Decoder<Error> = object(
 )
 export function isValid<T extends object>(obj: T | Error): obj is T {
     return !obj.hasOwnProperty('error')
+}
+
+//------------------------------------------------------------------------------
+// Schedule
+//------------------------------------------------------------------------------
+export interface UpdateScheduleRequest {
+    white: string
+    black: string
+    date: moment.Moment
 }
 
 //------------------------------------------------------------------------------
@@ -140,6 +145,16 @@ export function isTeamPairing(obj: Pairing): obj is TeamPairing {
 //------------------------------------------------------------------------------
 // Pairings
 //------------------------------------------------------------------------------
+
+export interface User {
+    name: string
+}
+export interface UpdatePairingRequest {
+    white: User
+    black: User
+    game_link?: string
+    result: string
+}
 
 export interface UpdatePairingResult {
     updated: number
@@ -360,7 +375,7 @@ export async function getAllPairings(
 // Update the schedule
 export async function updateSchedule(
     heltourConfig: Config,
-    schedule: Schedule
+    schedule: UpdateScheduleRequest
 ) {
     var request = heltourRequest(heltourConfig, 'update_pairing')
     request.method = 'POST'
@@ -375,7 +390,10 @@ export async function updateSchedule(
 }
 
 // Update the pairing with a result or link
-export async function updatePairing(heltourConfig: Config, result: Result) {
+export async function updatePairing(
+    heltourConfig: Config,
+    result: UpdatePairingRequest
+) {
     let pairings = await findPairing(
         heltourConfig,
         result.white.name,
@@ -396,8 +414,8 @@ export async function updatePairing(heltourConfig: Config, result: Result) {
     if (result.result) {
         request.bodyParameters['result'] = result.result
     }
-    if (result.gamelink) {
-        request.bodyParameters['game_link'] = result.gamelink
+    if (result.game_link) {
+        request.bodyParameters['game_link'] = result.game_link
     }
 
     let response = await http.fetchURL(request)

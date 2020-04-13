@@ -5,22 +5,34 @@ import * as http from './http'
 import moment from 'moment-timezone'
 import _ from 'lodash'
 import winston from 'winston'
+import {
+    Decoder,
+    object,
+    number,
+    string,
+    boolean,
+    oneOf,
+    andThen,
+    equal,
+    succeed,
+} from 'type-safe-json-decoder'
 // TODO: sequelize-cli requires us to call this models.js or models/index.js
 //       this name conflicts with the parameter that we pass in after getting
 //       the lock, so I'd like to (by convention) always refer to this as db.
 import * as db from './models'
+import { ResultsEnum } from './league'
+import { isDefined } from './utils'
 
 var MILISECOND = 1
 var SECONDS = 1000 * MILISECOND
 
 export type LichessID = string
 export type LichessName = string
-export type LichessResponse = any
-export type PlayerResponse = any
 
 type QueuedRequest = {
     url: string
     isJSON: boolean
+    accept?: string
     resolve: (value?: any) => void
     reject: (reason?: any) => void
 }
@@ -38,25 +50,38 @@ type QueuedRequest = {
 // a max of one request every 2 seconds (this is actually a bit slower), and
 // it will wait a minute if it receives a 429.
 //------------------------------------------------------------------------------
-let { makeRequest, processRequests } = (function () {
+let { makeRequest, startRequests, stopRequests } = (function () {
     // The background queue will be processed when there is nothing else to process
     var backgroundQueue: QueuedRequest[] = []
     // The mainQueue will be processed first.
     var mainQueue: QueuedRequest[] = []
-    function makeRequest(url: string, isJSON: boolean, isBackground: boolean) {
+    let stop = false
+    async function makeRequest(
+        url: string,
+        isJSON: boolean,
+        isBackground: boolean,
+        accept?: string
+    ): Promise<http.Response> {
         return new Promise((resolve, reject) => {
             if (isBackground) {
-                backgroundQueue.push({ url, isJSON, resolve, reject })
+                backgroundQueue.push({ url, isJSON, resolve, reject, accept })
             } else {
-                mainQueue.push({ url, isJSON, resolve, reject })
+                mainQueue.push({ url, isJSON, resolve, reject, accept })
             }
         })
     }
+    function stopRequests() {
+        stop = true
+    }
+    function startRequests() {
+        stop = false
+        processRequests()
+    }
     function processRequests() {
-        console.log(new Error().stack)
+        if (stop) return
         var request = null
         // The default delay between requests is 2 seconds
-        var requestDelay = 2 * SECONDS
+        var requestDelay = 0
         if (mainQueue.length > 0 || backgroundQueue.length > 0) {
             winston.info(
                 `[LICHESS] ${mainQueue.length} requests in mainQueue ` +
@@ -73,9 +98,15 @@ let { makeRequest, processRequests } = (function () {
             var isJSON = request.isJSON
             var resolve = request.resolve
             var reject = request.reject
+            var accept = request.accept
             var promise = null
             try {
-                promise = http.fetchURL(url)
+                let options = http.requestFromString(url)
+                if (accept) {
+                    options.headers = options.headers || {}
+                    options.headers['Accept'] = accept
+                }
+                promise = http.fetchURL(options)
                 promise.then(
                     function (result) {
                         try {
@@ -85,11 +116,14 @@ let { makeRequest, processRequests } = (function () {
                                     '[LICHESS] Last request status was a 429 - we will wait 60 seconds before our next request'
                                 )
                             } else {
-                                if (mainQueue.length > 0) {
-                                    requestDelay = 2 * SECONDS
+                                if (
+                                    mainQueue.length + backgroundQueue.length >
+                                    0
+                                ) {
+                                    requestDelay = 0
                                 } else {
-                                    // Back off a bit if we only have background requests.
-                                    requestDelay = 4 * SECONDS
+                                    // Back off a little bit if we don't have any requests
+                                    requestDelay = 0.05
                                 }
                                 if (isJSON) {
                                     var json = JSON.parse(result['body'])
@@ -136,16 +170,308 @@ let { makeRequest, processRequests } = (function () {
             setTimeout(processRequests, requestDelay)
         }
     }
-    return { makeRequest, processRequests }
+    return { makeRequest, startRequests, stopRequests }
 })()
 
-export function startLichessQueue() {
-    processRequests()
+export function startQueue() {
+    startRequests()
+}
+export function stopQueue() {
+    stopRequests()
+}
+export interface UserRating {
+    games: number
+    prog: number
+    rating: number
+    rd: number
+}
+export const UserRatingDecoder: Decoder<UserRating> = object(
+    ['games', number()],
+    ['prog', number()],
+    ['rating', number()],
+    ['rd', number()],
+    (games, prog, rating, rd) => ({
+        games,
+        prog,
+        rating,
+        rd,
+    })
+)
+export interface UserRatings {
+    bullet: UserRating
+    blitz: UserRating
+    rapid: UserRating
+    classical: UserRating
+    correspondence: UserRating
+}
+export const UserRatingsDecoder: Decoder<UserRatings> = object(
+    ['bullet', UserRatingDecoder],
+    ['blitz', UserRatingDecoder],
+    ['rapid', UserRatingDecoder],
+    ['classical', UserRatingDecoder],
+    ['correspondence', UserRatingDecoder],
+    (classical, rapid, blitz, bullet, correspondence) => ({
+        classical,
+        rapid,
+        blitz,
+        bullet,
+        correspondence,
+    })
+)
+
+export interface User {
+    id: string
+    username: string
+    createdAt: number
+    seenAt: number
+    perfs: UserRatings
+}
+export const UserDecoder: Decoder<User> = object(
+    ['id', string()],
+    ['username', string()],
+    ['createdAt', number()],
+    ['seenAt', number()],
+    ['perfs', UserRatingsDecoder],
+    (id, username, createdAt, seenAt, perfs) => ({
+        id,
+        username,
+        createdAt,
+        seenAt,
+        perfs,
+    })
+)
+
+export async function fetchUserByName(
+    name: string,
+    isBackground: boolean = false
+) {
+    let response = await makeRequest(
+        `https://lichess.org/api/user/${name}`,
+        false,
+        isBackground,
+        'application/json'
+    )
+    return UserDecoder.decodeJSON(response.body)
 }
 
-export async function getPlayerByName(name: string, isBackground: boolean) {
-    var url = 'https://lichess.org/api/user/' + name
-    return makeRequest(url, true, isBackground)
+//------------------------------------------------------------------------------
+//given a gamelinkID, use the lichess api to get the game details
+//pass the details to the callback as a JSON object
+//------------------------------------------------------------------------------
+export interface ShortUser {
+    name: string
+    id: string
+}
+export const ShortUserDecoder: Decoder<ShortUser> = object(
+    ['name', string()],
+    ['id', string()],
+    (name, id) => ({ name, id })
+)
+
+export interface Player {
+    user: ShortUser
+    rating: number
+}
+export const PlayerDecoder: Decoder<Player> = object(
+    ['user', ShortUserDecoder],
+    ['rating', number()],
+    (user, rating) => ({ user, rating })
+)
+export interface Players {
+    white: Player
+    black: Player
+}
+export const PlayersDecoder: Decoder<Players> = object(
+    ['white', PlayerDecoder],
+    ['black', PlayerDecoder],
+    (white, black) => ({ white, black })
+)
+export interface Opening {
+    eco: string
+    name: string
+    ply: number
+}
+export const OpeningDecoder: Decoder<Opening> = object(
+    ['eco', string()],
+    ['name', string()],
+    ['ply', number()],
+    (eco, name, ply) => ({ eco, name, ply })
+)
+export interface Clock {
+    initial: number
+    increment: number
+    totalTime: number
+}
+export const ClockDecoder: Decoder<Clock> = object(
+    ['initial', number()],
+    ['increment', number()],
+    ['totalTime', number()],
+    (initial, increment, totalTime) => ({ initial, increment, totalTime })
+)
+export enum GameStatus {
+    created = 10,
+    started = 20,
+    aborted = 25,
+    mute = 30,
+    resign = 31,
+    stalemate = 32,
+    timeout = 33,
+    draw = 34,
+    outoftime = 35,
+    cheat = 36,
+    nostart = 37,
+    unknownfinish = 38,
+    variantend = 60,
+}
+export const GameStatusIntDecoder: Decoder<GameStatus> = oneOf(
+    equal(10),
+    equal(20),
+    equal(25),
+    equal(30),
+    equal(31),
+    equal(32),
+    equal(33),
+    equal(34),
+    equal(35),
+    equal(36),
+    equal(37),
+    equal(38),
+    equal(60)
+)
+export const GameStatusStringDecoder: Decoder<GameStatus> = oneOf(
+    andThen(equal('created'), (_) => succeed(GameStatus.created)),
+    andThen(equal('started'), (_) => succeed(GameStatus.started)),
+    andThen(equal('aborted'), (_) => succeed(GameStatus.started)),
+    andThen(equal('mute'), (_) => succeed(GameStatus.started)),
+    andThen(equal('resign'), (_) => succeed(GameStatus.started)),
+    andThen(equal('stalemate'), (_) => succeed(GameStatus.started)),
+    andThen(equal('timeout'), (_) => succeed(GameStatus.started)),
+    andThen(equal('draw'), (_) => succeed(GameStatus.started)),
+    andThen(equal('outoftime'), (_) => succeed(GameStatus.started)),
+    andThen(equal('cheat'), (_) => succeed(GameStatus.started)),
+    andThen(equal('nostart'), (_) => succeed(GameStatus.started)),
+    andThen(equal('unknownfinish'), (_) => succeed(GameStatus.started)),
+    andThen(equal('variantend'), (_) => succeed(GameStatus.started))
+)
+export type GameWinner = 'white' | 'black'
+export const GameWinnerDecoder: Decoder<GameWinner> = oneOf(
+    equal('white'),
+    equal('black')
+)
+export function gameResult(
+    status: GameStatus,
+    winner?: GameWinner
+): ResultsEnum {
+    if (status === GameStatus.draw) {
+        return ResultsEnum.DRAW
+    }
+    if (!isDefined(winner)) {
+        return ResultsEnum.UNKNOWN
+    }
+    if (status == GameStatus.cheat) {
+        if (winner == 'white') {
+            return ResultsEnum.WHITE_FORFEIT_WIN
+        } else {
+            return ResultsEnum.BLACK_FORFEIT_WIN
+        }
+    }
+    if (winner === 'white') {
+        return ResultsEnum.WHITE_WIN
+    } else if (winner === 'black') {
+        return ResultsEnum.BLACK_WIN
+    }
+    return ResultsEnum.UNKNOWN
+}
+export interface GameDetails {
+    id: string
+    rated: boolean
+    variant: string
+    speed: string
+    perf: string
+    createdAt: number
+    players: Players
+    status: GameStatus
+    winner?: GameWinner
+    result: ResultsEnum
+    game_link: string
+    //opening: Opening
+    //moves: string
+    clock?: Clock
+}
+export const BaseGameDetailsDecoder: Decoder<GameDetails> = object(
+    ['id', string()],
+    ['rated', boolean()],
+    ['variant', string()],
+    ['speed', string()],
+    ['perf', string()],
+    ['createdAt', number()],
+    ['lastMoveAt', number()],
+    ['players', PlayersDecoder],
+    ['status', oneOf(GameStatusStringDecoder, GameStatusIntDecoder)],
+    (
+        id,
+        rated,
+        variant,
+        speed,
+        perf,
+        createdAt,
+        lastMoveAt,
+        players,
+        status
+    ) => ({
+        id,
+        rated,
+        variant,
+        speed,
+        perf,
+        createdAt,
+        lastMoveAt,
+        players,
+        status,
+        game_link: `https://lichess.org/${id}`,
+        result: gameResult(status),
+    })
+)
+// Awful way of dealing with optional properties. Silly library
+export const GameDetailsWithClockDecoder: Decoder<GameDetails> = andThen(
+    BaseGameDetailsDecoder,
+    (gameDetails) =>
+        object(['clock', ClockDecoder], (clock) => ({ ...gameDetails, clock }))
+)
+export const GameDetailsWithWinnerDecoder: Decoder<GameDetails> = andThen(
+    BaseGameDetailsDecoder,
+    (gameDetails) =>
+        object(['winner', GameWinnerDecoder], (winner) => ({
+            ...gameDetails,
+            winner,
+            result: gameResult(gameDetails.status, winner),
+        }))
+)
+export const GameDetailsWithClockWithWinnerDecoder: Decoder<GameDetails> = andThen(
+    BaseGameDetailsDecoder,
+    (gameDetails) =>
+        object(
+            ['clock', ClockDecoder],
+            ['winner', GameWinnerDecoder],
+            (clock, winner) => ({
+                ...gameDetails,
+                clock,
+                winner,
+                result: gameResult(gameDetails.status, winner),
+            })
+        )
+)
+export const GameDetailsDecoder: Decoder<GameDetails> = oneOf(
+    GameDetailsWithClockWithWinnerDecoder,
+    GameDetailsWithClockDecoder,
+    GameDetailsWithWinnerDecoder,
+    BaseGameDetailsDecoder
+)
+
+export async function fetchGameDetails(gamelinkID: string) {
+    var url = `https://lichess.org/game/export/${gamelinkID}`
+    let response = await makeRequest(url, false, false, 'application/json')
+    return GameDetailsDecoder.decodeJSON(response.body)
 }
 
 //------------------------------------------------------------------------------
@@ -156,11 +482,18 @@ export async function getPlayerByName(name: string, isBackground: boolean) {
 // can type it in themselves.
 //------------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-async function _updateRating(name: string, isBackground: boolean) {
+async function _updateRating(
+    name: string,
+    isBackground: boolean
+): Promise<number> {
     //store the promise for reuse
     try {
-        let result: PlayerResponse = await getPlayerByName(name, isBackground)
-        var rating = result.json.perfs.classical.rating
+        let user: User = await fetchUserByName(name, isBackground)
+        if (!isDefined(user.perfs.classical)) {
+            // TODO: This will be the source of a few bugs
+            return 1500
+        }
+        var rating = user.perfs.classical.rating
         // Get the writable lock for the database.
         let lichessRatings = await db.LichessRating.findOrCreate({
             where: { lichessUserName: name },
@@ -174,6 +507,7 @@ async function _updateRating(name: string, isBackground: boolean) {
         return rating
     } catch (error) {
         winston.error('Error getting player by name: ' + error)
+        throw error
     }
 }
 
@@ -184,7 +518,7 @@ async function _updateRating(name: string, isBackground: boolean) {
 export async function getPlayerRating(
     name: string,
     isBackground: boolean = false
-) {
+): Promise<number> {
     name = name.toLowerCase()
 
     try {
@@ -217,5 +551,6 @@ export async function getPlayerRating(
         return lichessRating.get('rating')
     } catch (error) {
         winston.error(`Error querying for rating: ${error}`)
+        throw error
     }
 }

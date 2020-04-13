@@ -15,11 +15,6 @@ import { PartialBy } from './utils'
 // An emitter for league events
 class ChessLeagueEmitter extends EventEmitter {}
 
-// TODO: these need to be typed out appropriately
-type Channel = any
-type RefreshError = any
-type Roster = any
-
 export interface Player {
     username: string
     rating: number
@@ -79,7 +74,7 @@ export interface LeagueLinks {
 export interface Team {
     name: string
     players: Player[]
-    captain: Player
+    captain?: Player
     number: number
     slack_channel: string
 }
@@ -152,8 +147,7 @@ export class League {
         public alternate?: Record<string, string>,
         public results?: Record<string, string>,
         public gamelinks?: Record<string, any>, // TODO: remove any.
-        public scheduling?: SchedulingOptions, // TODO: remove any.
-        public channels: Channel[] = [],
+        public scheduling?: SchedulingOptions,
         public _players: Player[] = [],
         public _pairings: Pairing[] = [],
         public _teams: Team[] = []
@@ -222,7 +216,7 @@ export class League {
                     this._lastUpdated = moment.utc()
                     this.emitter.emit('refreshRosters', this)
                 })
-                .catch((error: RefreshError) => {
+                .catch((error) => {
                     winston.error(
                         `${this.name}: Unable to refresh rosters: ${error}`
                     )
@@ -233,7 +227,7 @@ export class League {
                     this._lastUpdated = moment.utc()
                     this.emitter.emit('refreshPairings', this)
                 })
-                .catch((error: RefreshError) => {
+                .catch((error) => {
                     if (error !== 'no_matching_rounds') {
                         winston.error(
                             `${this.name}: Unable to refresh pairings: ${error}`
@@ -245,7 +239,7 @@ export class League {
                 .then(() => {
                     this._lastUpdated = moment.utc()
                 })
-                .catch((error: RefreshError) => {
+                .catch((error) => {
                     winston.error(
                         `${this.name}: Unable to refresh moderators: ${error}`
                     )
@@ -258,37 +252,49 @@ export class League {
     // Refreshes the latest roster information
     //--------------------------------------------------------------------------
     async refreshRosters() {
-        let roster: Roster = await heltour.getRoster(
+        var newPlayers: Player[] = []
+        var newPlayerLookup: Record<string, Player> = {}
+        var newTeams: Team[] = []
+        var newTeamLookup: Record<string, Team> = {}
+
+        let roster = await heltour.getRoster(
             this.heltour,
             this.heltour.leagueTag
         )
-        this._players = roster.players
-        var newPlayerLookup: Record<string, Player> = {}
-        var newTeams: Team[] = []
-        var newLookup: Record<string, Team> = {}
-        roster.players.forEach((player: Player) => {
-            var name = _.toLower(player.username)
-            newPlayerLookup[_.toLower(name)] = player
+        var incomingPlayerLookup: Record<string, heltour.Player> = {}
+        roster.players.map((p) => {
+            incomingPlayerLookup[p.username.toLowerCase()] = p
         })
-        this._playerLookup = newPlayerLookup
-        _.each(roster.teams, (team) => {
-            _.each(team.players, (teamPlayer) => {
-                var player = this.getPlayer(teamPlayer.username)
-                if (!player) return
-                player.isCaptain = teamPlayer.isCaptain = teamPlayer.is_captain
-                if (player.isCaptain) {
-                    team.captain = player
+        roster.teams.map((team) => {
+            let newTeam: Team = {
+                name: team.name,
+                players: [],
+                number: team.number,
+                slack_channel: team.slack_channel,
+            }
+            newTeams.push(newTeam)
+            newTeamLookup[newTeam.name.toLowerCase()] = newTeam
+            team.players.forEach(({ username, is_captain, board_number }) => {
+                let key = username.toLowerCase()
+                let { rating } = incomingPlayerLookup[key]
+                let newPlayer = {
+                    username,
+                    team: newTeam,
+                    isCaptain: is_captain,
+                    boardNumber: board_number,
+                    rating,
                 }
-                teamPlayer.rating = player.rating
-                player.boardNumber = teamPlayer.board_number
-                teamPlayer.team = player.team = team
+                if (newPlayer.isCaptain) {
+                    newTeam.captain = newPlayer
+                }
+                newPlayerLookup[key] = newPlayer
+                newPlayers.push(newPlayer)
             })
-            newTeams.push(team)
-            newLookup[_.toLower(team.name)] = team
         })
+
         this.log.info('Setting new teams')
         this._teams = newTeams
-        this._teamLookup = newLookup
+        this._teamLookup = newTeamLookup
     }
 
     //--------------------------------------------------------------------------
@@ -371,7 +377,7 @@ export class League {
     async getPairingDetails(
         lichessUsername: string
     ): Promise<PairingDetails | undefined> {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             var pairings = this.findPairing(lichessUsername)
             if (pairings.length < 1) {
                 return resolve(undefined)
