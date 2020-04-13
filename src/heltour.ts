@@ -273,12 +273,12 @@ export const UserMapDecoder: Decoder<UserMap> = object(
 //------------------------------------------------------------------------------
 export interface SlackLink {
     url: string
-    already_linked: boolean
+    already_linked: string[]
     expires: string
 }
 export const SlackLinkDecoder: Decoder<SlackLink> = object(
     ['url', string()],
-    ['already_linked', boolean()],
+    ['already_linked', array(string())],
     ['expires', string()],
     (url, already_linked, expires) => ({ url, already_linked, expires })
 )

@@ -11,8 +11,6 @@ import { League, SchedulingOptions } from '../league'
 import { SlackBot, CommandMessage, LeagueMember } from '../slack'
 import { isDefined } from '../utils'
 
-type Results = any
-
 export interface ExtremaParameters {
     start: moment.Moment
     end: moment.Moment
@@ -420,7 +418,7 @@ function schedulingReplyAmbiguous(bot: SlackBot, message: CommandMessage) {
 function schedulingReplyScheduled(
     bot: SlackBot,
     message: CommandMessage,
-    results: Results,
+    results: SchedulingResult,
     white: LeagueMember,
     black: LeagueMember,
     white_name: string,
