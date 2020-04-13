@@ -8,7 +8,7 @@ import Watcher from './watcher'
 import { getAllLeagues } from './league'
 
 import * as availability from './commands/availability'
-//import games from './commands/games'
+import * as games from './commands/games'
 import * as leagueInfo from './commands/leagueInfo'
 //import messageForwarding from './commands/messageForwarding'
 import * as privateURLs from './commands/privateURLs'
@@ -249,30 +249,26 @@ chesster.on(
         middleware: [slack.withLeague],
     },
     scheduling.ambientScheduling
-)
+)*/
 
 // results parsing
 
 // results processing will occur on any message
-chesster.on(
-    {
-        event: 'ambient',
-        middleware: [slack.withLeague],
-    },
-    games.ambientResults
-)
+chesster.hears({
+    patterns: [/.*/],
+    messageTypes: ['ambient'],
+    callback: games.ambientResults,
+})
 
 // game link parsing
 
 // gamelink processing will occur on any message
-chesster.on(
-    {
-        event: 'ambient',
-        middleware: [slack.withLeague],
-    },
-    games.ambientGamelinks
-)
-
+chesster.hears({
+    patterns: [/.*http.*/],
+    messageTypes: ['ambient'],
+    callback: games.ambientGamelinks,
+})
+/*
 // subscriptions
 
 chesster.hears(

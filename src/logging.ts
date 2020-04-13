@@ -45,7 +45,7 @@ export default class Slack extends Transport {
         }
     }
 
-    // TODO: this is literally the  signature from the docs. :monkas:
+    // This is literally the  signature from the docs. :monkas:
     log?(info: any, next: () => void): any {
         setImmediate(() => {
             this.emit('logged', info)

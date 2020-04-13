@@ -215,10 +215,6 @@ function processTellCommand(
         if (_.isUndefined(_league)) {
             return resolve(formatInvalidLeagueResponse(bot))
         }
-        // TODO: this is hacky, but required at the moment. :(
-        //       otherwise message.player.isModerator won't work.
-        //       this is usually set by the requiresLeague middleware,
-        //       but we are in a DM, not a league specific channel
         message.league = _league
         var team = message.league.getTeamByPlayerName(
             message.member.lichess_username

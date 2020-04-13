@@ -23,6 +23,7 @@ import { isDefined } from './utils'
 
 const WATCHER_MAX_USERNAMES = 300
 
+// TODO: stop using these
 const BACKOFF_TIMEOUT = 10
 // const CREATED = 10;
 const STARTED = 20

@@ -59,7 +59,6 @@ export interface LeagueLinks {
     rules: string
     faq: string
     league: string
-    // TODO: lone-wolf vs lonewolf
     lonewolf: string
     guide: string
     captains: string

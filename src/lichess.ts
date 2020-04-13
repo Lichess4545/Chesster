@@ -489,10 +489,6 @@ async function _updateRating(
     //store the promise for reuse
     try {
         let user: User = await fetchUserByName(name, isBackground)
-        if (!isDefined(user.perfs.classical)) {
-            // TODO: This will be the source of a few bugs
-            return 1500
-        }
         var rating = user.perfs.classical.rating
         // Get the writable lock for the database.
         let lichessRatings = await db.LichessRating.findOrCreate({

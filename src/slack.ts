@@ -587,12 +587,6 @@ export class SlackBot {
             self.config.winston.controller = self;
             winston.add(new SlackLogger(self.config.winston));
         }*/
-        // TODO: this may not be necessary
-        // Make chesster and the bot a bit more interchangeable.
-        /*self.reply = bot.reply;
-        self.api = bot.api;
-
-        self.user_id = response.self.id;*/
     }
 
     async updatesUsers() {
