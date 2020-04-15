@@ -1,6 +1,6 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // HTTP helpers
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import _http from 'http'
 import _https from 'https'
 import url from 'url'
@@ -39,7 +39,7 @@ export function fetchURL(
     }
 
     return new Promise((resolve, reject) => {
-        var http: typeof _http | typeof _https = _http
+        let http: typeof _http | typeof _https = _http
         if (_.isEqual(options.protocol, 'https:')) {
             http = _https
         }
@@ -47,7 +47,7 @@ export function fetchURL(
         if (options.parameters) {
             options.path += '?' + querystring.stringify(options.parameters)
         }
-        var bodyParameters = null
+        let bodyParameters = null
         if (options.bodyParameters) {
             bodyParameters = querystring.stringify(options.bodyParameters)
             options.headers = options.headers || {}
@@ -57,14 +57,14 @@ export function fetchURL(
                 bodyParameters
             )
         }
-        var req = http
+        const req = http
             .request(options, (res) => {
-                var body = ''
-                res.on('data', function (chunk) {
+                let body = ''
+                res.on('data', (chunk) => {
                     body += chunk
                 })
                 res.on('end', () => {
-                    resolve({ response: res, body: body })
+                    resolve({ response: res, body })
                 })
             })
             .on('error', (e) => {
@@ -83,46 +83,44 @@ export function fetchURLIntoJSON(
 ): Promise<JSONResponse> {
     return new Promise((resolve, reject) => {
         fetchURL(options).then(
-            function (result) {
+            (result) => {
                 try {
-                    var json = JSON.parse(result['body'])
+                    const json = JSON.parse(result.body)
                     if (json) {
                         resolve({ ...result, json })
                     } else {
                         winston.error(
                             '[HTTP] Options: ' + JSON.stringify(options)
                         )
-                        winston.error('[HTTP] Body: ' + result['body'])
+                        winston.error('[HTTP] Body: ' + result.body)
                         winston.error(
-                            '[HTTP] Status Code: ' +
-                                result['response']['statusCode']
+                            '[HTTP] Status Code: ' + result.response.statusCode
                         )
                         winston.error(
                             '[HTTP] Status Message: ' +
-                                result['response']['statusMessage']
+                                result.response.statusMessage
                         )
                         reject(
                             'body was not a valid json object: ' +
-                                JSON.stringify(result['body'])
+                                JSON.stringify(result.body)
                         )
                     }
                 } catch (e) {
                     winston.error('[HTTP] Options: ' + JSON.stringify(options))
                     winston.error('[HTTP] Exception: ' + e)
                     winston.error('[HTTP] Stack: ' + e.stack)
-                    winston.error('[HTTP] Body: ' + result['body'])
+                    winston.error('[HTTP] Body: ' + result.body)
                     winston.error(
-                        '[HTTP] Status Code: ' +
-                            result['response']['statusCode']
+                        '[HTTP] Status Code: ' + result.response.statusCode
                     )
                     winston.error(
                         '[HTTP] Status Message: ' +
-                            result['response']['statusMessage']
+                            result.response.statusMessage
                     )
                     reject(e)
                 }
             },
-            function (error) {
+            (error) => {
                 reject(error)
             }
         )

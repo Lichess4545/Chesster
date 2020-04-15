@@ -1,9 +1,9 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Heltour related facilities
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import _ from 'lodash'
 import moment from 'moment'
-import url from 'url'
+import { parse } from 'url'
 import * as http from './http'
 import {
     Decoder,
@@ -25,9 +25,9 @@ export interface Config {
     leagueTag: string
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Error
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export interface Error {
     error: string
 }
@@ -39,27 +39,27 @@ export function isValid<T extends object>(obj: T | Error): obj is T {
     return !obj.hasOwnProperty('error')
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Schedule
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export interface UpdateScheduleRequest {
     white: string
     black: string
     date: moment.Moment
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Pairings
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export interface IndividualPairing {
     league: string
     season: string
     round: number
     white: string
-    white_rating: number
+    whiteRating: number
     black: string
-    black_rating: number
-    game_link?: string
+    blackRating: number
+    gameLink?: string
     result: string
     datetime: moment.Moment
 }
@@ -80,10 +80,10 @@ export const IndividualPairingDecoder: Decoder<IndividualPairing> = object(
         season,
         round,
         white,
-        white_rating,
+        whiteRating,
         black,
-        black_rating,
-        game_link,
+        blackRating,
+        gameLink,
         result,
         datetime
     ) => ({
@@ -91,20 +91,20 @@ export const IndividualPairingDecoder: Decoder<IndividualPairing> = object(
         season,
         round,
         white,
-        white_rating,
+        whiteRating,
         black,
-        black_rating,
-        game_link,
+        blackRating,
+        gameLink,
         result,
         datetime: moment(datetime),
     })
 )
 
 export interface TeamPairing extends IndividualPairing {
-    white_team: string
-    white_team_number: number
-    black_team: string
-    black_team_number: number
+    whiteTeam: string
+    whiteTeamNumber: number
+    blackTeam: string
+    blackTeamNumber: number
 }
 export const TeamPairingDecoder: Decoder<TeamPairing> = andThen(
     IndividualPairingDecoder,
@@ -114,12 +114,12 @@ export const TeamPairingDecoder: Decoder<TeamPairing> = andThen(
             ['white_team_number', number()],
             ['black_team', string()],
             ['black_team_number', number()],
-            (white_team, white_team_number, black_team, black_team_number) => ({
+            (whiteTeam, whiteTeamNumber, blackTeam, blackTeamNumber) => ({
                 ...pairing,
-                white_team,
-                white_team_number,
-                black_team,
-                black_team_number,
+                whiteTeam,
+                whiteTeamNumber,
+                blackTeam,
+                blackTeamNumber,
             })
         )
     }
@@ -142,9 +142,9 @@ export function isTeamPairing(obj: Pairing): obj is TeamPairing {
     return obj.hasOwnProperty('white_team')
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Pairings
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 export interface User {
     name: string
@@ -160,8 +160,8 @@ export interface UpdatePairingResult {
     updated: number
     white: string
     black: string
-    game_link_changed: boolean
-    result_changed: boolean
+    gameLinkChanged: boolean
+    resultChanged: boolean
     reversed: boolean
 }
 export const UpdatePairingResultDecoder: Decoder<UpdatePairingResult> = object(
@@ -171,19 +171,19 @@ export const UpdatePairingResultDecoder: Decoder<UpdatePairingResult> = object(
     ['game_link_changed', boolean()],
     ['result_changed', boolean()],
     ['reversed', boolean()],
-    (updated, white, black, game_link_changed, result_changed, reversed) => ({
+    (updated, white, black, gameLinkChanged, resultChanged, reversed) => ({
         updated,
         white,
         black,
-        game_link_changed,
-        result_changed,
+        gameLinkChanged,
+        resultChanged,
         reversed,
     })
 )
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Rosters
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export interface Player {
     username: string
     rating: number
@@ -195,23 +195,23 @@ export const PlayerDecoder: Decoder<Player> = object(
 )
 export interface TeamPlayer {
     username: string
-    is_captain: boolean
-    board_number: number
+    isCaptain: boolean
+    boardNumber: number
 }
 export const TeamPlayerDecoder: Decoder<TeamPlayer> = object(
     ['username', string()],
     ['is_captain', boolean()],
     ['board_number', number()],
-    (username, is_captain, board_number) => ({
+    (username, isCaptain, boardNumber) => ({
         username,
-        is_captain,
-        board_number,
+        isCaptain,
+        boardNumber,
     })
 )
 export interface Team {
     name: string
-    number: number
-    slack_channel: string
+    num: number
+    slackChannel: string
     players: TeamPlayer[]
 }
 export const TeamDecoder: Decoder<Team> = object(
@@ -219,21 +219,21 @@ export const TeamDecoder: Decoder<Team> = object(
     ['number', number()],
     ['slack_channel', string()],
     ['players', array(TeamPlayerDecoder)],
-    (name, number, slack_channel, players) => ({
+    (name, num, slackChannel, players) => ({
         name,
-        number,
-        slack_channel,
+        num,
+        slackChannel,
         players,
     })
 )
 export interface BoardAlternates {
-    board_number: number
+    boardNumber: number
     usernames: string[]
 }
 export const BoardAlternatesDecoder: Decoder<BoardAlternates> = object(
     ['board_number', number()],
     ['usernames', array(string())],
-    (board_number, usernames) => ({ board_number, usernames })
+    (boardNumber, usernames) => ({ boardNumber, usernames })
 )
 export interface Roster {
     league: string
@@ -257,9 +257,9 @@ export const RosterDecoder: Decoder<Roster> = object(
     })
 )
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // UserMap
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export interface UserMap {
     users: Record<string, string>
 }
@@ -268,24 +268,24 @@ export const UserMapDecoder: Decoder<UserMap> = object(
     (users) => ({ users })
 )
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Link Slack
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export interface SlackLink {
     url: string
-    already_linked: string[]
+    alreadyLinked: string[]
     expires: string
 }
 export const SlackLinkDecoder: Decoder<SlackLink> = object(
     ['url', string()],
     ['already_linked', array(string())],
     ['expires', string()],
-    (url, already_linked, expires) => ({ url, already_linked, expires })
+    (url, alreadyLinked, expires) => ({ url, alreadyLinked, expires })
 )
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // UpdateSucceeded
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export interface UpdateSucceeded {
     updated: number
 }
@@ -294,9 +294,9 @@ export const UpdateSucceededDecoder: Decoder<UpdateSucceeded> = object(
     (updated) => ({ updated })
 )
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // League Moderators
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export interface LeagueModerators {
     moderators: string[]
 }
@@ -305,12 +305,12 @@ export const LeagueModeratorsDecoder: Decoder<LeagueModerators> = object(
     (moderators) => ({ moderators })
 )
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function heltourRequest(
     heltourConfig: Config,
     endpoint: string
 ): http.RequestOptions {
-    var request = url.parse(`${heltourConfig.baseEndpoint}${endpoint}/`)
+    const request = parse(`${heltourConfig.baseEndpoint}${endpoint}/`)
     return {
         ...request,
         headers: {
@@ -323,8 +323,8 @@ async function heltourApiCall<T extends object>(
     request: http.RequestOptions,
     decoder: Decoder<T>
 ) {
-    let response = await http.fetchURL(request)
-    let result = union(ErrorDecoder, decoder).decodeJSON(response.body)
+    const response = await http.fetchURL(request)
+    const result = union(ErrorDecoder, decoder).decodeJSON(response.body)
     if (!isValid<T>(result)) {
         throw new HeltourError(result.error)
     }
@@ -342,11 +342,8 @@ export async function findPairing(
     black: string,
     leagueTag?: string
 ) {
-    var request = heltourRequest(heltourConfig, 'find_pairing')
-    request.parameters = {
-        white: white,
-        black: black,
-    }
+    const request = heltourRequest(heltourConfig, 'find_pairing')
+    request.parameters = { white, black }
     if (!_.isNil(leagueTag)) {
         request.parameters.league = leagueTag
     }
@@ -365,7 +362,7 @@ export async function getAllPairings(
     heltourConfig: Config,
     leagueTag: string
 ): Promise<Pairing[]> {
-    var request = heltourRequest(heltourConfig, 'find_pairing')
+    const request = heltourRequest(heltourConfig, 'find_pairing')
     request.parameters = {
         league: leagueTag,
     }
@@ -377,7 +374,7 @@ export async function updateSchedule(
     heltourConfig: Config,
     schedule: UpdateScheduleRequest
 ) {
-    var request = heltourRequest(heltourConfig, 'update_pairing')
+    const request = heltourRequest(heltourConfig, 'update_pairing')
     request.method = 'POST'
     request.bodyParameters = {
         league: heltourConfig.leagueTag,
@@ -394,7 +391,7 @@ export async function updatePairing(
     heltourConfig: Config,
     result: UpdatePairingRequest
 ) {
-    let pairings = await findPairing(
+    const pairings = await findPairing(
         heltourConfig,
         result.white.name,
         result.black.name
@@ -404,7 +401,7 @@ export async function updatePairing(
     } else if (pairings.length > 1) {
         throw new HeltourError('ambiguous')
     }
-    var request = heltourRequest(heltourConfig, 'update_pairing')
+    const request = heltourRequest(heltourConfig, 'update_pairing')
     request.method = 'POST'
     request.bodyParameters = {
         league: heltourConfig.leagueTag,
@@ -412,14 +409,14 @@ export async function updatePairing(
         black: result.black.name,
     }
     if (result.result) {
-        request.bodyParameters['result'] = result.result
+        request.bodyParameters.result = result.result
     }
     if (result.game_link) {
-        request.bodyParameters['game_link'] = result.game_link
+        request.bodyParameters.game_link = result.game_link
     }
 
-    let response = await http.fetchURL(request)
-    let heltourResult = union(
+    const response = await http.fetchURL(request)
+    const heltourResult = union(
         ErrorDecoder,
         UpdatePairingResultDecoder
     ).decodeJSON(response.body)
@@ -427,7 +424,7 @@ export async function updatePairing(
         throw new HeltourError(heltourResult.error)
     }
     if (heltourResult.reversed) {
-        let white = heltourResult.white
+        const white = heltourResult.white
         heltourResult.white = heltourResult.black
         heltourResult.black = white
     }
@@ -435,7 +432,7 @@ export async function updatePairing(
 }
 
 export async function getRoster(heltourConfig: Config, leagueTag: string) {
-    var request = heltourRequest(heltourConfig, 'get_roster')
+    const request = heltourRequest(heltourConfig, 'get_roster')
     request.parameters = {
         league: leagueTag,
     }
@@ -443,18 +440,18 @@ export async function getRoster(heltourConfig: Config, leagueTag: string) {
 }
 
 export async function getUserMap(heltourConfig: Config): Promise<UserMap> {
-    var request = heltourRequest(heltourConfig, 'get_slack_user_map')
+    const request = heltourRequest(heltourConfig, 'get_slack_user_map')
     request.parameters = {}
     return heltourApiCall(request, UserMapDecoder)
 }
 
 export async function linkSlack(
     heltourConfig: Config,
-    user_id: string,
-    display_name: string
+    userId: string,
+    displayName: string
 ) {
-    var request = heltourRequest(heltourConfig, 'link_slack')
-    request.parameters = { user_id: user_id, display_name: display_name }
+    const request = heltourRequest(heltourConfig, 'link_slack')
+    request.parameters = { userId, displayName }
     return heltourApiCall(request, SlackLinkDecoder)
 }
 
@@ -465,20 +462,20 @@ export async function assignAlternate(
     board: number,
     player: string
 ) {
-    var request = heltourRequest(heltourConfig, 'assign_alternate')
+    const request = heltourRequest(heltourConfig, 'assign_alternate')
     request.method = 'POST'
     request.bodyParameters = {
         league: heltourConfig.leagueTag,
-        round: round,
-        team: team,
-        board: board,
-        player: player,
+        round,
+        team,
+        board,
+        player,
     }
     return heltourApiCall(request, UpdateSucceededDecoder)
 }
 
 export async function getLeagueModerators(heltourConfig: Config) {
-    var request = heltourRequest(heltourConfig, 'get_league_moderators')
+    const request = heltourRequest(heltourConfig, 'get_league_moderators')
     request.parameters = {
         league: heltourConfig.leagueTag,
     }
@@ -491,13 +488,13 @@ export async function setAvailability(
     available: boolean,
     roundNumber: number
 ) {
-    var request = heltourRequest(heltourConfig, 'set_availability')
+    const request = heltourRequest(heltourConfig, 'set_availability')
     request.method = 'POST'
     request.bodyParameters = {
         league: heltourConfig.leagueTag,
         player: playerName,
         round: roundNumber,
-        available: available,
+        available,
     }
     return heltourApiCall(request, UpdateSucceededDecoder)
 }
@@ -508,13 +505,13 @@ export async function sendGameWarning(
     black: string,
     reason: string
 ) {
-    var request = heltourRequest(heltourConfig, 'game_warning')
+    const request = heltourRequest(heltourConfig, 'game_warning')
     request.method = 'POST'
     request.bodyParameters = {
         league: heltourConfig.leagueTag,
-        white: white,
-        black: black,
-        reason: reason,
+        white,
+        black,
+        reason,
     }
     return heltourApiCall(request, UpdateSucceededDecoder)
 }
@@ -524,12 +521,9 @@ export async function playerContact(
     sender: string,
     recip: string
 ) {
-    var request = heltourRequest(heltourConfig, 'player_contact')
+    const request = heltourRequest(heltourConfig, 'player_contact')
     request.method = 'POST'
-    request.bodyParameters = {
-        sender: sender,
-        recip: recip,
-    }
+    request.bodyParameters = { sender, recip }
     return heltourApiCall(request, UpdateSucceededDecoder)
 }
 

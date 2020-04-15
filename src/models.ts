@@ -1,8 +1,8 @@
 'use strict'
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Models for our locally stored data
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import winston from 'winston'
 import { Sequelize, Model, DataTypes } from 'sequelize'
 
@@ -25,7 +25,7 @@ export class Subscription extends Model {
     public league!: string
 }
 
-//--------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 function defineModels(sequelize: Sequelize) {
     LichessRating.init(
         {
@@ -84,15 +84,15 @@ function defineModels(sequelize: Sequelize) {
     )
 }
 
-//--------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // Connection function that ensures we have a connection and the models
 // are defined.
 //
 // Parameters: config - the config option that contains the database
 //                      information.
-//--------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 export async function connect(config: Config) {
-    var sequelize = new Sequelize(
+    const sequelize = new Sequelize(
         config.database,
         config.username,
         config.password,

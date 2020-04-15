@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Commands related to game nomination
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import _ from 'lodash'
 import * as heltour from '../heltour'
 import { SlackBot, CommandMessage } from '../slack'
 import { isDefined } from '../utils'
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function nomination(bot: SlackBot, message: CommandMessage) {
     if (!isDefined(message.league)) return
     bot.reply(
@@ -15,7 +15,7 @@ export function nomination(bot: SlackBot, message: CommandMessage) {
     )
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function notification(bot: SlackBot, message: CommandMessage) {
     if (!isDefined(message.league)) return
     bot.reply(
@@ -24,7 +24,7 @@ export function notification(bot: SlackBot, message: CommandMessage) {
     )
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function availability(bot: SlackBot, message: CommandMessage) {
     if (!isDefined(message.league)) return
     bot.reply(
@@ -33,25 +33,25 @@ export function availability(bot: SlackBot, message: CommandMessage) {
     )
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export async function linkAccounts(bot: SlackBot, message: CommandMessage) {
-    var slackUser = bot.getSlackUserFromNameOrID(message.user)
+    const slackUser = bot.getSlackUserFromNameOrID(message.user)
     if (!isDefined(slackUser)) return
-    let result = await heltour.linkSlack(
+    const result = await heltour.linkSlack(
         bot.config.heltour,
         message.user,
-        slackUser.profile['display_name'] || slackUser.profile['real_name']
+        slackUser.profile.display_name || slackUser.profile.real_name
     )
-    let convo = await bot.startPrivateConversation([message.user])
+    const convo = await bot.startPrivateConversation([message.user])
 
-    var channelId = convo.channel.id
-    var text = ''
+    const channelId = convo.channel.id
+    let text = ''
 
-    _.each(result.already_linked, function (username) {
+    _.each(result.alreadyLinked, (username) => {
         text += `Your Slack account is already linked with the Lichess account <https://lichess.org/@/${username}|${username}>.\n`
     })
 
-    if (result.already_linked.length > 0) {
+    if (result.alreadyLinked.length > 0) {
         text += `<${result.url}|Click here> to link another Lichess account.\n`
     } else {
         text += `<${result.url}|Click here> to link your Slack and Lichess accounts.\n`
@@ -59,7 +59,7 @@ export async function linkAccounts(bot: SlackBot, message: CommandMessage) {
 
     bot.say({
         channel: channelId,
-        text: text,
+        text,
         attachments: [],
     })
 }

@@ -27,6 +27,7 @@
     "sequelize": "^5.21.5",
     "sequelize-cli": "5.5.0",
     "triple-beam": "^1.3.0",
+    "tslint": "^6.1.1",
     "type-safe-json-decoder": "^0.2.0",
     "utility-types": "^3.10.0",
     "winston": "^3.2.1"
@@ -59,7 +60,7 @@
     "start": "tsc && node build/chesster.js",
     "test": "mocha -r ts-node/register test/**/*.ts",
     "send-coverage": "tsc && node_modules/.bin/codeclimate-test-reporter < coverage/lcov.info; exit 0",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "hint": "tsc && node_modules/.bin/jshint src",
     "migrate": "tsc && node_modules/.bin/sequelize db:migrate --config"
   },

@@ -1,6 +1,6 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Commands and helpers related to subscriptions
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import _ from 'lodash'
 import winston from 'winston'
 
@@ -17,18 +17,18 @@ export const emitter = new ChessLeagueEmitter()
 type Context = any
 type Callback = any
 
-var events: string[] = [
-    //'a-game-starts',
-    //'a-game-is-scheduled',
-    //'a-game-is-over',
-    //'a-pairing-is-released',
+const events: string[] = [
+    // 'a-game-starts',
+    // 'a-game-is-scheduled',
+    // 'a-game-is-over',
+    // 'a-pairing-is-released',
 ]
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Format the help response message
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function formatHelpResponse(bot: SlackBot) {
-    var leagueNames = _.map(league.getAllLeagues(bot), 'options.name')
+    const leagueNames = _.map(league.getAllLeagues(bot), 'options.name')
 
     return (
         'The subscription system supports the following commands: \n' +
@@ -52,11 +52,11 @@ function formatHelpResponse(bot: SlackBot) {
     )
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // tell them they chose an invalid league
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function formatInvalidLeagueResponse(bot: SlackBot) {
-    var leagueNames = _.map(league.getAllLeagues(bot), 'options.name')
+    const leagueNames = _.map(league.getAllLeagues(bot), 'options.name')
 
     return (
         "You didn't specify a valid league. These are your options:\n" +
@@ -66,9 +66,9 @@ function formatInvalidLeagueResponse(bot: SlackBot) {
     )
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Tell them they can only listen for themselves
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function formatCanOnlyListenForYouResponse(listener: string) {
     if (_.isEqual(listener, 'my-team-channel')) {
         return (
@@ -89,18 +89,18 @@ function formatCanOnlyListenForYouResponse(listener: string) {
     }
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // This is not a listener that we recognize
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function formatInvalidListenerResponse(listener: string) {
     return (
         "I don't recognize '" + listener + "'. Please use 'me' as the listener."
     )
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Format the invalid event handler
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function formatInvalidEventResponse(event: string) {
     return (
         '`' +
@@ -112,9 +112,9 @@ function formatInvalidEventResponse(event: string) {
     )
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Format the response for when the source is not valid
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function formatInvalidSourceResponse(source: string) {
     return (
         '`' +
@@ -123,32 +123,32 @@ function formatInvalidSourceResponse(source: string) {
     )
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Format the response for when the user is not on a team
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function formatNoTeamResponse() {
     return "You can't use my-team or my-team-channel since you don't have a team right now."
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Format the a-game-is-scheduled response
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function formatAGameIsScheduled(
     bot: SlackBot,
     target: string,
     context: Context
 ) {
     // TODO: put these date formats somewhere, probably config?
-    var friendlyFormat = 'ddd @ HH:mm'
-    let member = bot.getSlackUserFromNameOrID(target)
-    var message = ''
-    var fullFormat = 'YYYY-MM-DD @ HH:mm UTC'
-    let realDate = context.result.date.format(fullFormat)
+    const friendlyFormat = 'ddd @ HH:mm'
+    const member = bot.getSlackUserFromNameOrID(target)
+    let message = ''
+    const fullFormat = 'YYYY-MM-DD @ HH:mm UTC'
+    const realDate = context.result.date.format(fullFormat)
     if (member && member.tz_offset) {
-        var targetDate = context.result.date
+        const targetDate = context.result.date
             .clone()
             .utcOffset(member.tz_offset / 60)
-        context['yourDate'] = targetDate.format(friendlyFormat)
+        context.yourDate = targetDate.format(friendlyFormat)
         message = `${context.white.name} vs ${context.black.name} in ${context.leagueName} has been scheduled for ${realDate}, which is {context.yourDate} for you.`
     } else {
         message = `${context.white.name} vs ${context.black.name} in ${context.leagueName} has been scheduled for ${realDate}.`
@@ -156,9 +156,9 @@ export function formatAGameIsScheduled(
     return message
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Format the A Game Starts response.
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function formatAGameStarts(
     bot: SlackBot,
     target: string,
@@ -167,9 +167,9 @@ export function formatAGameStarts(
     return `${context.white.name} vs ${context.black.name} in ${context.leagueName} has started: ${context.result.gamelink}`
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Format the a game is over response.
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function formatAGameIsOver(
     bot: SlackBot,
     target: string,
@@ -178,57 +178,57 @@ export function formatAGameIsOver(
     return `${context.white.name} vs ${context.black.name} in ${context.leagueName} is over. The result is ${context.result.result}.`
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Processes a tell command.
 //
 // A tell command is made up like so:
 //      tell <listener> when <event> in <league> for <source>
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function processTellCommand(
     bot: SlackBot,
     message: CommandMessage
 ): Promise<string> {
     return new Promise((resolve, reject) => {
-        var requester = bot.getSlackUserFromNameOrID(message.user)
+        const requester = bot.getSlackUserFromNameOrID(message.user)
         if (!isDefined(requester)) return
-        var components = message.text.split(' ')
-        var args = _.map(components.slice(0, 7), _.toLower)
-        var sourceName = components.splice(7).join(' ')
-        var tell = args[0],
-            listener = args[1],
-            when = args[2],
-            event = args[3],
-            _in = args[4],
-            targetLeague = args[5],
-            _for = args[6]
+        const components = message.text.split(' ')
+        const args = _.map(components.slice(0, 7), _.toLower)
+        let sourceName = components.splice(7).join(' ')
+        const tell = args[0]
+        let listener = args[1]
+        const when = args[2]
+        const event = args[3]
+        const _in = args[4]
+        const targetLeague = args[5]
+        const _for = args[6]
 
         // Ensure the basic command format is valid
         if (
             !_.isEqual(['tell', 'when', 'in', 'for'], [tell, when, _in, _for])
         ) {
-            let message = formatHelpResponse(bot)
-            return resolve("I didn't understand you.\n" + message)
+            const response = formatHelpResponse(bot)
+            return resolve("I didn't understand you.\n" + response)
         }
 
         // Ensure they chose a valid league.
-        var _league = league.getLeague(bot, targetLeague)
+        const _league = league.getLeague(bot, targetLeague)
         if (_.isUndefined(_league)) {
             return resolve(formatInvalidLeagueResponse(bot))
         }
         message.league = _league
-        var team = message.league.getTeamByPlayerName(
+        let team = message.league.getTeamByPlayerName(
             message.member.lichess_username
         )
-        var captainName =
+        const captainName =
             team && _(team.players).filter('isCaptain').map('username').value()
-        var isCaptain =
+        const isCaptain =
             captainName &&
             _.isEqual(
                 _.toLower(captainName[0]),
                 _.toLower(message.member.lichess_username)
             )
 
-        var possibleListeners = ['me', 'my-team-channel']
+        const possibleListeners = ['me', 'my-team-channel']
 
         if (
             !(
@@ -245,7 +245,7 @@ function processTellCommand(
         }
 
         // TODO: hrmmm. this seems bad.
-        var target: string = ''
+        let target: string = ''
         if (_.isEqual(listener, 'me')) {
             listener = 'you'
             target = requester.name
@@ -269,10 +269,10 @@ function processTellCommand(
             sourceName = team.name
         }
         // Ensure the source is a valid user or team within slack
-        var source = bot.getSlackUserFromNameOrID(sourceName)
-        let teams = _league.getTeams()
-        var team = _.find(teams, (team) => {
-            return team.name.toLowerCase() === sourceName.toLowerCase()
+        const source = bot.getSlackUserFromNameOrID(sourceName)
+        const teams = _league.getTeams()
+        team = _.find(teams, (t) => {
+            return t.name.toLowerCase() === sourceName.toLowerCase()
         })
         if (_.isUndefined(source) && _.isUndefined(team)) {
             return resolve(formatInvalidSourceResponse(sourceName))
@@ -300,17 +300,17 @@ function processTellCommand(
     })
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Processes the subscriptions command
 //
 // `subscription list` (by itself) simply lists your subscriptions with ID #s
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function processSubscriptionListCommand(
     bot: SlackBot,
     message: CommandMessage
 ): Promise<string> {
     return new Promise((resolve, reject) => {
-        var requester = bot.getSlackUserFromNameOrID(message.user)
+        const requester = bot.getSlackUserFromNameOrID(message.user)
         if (!isDefined(requester)) return
         return db.Subscription.findAll({
             where: {
@@ -319,11 +319,11 @@ function processSubscriptionListCommand(
             order: [['id', 'ASC']],
         })
             .then((subscriptions) => {
-                var response = ''
+                let response = ''
                 _.each(subscriptions, (subscription) => {
-                    var context: Context = subscription.get()
-                    if (_.startsWith(context['target'], 'channel_id:')) {
-                        context['target'] = 'your team channel'
+                    const context: Context = subscription.get()
+                    if (_.startsWith(context.target, 'channel_id:')) {
+                        context.target = 'your team channel'
                     }
                     response += `\nID ${context.id} -> tell ${context.target} when ${context.event} for ${context.source} in ${context.league}`
                 })
@@ -337,23 +337,23 @@ function processSubscriptionListCommand(
     })
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Processes the remove subscription command
 //
 // `subscription remove <id>` removes subscription with ID: <id>
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function processSubscriptionRemoveCommand(
     bot: SlackBot,
     message: CommandMessage,
     id: string
 ): Promise<string> {
     return new Promise((resolve, reject) => {
-        var requester = bot.getSlackUserFromNameOrID(message.user)
+        const requester = bot.getSlackUserFromNameOrID(message.user)
         if (!isDefined(requester)) return
         return db.Subscription.findAll({
             where: {
                 requester: requester.name.toLowerCase(),
-                id: id,
+                id,
             },
         }).then((subscriptions) => {
             if (subscriptions.length === 0) {
@@ -369,23 +369,23 @@ function processSubscriptionRemoveCommand(
     })
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Register an event + message handler
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function register(bot: SlackBot, eventName: string, cb: Callback) {
     // Ensure this is a known event.
     events.push(eventName)
 
     // Handle the event when it happens
-    emitter.on(eventName, async (league, sources, context) => {
-        return getListeners(bot, league.options.name, sources, eventName).then(
+    emitter.on(eventName, async (_league, sources, context) => {
+        return getListeners(bot, _league.options.name, sources, eventName).then(
             (targets) => {
-                var allDeferreds: Promise<void>[] = targets.map(
+                const allDeferreds: Promise<void>[] = targets.map(
                     (target) =>
                         new Promise((resolve, reject) => {
-                            var message = cb(bot, target, _.clone(context))
+                            const message = cb(bot, target, _.clone(context))
                             if (_.startsWith(target, 'channel_id:')) {
-                                var channelID = _.toUpper(target.substr(11))
+                                const channelID = _.toUpper(target.substr(11))
                                 bot.say({
                                     channel: channelID,
                                     text: message,
@@ -413,9 +413,9 @@ export function register(bot: SlackBot, eventName: string, cb: Callback) {
     })
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Get listeners for a given event and source
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function getListeners(
     bot: SlackBot,
     leagueName: string,
@@ -427,15 +427,15 @@ export function getListeners(
         // These are names of users, not users. So we have to go get the real
         // user and teams. This is somewhat wasteful - but I'm not sure whether
         // this is the right design or if we should pass in users to this point.
-        var _league = league.getLeague(bot, leagueName)
+        const _league = league.getLeague(bot, leagueName)
         if (!isDefined(_league)) return reject()
-        var teamNames = _(sources)
+        const teamNames = _(sources)
             .map(_league.getTeamByPlayerName)
             .filter(isDefined)
             .map('name')
             .map(_.toLower)
             .value()
-        var possibleSources = _.concat(sources, teamNames)
+        const possibleSources = _.concat(sources, teamNames)
         return db.Subscription.findAll({
             where: {
                 league: leagueName.toLowerCase(),
@@ -444,48 +444,48 @@ export function getListeners(
                 },
                 event: event.toLowerCase(),
             },
-        }).then(function (subscriptions) {
+        }).then((subscriptions) => {
             return resolve(_(subscriptions).map('target').uniq().value())
         })
     })
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Format the not a moderator response
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function formatNotModerator() {
     return "You are not a moderator and so you can't run this command"
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Process the subscribe teams command.
 //
 // A tell command is made up like so:
 //      tell <listener> when <event> in <league> for <source>
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function processTeamSubscribeCommand(
     bot: SlackBot,
     message: CommandMessage
 ): Promise<string> {
     return new Promise((resolve, reject) => {
-        var _leagueOr = league.getLeague(bot, '45+45')
+        const _leagueOr = league.getLeague(bot, '45+45')
         if (!isDefined(_leagueOr)) return
-        var _league: league.League = _leagueOr
+        const _league: league.League = _leagueOr
         // Needed for isModerator to work
         message.league = _league
         if (!_league.isModerator(message.member.lichess_username)) {
             return resolve(formatNotModerator())
         }
-        let teams = _league.getTeams()
-        var processed = 0
-        var missing_channel = 0
-        var promises = teams.map((team) => {
+        const teams = _league.getTeams()
+        let processed = 0
+        let missingChannel = 0
+        const promises = teams.map((team) => {
             if (!team.slack_channel) {
-                missing_channel++
+                missingChannel++
             } else {
-                var target = 'channel_id:' + team.slack_channel
+                const target = 'channel_id:' + team.slack_channel
                 processed++
-                ;['a-game-starts', 'a-game-is-over'].forEach(function (event) {
+                ;['a-game-starts', 'a-game-is-over'].forEach((event) => {
                     return db.Subscription.findOrCreate({
                         where: {
                             requester: 'chesster',
@@ -499,21 +499,21 @@ function processTeamSubscribeCommand(
             }
         })
         return Promise.all(promises)
-            .then(function () {
+            .then(() => {
                 return resolve(
-                    `Processed ${processed} teams. ${missing_channel} are missing channels.`
+                    `Processed ${processed} teams. ${missingChannel} are missing channels.`
                 )
             })
             .catch(reject)
     })
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Handler the tell me when command
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function tellMeWhenHandler() {
     return async (bot: SlackBot, message: CommandMessage) => {
-        let convo = await bot.startPrivateConversation([message.user])
+        const convo = await bot.startPrivateConversation([message.user])
         return processTellCommand(bot, message)
             .then((response) => {
                 bot.say({
@@ -532,12 +532,12 @@ export function tellMeWhenHandler() {
     }
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Handle the help message command
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function helpHandler() {
     return async (bot: SlackBot, message: CommandMessage) => {
-        let convo = await bot.startPrivateConversation([message.user])
+        const convo = await bot.startPrivateConversation([message.user])
         bot.say({
             channel: convo.channel.id,
             text: formatHelpResponse(bot),
@@ -545,20 +545,20 @@ export function helpHandler() {
     }
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Handle the subscription list command.
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function listHandler() {
     return async (bot: SlackBot, message: CommandMessage) => {
-        let convo = await bot.startPrivateConversation([message.user])
+        const convo = await bot.startPrivateConversation([message.user])
         return processSubscriptionListCommand(bot, message)
-            .then(function (response) {
+            .then((response) => {
                 bot.say({
                     channel: convo.channel.id,
                     text: response,
                 })
             })
-            .catch(function (error) {
+            .catch((error) => {
                 bot.say({
                     channel: convo.channel.id,
                     text:
@@ -569,24 +569,24 @@ export function listHandler() {
     }
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Handle the subscription remove command.
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function removeHandler() {
     return async (bot: SlackBot, message: CommandMessage) => {
-        let convo = await bot.startPrivateConversation([message.user])
+        const convo = await bot.startPrivateConversation([message.user])
         return processSubscriptionRemoveCommand(
             bot,
             message,
             message.matches[1]
         )
-            .then(function (response) {
+            .then((response) => {
                 bot.say({
                     channel: convo.channel.id,
                     text: response,
                 })
             })
-            .catch(function (error) {
+            .catch((error) => {
                 bot.say({
                     channel: convo.channel.id,
                     text:
@@ -597,20 +597,20 @@ export function removeHandler() {
     }
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Handle the subscribe teams command
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function subscribeTeams() {
     return async (bot: SlackBot, message: CommandMessage) => {
-        let convo = await bot.startPrivateConversation([message.user])
+        const convo = await bot.startPrivateConversation([message.user])
         return processTeamSubscribeCommand(bot, message)
-            .then(function (response) {
+            .then((response) => {
                 bot.say({
                     channel: convo.channel.id,
                     text: response,
                 })
             })
-            .catch(function (error) {
+            .catch((error) => {
                 bot.say({
                     channel: convo.channel.id,
                     text:

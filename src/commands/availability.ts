@@ -1,6 +1,6 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Commands related to availability
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import winston from 'winston'
 import _ from 'lodash'
 
@@ -51,7 +51,7 @@ function formatReplyUpdatedAvailability(
     available: boolean,
     roundNumber: number
 ) {
-    let not = available ? '' : ' not'
+    const not = available ? '' : ' not'
     bot.reply(
         message,
         `I have updated the availability. ` +
@@ -116,7 +116,7 @@ function replyMisunderstoodAlternateUnassignment(
 
 /* [player <player-name> is] {available, unavailable} for round <round-number> in <league> */
 export function updateAvailability(bot: SlackBot, message: CommandMessage) {
-    let heltourOptions = message.league?.heltour
+    const heltourOptions = message.league?.heltourConfig
     if (!heltourOptions) {
         winston.error(
             `${message.league?.name} league doesn't have heltour options.`
@@ -125,14 +125,7 @@ export function updateAvailability(bot: SlackBot, message: CommandMessage) {
     }
 
     let commandDescription
-    if (
-        _.isEqual(
-            _(message.text)
-                .split(' ')
-                .head(),
-            'player'
-        )
-    ) {
+    if (_.isEqual(_(message.text).split(' ').head(), 'player')) {
         commandDescription = [
             'player',
             '{text:playerName}',
@@ -156,18 +149,18 @@ export function updateAvailability(bot: SlackBot, message: CommandMessage) {
     }
 
     try {
-        let parameters = commands.tokenize(message.text, commandDescription)
+        const parameters = commands.tokenize(message.text, commandDescription)
 
-        let available = parameters['available'] ? true : false
-        let roundNumberVar = parameters['roundNumber']
+        const available = parameters.available ? true : false
+        const roundNumberVar = parameters.roundNumber
         if (!commands.isNumber(roundNumberVar)) {
             bot.reply(message, 'Round number is incorrect')
             return
         }
-        let roundNumber = roundNumberVar.value
-        let targetName = parameters['playerName']
+        const roundNumber = roundNumberVar.value
+        const targetName = parameters.playerName
         if (targetName && commands.isText(targetName)) {
-            let speaker = message.member
+            const speaker = message.member
 
             if (!isDefined(message.league)) {
                 bot.reply(
@@ -177,15 +170,15 @@ export function updateAvailability(bot: SlackBot, message: CommandMessage) {
                 return
             }
 
-            let speakerTeam = message.league.getTeamByPlayerName(speaker.name)
+            const speakerTeam = message.league.getTeamByPlayerName(speaker.name)
             if (!isDefined(speakerTeam)) {
                 bot.reply(message, `I couldn't figure your team`)
                 return
             }
-            //targetName is specified as an identifier or clear text, validate it and get the name
-            let slackUser = bot.getSlackUserFromNameOrID(targetName.value)
+            // targetName is specified as an identifier or clear text, validate it and get the name
+            const slackUser = bot.getSlackUserFromNameOrID(targetName.value)
             if (!slackUser) {
-                //didnt find a user by Name or ID
+                // didnt find a user by Name or ID
                 replyFailedToUpdate(
                     bot,
                     message,
@@ -194,9 +187,9 @@ export function updateAvailability(bot: SlackBot, message: CommandMessage) {
                 )
                 return
             }
-            let playerName = slackUser.name
-            //get the team associated with the player
-            let playerTeam = message.league.getTeamByPlayerName(playerName)
+            const playerName = slackUser.name
+            // get the team associated with the player
+            const playerTeam = message.league.getTeamByPlayerName(playerName)
             if (!isDefined(playerTeam)) {
                 bot.reply(
                     message,
@@ -205,8 +198,8 @@ export function updateAvailability(bot: SlackBot, message: CommandMessage) {
                 return
             }
 
-            //get the team associated with the speaker
-            //the speaker must be the captain of the player's team or a moderator
+            // get the team associated with the speaker
+            // the speaker must be the captain of the player's team or a moderator
             if (
                 !utils.isCaptainOrModerator(
                     speaker,
@@ -235,7 +228,7 @@ export function updateAvailability(bot: SlackBot, message: CommandMessage) {
                         roundNumber
                     )
                 )
-                .catch(function(error) {
+                .catch((error) => {
                     replyFailedToUpdate(bot, message, 'availability', error)
                 })
         }
@@ -258,7 +251,7 @@ export function updateAvailability(bot: SlackBot, message: CommandMessage) {
                 `[AVAILABILITY] Internal Error: Your description is not valid: {JSON.stringify(error)}`
             )
         } else {
-            //some unknown error, rethrow;
+            // some unknown error, rethrow;
             throw error
         }
     }
@@ -266,14 +259,14 @@ export function updateAvailability(bot: SlackBot, message: CommandMessage) {
 
 /* assign <player> to board <board-number> during round <round-number> on <team-name>*/
 export function assignAlternate(bot: SlackBot, message: CommandMessage) {
-    let alternateOptions = message.league?.alternate
+    const alternateOptions = message.league?.alternate
     if (
         !alternateOptions ||
         !_.isEqual(message.channel.id, alternateOptions.channel_id)
     ) {
         return
     }
-    let heltourOptions = message.league?.heltour
+    const heltourOptions = message.league?.heltourConfig
     if (!heltourOptions) {
         winston.error(
             `${message.league?.name} league doesn't have heltour options!?`
@@ -282,7 +275,7 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
     }
 
     try {
-        let parameters = commands.tokenize(message.text, [
+        const parameters = commands.tokenize(message.text, [
             'assign',
             '{text:playerName}',
             'to',
@@ -294,7 +287,7 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
             '{on|for|in}',
             '{text:teamName}',
         ])
-        let speaker = bot.getSlackUserFromNameOrID(message.user)
+        const speaker = bot.getSlackUserFromNameOrID(message.user)
         if (!isDefined(speaker)) {
             bot.reply(message, `I don't reocgnize you, sorry.`)
             return
@@ -308,20 +301,20 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
             return
         }
 
-        let speakerTeam = message.league.getTeamByPlayerName(speaker.name)
+        const speakerTeam = message.league.getTeamByPlayerName(speaker.name)
         if (!isDefined(speakerTeam)) {
             bot.reply(message, `I couldn't figure your team`)
             return
         }
 
-        let teamNameVar = parameters['teamName']
+        const teamNameVar = parameters.teamName
         if (!commands.isText(teamNameVar)) {
             bot.reply(message, 'Round number is incorrect')
             return
         }
-        let teamName = teamNameVar.value
+        const teamName = teamNameVar.value
 
-        let playerNameVar = parameters['playerName']
+        const playerNameVar = parameters.playerName
         if (!commands.isText(playerNameVar)) {
             bot.reply(message, 'Round number is incorrect')
             return
@@ -349,26 +342,26 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
             return
         }
 
-        let boardNumberVar = parameters['boardNumber']
+        const boardNumberVar = parameters.boardNumber
         if (!commands.isNumber(boardNumberVar)) {
             bot.reply(message, 'Round number is incorrect')
             return
         }
-        let boardNumber = boardNumberVar.value
-        let roundNumberVar = parameters['roundNumber']
+        const boardNumber = boardNumberVar.value
+        const roundNumberVar = parameters.roundNumber
         if (!commands.isNumber(roundNumberVar)) {
             bot.reply(message, 'Round number is incorrect')
             return
         }
-        let roundNumber = roundNumberVar.value
+        const roundNumber = roundNumberVar.value
 
-        let team = message.league.getTeam(teamName)
+        const team = message.league.getTeam(teamName)
         if (!team) {
             replyUnrecognizedTeam(bot, message, teamName)
             return
         }
 
-        let player = bot.getSlackUserFromNameOrID(playerName)
+        const player = bot.getSlackUserFromNameOrID(playerName)
         if (!isDefined(player)) {
             replyFailedToUpdate(
                 bot,
@@ -378,14 +371,10 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
             )
             return
         }
-        if (
-            _(playerName)
-                .toUpper()
-                .includes(player.id)
-        ) {
-            //currently commands makes everything lower case
-            //until I have added something to control the case-sensitivity
-            //I will need to convert player ids to upper case.
+        if (_(playerName).toUpper().includes(player.id)) {
+            // currently commands makes everything lower case
+            // until I have added something to control the case-sensitivity
+            // I will need to convert player ids to upper case.
             playerName = _.toUpper(playerName)
         }
         return heltour
@@ -402,7 +391,7 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
                     `*${playerName}* has been assigned to *board ${boardNumber}* for *${teamName}* during *round ${roundNumber}*`
                 )
             })
-            .catch(function(error) {
+            .catch((error) => {
                 replyFailedToUpdate(bot, message, 'alternate assignment', error)
             })
     } catch (error) {
@@ -429,7 +418,7 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
                 )}`
             )
         } else {
-            //some unknown error, rethrow;
+            // some unknown error, rethrow;
             throw error
         }
     }
@@ -438,14 +427,14 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
 /* unassign alternate for board <board-number> during round <round-number> on <team-name> */
 /* look up the original player and assign him to his board */
 export function unassignAlternate(bot: SlackBot, message: CommandMessage) {
-    let alternateOptions = message.league?.alternate
+    const alternateOptions = message.league?.alternate
     if (
         !alternateOptions ||
         !_.isEqual(message.channel.id, alternateOptions.channel_id)
     ) {
         return
     }
-    let heltourOptions = message.league?.heltour
+    const heltourOptions = message.league?.heltourConfig
     if (!heltourOptions) {
         winston.error(
             `${message.league?.name} league doesn't have heltour options!?`
@@ -454,20 +443,20 @@ export function unassignAlternate(bot: SlackBot, message: CommandMessage) {
     }
 
     let components = message.text.split(' ')
-    components = components.filter(p => p !== '')
-    let args = _.map(components.slice(0, 9), _.toLower)
-    let teamName = components.splice(9).join(' ')
-    let unassign = args[0],
-        alternate = args[1],
-        _for = args[2],
-        board = args[3],
-        boardNumberStr = args[4],
-        during = args[5],
-        round = args[6],
-        roundNumberStr = args[7],
-        on = args[8]
+    components = components.filter((p) => p !== '')
+    const args = _.map(components.slice(0, 9), _.toLower)
+    const teamName = components.splice(9).join(' ')
+    const unassign = args[0]
+    const alternate = args[1]
+    // const _for = args[2]
+    const board = args[3]
+    const boardNumberStr = args[4]
+    // const during = args[5]
+    const round = args[6]
+    const roundNumberStr = args[7]
+    const on = args[8]
 
-    let speaker = bot.getSlackUserFromNameOrID(message.user)
+    const speaker = bot.getSlackUserFromNameOrID(message.user)
     if (!isDefined(speaker)) {
         bot.reply(message, `I don't reocgnize you, sorry.`)
         return
@@ -478,7 +467,7 @@ export function unassignAlternate(bot: SlackBot, message: CommandMessage) {
         return
     }
 
-    let speakerTeam = message.league.getTeamByPlayerName(speaker.name)
+    const speakerTeam = message.league.getTeamByPlayerName(speaker.name)
     if (!isDefined(speakerTeam)) {
         bot.reply(message, `I couldn't figure your team`)
         return
@@ -507,24 +496,24 @@ export function unassignAlternate(bot: SlackBot, message: CommandMessage) {
         return
     }
 
-    let boardNumber = parseInt(boardNumberStr, 10)
+    const boardNumber = parseInt(boardNumberStr, 10)
     if (isNaN(boardNumber)) {
         replyMisunderstoodAlternateUnassignment(bot, message)
         return
     }
 
-    let roundNumber = parseInt(roundNumberStr, 10)
+    const roundNumber = parseInt(roundNumberStr, 10)
     if (isNaN(roundNumber)) {
         replyMisunderstoodAlternateUnassignment(bot, message)
         return
     }
 
-    let team = message.league.getTeam(teamName)
+    const team = message.league.getTeam(teamName)
     if (!team) {
         replyUnrecognizedTeam(bot, message, teamName)
         return
     }
-    let player = team.players[boardNumber - 1].username
+    const player = team.players[boardNumber - 1].username
     return heltour
         .assignAlternate(
             heltourOptions,
@@ -545,8 +534,7 @@ export function unassignAlternate(bot: SlackBot, message: CommandMessage) {
                     roundNumber
             )
         )
-        .catch(function(error) {
+        .catch((error) => {
             replyFailedToUpdate(bot, message, 'alternate assignment', error)
         })
 }
-

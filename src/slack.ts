@@ -1,6 +1,6 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Bot / Slack related helpers
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import { RTMClient } from '@slack/rtm-api'
 import {
     WebClient,
@@ -71,12 +71,11 @@ export interface SlackUserListResponse extends WebAPICallResult {
     cache_ts: number
     response_metadata: SlackResponseMetadata
 }
-export interface SlackChannelTopic {
+export interface SlackChannelTopicOrPurpose {
     value: string
     creator: SlackUserID
     last_set: number
 }
-export interface SlackChannelPurpose extends SlackChannelTopic {}
 
 export interface SlackChannel {
     id: string
@@ -96,8 +95,8 @@ export interface SlackChannel {
     is_mpim: boolean
     members: SlackUserID[]
     user?: string
-    topic: SlackChannelTopic
-    purpose: SlackChannelPurpose
+    topic: SlackChannelTopicOrPurpose
+    purpose: SlackChannelTopicOrPurpose
     previous_names: SlackChannelName[]
     num_members: number
     tz: string
@@ -205,7 +204,7 @@ export interface CommandMessage extends ChessterMessage {
     matches: RegExpMatchArray
 }
 
-//--------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // Callback related types
 export type EventType = 'ambient' | 'direct_message' | 'direct_mention'
 
@@ -232,9 +231,9 @@ function wantsAmbient(options: SlackRTMEventListenerOptions) {
     return options.messageTypes.findIndex((t) => t === 'ambient') !== -1
 }
 
-var SECONDS = 1000 // ms
+const SECONDS = 1000 // ms
 
-var slackIDRegex = (module.exports.slackIDRegex = /<@([^\s]+)>/)
+const slackIDRegex = (module.exports.slackIDRegex = /<@([^\s]+)>/)
 
 class StopControllerError extends Error {
     constructor(error: string) {
@@ -251,7 +250,7 @@ export function appendPlayerRegex(command: string, optional: boolean) {
      *               is what will show up in the match[1] place.
      * )
      */
-    var playerRegex = command + '(?: @?([^\\s]+))'
+    const playerRegex = command + '(?: @?([^\\s]+))'
 
     if (optional) {
         // If the username is optional (as in the "rating" command), append
@@ -262,15 +261,15 @@ export function appendPlayerRegex(command: string, optional: boolean) {
     return new RegExp(playerRegex, 'i')
 }
 
-/* 
+/*
    updates the user list
    updates the channel lists
    then repeats in new thread
-   
+
    if it encounters an error it will exit the process with exit code 1
 */
 function criticalPath<T>(promise: Promise<T>) {
-    exceptionLogger(promise).catch(function () {
+    exceptionLogger(promise).catch(() => {
         winston.error(
             'An exception was caught in a critical code-path. I am going down.'
         )
@@ -280,10 +279,10 @@ function criticalPath<T>(promise: Promise<T>) {
 }
 
 // a promise and ensures that uncaught exceptions are logged.
-let exceptionLogger = <T>(promise: Promise<T>) =>
-    new Promise((_, reject) => {
-        promise.catch(function (e) {
-            var error_log =
+const exceptionLogger = <T>(promise: Promise<T>) =>
+    new Promise((resolve, reject) => {
+        promise.then(resolve).catch((e) => {
+            const errorLog =
                 'An error occurred:' +
                 '\nDatetime: ' +
                 new Date() +
@@ -291,14 +290,14 @@ let exceptionLogger = <T>(promise: Promise<T>) =>
                 JSON.stringify(e) +
                 '\nStack: ' +
                 e.stack
-            winston.error(error_log)
+            winston.error(errorLog)
             reject(e)
         })
     })
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // A helper to determine if the user is a moderator
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function withModerator(message: ChessterMessage): ChessterMessage {
     return {
         ...message,
@@ -308,9 +307,9 @@ function withModerator(message: ChessterMessage): ChessterMessage {
     }
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Various middleware
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export function requiresModerator(
     bot: SlackBot,
     message: ChessterMessage
@@ -332,34 +331,32 @@ export function requiresModerator(
 }
 
 function findLeagueByMessageText(bot: SlackBot, message: ChessterMessage) {
-    var allLeagues = league.getAllLeagues(bot)
-    var leagueTargets: string[] = []
-    var targetToLeague: Record<string, league.League> = {}
+    const allLeagues = league.getAllLeagues(bot)
+    const leagueTargets: string[] = []
+    const targetToLeague: Record<string, league.League> = {}
     function add_target(l: league.League, target: string) {
         leagueTargets.push(target)
         targetToLeague[target] = l
     }
-    _.each(allLeagues, function (l) {
+    _.each(allLeagues, (l) => {
         add_target(l, l.name)
-        _.each(l.also_known_as, function (aka) {
-            add_target(l, aka)
-        })
+        _.each(l.alsoKnownAs, (aka) => add_target(l, aka))
     })
 
     // Now fuzzy match them based on each arg in the message
-    var matches: fuzzy.Result[][] = []
-    var args = message.text.split(' ')
-    _.each(args, function (arg) {
-        var results = fuzzy.rankChoices(arg.toLowerCase(), leagueTargets)
+    const matches: fuzzy.Result[][] = []
+    const args = message.text.split(' ')
+    _.each(args, (arg) => {
+        const results = fuzzy.rankChoices(arg.toLowerCase(), leagueTargets)
         matches.push(results)
     })
-    var bestMatches = fuzzy.findBestMatches(_.flatten(matches))
-    var possibleLeagues: Record<string, league.League> = {}
+    const bestMatches = fuzzy.findBestMatches(_.flatten(matches))
+    const possibleLeagues: Record<string, league.League> = {}
     _.each(bestMatches, (match) => {
-        var l = targetToLeague[match.value]
+        const l = targetToLeague[match.value]
         possibleLeagues[l.name] = l
     })
-    var matchingLeagueNames = _.keys(possibleLeagues)
+    const matchingLeagueNames = _.keys(possibleLeagues)
     if (matchingLeagueNames.length > 1) {
         throw new StopControllerError('Ambiguous leagues.')
     }
@@ -377,11 +374,11 @@ function getLeague(
     message.league = undefined
 
     // generate a set of possible target leagues
-    var l
+    let l
     // If they didn't ask for a specific league, then we will use the channel
     // to determine it
-    var targetLeague
-    var channel = message.channel
+    let targetLeague
+    const channel = message.channel
     if (channel && channel.name) {
         targetLeague = bot.config.channel_map[channel.name]
         l = league.getLeague(bot, targetLeague)
@@ -394,8 +391,8 @@ function getLeague(
     // If no channel name matched, try the channel Id this is necessary for private channels
     // it makes me sad ... :(
     if (channel && channel.id) {
-        var channelId = channel.id
-        targetLeague = bot.config['channel_map'][channelId]
+        const channelId = channel.id
+        targetLeague = bot.config.channel_map[channelId]
         if (targetLeague) {
             l = league.getLeague(bot, targetLeague)
             if (l) {
@@ -466,7 +463,7 @@ export class SlackEntityLookup<SlackEntity extends SlackEntityWithNameAndId> {
     }
 
     getId(name: string): string | undefined {
-        var entity = this.byName[_.toLower(name)]
+        const entity = this.byName[_.toLower(name)]
         if (!entity) {
             this.log.error("Couldn't find entity by name: " + name)
             return undefined
@@ -475,7 +472,7 @@ export class SlackEntityLookup<SlackEntity extends SlackEntityWithNameAndId> {
     }
 
     getName(id: string): string | undefined {
-        var entity = this.byId[id]
+        const entity = this.byId[id]
         if (!entity) {
             this.log.error("Couldn't find entity by id: " + id)
             return undefined
@@ -484,7 +481,7 @@ export class SlackEntityLookup<SlackEntity extends SlackEntityWithNameAndId> {
     }
 
     getIdString(name: string): string | undefined {
-        let id = this.getId(name)
+        const id = this.getId(name)
         return `<${this.idStringPrefix}${id}>`
     }
 
@@ -524,7 +521,7 @@ export class SlackBot {
         this.token = this.config.slack_tokens[this.slackName]
 
         if (!this.token) {
-            let error = `Failed to load token for ${this.slackName} from ${this.configFile}`
+            const error = `Failed to load token for ${this.slackName} from ${this.configFile}`
             this.log.error(error)
             throw new Error(error)
         }
@@ -575,8 +572,8 @@ export class SlackBot {
 
         this.startOnListener()
 
-        //refresh your user and channel list every 2 minutes
-        //would be nice if this was push model, not poll but oh well.
+        // refresh your user and channel list every 2 minutes
+        // would be nice if this was push model, not poll but oh well.
         await this.refresh(120 * SECONDS)
 
         // TODO: get this working again
@@ -595,14 +592,14 @@ export class SlackBot {
             this.config.heltour
         )
         if (this.controller) {
-            slackIDByLichessUsername.users['chesster'] = this.controller.id
+            slackIDByLichessUsername.users.chesster = this.controller.id
         }
-        var lichessUsernameBySlackID: Record<SlackUserID, SlackUserName> = {}
+        const lichessUsernameBySlackID: Record<SlackUserID, SlackUserName> = {}
         _.forOwn(slackIDByLichessUsername.users, (slackID, lichessUsername) => {
             lichessUsernameBySlackID[slackID] = lichessUsername.toLowerCase()
         })
 
-        let newUsers = new SlackEntityLookup<LeagueMember>(
+        const newUsers = new SlackEntityLookup<LeagueMember>(
             this.users.slackName,
             this.users.typePostfix,
             this.users.idStringPrefix
@@ -630,17 +627,17 @@ export class SlackBot {
     }
 
     async updateChannels() {
-        let newChannels = new SlackEntityLookup<SlackChannel>(
+        const newChannels = new SlackEntityLookup<SlackChannel>(
             this.channels.slackName,
             this.channels.typePostfix,
             this.channels.idStringPrefix
         )
-        let newMPIMs = new SlackEntityLookup<SlackChannel>(
+        const newMPIMs = new SlackEntityLookup<SlackChannel>(
             this.channels.slackName,
             this.channels.typePostfix,
             this.channels.idStringPrefix
         )
-        let newDMs = new SlackEntityLookup<SlackChannel>(
+        const newDMs = new SlackEntityLookup<SlackChannel>(
             this.channels.slackName,
             this.channels.typePostfix,
             this.channels.idStringPrefix
@@ -665,28 +662,28 @@ export class SlackBot {
 
     getLeagueMemberTarget(message: CommandMessage): LeagueMember | undefined {
         // The user is either a string or an id
-        var nameOrId = message.member.id
+        let nameOrId = message.member.id
 
         if (message.matches[1]) {
             nameOrId = message.matches[1]
         }
-        var player = this.getSlackUserFromNameOrID(nameOrId)
+        const player = this.getSlackUserFromNameOrID(nameOrId)
 
         return player
     }
 
     getSlackUserFromNameOrID(nameOrId: string): LeagueMember | undefined {
-        var self = this
+        const self = this
 
         // The name or Id was provided, so parse it out
-        var player = self.users.getByNameOrID(nameOrId)
+        const player = self.users.getByNameOrID(nameOrId)
 
         // If the player didn't exist that way, then it could be the @notation
         if (!player) {
             // Slack user ids are tranlated in messages to something like <@U17832>.  This
             // regex will capture the U17832 part so we can send it through the getByNameOrId
             // function
-            var userIdExtraction = nameOrId.match(slackIDRegex)
+            const userIdExtraction = nameOrId.match(slackIDRegex)
             if (userIdExtraction) {
                 return self.users.getByNameOrID(userIdExtraction[1])
             } else {
@@ -721,12 +718,11 @@ export class SlackBot {
     async startPrivateConversation(
         nameOrId: string[]
     ): Promise<SlackConversation> {
-        let targetUsers = nameOrId
+        const targetUsers = nameOrId
             .map((u) => this.getSlackUserFromNameOrID(u))
             .filter(isDefined)
             .map((u) => u.id)
             .join(',')
-        console.log(targetUsers)
         if (_.isNil(targetUsers)) {
             throw new Error('Unable to find user')
         } else {
@@ -750,7 +746,7 @@ export class SlackBot {
             options.text = options.text.replace(
                 /<\@([\w-\.]+)>/g,
                 (match: string, username: string) => {
-                    var user = this.users.getByNameOrID(username)
+                    const user = this.users.getByNameOrID(username)
                     if (user) {
                         return '<@' + user.id + '|' + user.name + '>'
                     }
@@ -764,7 +760,7 @@ export class SlackBot {
     async getChannel(channelId: string): Promise<SlackChannel | undefined> {
         let channel = this.channels.getByNameOrID(channelId)
         if (channel) return channel
-        let channelResponse = (await this.web.conversations.info({
+        const channelResponse = (await this.web.conversations.info({
             channel: channelId,
         })) as SlackChannelInfoResponse
         if (channelResponse.ok) {
@@ -778,7 +774,7 @@ export class SlackBot {
     async getUser(userId: string): Promise<SlackUser | undefined> {
         let user: SlackUser | undefined = this.users.getByNameOrID(userId)
         if (user) return user
-        let userResponse = (await this.web.users.info({
+        const userResponse = (await this.web.users.info({
             user: userId,
         })) as SlackUserInfoResponse
         if (userResponse.ok) {
@@ -800,14 +796,14 @@ export class SlackBot {
     async startOnListener() {
         this.rtm.on('message', async (event: SlackMessage) => {
             if (event.bot_id) return // Ignore bot messages
-            let channel = await this.getChannel(event.channel)
+            const channel = await this.getChannel(event.channel)
             if (!channel) {
                 this.log.warn(
                     `Unable to get details for channel: ${event.channel}`
                 )
                 return
             }
-            let member = this.users.getByNameOrID(event.user)
+            const member = this.users.getByNameOrID(event.user)
             if (!member) {
                 this.log.warn(
                     `Unable to get member details for slack user: ${event.user}`
@@ -817,15 +813,16 @@ export class SlackBot {
             let chessterMessage: ChessterMessage = {
                 ...event,
                 type: 'message',
-                channel: channel,
-                member: member,
+                channel,
+                member,
             }
             chessterMessage = withModerator(withLeague(this, chessterMessage))
 
-            let isDirectMessage = channel && channel.is_im && !channel.is_group
-            let isDirectMention =
-                chessterMessage.text.indexOf(`<@${this.controller?.id}>`) != -1
-            let isAmbient = !(isDirectMention || isDirectMessage)
+            const isDirectMessage =
+                channel && channel.is_im && !channel.is_group
+            const isDirectMention =
+                chessterMessage.text.indexOf(`<@${this.controller?.id}>`) !== -1
+            const isAmbient = !(isDirectMention || isDirectMessage)
             this.listeners.map(async (listener) => {
                 let isWanted = false
                 let text = event.text
@@ -842,12 +839,12 @@ export class SlackBot {
                 if (!isWanted) return
 
                 listener.patterns.some((p) => {
-                    let matches = text.match(p)
+                    const matches = text.match(p)
                     if (!matches) return false
-                    let message = {
+                    const message = {
                         ...chessterMessage,
                         text: text.trim(),
-                        matches: matches,
+                        matches,
                     }
                     try {
                         try {

@@ -1,6 +1,6 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Commands for onboarding new folks
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import _ from 'lodash'
 import * as heltour from '../heltour'
 import { SlackBot, CommandMessage } from '../slack'
@@ -9,10 +9,10 @@ export async function welcomeMessage(bot: SlackBot, message: CommandMessage) {
     if (
         _.isEqual(
             message.channel,
-            bot.channels.getId(bot.config.welcome['channel'])
+            bot.channels.getId(bot.config.welcome.channel)
         )
     ) {
-        let result = await heltour.linkSlack(
+        const result = await heltour.linkSlack(
             bot.config.heltour,
             message.user,
             ''
@@ -25,13 +25,13 @@ export async function welcomeMessage(bot: SlackBot, message: CommandMessage) {
                 '>!'
         )
 
-        let convo = await bot.startPrivateConversation([message.user])
+        const convo = await bot.startPrivateConversation([message.user])
 
-        let channelId = convo.channel.id
+        const channelId = convo.channel.id
 
-        let _4545FAQ = bot.config.leagues['45+45'].links.faq
-        let lonewolfFAQ = bot.config.leagues['lonewolf'].links.faq
-        let text =
+        const _4545FAQ = bot.config.leagues['45+45'].links.faq
+        const lonewolfFAQ = bot.config.leagues.lonewolf.links.faq
+        const text =
             'Welcome. I am the league moderator bot.\n' +
             `*Before you can participate, you must <${result.url}|click here to link your Slack and Lichess accounts.>*\n` +
             'After that, read the FAQ for your league: ' +
@@ -41,7 +41,7 @@ export async function welcomeMessage(bot: SlackBot, message: CommandMessage) {
 
         bot.say({
             channel: channelId,
-            text: text,
+            text,
             attachments: [],
         })
     }

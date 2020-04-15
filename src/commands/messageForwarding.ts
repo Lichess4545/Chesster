@@ -15,19 +15,22 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
         ) {
             return
         }
-        var commandDescription = ['forward', 'to', '{text:targets}']
+        const commandDescription = ['forward', 'to', '{text:targets}']
         try {
-            let parameters = commands.tokenize(message.text, commandDescription)
-            var targets = parameters['targets']
-            var messageToSend = message.attachments[0].text
-            var channels: string[] = []
-            var users: string[] = []
+            const parameters = commands.tokenize(
+                message.text,
+                commandDescription
+            )
+            const targets = parameters.targets
+            const messageToSend = message.attachments[0].text
+            const channels: string[] = []
+            const users: string[] = []
             _(targets)
                 .split('+')
                 .compact()
                 .forEach((t) => {
                     if (_.startsWith(t, '@')) {
-                        let user = chesster.users.getId(t.substr(1))
+                        const user = chesster.users.getId(t.substr(1))
                         if (user) users.push(user)
                     } else if (_.startsWith(t, '#')) {
                         channels.push(t)
@@ -36,21 +39,21 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
                     } else if (_.startsWith(t, 'u')) {
                         users.push(_.toUpper(t))
                     } else if (_.startsWith(t, '<@') && _.endsWith(t, '>')) {
-                        var name = adminSlack.users.getByNameOrID(
+                        const name = adminSlack.users.getByNameOrID(
                             t.substr(2, t.length - 3)
                         )?.name
                         if (!isDefined(name)) return
 
-                        let user = chesster.users.getId(name)
+                        const user = chesster.users.getId(name)
                         if (!isDefined(user)) return
                         users.push(user)
                     } else {
-                        let user = chesster.users.getId(t)
+                        const user = chesster.users.getId(t)
                         if (user) users.push(user)
                     }
                 })
 
-            var promises: Promise<void>[] = []
+            const promises: Promise<void>[] = []
             if (users.length > 1) {
                 promises.push(
                     chesster.startPrivateConversation(users).then((convo) => {
@@ -61,9 +64,9 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
                     })
                 )
             }
-            _.forEach(channels, function (channel) {
+            _.forEach(channels, (channel) => {
                 chesster.say({
-                    channel: channel,
+                    channel,
                     text: messageToSend,
                     attachments: [],
                 })
@@ -92,7 +95,7 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
                     )}`
                 )
             } else {
-                //some unknown error, rethrow;
+                // some unknown error, rethrow;
                 throw error
             }
         }
@@ -100,7 +103,7 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
 }
 
 export function refreshLeague(chesster: SlackBot, adminSlack: SlackBot) {
-    return function (bot: SlackBot, message: SlackMessage) {
+    return (bot: SlackBot, message: SlackMessage) => {
         if (
             !_.isEqual(
                 message.channel,
@@ -109,26 +112,29 @@ export function refreshLeague(chesster: SlackBot, adminSlack: SlackBot) {
         ) {
             return
         }
-        var commandDescription = ['refresh', '{text:type}', '{text:league}']
+        const commandDescription = ['refresh', '{text:type}', '{text:league}']
         try {
-            let parameters = commands.tokenize(message.text, commandDescription)
-            var typeVar = parameters['type']
+            const parameters = commands.tokenize(
+                message.text,
+                commandDescription
+            )
+            const typeVar = parameters.type
             if (!commands.isText(typeVar)) {
                 return
             }
-            let type = typeVar.value
-            var leagueNameVar = parameters['league']
+            const type = typeVar.value
+            const leagueNameVar = parameters.league
             if (!commands.isText(leagueNameVar)) {
                 return
             }
-            let leagueName = leagueNameVar.value
-            let _league = league.getLeague(bot, leagueName)
+            const leagueName = leagueNameVar.value
+            const _league = league.getLeague(bot, leagueName)
 
             if (!isDefined(_league)) {
                 winston.error(`No matching league: ${leagueName}`)
                 return
             }
-            let l = _league
+            const l = _league
 
             if (type === 'pairings') {
                 l.refreshCurrentRoundSchedules()
@@ -142,7 +148,7 @@ export function refreshLeague(chesster: SlackBot, adminSlack: SlackBot) {
                         )
                         l.emitter.emit('refreshPairings', l)
                     })
-                    .catch(function (error) {
+                    .catch((error) => {
                         winston.error(
                             `${
                                 l.name
@@ -159,4 +165,3 @@ export function refreshLeague(chesster: SlackBot, adminSlack: SlackBot) {
         }
     }
 }
-

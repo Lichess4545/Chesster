@@ -1,6 +1,6 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Commands related to player information
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import _ from 'lodash'
 
 import * as lichess from '../lichess'
@@ -17,12 +17,12 @@ function prepareRatingMessage(_player: string, rating: number) {
 }
 
 export async function playerRating(bot: SlackBot, message: CommandMessage) {
-    let player = bot.getLeagueMemberTarget(message)
+    const player = bot.getLeagueMemberTarget(message)
     if (!player) {
         bot.reply(message, 'I am sorry. I could not find that player.')
         return
     }
-    let rating = await lichess.getPlayerRating(player.name)
+    const rating = await lichess.getPlayerRating(player.name)
     if (rating) {
         bot.reply(message, prepareRatingMessage(player.name, rating))
     } else {
@@ -34,18 +34,18 @@ export function playerPairings(
     bot: SlackBot,
     message: CommandMessage
 ): Promise<void> {
-    var targetPlayer = bot.getLeagueMemberTarget(message)
-    return new Promise(async (resolve, _) => {
+    const targetPlayer = bot.getLeagueMemberTarget(message)
+    return new Promise(async (resolve) => {
         if (isLeagueMember(targetPlayer)) {
-            let member: LeagueMember = targetPlayer
-            let allLeagues = getAllLeagues(bot)
-            let convo = await bot.startPrivateConversation([message.user])
-            let possiblePairings = await Promise.all(
+            const member: LeagueMember = targetPlayer
+            const allLeagues = getAllLeagues(bot)
+            const convo = await bot.startPrivateConversation([message.user])
+            const possiblePairings = await Promise.all(
                 allLeagues.map(async (league) =>
                     league.getPairingDetails(member.lichess_username)
                 )
             )
-            let pairings = possiblePairings.filter(isPairingDetails)
+            const pairings = possiblePairings.filter(isPairingDetails)
             if (pairings.length < 1) {
                 bot.say({
                     text: `${member.name} has no pairings`,

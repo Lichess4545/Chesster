@@ -1,6 +1,6 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Lichess API helpers
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import * as http from './http'
 import moment from 'moment-timezone'
 import _ from 'lodash'
@@ -23,8 +23,8 @@ import * as db from './models'
 import { ResultsEnum } from './league'
 import { isDefined } from './utils'
 
-var MILISECOND = 1
-var SECONDS = 1000 * MILISECOND
+const MILISECOND = 1
+const SECONDS = 1000 * MILISECOND
 
 export type LichessID = string
 export type LichessName = string
@@ -37,7 +37,7 @@ type QueuedRequest = {
     reject: (reason?: any) => void
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // A lichess API queue.
 //
 // Provides two queues, a background queue and main queue. Use the main queue
@@ -49,14 +49,14 @@ type QueuedRequest = {
 // Also attempts to rate limit itself according to the lichess API guidelines
 // a max of one request every 2 seconds (this is actually a bit slower), and
 // it will wait a minute if it receives a 429.
-//------------------------------------------------------------------------------
-let { makeRequest, startRequests, stopRequests } = (function () {
+// -----------------------------------------------------------------------------
+const { makeRequest, startRequests, stopRequests } = (() => {
     // The background queue will be processed when there is nothing else to process
-    var backgroundQueue: QueuedRequest[] = []
+    const backgroundQueue: QueuedRequest[] = []
     // The mainQueue will be processed first.
-    var mainQueue: QueuedRequest[] = []
+    const mainQueue: QueuedRequest[] = []
     let stop = false
-    async function makeRequest(
+    async function _makeRequest(
         url: string,
         isJSON: boolean,
         isBackground: boolean,
@@ -70,18 +70,18 @@ let { makeRequest, startRequests, stopRequests } = (function () {
             }
         })
     }
-    function stopRequests() {
+    function _stopRequests() {
         stop = true
     }
-    function startRequests() {
+    function _startRequests() {
         stop = false
         processRequests()
     }
     function processRequests() {
         if (stop) return
-        var request = null
+        let request = null
         // The default delay between requests is 2 seconds
-        var requestDelay = 0
+        let requestDelay = 0
         if (mainQueue.length > 0 || backgroundQueue.length > 0) {
             winston.info(
                 `[LICHESS] ${mainQueue.length} requests in mainQueue ` +
@@ -94,21 +94,21 @@ let { makeRequest, startRequests, stopRequests } = (function () {
             request = backgroundQueue.shift()
         }
         if (request) {
-            var url = request.url
-            var isJSON = request.isJSON
-            var resolve = request.resolve
-            var reject = request.reject
-            var accept = request.accept
-            var promise = null
+            const url = request.url
+            const isJSON = request.isJSON
+            const resolve = request.resolve
+            const reject = request.reject
+            const accept = request.accept
+            let promise = null
             try {
-                let options = http.requestFromString(url)
+                const options = http.requestFromString(url)
                 if (accept) {
                     options.headers = options.headers || {}
-                    options.headers['Accept'] = accept
+                    options.headers.Accept = accept
                 }
                 promise = http.fetchURL(options)
                 promise.then(
-                    function (result) {
+                    (result) => {
                         try {
                             if (result.response.statusCode === 429) {
                                 requestDelay = 60 * SECONDS
@@ -126,7 +126,7 @@ let { makeRequest, startRequests, stopRequests } = (function () {
                                     requestDelay = 0.05
                                 }
                                 if (isJSON) {
-                                    var json = JSON.parse(result['body'])
+                                    const json = JSON.parse(result.body)
                                     if (json) {
                                         resolve({ ...result, json })
                                     } else {
@@ -152,7 +152,7 @@ let { makeRequest, startRequests, stopRequests } = (function () {
                             setTimeout(processRequests, requestDelay)
                         }
                     },
-                    function (error) {
+                    (error) => {
                         winston.error(
                             `[LICHESS] Request failed: ${JSON.stringify(error)}`
                         )
@@ -170,7 +170,11 @@ let { makeRequest, startRequests, stopRequests } = (function () {
             setTimeout(processRequests, requestDelay)
         }
     }
-    return { makeRequest, startRequests, stopRequests }
+    return {
+        makeRequest: _makeRequest,
+        startRequests: _startRequests,
+        stopRequests: _stopRequests,
+    }
 })()
 
 export function startQueue() {
@@ -245,7 +249,7 @@ export async function fetchUserByName(
     name: string,
     isBackground: boolean = false
 ) {
-    let response = await makeRequest(
+    const response = await makeRequest(
         `https://lichess.org/api/user/${name}`,
         false,
         isBackground,
@@ -254,10 +258,10 @@ export async function fetchUserByName(
     return UserDecoder.decodeJSON(response.body)
 }
 
-//------------------------------------------------------------------------------
-//given a gamelinkID, use the lichess api to get the game details
-//pass the details to the callback as a JSON object
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// given a gamelinkID, use the lichess api to get the game details
+// pass the details to the callback as a JSON object
+// -----------------------------------------------------------------------------
 export interface ShortUser {
     name: string
     id: string
@@ -339,19 +343,19 @@ export const GameStatusIntDecoder: Decoder<GameStatus> = oneOf(
     equal(60)
 )
 export const GameStatusStringDecoder: Decoder<GameStatus> = oneOf(
-    andThen(equal('created'), (_) => succeed(GameStatus.created)),
-    andThen(equal('started'), (_) => succeed(GameStatus.started)),
-    andThen(equal('aborted'), (_) => succeed(GameStatus.started)),
-    andThen(equal('mute'), (_) => succeed(GameStatus.started)),
-    andThen(equal('resign'), (_) => succeed(GameStatus.started)),
-    andThen(equal('stalemate'), (_) => succeed(GameStatus.started)),
-    andThen(equal('timeout'), (_) => succeed(GameStatus.started)),
-    andThen(equal('draw'), (_) => succeed(GameStatus.started)),
-    andThen(equal('outoftime'), (_) => succeed(GameStatus.started)),
-    andThen(equal('cheat'), (_) => succeed(GameStatus.started)),
-    andThen(equal('nostart'), (_) => succeed(GameStatus.started)),
-    andThen(equal('unknownfinish'), (_) => succeed(GameStatus.started)),
-    andThen(equal('variantend'), (_) => succeed(GameStatus.started))
+    andThen(equal('created'), () => succeed(GameStatus.created)),
+    andThen(equal('started'), () => succeed(GameStatus.started)),
+    andThen(equal('aborted'), () => succeed(GameStatus.started)),
+    andThen(equal('mute'), () => succeed(GameStatus.started)),
+    andThen(equal('resign'), () => succeed(GameStatus.started)),
+    andThen(equal('stalemate'), () => succeed(GameStatus.started)),
+    andThen(equal('timeout'), () => succeed(GameStatus.started)),
+    andThen(equal('draw'), () => succeed(GameStatus.started)),
+    andThen(equal('outoftime'), () => succeed(GameStatus.started)),
+    andThen(equal('cheat'), () => succeed(GameStatus.started)),
+    andThen(equal('nostart'), () => succeed(GameStatus.started)),
+    andThen(equal('unknownfinish'), () => succeed(GameStatus.started)),
+    andThen(equal('variantend'), () => succeed(GameStatus.started))
 )
 export type GameWinner = 'white' | 'black'
 export const GameWinnerDecoder: Decoder<GameWinner> = oneOf(
@@ -368,8 +372,8 @@ export function gameResult(
     if (!isDefined(winner)) {
         return ResultsEnum.UNKNOWN
     }
-    if (status == GameStatus.cheat) {
-        if (winner == 'white') {
+    if (status === GameStatus.cheat) {
+        if (winner === 'white') {
             return ResultsEnum.WHITE_FORFEIT_WIN
         } else {
             return ResultsEnum.BLACK_FORFEIT_WIN
@@ -394,8 +398,8 @@ export interface GameDetails {
     winner?: GameWinner
     result: ResultsEnum
     game_link: string
-    //opening: Opening
-    //moves: string
+    // opening: Opening
+    // moves: string
     clock?: Clock
 }
 export const BaseGameDetailsDecoder: Decoder<GameDetails> = object(
@@ -469,35 +473,35 @@ export const GameDetailsDecoder: Decoder<GameDetails> = oneOf(
 )
 
 export async function fetchGameDetails(gamelinkID: string) {
-    var url = `https://lichess.org/game/export/${gamelinkID}`
-    let response = await makeRequest(url, false, false, 'application/json')
+    const url = `https://lichess.org/game/export/${gamelinkID}`
+    const response = await makeRequest(url, false, false, 'application/json')
     return GameDetailsDecoder.decodeJSON(response.body)
 }
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Get a player rating, but only ping lichess once every 30 minutes for each
 // player.  It's supposed to be a classical rating, so it probably won't update
 // that often in a 30 minutes period. Besides, this function is not intended
 // for people to show off their latest rating.  If they wan to do that they
 // can type it in themselves.
-//------------------------------------------------------------------------------
-//--------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 async function _updateRating(
     name: string,
     isBackground: boolean
 ): Promise<number> {
-    //store the promise for reuse
+    // store the promise for reuse
     try {
-        let user: User = await fetchUserByName(name, isBackground)
-        var rating = user.perfs.classical.rating
+        const user: User = await fetchUserByName(name, isBackground)
+        const rating = user.perfs.classical.rating
         // Get the writable lock for the database.
-        let lichessRatings = await db.LichessRating.findOrCreate({
+        const lichessRatings = await db.LichessRating.findOrCreate({
             where: { lichessUserName: name },
         })
-        var lichessRating = lichessRatings[0]
+        const lichessRating = lichessRatings[0]
         lichessRating.set('rating', rating)
         lichessRating.set('lastCheckedAt', moment.utc().toDate())
-        lichessRating.save().then(function () {
+        lichessRating.save().then(() => {
             winston.info(`Got updated rating for ${name}: ${rating}`)
         })
         return rating
@@ -507,10 +511,10 @@ async function _updateRating(
     }
 }
 
-//--------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // Get the player rating. Always return the most recent rating from the
 // database, unless they don't have it. Then go get it and return it.
-//--------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 export async function getPlayerRating(
     name: string,
     isBackground: boolean = false
@@ -519,19 +523,19 @@ export async function getPlayerRating(
 
     try {
         // Ensure we have a record.
-        let lichessRatingRec = await db.LichessRating.findOrCreate({
+        const lichessRatingRec = await db.LichessRating.findOrCreate({
             where: { lichessUserName: name },
         })
-        let lichessRating = lichessRatingRec[0]
+        const lichessRating = lichessRatingRec[0]
 
-        var _30MinsAgo = moment.utc().subtract(30, 'minutes')
-        var lastCheckedAt = moment(lichessRating.get('lastCheckedAt'))
+        const _30MinsAgo = moment.utc().subtract(30, 'minutes')
+        let lastCheckedAt = moment(lichessRating.get('lastCheckedAt'))
         if (lastCheckedAt) {
             lastCheckedAt = moment.utc(lastCheckedAt)
         }
 
-        //if a promise exists, then the player is already queued
-        var rating = lichessRating.get('rating')
+        // if a promise exists, then the player is already queued
+        const rating = lichessRating.get('rating')
 
         // Only update the rating if it's older than 30 minutes
         // or if we don't have one a rating

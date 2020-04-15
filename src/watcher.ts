@@ -1,7 +1,7 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Watcher uses the game-stream API from Lichess to listen for games as they
 // start and end.
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 // Previous imports
 import _ from 'lodash'
@@ -89,7 +89,7 @@ class WatcherRequest {
             .on('response', (res) => {
                 res.on('data', (chunk) => {
                     try {
-                        let details = lichess.GameDetailsDecoder.decodeJSON(
+                        const details = lichess.GameDetailsDecoder.decodeJSON(
                             chunk.toString()
                         )
                         this.log.info(
@@ -153,7 +153,7 @@ class WatcherRequest {
         return false
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     async processGameDetails(details: lichess.GameDetails) {
         fp.each(async (league) => {
             // 1. perfect match any time, try to update.
@@ -162,8 +162,8 @@ class WatcherRequest {
             if (!isDefined(league.gamelinks) || !isDefined(league.results)) {
                 return
             }
-            let gamelinks: Record<string, any> = league.gamelinks
-            let results: Record<string, string> = league.results
+            const gamelinks: Record<string, any> = league.gamelinks
+            const results: Record<string, string> = league.results
 
             const result = games.validateGameDetails(league, details)
             this.log.info(`Validation result: ${JSON.stringify(result)}`)
@@ -219,15 +219,15 @@ class WatcherRequest {
                     // Fetch the game details from the lichess games API because updateGamelink is more picky about the details format
                     // This could be obviated by an enhancement to the game-stream API
                     try {
-                        let detailsFromApi = await lichess.fetchGameDetails(
+                        const detailsFromApi = await lichess.fetchGameDetails(
                             details.id
                         )
                         try {
-                            let updatePairingResult = await games.updateGamelink(
+                            const updatePairingResult = await games.updateGamelink(
                                 league,
                                 detailsFromApi
                             )
-                            if (updatePairingResult.game_link_changed) {
+                            if (updatePairingResult.gameLinkChanged) {
                                 this.bot.say({
                                     text:
                                         '<@' +
@@ -241,7 +241,7 @@ class WatcherRequest {
                                     attachments: [], // Needed to activate link parsing in the message
                                 })
                             }
-                            if (updatePairingResult.result_changed) {
+                            if (updatePairingResult.resultChanged) {
                                 this.bot.say({
                                     text: `<@${white}> ${detailsFromApi.result} <@${black}>`,
                                     channel: results.channel_id,
@@ -301,7 +301,7 @@ class WatcherRequest {
                 })
                 heltour
                     .sendGameWarning(
-                        league.heltour,
+                        league.heltourConfig,
                         white,
                         black,
                         result.reason

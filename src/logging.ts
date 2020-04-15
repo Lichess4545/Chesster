@@ -1,7 +1,7 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Winston transport implementation that writes log data to a Slack instance
 // Based off of work by andy.batchelor on 2/26/14.
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 import _ from 'lodash'
 import winston from 'winston'
@@ -16,7 +16,7 @@ interface MessageParams {
     username: string
 }
 
-let EmojiLookup = {
+const EmojiLookup = {
     debug: ':grey_question:',
     info: ':information_source:',
     warning: ':warning:',
@@ -24,11 +24,11 @@ let EmojiLookup = {
 }
 
 export default class Slack extends Transport {
-    private message_params: MessageParams
+    private messageParams: MessageParams
     constructor(
         public bot: SlackBot,
         public channel: string,
-        //public domain: string,
+        // public domain: string,
         public username: string,
         public format?: logform.Format,
         public level?: string,
@@ -39,7 +39,7 @@ export default class Slack extends Transport {
         this.level = this.level || 'debug'
         this.silent = this.silent || false
         this.handleExceptions = this.silent || false
-        this.message_params = {
+        this.messageParams = {
             channel: this.channel,
             username: this.username,
         }
@@ -55,15 +55,15 @@ export default class Slack extends Transport {
             return
         }
 
-        let icon_emoji = ':grey_question:'
+        let iconEmoji = ':grey_question:'
         if (this.level && hasKey(EmojiLookup, this.level)) {
-            icon_emoji = EmojiLookup[this.level]
+            iconEmoji = EmojiLookup[this.level]
         }
 
         this.bot.say({
-            text: `${icon_emoji} [${this.level}] ${info[MESSAGE]}`,
-            icon_emoji: icon_emoji,
-            ...this.message_params,
+            text: `${iconEmoji} [${this.level}] ${info[MESSAGE]}`,
+            icon_emoji: iconEmoji,
+            ...this.messageParams,
         })
 
         next()

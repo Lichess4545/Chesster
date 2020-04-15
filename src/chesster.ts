@@ -1,7 +1,7 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Entry point for Chesster
 // Bot commands are defined here with implementations in various modules.
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import winston from 'winston'
 import * as slack from './slack'
 import Watcher from './watcher'
@@ -10,18 +10,18 @@ import { getAllLeagues } from './league'
 import * as availability from './commands/availability'
 import * as games from './commands/games'
 import * as leagueInfo from './commands/leagueInfo'
-//import messageForwarding from './commands/messageForwarding'
+// import messageForwarding from './commands/messageForwarding'
 import * as privateURLs from './commands/privateURLs'
-//import onboarding from './commands/onboarding'
+// import onboarding from './commands/onboarding'
 import * as playerInfo from './commands/playerInfo'
-//import scheduling from './commands/scheduling'
-//import subscription from './commands/subscription'
-//import presence from './commands/presence'
+// import scheduling from './commands/scheduling'
+// import subscription from './commands/subscription'
+// import presence from './commands/presence'
 
 /* static entry point */
 
-var configFile = process.argv[2] || '../config/config.js'
-var chesster = new slack.SlackBot('lichess4545', configFile)
+const configFile = process.argv[2] || '../config/config.js'
+const chesster = new slack.SlackBot('lichess4545', configFile)
 
 if (process.env.NODE_ENV !== 'production') {
     winston.add(
@@ -31,7 +31,7 @@ if (process.env.NODE_ENV !== 'production') {
     )
 }
 
-var adminSlack = new slack.SlackBot(
+const adminSlack = new slack.SlackBot(
     'chesster',
     configFile,
     false,
@@ -47,9 +47,9 @@ export function directRequiresLeague(
 ) {
     chesster.hears({
         middleware: [slack.requiresLeague],
-        patterns: patterns,
+        patterns,
         messageTypes: ['direct_message', 'direct_mention'],
-        callback: callback,
+        callback,
     })
 }
 
@@ -334,7 +334,7 @@ subscription.register(
 
 chesster.start()
 
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Start the watcher.
-let watcher = new Watcher(chesster, getAllLeagues(chesster))
+const watcher = new Watcher(chesster, getAllLeagues(chesster))
 watcher.watch()

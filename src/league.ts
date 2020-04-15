@@ -1,7 +1,7 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Defines a league object which can be used to interact with the website
 // for the given league
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import _ from 'lodash'
 import winston from 'winston'
 import moment from 'moment-timezone'
@@ -139,8 +139,8 @@ export class League {
     constructor(
         public bot: SlackBot,
         public name: string,
-        public also_known_as: string[],
-        public heltour: heltour.Config,
+        public alsoKnownAs: string[],
+        public heltourConfig: heltour.Config,
         public links: LeagueLinks,
         public welcome: Record<string, string>,
         public alternate?: Record<string, string>,
@@ -155,59 +155,59 @@ export class League {
         this.log = new LogWithPrefix(`[League(${this.name})]`)
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // A lookup from player username to a player object (from _players)
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     _playerLookup: Record<string, Player> = {}
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // A lookup from a team name to the team object.
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     _teamLookup: Record<string, Team> = {}
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // A list of moderator names
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     _moderators: string[] = []
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // The datetime when we were last updated
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     _lastUpdated: moment.Moment = moment.utc()
     emitter: ChessLeagueEmitter
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Canonicalize the username
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     canonicalUsername(username: string): string {
         username = username.split(' ')[0]
         return username.replace('*', '')
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Lookup a player by playerName
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     getPlayer(username: string): Player | undefined {
         return this._playerLookup[_.toLower(username)]
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Register a refreshRosters event
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     onRefreshRosters(fn: RefreshRostersCallback) {
         this.emitter.on('refreshRosters', fn)
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Register a refreshPairings event
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     onRefreshPairings(fn: RefreshPairingsCallback) {
         this.emitter.on('refreshPairings', fn)
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Refreshes everything
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     refresh() {
         return Promise.all([
             this.refreshRosters()
@@ -247,40 +247,40 @@ export class League {
         ])
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Refreshes the latest roster information
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     async refreshRosters() {
-        var newPlayers: Player[] = []
-        var newPlayerLookup: Record<string, Player> = {}
-        var newTeams: Team[] = []
-        var newTeamLookup: Record<string, Team> = {}
+        const newPlayers: Player[] = []
+        const newPlayerLookup: Record<string, Player> = {}
+        const newTeams: Team[] = []
+        const newTeamLookup: Record<string, Team> = {}
 
-        let roster = await heltour.getRoster(
-            this.heltour,
-            this.heltour.leagueTag
+        const roster = await heltour.getRoster(
+            this.heltourConfig,
+            this.heltourConfig.leagueTag
         )
-        var incomingPlayerLookup: Record<string, heltour.Player> = {}
+        const incomingPlayerLookup: Record<string, heltour.Player> = {}
         roster.players.map((p) => {
             incomingPlayerLookup[p.username.toLowerCase()] = p
         })
         roster.teams.map((team) => {
-            let newTeam: Team = {
+            const newTeam: Team = {
                 name: team.name,
                 players: [],
-                number: team.number,
-                slack_channel: team.slack_channel,
+                number: team.num,
+                slack_channel: team.slackChannel,
             }
             newTeams.push(newTeam)
             newTeamLookup[newTeam.name.toLowerCase()] = newTeam
-            team.players.forEach(({ username, is_captain, board_number }) => {
-                let key = username.toLowerCase()
-                let { rating } = incomingPlayerLookup[key]
-                let newPlayer = {
+            team.players.forEach(({ username, isCaptain, boardNumber }) => {
+                const key = username.toLowerCase()
+                const { rating } = incomingPlayerLookup[key]
+                const newPlayer = {
                     username,
                     team: newTeam,
-                    isCaptain: is_captain,
-                    boardNumber: board_number,
+                    isCaptain,
+                    boardNumber,
                     rating,
                 }
                 if (newPlayer.isCaptain) {
@@ -296,30 +296,30 @@ export class League {
         this._teamLookup = newTeamLookup
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Calls into the website moderators endpoint to get the list of moderators
     // for the league.
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     async refreshLeagueModerators() {
-        let response = await heltour.getLeagueModerators(this.heltour)
+        const response = await heltour.getLeagueModerators(this.heltourConfig)
         this._moderators = response.moderators.map((m) => m.toLowerCase())
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Figures out the current scheduling information for the round.
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     async refreshCurrentRoundSchedules() {
         return heltour
-            .getAllPairings(this.heltour, this.heltour.leagueTag)
+            .getAllPairings(this.heltourConfig, this.heltourConfig.leagueTag)
             .then((pairings: heltour.Pairing[]) => {
-                var newPairings: Pairing[] = []
+                const newPairings: Pairing[] = []
                 _.each(pairings, (heltourPairing) => {
-                    var date = moment.utc(heltourPairing.datetime)
+                    const date = moment.utc(heltourPairing.datetime)
                     newPairings.push({
                         white: heltourPairing.white,
                         black: heltourPairing.black,
                         scheduledDate: date.isValid() ? date : undefined,
-                        url: heltourPairing.game_link,
+                        url: heltourPairing.gameLink,
                         result: resultFromString(heltourPairing.result),
                     })
                 })
@@ -328,16 +328,16 @@ export class League {
             })
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Finds the pairing for this current round given either a black or a white
     // username.
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     findPairing(white: string, black?: string): Pairing[] {
         if (!white) {
             throw new Error('findPairing requires at least one username.')
         }
-        var possibilities = this._pairings
-        let filter = (playerName: string) => {
+        let possibilities = this._pairings
+        const filter = (playerName: string) => {
             if (playerName) {
                 possibilities = _.filter(possibilities, (item) => {
                     return (
@@ -352,38 +352,38 @@ export class League {
         return possibilities
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Returns whether someone is a moderator or not.
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     isModerator(name: string) {
         return _.includes(this._moderators, _.toLower(name))
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Prepare a debug message for this league
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatDebugResponse(): string {
-        let name = this.name
-        let pairingsCount = this._pairings.length
-        let lastUpdated = this._lastUpdated.format('YYYY-MM-DD HH:mm UTC')
-        let since = this._lastUpdated.fromNow(true)
+        const name = this.name
+        const pairingsCount = this._pairings.length
+        const lastUpdated = this._lastUpdated.format('YYYY-MM-DD HH:mm UTC')
+        const since = this._lastUpdated.fromNow(true)
         return `DEBUG:\nLeague: ${name}\nTotal Pairings: ${pairingsCount}\nLast Updated: ${lastUpdated} [${since} ago]`
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Generates the appropriate data format for pairing result for this league.
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     async getPairingDetails(
         lichessUsername: string
     ): Promise<PairingDetails | undefined> {
         return new Promise(async (resolve) => {
-            var pairings = this.findPairing(lichessUsername)
+            const pairings = this.findPairing(lichessUsername)
             if (pairings.length < 1) {
                 return resolve(undefined)
             }
             // TODO: determine what to do if multiple pairings are returned. ?
-            var pairing = pairings[0]
-            var details: PairingDetails = {
+            const pairing = pairings[0]
+            const details: PairingDetails = {
                 ...pairing,
                 player: lichessUsername,
                 color: 'white',
@@ -400,8 +400,8 @@ export class League {
                 details.opponent = pairing.white
             }
             try {
-                let rating = await lichess.getPlayerRating(details.opponent)
-                details['rating'] = rating
+                const rating = await lichess.getPlayerRating(details.opponent)
+                details.rating = rating
                 resolve(details)
             } catch (error) {
                 winston.error(JSON.stringify(error))
@@ -410,47 +410,47 @@ export class League {
         })
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Formats the pairing result for this league
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatPairingResponse(
         requestingPlayer: LeagueMember,
         details: PairingDetails
     ) {
-        var time
+        let time
         if (details.scheduledDate) {
             time = localTime(requestingPlayer, details.scheduledDate)
         }
-        var schedule_phrase = ''
-        var played_phrase = ''
+        let schedulePhrase = ''
+        let playedPhrase = ''
 
         if (!time || !time.isValid()) {
-            played_phrase = 'will play'
-            schedule_phrase = '. The game is unscheduled.'
+            playedPhrase = 'will play'
+            schedulePhrase = '. The game is unscheduled.'
         } else if (moment.utc().isAfter(time)) {
             // If the match took place in the past, display the date instead of the day
-            played_phrase = 'played'
-            let localDateTimeString = time.format('YYYY-MM-DD [at] HH:mm')
-            schedule_phrase = ` on ${localDateTimeString} in your timezone.`
+            playedPhrase = 'played'
+            const localDateTimeString = time.format('YYYY-MM-DD [at] HH:mm')
+            schedulePhrase = ` on ${localDateTimeString} in your timezone.`
         } else {
-            played_phrase = 'will play'
-            let localDateTimeString = time.format('MM/DD _(dddd)_ [at] HH:mm')
-            let timeUntil = time.fromNow(true)
-            schedule_phrase = ` on ${localDateTimeString} in your timezone, which is in ${timeUntil}.`
+            playedPhrase = 'will play'
+            const localDateTimeString = time.format('MM/DD _(dddd)_ [at] HH:mm')
+            const timeUntil = time.fromNow(true)
+            schedulePhrase = ` on ${localDateTimeString} in your timezone, which is in ${timeUntil}.`
         }
 
         // Otherwise display the time until the match
-        let opponent_color = details.color === 'white' ? 'black' : 'white'
-        let rating = details.rating ? '(' + details.rating + ')' : ''
+        const opponentColor = details.color === 'white' ? 'black' : 'white'
+        const rating = details.rating ? '(' + details.rating + ')' : ''
         return (
-            `[${this.name}]: :${details.color}pieces: _${details.player}_ ${played_phrase} against ` +
-            `:${opponent_color}pieces: _${details.opponent}_ ${rating}${schedule_phrase}`
+            `[${this.name}]: :${details.color}pieces: _${details.player}_ ${playedPhrase} against ` +
+            `:${opponentColor}pieces: _${details.opponent}_ ${rating}${schedulePhrase}`
         )
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Formats the captains Guidelines
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatCaptainGuidelinesResponse() {
         if (this.links && this.links.captains) {
             return `Here are the captain's guidelines:\n${this.links.captains}`
@@ -459,9 +459,9 @@ export class League {
         }
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Formats the pairings response
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatPairingsLinkResponse() {
         if (this.links && this.links.league) {
             return (
@@ -474,9 +474,9 @@ export class League {
         }
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Formats the standings response
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatStandingsLinkResponse() {
         if (this.links && this.links.league) {
             return (
@@ -488,9 +488,9 @@ export class League {
         }
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Formats the rules link response
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatRulesLinkResponse() {
         if (this.links.rules) {
             return `Here are the rules and regulations:\n${this.links.rules}`
@@ -499,9 +499,9 @@ export class League {
         }
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Formats the starter guide message
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatStarterGuideResponse() {
         if (this.links.guide) {
             return `Here is everything you need to know:\n${this.links.guide}`
@@ -510,9 +510,9 @@ export class League {
         }
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Formats the signup response
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatRegistrationResponse() {
         if (this.links.registration) {
             return `You can sign up here:\n${this.links.registration}`
@@ -521,33 +521,33 @@ export class League {
         }
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Get a list of captain names
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     getCaptains() {
         return this._teams.map((t) => t.captain)
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Get the list of teams
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     getTeams() {
         return this._teams
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Get the team for a given player name
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     getTeamByPlayerName(playerName: string) {
         playerName = playerName.toLowerCase()
-        let teamName =
+        const teamName =
             this._playerLookup[playerName.toLowerCase()] &&
             this._playerLookup[playerName.toLowerCase()].team
         if (teamName) return teamName
         // Try to find the team by looking through the pairings for this
         // playername.  This will find alternates.
-        let teams: Team[] = this._teams.filter((t) => {
-            let playerIds = t.players.map((p) => p.username.toLowerCase())
+        const teams: Team[] = this._teams.filter((t) => {
+            const playerIds = t.players.map((p) => p.username.toLowerCase())
             return playerIds.filter((n) => n === playerName)
         })
         if (teams.length > 0) {
@@ -556,18 +556,18 @@ export class League {
         return undefined
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Get the team for a given team name
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     getTeam(teamName: string) {
         return this._teamLookup[teamName.toLowerCase()]
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Get the the players from a particular board
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     getBoard(boardNumber: number) {
-        var players: Player[] = []
+        const players: Player[] = []
         _.each(this._teams, (team) => {
             if (boardNumber - 1 < team.players.length) {
                 players.push(team.players[boardNumber - 1])
@@ -576,17 +576,17 @@ export class League {
         return players
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Format the response for the list of captains
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatCaptainsResponse() {
         if (this._teams.length === 0) {
             return `The ${this.name} league does not have captains`
         }
-        var message = 'Team Captains:\n'
-        var teamIndex = 1
+        let message = 'Team Captains:\n'
+        let teamIndex = 1
         this._teams.forEach((team) => {
-            let captainName = team.captain?.username || 'Unchosen'
+            const captainName = team.captain?.username || 'Unchosen'
             message +=
                 '\t' +
                 teamIndex++ +
@@ -599,14 +599,14 @@ export class League {
         return message
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Format the response for the list of captains
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatTeamCaptainResponse(teamName: string) {
         if (this._teams.length === 0) {
             return `The {this.name} league does not have captains`
         }
-        var teams = _.filter(this._teams, (t) =>
+        const teams = _.filter(this._teams, (t) =>
             _.isEqual(t.name.toLowerCase(), teamName.toLowerCase())
         )
         if (teams.length === 0) {
@@ -615,7 +615,7 @@ export class League {
         if (teams.length > 1) {
             return 'Too many teams by that name'
         }
-        var team = teams[0]
+        const team = teams[0]
         if (team && team.captain) {
             return 'Captain of ' + team.name + ' is ' + team.captain.username
         } else {
@@ -623,14 +623,14 @@ export class League {
         }
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Format the teams response
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatTeamsResponse() {
         if (this._teams.length === 0) {
             return `The ${name} league does not have teams`
         }
-        var message =
+        let message =
             'There are currently ' + this._teams.length + ' teams competing. \n'
         this._teams.forEach((team) => {
             message += '\t' + team.number + '. ' + team.name + '\n'
@@ -638,15 +638,15 @@ export class League {
         return message
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Format board response
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatBoardResponse(boardNumber: number) {
         if (this._teams.length === 0) {
             return `The ${this.name} league does not have teams`
         }
-        let players = this.getBoard(boardNumber)
-        var message = `Board ${boardNumber}consists of... \n`
+        const players = this.getBoard(boardNumber)
+        let message = `Board ${boardNumber}consists of... \n`
         players.sort((e1, e2) => {
             return e1.rating > e2.rating ? -1 : e1.rating < e2.rating ? 1 : 0
         })
@@ -663,14 +663,14 @@ export class League {
         return message
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Format team members response
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatTeamMembersResponse(teamName: string) {
         if (this._teams.length === 0) {
             return `The ${this.name} league does not have teams`
         }
-        var teams = _.filter(this._teams, (t) => {
+        const teams = _.filter(this._teams, (t) => {
             return _.isEqual(t.name.toLowerCase(), teamName.toLowerCase())
         })
         if (teams.length === 0) {
@@ -679,8 +679,8 @@ export class League {
         if (teams.length > 1) {
             return 'Too many teams by that name'
         }
-        var team = teams[0]
-        var message = 'The members of ' + team.name + ' are \n'
+        const team = teams[0]
+        let message = 'The members of ' + team.name + ' are \n'
         team.players.forEach((member, index) => {
             message +=
                 '\tBoard ' +
@@ -694,11 +694,11 @@ export class League {
         return message
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Format the mods message
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatModsResponse() {
-        var moderators = _.map(this._moderators, (name) => {
+        const moderators = _.map(this._moderators, (name) => {
             return name[0] + '\u200B' + name.slice(1)
         })
         return (
@@ -708,11 +708,11 @@ export class League {
         )
     }
 
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Format the summon mods message
-    //--------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     formatSummonModsResponse() {
-        var moderators = _.map(this._moderators, (name) => {
+        const moderators = _.map(this._moderators, (name) => {
             return this.bot.users.getIdString(name)
         })
         return (
@@ -732,42 +732,42 @@ function isLeague(l: League | undefined): l is League {
 }
 
 export function getAllLeagues(bot: SlackBot): League[] {
-    var all_league_configs = bot.config['leagues'] || {}
-    return _(all_league_configs)
+    const allLeagueConfigs = bot.config.leagues || {}
+    return _(allLeagueConfigs)
         .keys()
         .map((key) => getLeague(bot, key))
         .filter(isLeague)
         .value()
 }
 
-export let getLeague = (function () {
-    var _league_cache: Record<string, League> = {}
+export const getLeague = (() => {
+    const _leagueCache: Record<string, League> = {}
     return (bot: SlackBot, leagueName: string): League | undefined => {
-        if (!_league_cache[leagueName]) {
+        if (!_leagueCache[leagueName]) {
             // Else create it if there is a config for it.
-            var all_league_configs = bot.config['leagues'] || {}
-            var this_league_config = all_league_configs[leagueName] || undefined
-            if (this_league_config) {
+            const allLeagueConfigs = bot.config.leagues || {}
+            let thisLeagueConfig = allLeagueConfigs[leagueName] || undefined
+            if (thisLeagueConfig) {
                 winston.info('Creating new league for ' + leagueName)
-                this_league_config = _.clone(this_league_config)
-                this_league_config.name = leagueName
-                var league = new League(
+                thisLeagueConfig = _.clone(thisLeagueConfig)
+                thisLeagueConfig.name = leagueName
+                const league = new League(
                     bot,
                     leagueName,
-                    this_league_config.also_known_as,
-                    this_league_config.heltour,
-                    this_league_config.links,
-                    this_league_config.alternate,
-                    this_league_config.welcome,
-                    this_league_config.results,
-                    this_league_config.gamelinks,
-                    this_league_config.scheduling?.extrema
+                    thisLeagueConfig.also_known_as,
+                    thisLeagueConfig.heltour,
+                    thisLeagueConfig.links,
+                    thisLeagueConfig.alternate,
+                    thisLeagueConfig.welcome,
+                    thisLeagueConfig.results,
+                    thisLeagueConfig.gamelinks,
+                    thisLeagueConfig.scheduling?.extrema
                 )
-                _league_cache[leagueName] = league
+                _leagueCache[leagueName] = league
             } else {
                 return undefined
             }
         }
-        return _league_cache[leagueName]
+        return _leagueCache[leagueName]
     }
 })()

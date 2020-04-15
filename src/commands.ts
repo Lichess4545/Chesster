@@ -1,7 +1,7 @@
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Utilities for command parsing
 // See chesster.js for command definitions.
-//------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 import _ from 'lodash'
 
 const VARIABLE = /^\{(int)(text)|:[a-zA-Z]+\}$/
@@ -26,9 +26,7 @@ export class IntVariable {
 }
 
 type Variable = TextVariable | IntVariable
-interface VariableConstructor {
-    new (token: string): Variable
-}
+type VariableConstructor = new (token: string) => Variable
 const VARIABLE_TYPES: Record<string, VariableConstructor> = {
     text: TextVariable,
     int: IntVariable,
@@ -59,9 +57,9 @@ type Parameters = Record<string, Variable>
  * Commands that are too short will throw TooFewTokensError
  */
 export function tokenize(command: string, descriptions: string[]): Parameters {
-    var tokens = getTokens(_.toLower(command), descriptions.length)
+    const tokens = getTokens(_.toLower(command), descriptions.length)
 
-    var parameters: Parameters = {}
+    const parameters: Parameters = {}
     _.zipWith(tokens, descriptions, (token, description) => {
         if (_.isNil(token)) {
             throw new TooFewTokensError(tokens, descriptions)
@@ -84,11 +82,11 @@ export function tokenize(command: string, descriptions: string[]): Parameters {
  * " " separated words is returned without concatenation
  */
 function getTokens(text: string, numTokens: number) {
-    var words = _(text).split(' ').compact().value()
+    const words = _(text).split(' ').compact().value()
     if (words.length <= numTokens) return words
 
-    var tokens = _.slice(words, 0, numTokens - 1)
-    var lastToken = _.slice(words, numTokens - 1).join(' ')
+    const tokens = _.slice(words, 0, numTokens - 1)
+    const lastToken = _.slice(words, numTokens - 1).join(' ')
     tokens.push(lastToken)
 
     return tokens
@@ -107,8 +105,8 @@ function parameterizeVariableToken(
     dscription: string,
     parameters: Parameters
 ) {
-    //create an object splitting the description string into type and name
-    var description = _.zipObject(
+    // create an object splitting the description string into type and name
+    const description = _.zipObject(
         ['type', 'name'],
         _(dscription)
             .split(/[\{\:\}]/)
@@ -116,14 +114,14 @@ function parameterizeVariableToken(
             .value()
     )
 
-    //if either are not specified, the description string is bad.
+    // if either are not specified, the description string is bad.
     if (_.isNil(description.type) || _.isNil(description.name))
         throw new InvalidTokenDescriptionError(dscription)
 
-    //for each type defined, test it to see if it matches
+    // for each type defined, test it to see if it matches
     //   given a match, parse the token and store
 
-    var ctor = VARIABLE_TYPES[description.type]
+    const ctor = VARIABLE_TYPES[description.type]
     if (ctor) {
         parameters[description.name] = new ctor(token)
     } else {
@@ -140,13 +138,13 @@ function parameterizeChoiceToken(
     description: string,
     parameters: Parameters
 ) {
-    //get the choices from the description
-    var choices = _(description)
+    // get the choices from the description
+    const choices = _(description)
         .split(/[\{\|\}]/)
         .compact()
         .value()
 
-    //verify the token exists as one of the valid choices
+    // verify the token exists as one of the valid choices
     if (!_.includes(choices, token))
         throw new InvalidChoiceError(token, description)
     parameters[token] = new TextVariable(token) // name and token are the same here
