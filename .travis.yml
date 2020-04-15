@@ -5,5 +5,4 @@ script:
   - yarn run build
   - istanbul cover node_modules/mocha/bin/_mocha -- --exit
   - yarn run lint
-  - yarn run hint
   - yarn run send-coverage
