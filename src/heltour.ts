@@ -2,6 +2,7 @@
 // Heltour related facilities
 // -----------------------------------------------------------------------------
 import _ from 'lodash'
+import winston from 'winston'
 import moment from 'moment'
 import { parse } from 'url'
 import * as http from './http'
@@ -277,7 +278,7 @@ export const RosterDecoder: Decoder<Roster> = oneOf(
     IndividualLeagueRosterDecoder
 )
 export function isTeamLeagueRoster(roster: Roster): roster is TeamLeagueRoster {
-    return roster.hasOwnProperty('team')
+    return roster.hasOwnProperty('teams')
 }
 
 // -----------------------------------------------------------------------------
@@ -338,13 +339,23 @@ export function heltourRequest(
 async function heltourApiCall<T extends object>(
     request: http.RequestOptions,
     decoder: Decoder<T>
-) {
+): Promise<T> {
     const response = await http.fetchURL(request)
-    const result = union(ErrorDecoder, decoder).decodeJSON(response.body)
-    if (!isValid<T>(result)) {
-        throw new HeltourError(result.error)
+    try {
+        const result = union(ErrorDecoder, decoder).decodeJSON(response.body)
+        if (!isValid<T>(result)) {
+            throw new HeltourError(result.error)
+        }
+        return result
+    } catch (error) {
+        winston.error(
+            `[HELTOUR] Unable to make API request for ${JSON.stringify(
+                request
+            )}: ${error}`
+        )
+        winston.error(`[HELTOUR] response.body ${response.body}`)
+        throw error
     }
-    return result
 }
 
 /*
@@ -467,7 +478,7 @@ export async function linkSlack(
     displayName: string
 ) {
     const request = heltourRequest(heltourConfig, 'link_slack')
-    request.parameters = { userId, displayName }
+    request.parameters = { user_id: userId, display_name: displayName }
     return heltourApiCall(request, SlackLinkDecoder)
 }
 
