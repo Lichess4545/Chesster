@@ -272,8 +272,6 @@ export class League {
                     number: team.num,
                     slack_channel: team.slackChannel,
                 }
-                newTeams.push(newTeam)
-                newTeamLookup[newTeam.name.toLowerCase()] = newTeam
                 team.players.forEach(({ username, isCaptain, boardNumber }) => {
                     const key = username.toLowerCase()
                     const { rating } = incomingPlayerLookup[key]
@@ -287,9 +285,12 @@ export class League {
                     if (newPlayer.isCaptain) {
                         newTeam.captain = newPlayer
                     }
+                    newTeam.players.push(newPlayer)
                     newPlayerLookup[key] = newPlayer
                     newPlayers.push(newPlayer)
                 })
+                newTeamLookup[newTeam.name.toLowerCase()] = newTeam
+                newTeams.push(newTeam)
             })
         }
 
@@ -542,15 +543,15 @@ export class League {
     // -------------------------------------------------------------------------
     getTeamByPlayerName(playerName: string) {
         playerName = playerName.toLowerCase()
-        const teamName =
+        const directTeamMapping =
             this._playerLookup[playerName.toLowerCase()] &&
             this._playerLookup[playerName.toLowerCase()].team
-        if (teamName) return teamName
+        if (directTeamMapping) return directTeamMapping
         // Try to find the team by looking through the pairings for this
         // playername.  This will find alternates.
         const teams: Team[] = this._teams.filter((t) => {
             const playerIds = t.players.map((p) => p.username.toLowerCase())
-            return playerIds.filter((n) => n === playerName)
+            return playerIds.filter((n) => n === playerName).length > 0
         })
         if (teams.length > 0) {
             return teams[0]
@@ -718,7 +719,7 @@ export class League {
             return this.bot.users.getIdString(name)
         })
         return (
-            `{this.name} mods: ` +
+            `${this.name} mods: ` +
             moderators.join(', ') +
             ' Please wait for the mods to contact you. Do not send messages directly.'
         )
