@@ -271,10 +271,8 @@ var config = {
         'lonewolf-general': 'lonewolf',
         'lonewolf-games': 'lonewolf',
         'lonewolf-scheduling': 'lonewolf',
-        'unstable_bot-lonewolf': 'lonewolf',
         'blitz-battle': 'blitzbattle',
         'blitz-battle-games': 'blitzbattle',
-        'unstable_bot-blitz': 'blitzbattle',
         general: '45+45',
         'team-general': '45+45',
         'team-games': '45+45',
@@ -284,7 +282,6 @@ var config = {
         chess960: 'chess960',
         chess960games: 'chess960',
         chess960scheduling: 'chess960',
-        'unstable_bot-chess960': 'chess960',
     },
     messageForwarding: {
         channel: 'G3D6N2HNF',

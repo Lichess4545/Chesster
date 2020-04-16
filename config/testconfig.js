@@ -18,7 +18,7 @@ config['slack_tokens']['chesster'] = test_chesster_slack_token
 config['winston']['channel'] = '#modster-logging'
 config['winston']['handleExceptions'] = false
 
-config['welcome']['channel'] = 'unstable_bot-lonewolf'
+config['welcome']['channel'] = 'dev-testing-lonewolf'
 
 config['heltour']['token'] = heltour_token
 config['heltour']['baseEndpoint'] = 'http://localhost:8000/api/'
@@ -29,18 +29,18 @@ config['leagues']['lonewolf']['heltour']['token'] = heltour_token
 config['leagues']['lonewolf']['heltour']['baseEndpoint'] =
     'http://localhost:8000/api/'
 
-config['leagues']['45+45']['scheduling']['channel'] = 'unstable_bot'
-config['leagues']['45+45']['results']['channel'] = 'unstable_bot'
+config['leagues']['45+45']['scheduling']['channel'] = 'dev-testing'
+config['leagues']['45+45']['results']['channel'] = 'dev-testing'
 config['leagues']['45+45']['results']['channel_id'] = UNSTABLE_BOT_ID
-config['leagues']['45+45']['gamelinks']['channel'] = 'unstable_bot'
+config['leagues']['45+45']['gamelinks']['channel'] = 'dev-testing'
 config['leagues']['45+45']['gamelinks']['channel_id'] = UNSTABLE_BOT_ID
 config['leagues']['45+45']['alternate']['channel_id'] = UNSTABLE_BOT_ID
-config['leagues']['lonewolf']['scheduling']['channel'] = 'unstable_bot-lonewolf'
-config['leagues']['lonewolf']['results']['channel'] = 'unstable_bot-lonewolf'
+config['leagues']['lonewolf']['scheduling']['channel'] = 'dev-testing-lonewolf'
+config['leagues']['lonewolf']['results']['channel'] = 'dev-testing-lonewolf'
 config['leagues']['lonewolf']['results'][
     'channel_id'
 ] = UNSTABLE_BOT_LONEWOLF_ID
-config['leagues']['lonewolf']['gamelinks']['channel'] = 'unstable_bot-lonewolf'
+config['leagues']['lonewolf']['gamelinks']['channel'] = 'dev-testing-lonewolf'
 config['leagues']['lonewolf']['gamelinks'][
     'channel_id'
 ] = UNSTABLE_BOT_LONEWOLF_ID

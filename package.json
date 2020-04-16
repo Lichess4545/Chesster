@@ -52,7 +52,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "tsc && node build/chesster.js",
+    "start": "tsc && node build/chesster.js ../config/testconfig",
     "test": "mocha -r ts-node/register test/**/*.ts",
     "send-coverage": "tsc && node_modules/.bin/codeclimate-test-reporter < coverage/lcov.info; exit 0",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
