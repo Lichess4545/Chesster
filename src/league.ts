@@ -760,8 +760,8 @@ export const getLeague = (() => {
                     thisLeagueConfig.also_known_as,
                     thisLeagueConfig.heltour,
                     thisLeagueConfig.links,
-                    thisLeagueConfig.alternate,
                     thisLeagueConfig.welcome,
+                    thisLeagueConfig.alternate,
                     thisLeagueConfig.results,
                     thisLeagueConfig.gamelinks,
                     thisLeagueConfig.scheduling?.extrema
