@@ -264,32 +264,34 @@ export class League {
         roster.players.map((p) => {
             incomingPlayerLookup[p.username.toLowerCase()] = p
         })
-        roster.teams.map((team) => {
-            const newTeam: Team = {
-                name: team.name,
-                players: [],
-                number: team.num,
-                slack_channel: team.slackChannel,
-            }
-            newTeams.push(newTeam)
-            newTeamLookup[newTeam.name.toLowerCase()] = newTeam
-            team.players.forEach(({ username, isCaptain, boardNumber }) => {
-                const key = username.toLowerCase()
-                const { rating } = incomingPlayerLookup[key]
-                const newPlayer = {
-                    username,
-                    team: newTeam,
-                    isCaptain,
-                    boardNumber,
-                    rating,
+        if (heltour.isTeamLeagueRoster(roster)) {
+            roster.teams.map((team) => {
+                const newTeam: Team = {
+                    name: team.name,
+                    players: [],
+                    number: team.num,
+                    slack_channel: team.slackChannel,
                 }
-                if (newPlayer.isCaptain) {
-                    newTeam.captain = newPlayer
-                }
-                newPlayerLookup[key] = newPlayer
-                newPlayers.push(newPlayer)
+                newTeams.push(newTeam)
+                newTeamLookup[newTeam.name.toLowerCase()] = newTeam
+                team.players.forEach(({ username, isCaptain, boardNumber }) => {
+                    const key = username.toLowerCase()
+                    const { rating } = incomingPlayerLookup[key]
+                    const newPlayer = {
+                        username,
+                        team: newTeam,
+                        isCaptain,
+                        boardNumber,
+                        rating,
+                    }
+                    if (newPlayer.isCaptain) {
+                        newTeam.captain = newPlayer
+                    }
+                    newPlayerLookup[key] = newPlayer
+                    newPlayers.push(newPlayer)
+                })
             })
-        })
+        }
 
         this.log.info('Setting new teams')
         this._teams = newTeams
@@ -301,8 +303,8 @@ export class League {
     // for the league.
     // -------------------------------------------------------------------------
     async refreshLeagueModerators() {
-        const response = await heltour.getLeagueModerators(this.heltourConfig)
-        this._moderators = response.moderators.map((m) => m.toLowerCase())
+        const moderators = await heltour.getLeagueModerators(this.heltourConfig)
+        this._moderators = moderators.map((m) => m.toLowerCase())
     }
 
     // -------------------------------------------------------------------------

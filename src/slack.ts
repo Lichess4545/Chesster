@@ -592,10 +592,10 @@ export class SlackBot {
             this.config.heltour
         )
         if (this.controller) {
-            slackIDByLichessUsername.users.chesster = this.controller.id
+            slackIDByLichessUsername.chesster = this.controller.id
         }
         const lichessUsernameBySlackID: Record<SlackUserID, SlackUserName> = {}
-        _.forOwn(slackIDByLichessUsername.users, (slackID, lichessUsername) => {
+        _.forOwn(slackIDByLichessUsername, (slackID, lichessUsername) => {
             lichessUsernameBySlackID[slackID] = lichessUsername.toLowerCase()
         })
 

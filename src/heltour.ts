@@ -17,6 +17,7 @@ import {
     oneOf,
     union,
     dict,
+    equal,
 } from 'type-safe-json-decoder'
 
 export interface Config {
@@ -61,7 +62,7 @@ export interface IndividualPairing {
     blackRating: number
     gameLink?: string
     result: string
-    datetime: moment.Moment
+    datetime?: moment.Moment
 }
 
 export const IndividualPairingDecoder: Decoder<IndividualPairing> = object(
@@ -74,7 +75,7 @@ export const IndividualPairingDecoder: Decoder<IndividualPairing> = object(
     ['black_rating', number()],
     ['game_link', string()],
     ['result', string()],
-    ['datetime', string()],
+    ['datetime', oneOf(string(), equal(null))],
     (
         league,
         season,
@@ -96,7 +97,7 @@ export const IndividualPairingDecoder: Decoder<IndividualPairing> = object(
         blackRating,
         gameLink,
         result,
-        datetime: moment(datetime),
+        datetime: datetime ? moment.utc(datetime) : undefined,
     })
 )
 
@@ -235,38 +236,55 @@ export const BoardAlternatesDecoder: Decoder<BoardAlternates> = object(
     ['usernames', array(string())],
     (boardNumber, usernames) => ({ boardNumber, usernames })
 )
-export interface Roster {
+export interface IndividualLeagueRoster {
+    league: string
+    season: string
+    players: Player[]
+}
+export const IndividualLeagueRosterDecoder: Decoder<IndividualLeagueRoster> = object(
+    ['league', string()],
+    ['season', string()],
+    ['players', array(PlayerDecoder)],
+    (league, season, players) => ({
+        league,
+        season,
+        players,
+    })
+)
+export interface TeamLeagueRoster extends IndividualLeagueRoster {
     league: string
     season: string
     players: Player[]
     teams: Team[]
     alternates: BoardAlternates[]
 }
-export const RosterDecoder: Decoder<Roster> = object(
-    ['league', string()],
-    ['season', string()],
-    ['players', array(PlayerDecoder)],
-    ['teams', array(TeamDecoder)],
-    ['alternates', array(BoardAlternatesDecoder)],
-    (league, season, players, teams, alternates) => ({
-        league,
-        season,
-        players,
-        teams,
-        alternates,
-    })
+export const TeamLeagueRosterDecoder: Decoder<TeamLeagueRoster> = andThen(
+    IndividualLeagueRosterDecoder,
+    (baseRoster: IndividualLeagueRoster) =>
+        object(
+            ['teams', array(TeamDecoder)],
+            ['alternates', array(BoardAlternatesDecoder)],
+            (teams, alternates) => ({
+                ...baseRoster,
+                teams,
+                alternates,
+            })
+        )
 )
+export type Roster = IndividualLeagueRoster | TeamLeagueRoster
+export const RosterDecoder: Decoder<Roster> = oneOf(
+    TeamLeagueRosterDecoder,
+    IndividualLeagueRosterDecoder
+)
+export function isTeamLeagueRoster(roster: Roster): roster is TeamLeagueRoster {
+    return roster.hasOwnProperty('team')
+}
 
 // -----------------------------------------------------------------------------
 // UserMap
 // -----------------------------------------------------------------------------
-export interface UserMap {
-    users: Record<string, string>
-}
-export const UserMapDecoder: Decoder<UserMap> = object(
-    ['users', dict(string())],
-    (users) => ({ users })
-)
+export type UserMap = Record<string, string>
+export const UserMapDecoder: Decoder<UserMap> = at(['users'], dict(string()))
 
 // -----------------------------------------------------------------------------
 // Link Slack
@@ -297,12 +315,10 @@ export const UpdateSucceededDecoder: Decoder<UpdateSucceeded> = object(
 // -----------------------------------------------------------------------------
 // League Moderators
 // -----------------------------------------------------------------------------
-export interface LeagueModerators {
-    moderators: string[]
-}
-export const LeagueModeratorsDecoder: Decoder<LeagueModerators> = object(
-    ['moderators', array(string())],
-    (moderators) => ({ moderators })
+export type LeagueModerators = string[]
+export const LeagueModeratorsDecoder: Decoder<LeagueModerators> = at(
+    ['moderators'],
+    array(string())
 )
 
 // -----------------------------------------------------------------------------
