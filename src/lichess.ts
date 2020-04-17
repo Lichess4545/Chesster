@@ -214,11 +214,11 @@ export const UserRatingsDecoder: Decoder<UserRatings> = object(
     ['rapid', UserRatingDecoder],
     ['classical', UserRatingDecoder],
     ['correspondence', UserRatingDecoder],
-    (classical, rapid, blitz, bullet, correspondence) => ({
-        classical,
-        rapid,
-        blitz,
+    (bullet, blitz, rapid, classical, correspondence) => ({
         bullet,
+        blitz,
+        rapid,
+        classical,
         correspondence,
     })
 )

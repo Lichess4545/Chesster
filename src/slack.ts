@@ -312,8 +312,8 @@ function withModerator(message: ChessterMessage): ChessterMessage {
 // -----------------------------------------------------------------------------
 export function requiresModerator(
     bot: SlackBot,
-    message: ChessterMessage
-): ChessterMessage {
+    message: CommandMessage
+): CommandMessage {
     if (_.isUndefined(message.league)) {
         throw new Error('requiresModerator MUST be called after withLeague.')
     }
@@ -323,7 +323,7 @@ export function requiresModerator(
     if (!message.isModerator) {
         bot.reply(
             message,
-            `You are not a moderator of the {message.league.name} league. Your temerity has been logged.`
+            `You are not a moderator of the ${message.league.name} league. Your temerity has been logged.`
         )
         throw new StopControllerError('Not a moderator.')
     }

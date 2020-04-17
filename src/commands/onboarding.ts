@@ -6,12 +6,7 @@ import * as heltour from '../heltour'
 import { SlackBot, CommandMessage } from '../slack'
 
 export async function welcomeMessage(bot: SlackBot, message: CommandMessage) {
-    if (
-        _.isEqual(
-            message.channel,
-            bot.channels.getId(bot.config.welcome.channel)
-        )
-    ) {
+    if (message.channel.name === bot.config.welcome.channel) {
         const result = await heltour.linkSlack(
             bot.config.heltour,
             message.user,

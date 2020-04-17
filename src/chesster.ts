@@ -12,16 +12,18 @@ import * as games from './commands/games'
 import * as leagueInfo from './commands/leagueInfo'
 // import messageForwarding from './commands/messageForwarding'
 import * as privateURLs from './commands/privateURLs'
-// import onboarding from './commands/onboarding'
+import * as onboarding from './commands/onboarding'
 import * as playerInfo from './commands/playerInfo'
 // import scheduling from './commands/scheduling'
 // import subscription from './commands/subscription'
 // import presence from './commands/presence'
+import { startQueue } from './lichess'
 
 /* static entry point */
 
 const configFile = process.argv[2] || '../config/config.js'
 const chesster = new slack.SlackBot('lichess4545', configFile)
+startQueue()
 
 if (process.env.NODE_ENV !== 'production') {
     winston.add(
@@ -171,7 +173,6 @@ chesster.hears({
     callback: playerInfo.playerPairings,
 })
 
-/*
 // commands
 
 function prepareCommandsMessage() {
@@ -201,32 +202,33 @@ function prepareCommandsMessage() {
     )
 }
 
-chesster.hears(
-    {
-        patterns: ['commands', 'command list', '^help$'],
-        messageTypes: ['direct_mention', 'direct_message'],
-    },
-    function(bot, message) {
-        bot.startPrivateConversation(message.user).then(function(convo) {
-            convo.say(prepareCommandsMessage())
+chesster.hears({
+    patterns: [/commands/, /command list/, /^help$/],
+    messageTypes: ['direct_mention', 'direct_message'],
+    callback: async (bot, message) => {
+        let convo = await bot.startPrivateConversation([message.user])
+        bot.say({
+            channel: convo.channel.id,
+            text: prepareCommandsMessage(),
         })
-    }
-)
+    },
+})
 
 // welcome
 
-chesster.on(
-    { event: 'user_channel_join' },
-    onboarding.welcomeMessage(chesster.config)
-)
-chesster.hears(
-    {
-        middleware: [slack.requiresLeague, slack.requiresModerator],
-        patterns: ['^welcome me'],
-        messageTypes: ['direct_mention'],
-    },
-    onboarding.welcomeMessage(chesster.config)
-)
+/*chesster.on({
+    event: 'user_channel_join',
+    callback: onboarding.welcomeMessage,
+})*/
+
+chesster.hears({
+    middleware: [slack.requiresLeague, slack.requiresModerator],
+    patterns: [/^welcome me/],
+    messageTypes: ['direct_mention'],
+    callback: onboarding.welcomeMessage,
+})
+
+/*
 
 // source
 
