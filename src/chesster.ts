@@ -228,19 +228,16 @@ chesster.hears({
     callback: onboarding.welcomeMessage,
 })
 
-/*
-
 // source
 
-chesster.hears(
-    {
-        patterns: 'source',
-        messageTypes: ['direct_message', 'direct_mention'],
-    },
-    function(bot, message) {
-        bot.reply(message, chesster.config.links.source)
-    }
-)
+chesster.hears({
+    patterns: [/source/],
+    messageTypes: ['direct_message', 'direct_mention'],
+    callback: (bot, message) =>
+        bot.reply(message, chesster.config.links.source),
+})
+
+/*
 
 // Scheduling
 
