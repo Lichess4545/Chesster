@@ -205,7 +205,7 @@ chesster.hears({
     patterns: [/commands/, /command list/, /^help$/],
     messageTypes: ['direct_mention', 'direct_message'],
     callback: async (bot, message) => {
-        let convo = await bot.startPrivateConversation([message.user])
+        const convo = await bot.startPrivateConversation([message.user])
         bot.say({
             channel: convo.channel.id,
             text: prepareCommandsMessage(),

@@ -12,7 +12,7 @@ async function welcomeMessageImpl(
 ) {
     const result = await heltour.linkSlack(bot.config.heltour, user, '')
     bot.say({
-        channel: channel,
+        channel,
         text:
             'Everyone, please welcome the newest member of the ' +
             `Lichess 45+45 League, <@${user}>!`,
