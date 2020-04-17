@@ -17,13 +17,12 @@ import * as playerInfo from './commands/playerInfo'
 // import scheduling from './commands/scheduling'
 // import subscription from './commands/subscription'
 // import presence from './commands/presence'
-import { startQueue } from './lichess'
+import * as lichess from './lichess'
 
 /* static entry point */
 
 const configFile = process.argv[2] || '../config/config.js'
 const chesster = new slack.SlackBot('lichess4545', configFile)
-startQueue()
 
 if (process.env.NODE_ENV !== 'production') {
     winston.add(
@@ -216,10 +215,10 @@ chesster.hears({
 
 // welcome
 
-/*chesster.on({
-    event: 'user_channel_join',
+chesster.on({
+    event: 'member_joined_channel',
     callback: onboarding.welcomeMessage,
-})*/
+})
 
 chesster.hears({
     middleware: [slack.requiresLeague, slack.requiresModerator],
@@ -337,3 +336,5 @@ chesster.start()
 // Start the watcher.
 const watcher = new Watcher(chesster, getAllLeagues(chesster))
 watcher.watch()
+
+lichess.startQueue()

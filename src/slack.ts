@@ -206,7 +206,7 @@ export interface CommandMessage extends ChessterMessage {
 
 // -------------------------------------------------------------------------------
 // Callback related types
-export type EventType = 'ambient' | 'direct_message' | 'direct_mention'
+export type HearsEventType = 'ambient' | 'direct_message' | 'direct_mention'
 
 export type MiddlewareFn = (
     bot: SlackBot,
@@ -217,7 +217,7 @@ export type CallbackFn = (bot: SlackBot, message: CommandMessage) => void
 
 export interface SlackRTMEventListenerOptions {
     patterns: RegExp[]
-    messageTypes: EventType[]
+    messageTypes: HearsEventType[]
     middleware?: MiddlewareFn[]
     callback: CallbackFn
 }
@@ -229,6 +229,28 @@ function wantsDirectMention(options: SlackRTMEventListenerOptions) {
 }
 function wantsAmbient(options: SlackRTMEventListenerOptions) {
     return options.messageTypes.findIndex((t) => t === 'ambient') !== -1
+}
+
+export type OnEventType = 'member_joined_channel'
+
+export interface MemberJoinedChannel {
+    type: 'member_joined_channel'
+    user: string
+    channel: string
+    channel_type: string
+    team: string
+    inviter: string
+}
+export type OnEvent = MemberJoinedChannel
+export function isMemberJoinedChannelEvent(
+    event: OnEvent
+): event is MemberJoinedChannel {
+    return event.type === 'member_joined_channel'
+}
+export type SlackOnCallbackFn = (bot: SlackBot, event: OnEvent) => void
+export interface OnOptions {
+    event: OnEventType
+    callback: SlackOnCallbackFn
 }
 
 const SECONDS = 1000 // ms
@@ -875,5 +897,11 @@ export class SlackBot {
 
     hears(options: SlackRTMEventListenerOptions): void {
         this.listeners.push(options)
+    }
+
+    on(options: OnOptions) {
+        return this.rtm.on(options.event, (event) =>
+            options.callback(this, event)
+        )
     }
 }
