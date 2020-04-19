@@ -8,7 +8,7 @@ import * as scheduling from './scheduling'
 import * as subscription from './subscription'
 import * as heltour from '../heltour'
 import * as lichess from '../lichess'
-import { SlackBot, CommandMessage } from '../slack'
+import { SlackBot, CommandMessage, LeagueCommandMessage } from '../slack'
 import { isDefined } from '../utils'
 import { League, Pairing as LeaguePairing } from '../league'
 
@@ -109,31 +109,18 @@ function handleHeltourErrors(
     }
 }
 
-export async function ambientResults(bot: SlackBot, message: CommandMessage) {
-    if (!isDefined(message.league)) {
-        return
-    }
+export async function ambientResults(
+    bot: SlackBot,
+    message: LeagueCommandMessage
+) {
     const league: League = message.league
     const resultsOptions = message.league.config.results
-    const channel = message.channel
-    if (!resultsOptions || !_.isEqual(channel.name, resultsOptions.channel)) {
-        return
-    }
-
     const heltourOptions = message.league.config.heltour
-    if (!heltourOptions) {
-        winston.error(
-            `${message.league?.name} league doesn't have heltour options!?`
-        )
+    const channel = message.channel
+    if (!_.isEqual(channel.name, resultsOptions.channel)) {
         return
     }
 
-    const gamelinkOptions = message.league.config.gamelinks
-    if (!gamelinkOptions) {
-        return
-    }
-
-    const speaker = message.member
     const result = parseResult(message.text)
     if (!isDefined(result)) {
         return
@@ -151,7 +138,7 @@ export async function ambientResults(bot: SlackBot, message: CommandMessage) {
         black,
     }
 
-    const isModerator = message.league.isModerator(speaker.name)
+    const isModerator = message.isModerator
     if (
         !_.isEqual(white.id, message.user) &&
         !_.isEqual(black.id, message.user) &&
@@ -221,10 +208,10 @@ function replyPlayerNotFound(bot: SlackBot, message: CommandMessage) {
     bot.reply(message, 'Sorry, I could not find one of the players on Slack.')
 }
 
-function resultReplyMissingGamelink(bot: SlackBot, message: CommandMessage) {
-    if (!isDefined(message.league)) {
-        return
-    }
+function resultReplyMissingGamelink(
+    bot: SlackBot,
+    message: LeagueCommandMessage
+) {
     const league: League = message.league
     const channel = bot.channels.getByNameOrID(league.config.gamelinks.channel)
     if (!isDefined(channel)) {

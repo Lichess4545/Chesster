@@ -11,6 +11,7 @@ import {
     isLeagueMember,
     LeagueMember,
 } from '../slack'
+import { isDefined } from '../utils'
 
 function prepareRatingMessage(_player: string, rating: number) {
     return `${_player} is rated ${rating} in classical chess`
@@ -36,6 +37,10 @@ export function playerPairings(
 ): Promise<void> {
     const targetPlayer = bot.getLeagueMemberTarget(message)
     return new Promise(async (resolve) => {
+        if (!isDefined(message.member)) {
+            return
+        }
+        const requester: LeagueMember = message.member
         if (isLeagueMember(targetPlayer)) {
             const member: LeagueMember = targetPlayer
             const allLeagues = getAllLeagues(bot)
@@ -55,7 +60,7 @@ export function playerPairings(
                 pairings.map((details) => {
                     bot.say({
                         text: details.league.formatPairingResponse(
-                            message.member,
+                            requester,
                             details
                         ),
                         channel: convo.channel.id,

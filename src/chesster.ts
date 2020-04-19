@@ -44,10 +44,10 @@ const adminSlack = new slack.SlackBot(
 // A helper for a very common pattern
 export function directRequiresLeague(
     patterns: RegExp[],
-    callback: slack.CallbackFn
+    callback: slack.LeagueCommandCallbackFn
 ) {
     chesster.hears({
-        middleware: [slack.requiresLeague],
+        type: 'league_command',
         patterns,
         messageTypes: ['direct_message', 'direct_mention'],
         callback,
@@ -94,7 +94,7 @@ directRequiresLeague(
 
 // availability
 chesster.hears({
-    middleware: [slack.requiresLeague],
+    type: 'league_command',
     patterns: [/available/, /unavailable/],
     messageTypes: ['direct_message', 'direct_mention'],
     callback: availability.updateAvailability,
@@ -102,7 +102,7 @@ chesster.hears({
 
 // alternate assignment
 chesster.hears({
-    middleware: [],
+    type: 'league_command',
     patterns: [/^assign/],
     messageTypes: ['ambient', 'direct_mention'],
     callback: availability.assignAlternate,
@@ -110,7 +110,7 @@ chesster.hears({
 
 // alternate unassignment
 chesster.hears({
-    middleware: [],
+    type: 'league_command',
     patterns: [/^unassign/],
     messageTypes: ['ambient', 'direct_mention'],
     callback: availability.unassignAlternate,
@@ -118,11 +118,13 @@ chesster.hears({
 
 // Message Forwarding
 adminSlack.hears({
+    type: 'command',
     patterns: [/^forward to/],
     messageTypes: ['direct_mention', 'bot_message'],
     callback: messageForwarding.forwardMessage(chesster, adminSlack),
 })
 adminSlack.hears({
+    type: 'command',
     patterns: [/^refresh/],
     messageTypes: ['direct_mention', 'bot_message'],
     callback: messageForwarding.refreshLeague(chesster, adminSlack),
@@ -130,24 +132,25 @@ adminSlack.hears({
 
 // private urls
 chesster.hears({
-    middleware: [slack.requiresLeague],
+    type: 'league_command',
     patterns: [/get nomination url/, /nomination/],
     messageTypes: ['direct_message'],
     callback: privateURLs.nomination,
 })
 chesster.hears({
-    middleware: [slack.requiresLeague],
+    type: 'league_command',
     patterns: [/get notification url/, /notification/],
     messageTypes: ['direct_message'],
     callback: privateURLs.notification,
 })
 chesster.hears({
-    middleware: [slack.requiresLeague],
+    type: 'league_command',
     patterns: [/availability/, /edit availability/, /availability edit/],
     messageTypes: ['direct_message'],
     callback: privateURLs.availability,
 })
 chesster.hears({
+    type: 'league_command',
     patterns: [/link/],
     messageTypes: ['direct_message'],
     callback: privateURLs.linkAccounts,
@@ -155,12 +158,14 @@ chesster.hears({
 
 // rating
 chesster.hears({
+    type: 'command',
     patterns: [slack.appendPlayerRegex('rating', true)],
     messageTypes: ['direct_mention', 'direct_message'],
     callback: playerInfo.playerRating,
 })
 
 chesster.hears({
+    type: 'command',
     patterns: [slack.appendPlayerRegex('pairing', true)],
     messageTypes: ['direct_mention', 'direct_message'],
     callback: playerInfo.playerPairings,
@@ -196,9 +201,10 @@ function prepareCommandsMessage() {
 }
 
 chesster.hears({
+    type: 'command',
     patterns: [/commands/, /command list/, /^help$/],
     messageTypes: ['direct_mention', 'direct_message'],
-    callback: async (bot, message) => {
+    callback: async (bot: slack.SlackBot, message: slack.CommandMessage) => {
         const convo = await bot.startPrivateConversation([message.user])
         bot.say({
             channel: convo.channel.id,
@@ -215,7 +221,8 @@ chesster.on({
 })
 
 chesster.hears({
-    middleware: [slack.requiresLeague, slack.requiresModerator],
+    type: 'command',
+    middleware: [slack.requiresModerator],
     patterns: [/^welcome me/],
     messageTypes: ['direct_mention'],
     callback: onboarding.welcomeMessage,
@@ -224,6 +231,7 @@ chesster.hears({
 // source
 
 chesster.hears({
+    type: 'command',
     patterns: [/source/],
     messageTypes: ['direct_message', 'direct_mention'],
     callback: (bot, message) =>
@@ -234,6 +242,7 @@ chesster.hears({
 
 // Scheduling will occur on any message
 chesster.hears({
+    type: 'league_command',
     patterns: [/.*/],
     messageTypes: ['ambient'],
     callback: scheduling.ambientScheduling,
@@ -243,6 +252,7 @@ chesster.hears({
 
 // results processing will occur on any message
 chesster.hears({
+    type: 'league_command',
     patterns: [/.*/],
     messageTypes: ['ambient'],
     callback: games.ambientResults,
@@ -252,6 +262,7 @@ chesster.hears({
 
 // gamelink processing will occur on any message
 chesster.hears({
+    type: 'league_command',
     patterns: [/.*http.*/],
     messageTypes: ['ambient'],
     callback: games.ambientGamelinks,
@@ -321,6 +332,7 @@ subscription.register(
 */
 
 chesster.start()
+adminSlack.start()
 
 // -----------------------------------------------------------------------------
 // Start the watcher.

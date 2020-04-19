@@ -9,7 +9,7 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
     return async (bot: SlackBot, message: CommandMessage) => {
         if (
             !_.isEqual(
-                message.channel,
+                message.channel.id,
                 adminSlack.config.messageForwarding.channelId
             )
         ) {
@@ -106,7 +106,7 @@ export function refreshLeague(chesster: SlackBot, adminSlack: SlackBot) {
     return (bot: SlackBot, message: CommandMessage) => {
         if (
             !_.isEqual(
-                message.channel,
+                message.channel.id,
                 adminSlack.config.messageForwarding.channelId
             )
         ) {
@@ -138,7 +138,7 @@ export function refreshLeague(chesster: SlackBot, adminSlack: SlackBot) {
 
             if (type === 'pairings') {
                 l.refreshCurrentRoundSchedules()
-                    .then((pairings) => {
+                    .then(async (pairings) => {
                         winston.info(
                             'Found ' +
                                 pairings.length +
@@ -147,6 +147,7 @@ export function refreshLeague(chesster: SlackBot, adminSlack: SlackBot) {
                                 ' (manual refresh)'
                         )
                         l.emitter.emit('refreshPairings', l)
+                        await bot.react(message, 'heavy_check_mark')
                     })
                     .catch((error) => {
                         winston.error(

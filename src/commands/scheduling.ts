@@ -8,8 +8,7 @@ import winston from 'winston'
 import * as heltour from '../heltour'
 import * as subscription from './subscription'
 import * as config from '../config'
-import { League } from '../league'
-import { SlackBot, CommandMessage, LeagueMember } from '../slack'
+import { SlackBot, LeagueCommandMessage, LeagueMember } from '../slack'
 import { isDefined } from '../utils'
 
 interface ExtremaParameters {
@@ -366,7 +365,7 @@ export function getRoundExtrema(options: config.Scheduling): Extrema {
 }
 
 // There is not active round
-function replyNoActiveRound(bot: SlackBot, message: CommandMessage) {
+function replyNoActiveRound(bot: SlackBot, message: LeagueCommandMessage) {
     const user = '<@' + message.user + '>'
     bot.reply(
         message,
@@ -377,7 +376,10 @@ function replyNoActiveRound(bot: SlackBot, message: CommandMessage) {
 }
 
 // Can't find the pairing
-function schedulingReplyMissingPairing(bot: SlackBot, message: CommandMessage) {
+function schedulingReplyMissingPairing(
+    bot: SlackBot,
+    message: LeagueCommandMessage
+) {
     const user = '<@' + message.user + '>'
     bot.reply(
         message,
@@ -390,7 +392,7 @@ function schedulingReplyMissingPairing(bot: SlackBot, message: CommandMessage) {
 // you are very close to the cutoff
 function schedulingReplyTooCloseToCutoff(
     bot: SlackBot,
-    message: CommandMessage,
+    message: LeagueCommandMessage,
     schedulingOptions: config.Scheduling,
     white: LeagueMember,
     black: LeagueMember
@@ -407,7 +409,10 @@ function schedulingReplyTooCloseToCutoff(
 }
 
 // the pairing is ambiguous
-function schedulingReplyAmbiguous(bot: SlackBot, message: CommandMessage) {
+function schedulingReplyAmbiguous(
+    bot: SlackBot,
+    message: LeagueCommandMessage
+) {
     bot.reply(
         message,
         'The pairing you are trying to schedule is ambiguous. Please contact a moderator.'
@@ -417,7 +422,7 @@ function schedulingReplyAmbiguous(bot: SlackBot, message: CommandMessage) {
 // Game has been scheduled.
 function schedulingReplyScheduled(
     bot: SlackBot,
-    message: CommandMessage,
+    message: LeagueCommandMessage,
     results: SchedulingResult,
     white: LeagueMember,
     black: LeagueMember,
@@ -473,7 +478,7 @@ function schedulingReplyScheduled(
 // Your game is out of bounds
 function schedulingReplyTooLate(
     bot: SlackBot,
-    message: CommandMessage,
+    message: LeagueCommandMessage,
     schedulingOptions: config.Scheduling
 ) {
     const user = '<@' + message.user + '>'
@@ -483,7 +488,7 @@ function schedulingReplyTooLate(
 // can't find the users you menteiond
 function schedulingReplyCantScheduleOthers(
     bot: SlackBot,
-    message: CommandMessage
+    message: LeagueCommandMessage
 ) {
     const user = '<@' + message.user + '>'
     bot.reply(
@@ -495,7 +500,10 @@ function schedulingReplyCantScheduleOthers(
 }
 
 // can't find the users you menteiond
-function schedulingReplyCantFindUser(bot: SlackBot, message: CommandMessage) {
+function schedulingReplyCantFindUser(
+    bot: SlackBot,
+    message: LeagueCommandMessage
+) {
     const user = '<@' + message.user + '>'
     bot.reply(
         message,
@@ -504,35 +512,18 @@ function schedulingReplyCantFindUser(bot: SlackBot, message: CommandMessage) {
 }
 export async function ambientScheduling(
     bot: SlackBot,
-    message: CommandMessage
+    message: LeagueCommandMessage
 ) {
-    if (!isDefined(message.league)) {
-        return
-    }
-    const league: League = message.league
-
-    const speakerOr = bot.users.getByNameOrID(message.user)
-    if (!isDefined(speakerOr)) return
-    const speaker: LeagueMember = speakerOr
+    const league = message.league
+    const speaker = message.member
 
     const schedulingOptions = league.config.scheduling
     const channel = message.channel
-    if (
-        !schedulingOptions ||
-        !channel ||
-        !_.isEqual(channel.name, schedulingOptions.channel)
-    ) {
+    if (!_.isEqual(channel.name, schedulingOptions.channel)) {
         return
     }
 
     const heltourOptions = league.config.heltour
-    if (!heltourOptions) {
-        winston.error(
-            `[SCHEDULING] ${league.name} league doesn't have heltour options!?`
-        )
-        return
-    }
-
     let schedulingResults: SchedulingResult | undefined
 
     // Step 1. See if we can parse the dates

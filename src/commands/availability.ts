@@ -6,7 +6,7 @@ import _ from 'lodash'
 
 import * as commands from '../commands'
 import * as heltour from '../heltour'
-import { SlackBot, CommandMessage } from '../slack'
+import { SlackBot, CommandMessage, LeagueCommandMessage } from '../slack'
 import { Team } from '../league'
 import { isDefined } from '../utils'
 
@@ -115,14 +115,11 @@ function replyMisunderstoodAlternateUnassignment(
 }
 
 /* [player <player-name> is] {available, unavailable} for round <round-number> in <league> */
-export function updateAvailability(bot: SlackBot, message: CommandMessage) {
-    const heltourOptions = message.league?.config.heltour
-    if (!heltourOptions) {
-        winston.error(
-            `${message.league?.name} league doesn't have heltour options.`
-        )
-        return
-    }
+export function updateAvailability(
+    bot: SlackBot,
+    message: LeagueCommandMessage
+) {
+    const heltourOptions = message.league.config.heltour
 
     let commandDescription
     if (_.isEqual(_(message.text).split(' ').head(), 'player')) {
@@ -161,14 +158,6 @@ export function updateAvailability(bot: SlackBot, message: CommandMessage) {
         const targetName = parameters.playerName
         if (targetName && commands.isText(targetName)) {
             const speaker = message.member
-
-            if (!isDefined(message.league)) {
-                bot.reply(
-                    message,
-                    `I couldn't figure out the league for this command`
-                )
-                return
-            }
 
             const speakerTeam = message.league.getTeamByPlayerName(speaker.name)
             if (!isDefined(speakerTeam)) {
@@ -258,21 +247,15 @@ export function updateAvailability(bot: SlackBot, message: CommandMessage) {
 }
 
 /* assign <player> to board <board-number> during round <round-number> on <team-name>*/
-export function assignAlternate(bot: SlackBot, message: CommandMessage) {
-    const alternateOptions = message.league?.config.alternate
+export function assignAlternate(bot: SlackBot, message: LeagueCommandMessage) {
+    const alternateOptions = message.league.config.alternate
     if (
         !alternateOptions ||
         !_.isEqual(message.channel.id, alternateOptions.channelId)
     ) {
         return
     }
-    const heltourOptions = message.league?.config.heltour
-    if (!heltourOptions) {
-        winston.error(
-            `${message.league?.name} league doesn't have heltour options!?`
-        )
-        return
-    }
+    const heltourOptions = message.league.config.heltour
 
     try {
         const parameters = commands.tokenize(message.text, [
@@ -287,19 +270,7 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
             '{on|for|in}',
             '{text:teamName}',
         ])
-        const speaker = bot.getSlackUserFromNameOrID(message.user)
-        if (!isDefined(speaker)) {
-            bot.reply(message, `I don't reocgnize you, sorry.`)
-            return
-        }
-
-        if (!isDefined(message.league)) {
-            bot.reply(
-                message,
-                `I couldn't figure out the league for this command`
-            )
-            return
-        }
+        const speaker = message.member
 
         const speakerTeam = message.league.getTeamByPlayerName(speaker.name)
         if (!isDefined(speakerTeam)) {
@@ -426,7 +397,10 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
 
 /* unassign alternate for board <board-number> during round <round-number> on <team-name> */
 /* look up the original player and assign him to his board */
-export function unassignAlternate(bot: SlackBot, message: CommandMessage) {
+export function unassignAlternate(
+    bot: SlackBot,
+    message: LeagueCommandMessage
+) {
     const alternateOptions = message.league?.config.alternate
     if (
         !alternateOptions ||
@@ -434,13 +408,7 @@ export function unassignAlternate(bot: SlackBot, message: CommandMessage) {
     ) {
         return
     }
-    const heltourOptions = message.league?.config.heltour
-    if (!heltourOptions) {
-        winston.error(
-            `${message.league?.name} league doesn't have heltour options!?`
-        )
-        return
-    }
+    const heltourOptions = message.league.config.heltour
 
     let components = message.text.split(' ')
     components = components.filter((p) => p !== '')
@@ -459,11 +427,6 @@ export function unassignAlternate(bot: SlackBot, message: CommandMessage) {
     const speaker = bot.getSlackUserFromNameOrID(message.user)
     if (!isDefined(speaker)) {
         bot.reply(message, `I don't reocgnize you, sorry.`)
-        return
-    }
-
-    if (!isDefined(message.league)) {
-        bot.reply(message, `I couldn't figure out the league for this command`)
         return
     }
 

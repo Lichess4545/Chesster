@@ -20,14 +20,18 @@ config['winston']['handleExceptions'] = false
 
 config['welcome']['channel'] = 'dev-testing-lonewolf'
 
-config['heltour']['token'] = heltour_token
-config['heltour']['baseEndpoint'] = 'http://localhost:8000/api/'
-config['leagues']['45+45']['heltour']['token'] = heltour_token
-config['leagues']['45+45']['heltour']['baseEndpoint'] =
-    'http://localhost:8000/api/'
-config['leagues']['lonewolf']['heltour']['token'] = heltour_token
-config['leagues']['lonewolf']['heltour']['baseEndpoint'] =
-    'http://localhost:8000/api/'
+heltour = {
+    baseEndpoint: 'http://localhost:8000/api/',
+    token: heltour_token,
+}
+let leagues = ['45+45', 'lonewolf', 'blitzbattle', 'chess960']
+config['heltour'] = heltour
+leagues.map((k) => {
+    config['leagues'][k]['heltour'] = {
+        ...heltour,
+        leagueTag: config['leagues'][k]['heltour']['leagueTag'],
+    }
+})
 
 config['leagues']['45+45']['scheduling']['channel'] = 'dev-testing'
 config['leagues']['45+45']['results']['channel'] = 'dev-testing'
@@ -49,6 +53,6 @@ config['channelMap']['dev-testing-lonewolf'] = 'lonewolf'
 config['channelMap']['dev-testing-blitz'] = 'blitz'
 config['channelMap'][UNSTABLE_BOT_LONEWOLF_ID] = 'lonewolf'
 
-config['messageForwarding']['channel'] = 'N/A'
+config['messageForwarding']['channelId'] = 'G3FJXJ0C9'
 
 module.exports = config

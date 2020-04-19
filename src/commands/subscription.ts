@@ -189,6 +189,9 @@ function processTellCommand(
     message: CommandMessage
 ): Promise<string> {
     return new Promise((resolve, reject) => {
+        if (!isDefined(message.member)) {
+            return
+        }
         const requester = bot.getSlackUserFromNameOrID(message.user)
         if (!isDefined(requester)) return
         const components = message.text.split(' ')
@@ -468,6 +471,9 @@ function processTeamSubscribeCommand(
     message: CommandMessage
 ): Promise<string> {
     return new Promise((resolve, reject) => {
+        if (!isDefined(message.member)) {
+            return
+        }
         const _leagueOr = league.getLeague(bot, '45+45')
         if (!isDefined(_leagueOr)) return
         const _league: league.League = _leagueOr

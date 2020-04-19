@@ -3,12 +3,11 @@
 // -----------------------------------------------------------------------------
 import _ from 'lodash'
 import * as heltour from '../heltour'
-import { SlackBot, CommandMessage } from '../slack'
+import { SlackBot, CommandMessage, LeagueCommandMessage } from '../slack'
 import { isDefined } from '../utils'
 
 // -----------------------------------------------------------------------------
-export function nomination(bot: SlackBot, message: CommandMessage) {
-    if (!isDefined(message.league)) return
+export function nomination(bot: SlackBot, message: LeagueCommandMessage) {
     bot.reply(
         message,
         `Use this link to nominate your choice: ${message.league.config.links.nominate}`
@@ -16,8 +15,7 @@ export function nomination(bot: SlackBot, message: CommandMessage) {
 }
 
 // -----------------------------------------------------------------------------
-export function notification(bot: SlackBot, message: CommandMessage) {
-    if (!isDefined(message.league)) return
+export function notification(bot: SlackBot, message: LeagueCommandMessage) {
     bot.reply(
         message,
         `Use this link to set your notifications preferences: ${message.league.config.links.notifications}`
@@ -25,8 +23,7 @@ export function notification(bot: SlackBot, message: CommandMessage) {
 }
 
 // -----------------------------------------------------------------------------
-export function availability(bot: SlackBot, message: CommandMessage) {
-    if (!isDefined(message.league)) return
+export function availability(bot: SlackBot, message: LeagueCommandMessage) {
     bot.reply(
         message,
         `Use this link to set your availability: ${message.league.config.links.availability}`
@@ -34,9 +31,11 @@ export function availability(bot: SlackBot, message: CommandMessage) {
 }
 
 // -----------------------------------------------------------------------------
-export async function linkAccounts(bot: SlackBot, message: CommandMessage) {
-    const slackUser = bot.getSlackUserFromNameOrID(message.user)
-    if (!isDefined(slackUser)) return
+export async function linkAccounts(
+    bot: SlackBot,
+    message: LeagueCommandMessage
+) {
+    const slackUser = message.member
     const result = await heltour.linkSlack(
         bot.config.heltour,
         message.user,

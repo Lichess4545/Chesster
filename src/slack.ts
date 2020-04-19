@@ -175,6 +175,7 @@ export interface SlackAttachment {
 
 export interface SlackMessage {
     type: 'message' | 'app_mention'
+    subtype: string
     client_msg_id: string
     user: SlackUserID
     bot_id?: SlackUserID
@@ -192,9 +193,9 @@ export interface SlackMessage {
 export interface ChessterMessage {
     type: 'message'
     user: SlackUserID
-    member: LeagueMember
     channel: SlackChannel
     text: string
+    member?: LeagueMember
     league?: league.League
     isModerator?: boolean
     ts: string
@@ -202,6 +203,13 @@ export interface ChessterMessage {
 }
 
 export interface CommandMessage extends ChessterMessage {
+    matches: RegExpMatchArray
+}
+
+export interface LeagueCommandMessage extends ChessterMessage {
+    member: LeagueMember
+    league: league.League
+    isModerator: boolean
     matches: RegExpMatchArray
 }
 
@@ -218,13 +226,34 @@ export type MiddlewareFn = (
     message: CommandMessage
 ) => CommandMessage
 
-export type CallbackFn = (bot: SlackBot, message: CommandMessage) => void
+// export type ChessterCallbackFn = (bot: SlackBot, message: CommandMessage) => void
+export type CommandCallbackFn = (bot: SlackBot, message: CommandMessage) => void
+export type LeagueCommandCallbackFn = (
+    bot: SlackBot,
+    message: LeagueCommandMessage
+) => void
 
-export interface SlackRTMEventListenerOptions {
+export interface CommandEventOptions {
+    type: 'command'
     patterns: RegExp[]
     messageTypes: HearsEventType[]
     middleware?: MiddlewareFn[]
-    callback: CallbackFn
+    callback: CommandCallbackFn
+}
+export interface LeagueCommandEventOptions {
+    type: 'league_command'
+    patterns: RegExp[]
+    messageTypes: HearsEventType[]
+    middleware?: MiddlewareFn[]
+    callback: LeagueCommandCallbackFn
+}
+
+export type SlackRTMEventListenerOptions =
+    | CommandEventOptions
+    | LeagueCommandEventOptions
+
+function wantsBotMessage(options: SlackRTMEventListenerOptions) {
+    return options.messageTypes.findIndex((t) => t === 'bot_message') !== -1
 }
 function wantsDirectMessage(options: SlackRTMEventListenerOptions) {
     return options.messageTypes.findIndex((t) => t === 'direct_message') !== -1
@@ -321,18 +350,6 @@ const exceptionLogger = <T>(promise: Promise<T>) =>
             reject(e)
         })
     })
-
-// -----------------------------------------------------------------------------
-// A helper to determine if the user is a moderator
-// -----------------------------------------------------------------------------
-function withModerator(message: ChessterMessage): ChessterMessage {
-    return {
-        ...message,
-        isModerator: !message.league
-            ? false
-            : message.league.isModerator(message.user),
-    }
-}
 
 // -----------------------------------------------------------------------------
 // Various middleware
@@ -439,13 +456,6 @@ function getLeague(
     }
 
     return undefined
-}
-
-export function withLeague(
-    bot: SlackBot,
-    message: ChessterMessage
-): ChessterMessage {
-    return { ...message, league: getLeague(bot, message, false) }
 }
 
 export function requiresLeague(
@@ -690,6 +700,9 @@ export class SlackBot {
     }
 
     getLeagueMemberTarget(message: CommandMessage): LeagueMember | undefined {
+        if (!isDefined(message.member)) {
+            return
+        }
         // The user is either a string or an id
         let nameOrId = message.member.id
 
@@ -822,9 +835,65 @@ export class SlackBot {
         })
     }
 
+    async handleMatch(
+        listener: SlackRTMEventListenerOptions,
+        message: CommandMessage
+    ) {
+        let allowedTypes = ['command', 'league_command']
+        const member = this.users.getByNameOrID(message.user)
+        const _league = getLeague(this, message, false)
+        if (!_league || !member) {
+            allowedTypes = ['command']
+        }
+
+        try {
+            try {
+                if (
+                    listener.type === 'command' &&
+                    allowedTypes.indexOf('command') !== -1
+                ) {
+                    _.map(listener.middleware, (m) => m(this, message))
+                    listener.callback(this, message)
+                } else if (
+                    listener.type === 'league_command' &&
+                    allowedTypes.indexOf('league_command') !== -1
+                ) {
+                    if (_league && member) {
+                        // Typescript should have been able know that they are set appropriately
+                        // here.
+                        _.map(listener.middleware, (m) => m(this, message))
+                        const leagueCommandMessage: LeagueCommandMessage = {
+                            ...message,
+                            league: _league,
+                            member,
+                            isModerator: _league.isModerator(message.user),
+                        }
+                        listener.callback(this, leagueCommandMessage)
+                    } else {
+                        this.log.warn('Typescript failed me')
+                    }
+                }
+            } catch (error) {
+                if (error instanceof StopControllerError) {
+                    this.log.error(
+                        `Middleware asked to not process controller callback: ${JSON.stringify(
+                            error
+                        )}`
+                    )
+                }
+            }
+        } catch (e) {
+            this.log.info(`Error handling event: ${message}`)
+            this.say({
+                channel: message.channel.id,
+                text:
+                    'Something has gone terribly terribly wrong. Please forgive me.',
+            })
+        }
+    }
+
     async startOnListener() {
         this.rtm.on('message', async (event: SlackMessage) => {
-            if (event.bot_id) return // Ignore bot messages
             const channel = await this.getChannel(event.channel)
             if (!channel) {
                 this.log.warn(
@@ -832,26 +901,18 @@ export class SlackBot {
                 )
                 return
             }
-            const member = this.users.getByNameOrID(event.user)
-            if (!member) {
-                this.log.warn(
-                    `Unable to get member details for slack user: ${event.user}`
-                )
-                return
-            }
-            let chessterMessage: ChessterMessage = {
+            const chessterMessage: ChessterMessage = {
                 ...event,
                 type: 'message',
                 channel,
-                member,
             }
-            chessterMessage = withModerator(withLeague(this, chessterMessage))
 
             const isDirectMessage =
                 channel && channel.is_im && !channel.is_group
             const isDirectMention =
                 chessterMessage.text.indexOf(`<@${this.controller?.id}>`) !== -1
             const isAmbient = !(isDirectMention || isDirectMessage)
+            const isBotMessage = event.subtype === 'bot_message'
             this.listeners.map(async (listener) => {
                 let isWanted = false
                 let text = event.text
@@ -863,6 +924,8 @@ export class SlackBot {
                     text = text.replace(`<@${this.controller?.id}>`, '')
                 } else if (isAmbient && wantsAmbient(listener)) {
                     isWanted = true
+                } else if (isBotMessage && wantsBotMessage(listener)) {
+                    isWanted = true
                 }
 
                 if (!isWanted) return
@@ -870,32 +933,11 @@ export class SlackBot {
                 listener.patterns.some((p) => {
                     const matches = text.match(p)
                     if (!matches) return false
-                    const message = {
+                    this.handleMatch(listener, {
                         ...chessterMessage,
                         text: text.trim(),
                         matches,
-                    }
-                    try {
-                        try {
-                            _.map(listener.middleware, (m) => m(this, message))
-                            listener.callback(this, message)
-                        } catch (error) {
-                            if (error instanceof StopControllerError) {
-                                this.log.error(
-                                    `Middleware asked to not process controller callback: ${JSON.stringify(
-                                        error
-                                    )}`
-                                )
-                            }
-                        }
-                    } catch (e) {
-                        this.log.info(`Error handling event: ${event}`)
-                        this.say({
-                            channel: event.channel,
-                            text:
-                                'Something has gone terribly terribly wrong. Please forgive me.',
-                        })
-                    }
+                    })
                     return true
                 })
             })
