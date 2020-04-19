@@ -16,7 +16,7 @@ import * as onboarding from './commands/onboarding'
 import * as playerInfo from './commands/playerInfo'
 import * as scheduling from './commands/scheduling'
 // import subscription from './commands/subscription'
-// import presence from './commands/presence'
+import * as presence from './commands/presence'
 import * as lichess from './lichess'
 
 /* static entry point */
@@ -309,15 +309,6 @@ chesster.hears(
     },
     subscription.subscribeTeams(chesster.config)
 )
-
-chesster.hears(
-    {
-        patterns: [''],
-        messageTypes: ['ambient'],
-    },
-    presence.ambientPresence(chesster.config)
-)
-
 subscription.register(
     chesster,
     'a-game-is-scheduled',
@@ -330,6 +321,13 @@ subscription.register(
     subscription.formatAGameIsOver
 )
 */
+
+chesster.hears({
+    type: 'command',
+    patterns: [/.*/],
+    messageTypes: ['ambient'],
+    callback: presence.ambientPresence,
+})
 
 chesster.start()
 adminSlack.start()

@@ -76,6 +76,11 @@ export interface SlackChannelTopicOrPurpose {
     creator: SlackUserID
     last_set: number
 }
+export interface SlackChannelMembersList extends WebAPICallResult {
+    ok: boolean
+    members: string[]
+    response_metadata: SlackResponseMetadata
+}
 
 export interface SlackChannel {
     id: string
@@ -93,7 +98,6 @@ export interface SlackChannel {
     is_member: boolean
     is_private: boolean
     is_mpim: boolean
-    members: SlackUserID[]
     user?: string
     topic: SlackChannelTopicOrPurpose
     purpose: SlackChannelTopicOrPurpose
@@ -683,20 +687,32 @@ export class SlackBot {
         )
         // @ https://api.slack.com/methods/conversations.list
         for await (const page of (this.web.paginate('conversations.list', {
-            types: 'public_channel,private_channel,mpim,im,',
+            types: 'public_channel,private_channel,mpim,im',
             exclude_archived: true,
         }) as unknown) as AsyncIterable<SlackChannelListResponse>) {
             if (page.ok) {
                 page.channels.map((c) => {
                     if (c.is_channel) newChannels.add(c)
                     if (c.is_im) newDMs.add(c)
-                    else newMPIMs.add(c)
+                    else {
+                        console.log(c)
+                        newMPIMs.add(c)
+                    }
                 })
             }
         }
         this.channels = newChannels
         this.mpims = newMPIMs
         this.dms = newDMs
+    }
+
+    async getChannelMemberList(
+        channel: SlackChannel
+    ): Promise<SlackChannelMembersList> {
+        let response = (await this.web.conversations.members({
+            channel: channel.id,
+        })) as SlackChannelMembersList
+        return response
     }
 
     getLeagueMemberTarget(message: CommandMessage): LeagueMember | undefined {

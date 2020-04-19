@@ -8,18 +8,24 @@ import { SlackBot, CommandMessage } from '../slack'
 import { isDefined } from '../utils'
 
 export async function ambientPresence(bot: SlackBot, message: CommandMessage) {
-    if (!isDefined(message.member)) {
-        return
-    }
     const mpim = bot.mpims.getByNameOrID(message.channel.id)
     if (!mpim) {
         return
     }
-    const sender = message.member
+    const sender = bot.users.getByNameOrID(message.user)
+    if (!isDefined(sender)) {
+        return
+    }
     if (!isDefined(bot.controller)) {
         return
     }
-    const recips = _.without(mpim.members, bot.controller.id, sender.id)
+
+    let membersResponse = await bot.getChannelMemberList(message.channel)
+    const recips = _.without(
+        membersResponse.members,
+        bot.controller.id,
+        sender.id
+    )
     if (recips.length !== 1) {
         return
     }
