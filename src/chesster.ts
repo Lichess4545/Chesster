@@ -14,7 +14,7 @@ import * as leagueInfo from './commands/leagueInfo'
 import * as privateURLs from './commands/privateURLs'
 import * as onboarding from './commands/onboarding'
 import * as playerInfo from './commands/playerInfo'
-// import scheduling from './commands/scheduling'
+import * as scheduling from './commands/scheduling'
 // import subscription from './commands/subscription'
 // import presence from './commands/presence'
 import * as lichess from './lichess'
@@ -236,18 +236,14 @@ chesster.hears({
         bot.reply(message, chesster.config.links.source),
 })
 
-/*
-
 // Scheduling
 
 // Scheduling will occur on any message
-chesster.on(
-    {
-        event: 'ambient',
-        middleware: [slack.withLeague],
-    },
-    scheduling.ambientScheduling
-)*/
+chesster.hears({
+    patterns: [/.*/],
+    messageTypes: ['ambient'],
+    callback: scheduling.ambientScheduling,
+})
 
 // results parsing
 

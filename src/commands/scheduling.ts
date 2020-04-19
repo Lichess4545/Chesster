@@ -496,7 +496,6 @@ function schedulingReplyCantFindUser(bot: SlackBot, message: CommandMessage) {
         ':x: ' + user + " I don't recognize one of the players you mentioned."
     )
 }
-
 export async function ambientScheduling(
     bot: SlackBot,
     message: CommandMessage

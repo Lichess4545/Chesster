@@ -11,12 +11,14 @@ try {
 
 var config = {
     // Unfortunately this all has to be at the top level due to sequelize-cli
-    database: 'chesster',
-    username: 'chesster',
-    password: 'asdfasdf',
-    host: 'localhost',
-    dialect: 'postgres',
-    logging: false,
+    database: {
+        name: 'chesster',
+        username: 'chesster',
+        password: 'asdfasdf',
+        host: 'localhost',
+        dialect: 'postgres',
+        logging: false,
+    },
     pool: {
         max: 5,
         min: 0,
@@ -25,7 +27,7 @@ var config = {
     storage: '',
     watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
 
-    slack_tokens: {
+    slackTokens: {
         lichess4545: token,
         chesster: chesster_slack_token,
     },
@@ -39,17 +41,13 @@ var config = {
     links: {
         source: 'https://github.com/endrawes0/Chesster',
     },
-    welcome: {
-        channel: 'general',
-    },
-    heltour: {
-        token: heltour_token,
-        baseEndpoint: 'http://localhost:8000/api/',
-    },
     leagues: {
         '45+45': {
             name: '45+45',
-            also_known_as: ['4545', 'Team', '45'],
+            alsoKnownAs: ['4545', 'Team', '45'],
+            welcome: {
+                channel: 'general',
+            },
             heltour: {
                 token: heltour_token,
                 baseEndpoint: 'http://localhost:8000/api/',
@@ -57,23 +55,17 @@ var config = {
             },
             results: {
                 channel: 'team-games',
-                channel_id: 'C0CSAHD43',
+                channelId: 'C0CSAHD43',
             },
             gamelinks: {
                 channel: 'team-games',
-                channel_id: 'C0CSAHD43',
+                channelId: 'C0CSAHD43',
                 clock: {
                     initial: 45,
                     increment: 45,
                 },
                 rated: true,
                 variant: 'standard',
-                extrema: {
-                    iso_weekday: 1,
-                    hour: 11,
-                    minute: 0,
-                    warning_hours: 1,
-                },
             },
             scheduling: {
                 extrema: {
@@ -90,7 +82,7 @@ var config = {
                 channel: 'team-scheduling',
             },
             alternate: {
-                channel_id: 'G0DFRURGQ',
+                channelId: 'G0DFRURGQ',
             },
             links: {
                 faq: 'https://www.lichess4545.com/team4545/document/faq/',
@@ -112,7 +104,7 @@ var config = {
         },
         lonewolf: {
             name: 'Lone Wolf',
-            also_known_as: ['lonewolf', '3030', '30', 'lw', 'lonewolf', 'wolf'],
+            alsoKnownAs: ['lonewolf', '3030', '30', 'lw', 'lonewolf', 'wolf'],
             heltour: {
                 token: heltour_token,
                 baseEndpoint: 'http://localhost:8000/api/',
@@ -120,23 +112,17 @@ var config = {
             },
             results: {
                 channel: 'lonewolf-games',
-                channel_id: 'C0SD3SCAH',
+                channelId: 'C0SD3SCAH',
             },
             gamelinks: {
                 channel: 'lonewolf-games',
-                channel_id: 'C0SD3SCAH',
+                channelId: 'C0SD3SCAH',
                 clock: {
                     initial: 30,
                     increment: 30,
                 },
                 rated: true,
                 variant: 'standard',
-                extrema: {
-                    iso_weekday: 1,
-                    hour: 22,
-                    minute: 0,
-                    warning_hours: 1,
-                },
             },
             scheduling: {
                 extrema: {
@@ -168,7 +154,7 @@ var config = {
         },
         blitzbattle: {
             name: 'Blitz Battle',
-            also_known_as: ['blitz', '32'],
+            alsoKnownAs: ['blitz', '32'],
             heltour: {
                 token: heltour_token,
                 baseEndpoint: 'http://localhost:8000/api/',
@@ -176,23 +162,17 @@ var config = {
             },
             results: {
                 channel: 'blitz-battle-games',
-                channel_id: 'C3TV7T648',
+                channelId: 'C3TV7T648',
             },
             gamelinks: {
                 channel: 'blitz-battle-games',
-                channel_id: 'C3TV7T648',
+                channelId: 'C3TV7T648',
                 clock: {
                     initial: 3,
                     increment: 2,
                 },
                 rated: true,
                 variant: 'standard',
-                extrema: {
-                    iso_weekday: 1,
-                    hour: 22,
-                    minute: 0,
-                    warning_hours: 1,
-                },
             },
             links: {
                 faq: 'https://www.lichess4545.com/blitzbattle/document/faq/',
@@ -212,7 +192,7 @@ var config = {
         },
         chess960: {
             name: 'Lichess 960',
-            also_known_as: ['960', '1515'],
+            alsoKnownAs: ['960', '1515'],
             heltour: {
                 token: heltour_token,
                 baseEndpoint: 'http://localhost:8000/api/',
@@ -220,23 +200,17 @@ var config = {
             },
             results: {
                 channel: 'chess960games',
-                channel_id: 'CAG3R6HL6',
+                channelId: 'CAG3R6HL6',
             },
             gamelinks: {
                 channel: 'chess960games',
-                channel_id: 'CAG3R6HL6',
+                channelId: 'CAG3R6HL6',
                 clock: {
                     initial: 15,
                     increment: 15,
                 },
                 rated: true,
                 variant: 'chess960',
-                extrema: {
-                    iso_weekday: 1,
-                    hour: 22,
-                    minute: 0,
-                    warning_hours: 1,
-                },
             },
             scheduling: {
                 extrema: {
@@ -267,7 +241,7 @@ var config = {
             },
         },
     },
-    channel_map: {
+    channelMap: {
         'lonewolf-general': 'lonewolf',
         'lonewolf-games': 'lonewolf',
         'lonewolf-scheduling': 'lonewolf',
@@ -284,7 +258,7 @@ var config = {
         chess960scheduling: 'chess960',
     },
     messageForwarding: {
-        channel: 'G3D6N2HNF',
+        channelId: 'G3D6N2HNF',
     },
 }
 module.exports = config

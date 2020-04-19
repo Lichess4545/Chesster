@@ -14,7 +14,7 @@ const UNSTABLE_BOT_LONEWOLF_ID = 'C0XQM31SL'
 
 var config = require('./config.js')
 config['watcherBaseURL'] = 'https://lichess.dev/api/stream/games-by-users'
-config['slack_tokens']['chesster'] = test_chesster_slack_token
+config['slackTokens']['chesster'] = test_chesster_slack_token
 config['winston']['channel'] = '#modster-logging'
 config['winston']['handleExceptions'] = false
 
@@ -31,25 +31,23 @@ config['leagues']['lonewolf']['heltour']['baseEndpoint'] =
 
 config['leagues']['45+45']['scheduling']['channel'] = 'dev-testing'
 config['leagues']['45+45']['results']['channel'] = 'dev-testing'
-config['leagues']['45+45']['results']['channel_id'] = UNSTABLE_BOT_ID
+config['leagues']['45+45']['results']['channelId'] = UNSTABLE_BOT_ID
 config['leagues']['45+45']['gamelinks']['channel'] = 'dev-testing'
-config['leagues']['45+45']['gamelinks']['channel_id'] = UNSTABLE_BOT_ID
-config['leagues']['45+45']['alternate']['channel_id'] = UNSTABLE_BOT_ID
+config['leagues']['45+45']['gamelinks']['channelId'] = UNSTABLE_BOT_ID
+config['leagues']['45+45']['alternate']['channelId'] = UNSTABLE_BOT_ID
 config['leagues']['lonewolf']['scheduling']['channel'] = 'dev-testing-lonewolf'
 config['leagues']['lonewolf']['results']['channel'] = 'dev-testing-lonewolf'
-config['leagues']['lonewolf']['results'][
-    'channel_id'
-] = UNSTABLE_BOT_LONEWOLF_ID
+config['leagues']['lonewolf']['results']['channelId'] = UNSTABLE_BOT_LONEWOLF_ID
 config['leagues']['lonewolf']['gamelinks']['channel'] = 'dev-testing-lonewolf'
 config['leagues']['lonewolf']['gamelinks'][
-    'channel_id'
+    'channelId'
 ] = UNSTABLE_BOT_LONEWOLF_ID
 
-config['channel_map'][UNSTABLE_BOT_ID] = '45+45'
-config['channel_map']['dev-testing'] = '45+45'
-config['channel_map']['dev-testing-lonewolf'] = 'lonewolf'
-config['channel_map']['dev-testing-blitz'] = 'blitz'
-config['channel_map'][UNSTABLE_BOT_LONEWOLF_ID] = 'lonewolf'
+config['channelMap'][UNSTABLE_BOT_ID] = '45+45'
+config['channelMap']['dev-testing'] = '45+45'
+config['channelMap']['dev-testing-lonewolf'] = 'lonewolf'
+config['channelMap']['dev-testing-blitz'] = 'blitz'
+config['channelMap'][UNSTABLE_BOT_LONEWOLF_ID] = 'lonewolf'
 
 config['messageForwarding']['channel'] = 'N/A'
 
