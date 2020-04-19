@@ -20,7 +20,7 @@ export async function ambientPresence(bot: SlackBot, message: CommandMessage) {
         return
     }
 
-    let membersResponse = await bot.getChannelMemberList(message.channel)
+    const membersResponse = await bot.getChannelMemberList(message.channel)
     const recips = _.without(
         membersResponse.members,
         bot.controller.id,

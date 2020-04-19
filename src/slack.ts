@@ -694,10 +694,7 @@ export class SlackBot {
                 page.channels.map((c) => {
                     if (c.is_channel) newChannels.add(c)
                     if (c.is_im) newDMs.add(c)
-                    else {
-                        console.log(c)
-                        newMPIMs.add(c)
-                    }
+                    else newMPIMs.add(c)
                 })
             }
         }
@@ -709,7 +706,7 @@ export class SlackBot {
     async getChannelMemberList(
         channel: SlackChannel
     ): Promise<SlackChannelMembersList> {
-        let response = (await this.web.conversations.members({
+        const response = (await this.web.conversations.members({
             channel: channel.id,
         })) as SlackChannelMembersList
         return response
