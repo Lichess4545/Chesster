@@ -10,7 +10,7 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
         if (
             !_.isEqual(
                 message.channel,
-                adminSlack.config.messageForwarding.channel
+                adminSlack.config.messageForwarding.channelId
             )
         ) {
             return
@@ -107,7 +107,7 @@ export function refreshLeague(chesster: SlackBot, adminSlack: SlackBot) {
         if (
             !_.isEqual(
                 message.channel,
-                adminSlack.config.messageForwarding.channel
+                adminSlack.config.messageForwarding.channelId
             )
         ) {
             return

@@ -11,7 +11,7 @@ export function nomination(bot: SlackBot, message: CommandMessage) {
     if (!isDefined(message.league)) return
     bot.reply(
         message,
-        `Use this link to nominate your choice: ${message.league.links.nominate}`
+        `Use this link to nominate your choice: ${message.league.config.links.nominate}`
     )
 }
 
@@ -20,7 +20,7 @@ export function notification(bot: SlackBot, message: CommandMessage) {
     if (!isDefined(message.league)) return
     bot.reply(
         message,
-        `Use this link to set your notifications preferences: ${message.league.links.notifications}`
+        `Use this link to set your notifications preferences: ${message.league.config.links.notifications}`
     )
 }
 
@@ -29,7 +29,7 @@ export function availability(bot: SlackBot, message: CommandMessage) {
     if (!isDefined(message.league)) return
     bot.reply(
         message,
-        `Use this link to set your availability: ${message.league.links.availability}`
+        `Use this link to set your availability: ${message.league.config.links.availability}`
     )
 }
 

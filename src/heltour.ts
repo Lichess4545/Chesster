@@ -7,6 +7,10 @@ import moment from 'moment'
 import { parse } from 'url'
 import * as http from './http'
 import {
+    Heltour as Config,
+    HeltourLeagueConfig as LeagueConfig,
+} from './config'
+import {
     Decoder,
     at,
     array,
@@ -20,15 +24,6 @@ import {
     dict,
     equal,
 } from 'type-safe-json-decoder'
-
-export interface Config {
-    token: string
-    baseEndpoint: string
-}
-
-export interface LeagueConfig extends Config {
-    leagueTag: string
-}
 
 // -----------------------------------------------------------------------------
 // Error

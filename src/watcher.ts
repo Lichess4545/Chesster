@@ -166,7 +166,7 @@ class WatcherRequest {
             ) {
                 return
             }
-            const gamelinks: Record<string, any> = league.config.gamelinks
+            const gamelinks: config.GameLinks = league.config.gamelinks
             const results: config.Results = league.config.results
 
             const result = games.validateGameDetails(league, details)
@@ -199,7 +199,7 @@ class WatcherRequest {
                                 `<@${white}>,  <@${black}>:` +
                                 ' There is already a result set for this pairing. If you want ' +
                                 'the new game to count for the league, please contact a mod.',
-                            channel: gamelinks?.channel_id,
+                            channel: gamelinks?.channelId,
                         })
                     }
                 } else if (
@@ -215,7 +215,7 @@ class WatcherRequest {
                                 `<@${white}>,  <@${black}>:` +
                                 ' There is already a gamelink set for this pairing. If you want ' +
                                 'the new game to count for the league, please contact a mod.',
-                            channel: gamelinks.channel_id,
+                            channel: gamelinks.channelId,
                         })
                     }
                 } else {
@@ -241,7 +241,7 @@ class WatcherRequest {
                                         '>: <' +
                                         detailsFromApi.game_link +
                                         '>',
-                                    channel: gamelinks.channel_id,
+                                    channel: gamelinks.channelId,
                                     attachments: [], // Needed to activate link parsing in the message
                                 })
                             }
@@ -294,14 +294,14 @@ class WatcherRequest {
                         '*' +
                         result.reason +
                         '*',
-                    channel: gamelinks.channel_id,
+                    channel: gamelinks.channelId,
                 })
                 this.bot.say({
                     text:
                         'If this was a mistake, please correct it and ' +
                         'try again. If this is not a league game, you ' +
                         'may ignore this message. Thank you.',
-                    channel: gamelinks.channel_id,
+                    channel: gamelinks.channelId,
                 })
                 heltour
                     .sendGameWarning(

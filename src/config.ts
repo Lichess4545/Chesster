@@ -10,10 +10,15 @@ import {
     oneOf,
     dict,
 } from 'type-safe-json-decoder'
-import {
-    Config as Heltour,
-    LeagueConfig as HeltourLeagueConfig,
-} from './heltour'
+
+export interface Heltour {
+    token: string
+    baseEndpoint: string
+}
+
+export interface HeltourLeagueConfig extends Heltour {
+    leagueTag: string
+}
 
 export const HeltourDecoder: Decoder<Heltour> = object(
     ['token', string()],

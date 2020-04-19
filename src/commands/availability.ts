@@ -266,7 +266,7 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
     ) {
         return
     }
-    const heltourOptions = message.league?.heltourConfig
+    const heltourOptions = message.league?.config.heltour
     if (!heltourOptions) {
         winston.error(
             `${message.league?.name} league doesn't have heltour options!?`
@@ -434,7 +434,7 @@ export function unassignAlternate(bot: SlackBot, message: CommandMessage) {
     ) {
         return
     }
-    const heltourOptions = message.league?.heltourConfig
+    const heltourOptions = message.league?.config.heltour
     if (!heltourOptions) {
         winston.error(
             `${message.league?.name} league doesn't have heltour options!?`
