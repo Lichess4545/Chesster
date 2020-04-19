@@ -5,9 +5,9 @@
 // -----------------------------------------------------------------------------
 import winston from 'winston'
 import { Sequelize, Model, DataTypes } from 'sequelize'
+import { ChessterConfig } from './config'
 
 // TODO: better type for this
-type Config = any
 
 export class LichessRating extends Model {
     public id!: number
@@ -91,12 +91,17 @@ function defineModels(sequelize: Sequelize) {
 // Parameters: config - the config option that contains the database
 //                      information.
 // -------------------------------------------------------------------------
-export async function connect(config: Config) {
+export async function connect(config: ChessterConfig) {
+    if (config.database.dialect !== 'postgres') {
+        throw new Error(
+            "We don't support anything but postgresql because I'm lazy"
+        )
+    }
     const sequelize = new Sequelize(
-        config.database,
-        config.username,
-        config.password,
-        config
+        config.database.name,
+        config.database.username,
+        config.database.password,
+        { ...config.database, dialect: 'postgres' }
     )
 
     try {

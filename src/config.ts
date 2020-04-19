@@ -1,3 +1,4 @@
+import moment from 'moment'
 import {
     Decoder,
     array,
@@ -9,13 +10,23 @@ import {
     oneOf,
     dict,
 } from 'type-safe-json-decoder'
-import { Config as Heltour } from './heltour'
+import {
+    Config as Heltour,
+    LeagueConfig as HeltourLeagueConfig,
+} from './heltour'
 
 export const HeltourDecoder: Decoder<Heltour> = object(
     ['token', string()],
     ['baseEndpoint', string()],
-    ['leagueTag', string()],
-    (token, baseEndpoint, leagueTag) => ({ token, baseEndpoint, leagueTag })
+    (token, baseEndpoint) => ({ token, baseEndpoint })
+)
+export const HeltourLeagueConfigDecoder: Decoder<HeltourLeagueConfig> = andThen(
+    HeltourDecoder,
+    (heltour) =>
+        object(['leagueTag', string()], (leagueTag) => ({
+            ...heltour,
+            leagueTag,
+        }))
 )
 
 export interface Welcome {
@@ -73,6 +84,7 @@ export interface SchedulingExtrema {
     hour: number
     minute: number
     warningHours: number
+    referenceDate: moment.Moment | undefined
 }
 export const SchedulingExtremaDecoder: Decoder<SchedulingExtrema> = object(
     ['isoWeekday', number()],
@@ -84,6 +96,7 @@ export const SchedulingExtremaDecoder: Decoder<SchedulingExtrema> = object(
         hour,
         minute,
         warningHours,
+        referenceDate: undefined,
     })
 )
 export interface Scheduling {
@@ -166,53 +179,52 @@ export const LeagueLinksDecoder: Decoder<LeagueLinks> = object(
     })
 )
 
-export interface LeagueWithoutWelcome {
+export interface LeagueWithoutAlternate {
     name: string
     alsoKnownAs: string[]
-    heltour: Heltour
+    heltour: HeltourLeagueConfig
     results: Results
+    gamelinks: GameLinks
+    scheduling: Scheduling
+    links: LeagueLinks
 }
 
-export const LeagueWithoutWelcomeDecoder: Decoder<LeagueWithoutWelcome> = object(
+export const LeagueWithoutAlternateDecoder: Decoder<LeagueWithoutAlternate> = object(
     ['name', string()],
     ['alsoKnownAs', array(string())],
-    ['heltour', HeltourDecoder],
+    ['heltour', HeltourLeagueConfigDecoder],
     ['results', ResultsDecoder],
-    (name, alsoKnownAs, heltour, results) => ({
+    ['gamelinks', GameLinksDecoder],
+    ['scheduling', SchedulingDecoder],
+    ['links', LeagueLinksDecoder],
+    (name, alsoKnownAs, heltour, results, gamelinks, scheduling, links) => ({
         name,
         alsoKnownAs,
         heltour,
         results,
+        gamelinks,
+        scheduling,
+        links,
     })
 )
-export interface LeagueWithWelcome extends LeagueWithoutWelcome {
-    welcome: Welcome
+export interface LeagueWithAlternate extends LeagueWithoutAlternate {
+    alternate: Alternate
 }
-export const LeagueWithWelcomeDecoder: Decoder<LeagueWithoutWelcome> = andThen(
-    LeagueWithoutWelcomeDecoder,
-    (leagueWithoutWelcome) =>
-        object(['welcome', WelcomeDecoder], (welcome) => ({
-            ...leagueWithoutWelcome,
-            welcome,
+export const LeagueWithAlternateDecoder: Decoder<LeagueWithAlternate> = andThen(
+    LeagueWithoutAlternateDecoder,
+    (leagueWithoutAlternate) =>
+        object(['alternate', AlternateDecoder], (alternate) => ({
+            ...leagueWithoutAlternate,
+            alternate,
         }))
 )
-export type League = LeagueWithWelcome | LeagueWithoutWelcome
+export type League = LeagueWithAlternate | LeagueWithoutAlternate
 export const LeagueDecoder: Decoder<League> = oneOf(
-    LeagueWithoutWelcomeDecoder,
-    LeagueWithoutWelcomeDecoder
+    LeagueWithAlternateDecoder,
+    LeagueWithoutAlternateDecoder
 )
-export interface SlackTokens {
-    lichess4545: string
-    chesster: string
-}
-export const SlackTokensDecoder: Decoder<SlackTokens> = object(
-    ['lichess4545', string()],
-    ['chesster', string()],
-    (lichess4545, chesster) => ({
-        lichess4545,
-        chesster,
-    })
-)
+export type SlackTokens = Record<string, string>
+export const SlackTokensDecoder: Decoder<SlackTokens> = dict(string())
 export interface Winston {
     domain: string
     channel: string
@@ -269,6 +281,7 @@ export interface Database {
     host: string
     dialect: string
     logging: boolean
+    pool: Pool
 }
 export const DatabaseDecoder: Decoder<Database> = object(
     ['name', string()],
@@ -277,19 +290,21 @@ export const DatabaseDecoder: Decoder<Database> = object(
     ['host', string()],
     ['dialect', string()],
     ['logging', boolean()],
-    (name, username, password, host, dialect, logging) => ({
+    ['pool', PoolDecoder],
+    (name, username, password, host, dialect, logging, pool) => ({
         name,
         username,
         password,
         host,
         dialect,
         logging,
+        pool,
     })
 )
 
 export interface ChessterConfig {
     database: Database
-    pool: Pool
+    heltour: Heltour
     storage: string
     watcherBaseURL: string
     slackTokens: SlackTokens
@@ -301,7 +316,7 @@ export interface ChessterConfig {
 }
 export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
     ['database', DatabaseDecoder],
-    ['pool', PoolDecoder],
+    ['heltour', HeltourDecoder],
     ['storage', string()],
     ['watcherBaseURL', string()],
     ['slackTokens', SlackTokensDecoder],
@@ -310,20 +325,10 @@ export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
     ['leagues', dict(LeagueDecoder)],
     ['channelMap', ChannelMapDecoder],
     ['messageForwarding', MessageForwardingDecoder],
+    ['welcome', WelcomeDecoder],
     (
         database,
-        pool,
-        storage,
-        watcherBaseURL,
-        slackTokens,
-        winston,
-        links,
-        leagues,
-        channelMap,
-        messageForwarding
-    ) => ({
-        database,
-        pool,
+        heltour,
         storage,
         watcherBaseURL,
         slackTokens,
@@ -332,5 +337,18 @@ export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
         leagues,
         channelMap,
         messageForwarding,
+        welcome
+    ) => ({
+        database,
+        heltour,
+        storage,
+        watcherBaseURL,
+        slackTokens,
+        winston,
+        links,
+        leagues,
+        channelMap,
+        messageForwarding,
+        welcome,
     })
 )

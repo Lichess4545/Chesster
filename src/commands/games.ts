@@ -10,7 +10,7 @@ import * as heltour from '../heltour'
 import * as lichess from '../lichess'
 import { SlackBot, CommandMessage } from '../slack'
 import { isDefined } from '../utils'
-import { League, SchedulingOptions, Pairing as LeaguePairing } from '../league'
+import { League, Pairing as LeaguePairing } from '../league'
 
 const TIMEOUT = 33
 const CHEAT = 36
@@ -114,13 +114,13 @@ export async function ambientResults(bot: SlackBot, message: CommandMessage) {
         return
     }
     const league: League = message.league
-    const resultsOptions = message.league.results
+    const resultsOptions = message.league.config.results
     const channel = message.channel
     if (!resultsOptions || !_.isEqual(channel.name, resultsOptions.channel)) {
         return
     }
 
-    const heltourOptions = message.league.heltourConfig
+    const heltourOptions = message.league.config.heltour
     if (!heltourOptions) {
         winston.error(
             `${message.league?.name} league doesn't have heltour options!?`
@@ -128,7 +128,7 @@ export async function ambientResults(bot: SlackBot, message: CommandMessage) {
         return
     }
 
-    const gamelinkOptions = message.league.gamelinks
+    const gamelinkOptions = message.league.config.gamelinks
     if (!gamelinkOptions) {
         return
     }
@@ -222,7 +222,14 @@ function replyPlayerNotFound(bot: SlackBot, message: CommandMessage) {
 }
 
 function resultReplyMissingGamelink(bot: SlackBot, message: CommandMessage) {
-    const channel = bot.channels.byName[message.league?.gamelinks?.channel]
+    if (!isDefined(message.league)) {
+        return
+    }
+    const league: League = message.league
+    const channel = bot.channels.getByNameOrID(league.config.gamelinks.channel)
+    if (!isDefined(channel)) {
+        return
+    }
     bot.reply(
         message,
         'Sorry, that game does not have a link. I will not update the result without it.'
@@ -331,17 +338,12 @@ export function validateGameDetails(
         cheatDetected: false,
         reason: '',
     }
-    const options = league.gamelinks
+    const options = league.config.gamelinks
     if (!isDefined(options)) {
         result.valid = false
         return result
     }
-    const schedulingOptionsOr = league.scheduling
-    if (!isDefined(schedulingOptionsOr)) {
-        result.valid = false
-        return result
-    }
-    const schedulingOptions: SchedulingOptions = schedulingOptionsOr
+    const schedulingOptions = league.config.scheduling
 
     const white = details.players.white.user.id
     const black = details.players.black.user.id
@@ -589,7 +591,7 @@ export async function updateGamelink(
 
     // update the website with results from gamelink
     const updatePairingResult = await heltour.updatePairing(
-        league.heltourConfig,
+        league.config.heltour,
         result
     )
 
@@ -634,11 +636,11 @@ export function ambientGamelinks(bot: SlackBot, message: CommandMessage) {
     if (!channel) {
         return
     }
-    const gamelinkOptions = message.league.gamelinks
-    if (!gamelinkOptions || !_.isEqual(channel.name, gamelinkOptions.channel)) {
+    const gamelinkOptions = message.league.config.gamelinks
+    if (!_.isEqual(channel.name, gamelinkOptions.channel)) {
         return
     }
-    const heltourOptions = message.league.heltourConfig
+    const heltourOptions = message.league.config.heltour
     if (!heltourOptions) {
         winston.error(
             `[GAMELINK] ${message.league.name} league doesn't have heltour options!?`

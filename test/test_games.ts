@@ -139,8 +139,10 @@ describe('games', function () {
             let mockLeague: league.League = mockLeagueOr
 
             // Set the reference date for testing.
-            if (mockLeague.scheduling)
-                mockLeague.scheduling.referenceDate = moment('2016-10-15')
+            if (mockLeague.config.scheduling)
+                mockLeague.config.scheduling.extrema.referenceDate = moment(
+                    '2016-10-15'
+                )
             function testValidateGameDetails(
                 details: lichess.GameDetails,
                 pairings: league.Pairing[],

@@ -116,7 +116,7 @@ function replyMisunderstoodAlternateUnassignment(
 
 /* [player <player-name> is] {available, unavailable} for round <round-number> in <league> */
 export function updateAvailability(bot: SlackBot, message: CommandMessage) {
-    const heltourOptions = message.league?.heltourConfig
+    const heltourOptions = message.league?.config.heltour
     if (!heltourOptions) {
         winston.error(
             `${message.league?.name} league doesn't have heltour options.`

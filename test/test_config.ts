@@ -11,11 +11,11 @@ describe('config types', function () {
             host: 'localhost',
             dialect: 'postgres',
             logging: false,
-        },
-        pool: {
-            max: 5,
-            min: 0,
-            idle: 10000,
+            pool: {
+                max: 5,
+                min: 0,
+                idle: 10000,
+            },
         },
         storage: '',
         watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
@@ -34,13 +34,17 @@ describe('config types', function () {
         links: {
             source: 'https://github.com/endrawes0/Chesster',
         },
+        welcome: {
+            channel: 'general',
+        },
+        heltour: {
+            token: 'foo',
+            baseEndpoint: 'http://localhost:8000/api/',
+        },
         leagues: {
             '45+45': {
                 name: '45+45',
                 alsoKnownAs: ['4545', 'Team', '45'],
-                welcome: {
-                    channel: 'general',
-                },
                 heltour: {
                     token: 'foo',
                     baseEndpoint: 'http://localhost:8000/api/',
@@ -108,7 +112,7 @@ describe('config types', function () {
                     'lonewolf',
                     'wolf',
                 ],
-                welcome: undefined,
+                alternate: undefined,
                 heltour: {
                     token: 'foo',
                     baseEndpoint: 'http://localhost:8000/api/',
@@ -150,6 +154,8 @@ describe('config types', function () {
                     pairings: 'https://www.lichess4545.com/lonewolf/pairings/',
                     standings:
                         'https://www.lichess4545.com/lonewolf/standings/',
+                    guide: '',
+                    captains: '',
                     registration:
                         'https://www.lichess45454.com/lonewolf/register/',
                     availability:
@@ -162,7 +168,7 @@ describe('config types', function () {
             blitzbattle: {
                 name: 'Blitz Battle',
                 alsoKnownAs: ['blitz', '32'],
-                welcome: undefined,
+                alternate: undefined,
                 heltour: {
                     token: 'foo',
                     baseEndpoint: 'http://localhost:8000/api/',
@@ -182,6 +188,18 @@ describe('config types', function () {
                     rated: true,
                     variant: 'standard',
                 },
+                scheduling: {
+                    extrema: {
+                        isoWeekday: 0,
+                        hour: 0,
+                        minute: 0,
+                        warningHours: 0,
+                    },
+                    warningMessage: '',
+                    lateMessage: '',
+                    format: '',
+                    channel: '',
+                },
                 links: {
                     faq:
                         'https://www.lichess4545.com/blitzbattle/document/faq/',
@@ -192,6 +210,8 @@ describe('config types', function () {
                         'https://www.lichess4545.com/blitzbattle/pairings/',
                     standings:
                         'https://www.lichess4545.com/blitzbattle/standings/',
+                    guide: '',
+                    captains: '',
                     registration:
                         'https://www.lichess45454.com/blitzbattle/register/',
                     availability:
@@ -205,7 +225,7 @@ describe('config types', function () {
             chess960: {
                 name: 'Lichess 960',
                 alsoKnownAs: ['960', '1515'],
-                welcome: undefined,
+                alternate: undefined,
                 heltour: {
                     token: 'foo',
                     baseEndpoint: 'http://localhost:8000/api/',
@@ -247,6 +267,8 @@ describe('config types', function () {
                     pairings: 'https://www.lichess4545.com/chess960/pairings/',
                     standings:
                         'https://www.lichess4545.com/chess960/standings/',
+                    guide: '',
+                    captains: '',
                     registration:
                         'https://www.lichess45454.com/chess960/register/',
                     availability:

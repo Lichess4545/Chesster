@@ -7,6 +7,7 @@ import winston from 'winston'
 import moment from 'moment-timezone'
 import * as heltour from './heltour'
 import * as lichess from './lichess'
+import { League as LeagueConfig } from './config'
 import { EventEmitter } from 'events'
 import { SlackBot, LeagueMember, localTime } from './slack'
 import { LogWithPrefix } from './logging'
@@ -80,39 +81,6 @@ export interface Team {
 type RefreshRostersCallback = () => void
 type RefreshPairingsCallback = () => void
 
-export interface SchedulingOptions {
-    referenceDate?: moment.Moment
-    warningMessage: string
-    lateMessage: string
-    isoWeekday: number
-    hour: number
-    minute: number
-    warningHours: number
-    channel: string
-}
-
-type SchedulingOptionsParameters = PartialBy<SchedulingOptions, 'referenceDate'>
-
-export function makeSchedulingOptions({
-    isoWeekday = 2,
-    hour = 0,
-    minute = 0,
-    warningHours = 1.5,
-    referenceDate,
-    ...rest
-}: SchedulingOptionsParameters) {
-    return {
-        isoWeekday,
-        hour,
-        minute,
-        warningHours,
-        referenceDate: referenceDate
-            ? moment(referenceDate).clone()
-            : moment.utc(),
-        ...rest,
-    }
-}
-
 function resultFromString(result: string | undefined): ResultsEnum {
     if (result === undefined) return ResultsEnum.UNKNOWN
     result = result.toLowerCase()
@@ -139,14 +107,7 @@ export class League {
     constructor(
         public bot: SlackBot,
         public name: string,
-        public alsoKnownAs: string[],
-        public heltourConfig: heltour.Config,
-        public links: LeagueLinks,
-        public welcome: Record<string, string>,
-        public alternate?: Record<string, string>,
-        public results?: Record<string, string>,
-        public gamelinks?: Record<string, any>, // TODO: remove any.
-        public scheduling?: SchedulingOptions,
+        public config: LeagueConfig,
         public _players: Player[] = [],
         public _pairings: Pairing[] = [],
         public _teams: Team[] = []
@@ -257,8 +218,8 @@ export class League {
         const newTeamLookup: Record<string, Team> = {}
 
         const roster = await heltour.getRoster(
-            this.heltourConfig,
-            this.heltourConfig.leagueTag
+            this.config.heltour,
+            this.config.heltour.leagueTag
         )
         const incomingPlayerLookup: Record<string, heltour.Player> = {}
         roster.players.map((p) => {
@@ -304,7 +265,9 @@ export class League {
     // for the league.
     // -------------------------------------------------------------------------
     async refreshLeagueModerators() {
-        const moderators = await heltour.getLeagueModerators(this.heltourConfig)
+        const moderators = await heltour.getLeagueModerators(
+            this.config.heltour
+        )
         this._moderators = moderators.map((m) => m.toLowerCase())
     }
 
@@ -313,7 +276,7 @@ export class League {
     // -------------------------------------------------------------------------
     async refreshCurrentRoundSchedules() {
         return heltour
-            .getAllPairings(this.heltourConfig, this.heltourConfig.leagueTag)
+            .getAllPairings(this.config.heltour, this.config.heltour.leagueTag)
             .then((pairings: heltour.Pairing[]) => {
                 const newPairings: Pairing[] = []
                 _.each(pairings, (heltourPairing) => {
@@ -455,8 +418,8 @@ export class League {
     // Formats the captains Guidelines
     // -------------------------------------------------------------------------
     formatCaptainGuidelinesResponse() {
-        if (this.links && this.links.captains) {
-            return `Here are the captain's guidelines:\n${this.links.captains}`
+        if (this.config.links && this.config.links.captains) {
+            return `Here are the captain's guidelines:\n${this.config.links.captains}`
         } else {
             return `The ${this.name} league does not have captains guidelines.`
         }
@@ -466,10 +429,10 @@ export class League {
     // Formats the pairings response
     // -------------------------------------------------------------------------
     formatPairingsLinkResponse() {
-        if (this.links && this.links.league) {
+        if (this.config.links && this.config.links.league) {
             return (
                 'The pairings can be found on the website:\n' +
-                this.links.pairings +
+                this.config.links.pairings +
                 '\nAlternatively, try [ @chesster pairing [competitor] ]'
             )
         } else {
@@ -481,10 +444,10 @@ export class League {
     // Formats the standings response
     // -------------------------------------------------------------------------
     formatStandingsLinkResponse() {
-        if (this.links && this.links.league) {
+        if (this.config.links && this.config.links.league) {
             return (
                 'The standings can be found on the website:\n' +
-                this.links.standings
+                this.config.links.standings
             )
         } else {
             return `The ${this.name} league does not have a standings link.`
@@ -495,8 +458,8 @@ export class League {
     // Formats the rules link response
     // -------------------------------------------------------------------------
     formatRulesLinkResponse() {
-        if (this.links.rules) {
-            return `Here are the rules and regulations:\n${this.links.rules}`
+        if (this.config.links.rules) {
+            return `Here are the rules and regulations:\n${this.config.links.rules}`
         } else {
             return `The ${this.name} league does not have a rules link.`
         }
@@ -506,8 +469,8 @@ export class League {
     // Formats the starter guide message
     // -------------------------------------------------------------------------
     formatStarterGuideResponse() {
-        if (this.links.guide) {
-            return `Here is everything you need to know:\n${this.links.guide}`
+        if (this.config.links.guide) {
+            return `Here is everything you need to know:\n${this.config.links.guide}`
         } else {
             return `The ${this.name} league does not have a starter guide.`
         }
@@ -517,8 +480,8 @@ export class League {
     // Formats the signup response
     // -------------------------------------------------------------------------
     formatRegistrationResponse() {
-        if (this.links.registration) {
-            return `You can sign up here:\n${this.links.registration}`
+        if (this.config.links.registration) {
+            return `You can sign up here:\n${this.config.links.registration}`
         } else {
             return `The ${this.name} league does not have an active signup form at the moment.`
         }
@@ -726,7 +689,7 @@ export class League {
     }
 
     formatFAQResponse() {
-        return `The FAQ for ${this.name} can be found: ${this.links.faq}`
+        return `The FAQ for ${this.name} can be found: ${this.config.links.faq}`
     }
 }
 
@@ -754,18 +717,7 @@ export const getLeague = (() => {
                 winston.info('Creating new league for ' + leagueName)
                 thisLeagueConfig = _.clone(thisLeagueConfig)
                 thisLeagueConfig.name = leagueName
-                const league = new League(
-                    bot,
-                    leagueName,
-                    thisLeagueConfig.also_known_as,
-                    thisLeagueConfig.heltour,
-                    thisLeagueConfig.links,
-                    thisLeagueConfig.welcome,
-                    thisLeagueConfig.alternate,
-                    thisLeagueConfig.results,
-                    thisLeagueConfig.gamelinks,
-                    thisLeagueConfig.scheduling?.extrema
-                )
+                const league = new League(bot, leagueName, thisLeagueConfig)
                 _leagueCache[leagueName] = league
             } else {
                 return undefined

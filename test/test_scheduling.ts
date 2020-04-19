@@ -1,18 +1,22 @@
 import { assert } from 'chai'
 import moment from 'moment-timezone'
 import * as scheduling from '../src/commands/scheduling'
+import * as config from '../src/config'
 
 var fmt = 'YYYY-MM-DDTHH:mm:ssZZ'
 
-let defaultOptions = {
-    isoWeekday: 1,
-    hour: 11,
-    minute: 0,
-    warningHours: 2,
+let defaultOptions: config.Scheduling = {
+    extrema: {
+        isoWeekday: 1,
+        hour: 11,
+        minute: 0,
+        warningHours: 2,
+        referenceDate: undefined,
+    },
     warningMessage: 'You are warned!',
     lateMessage: 'You are late!',
-    referenceDate: moment.utc(),
     channel: '#asdfasdf',
+    format: 'YYYY-mm-dd',
 }
 
 interface ExpectedResults {
@@ -25,21 +29,24 @@ describe('scheduling', function () {
     //--------------------------------------------------------------------------
     describe('#getRoundExtrema()', function () {
         var options = {
-            isoWeekday: 1,
-            hour: 11,
-            minute: 0,
-            warningHours: 2,
+            extrema: {
+                isoWeekday: 1,
+                hour: 11,
+                minute: 0,
+                warningHours: 2,
+                referenceDate: moment.utc(),
+            },
             warningMessage: 'You are warned!',
             lateMessage: 'You are late!',
-            referenceDate: moment.utc(),
             channel: '#asdfasdf',
+            format: '',
         }
         it('.isoWeekday() of the bounds should always return the value passed in', function () {
             var bounds = scheduling.getRoundExtrema(options)
             assert.equal(1, bounds.start.isoWeekday())
             assert.equal(1, bounds.end.isoWeekday())
 
-            options.isoWeekday = 2
+            options.extrema.isoWeekday = 2
             bounds = scheduling.getRoundExtrema(options)
             assert.equal(2, bounds.start.isoWeekday())
             assert.equal(2, bounds.end.isoWeekday())
@@ -48,39 +55,39 @@ describe('scheduling', function () {
             assert.equal(true, now.isBefore(bounds.end))
         })
         it('The bounds respects the passed in extrema and reference date', function () {
-            options.isoWeekday = 1
-            options.referenceDate = moment.utc('2016-04-07')
+            options.extrema.isoWeekday = 1
+            options.extrema.referenceDate = moment.utc('2016-04-07')
             var bounds = scheduling.getRoundExtrema(options)
             assert.equal(bounds.start.format(fmt), '2016-04-04T11:00:00+0000')
             assert.equal(bounds.end.format(fmt), '2016-04-11T11:00:00+0000')
         })
         it('The round extrema works on day when the rounds change, durng the period leading up to the cutoff', function () {
-            options.isoWeekday = 1
-            options.referenceDate = moment.utc('2016-05-02T03:55:00')
+            options.extrema.isoWeekday = 1
+            options.extrema.referenceDate = moment.utc('2016-05-02T03:55:00')
             var bounds = scheduling.getRoundExtrema(options)
             assert.equal(bounds.start.format(fmt), '2016-04-25T11:00:00+0000')
             assert.equal(bounds.end.format(fmt), '2016-05-02T11:00:00+0000')
-            options.referenceDate = moment.utc('2016-05-02T10:59:59')
+            options.extrema.referenceDate = moment.utc('2016-05-02T10:59:59')
             bounds = scheduling.getRoundExtrema(options)
             assert.equal(bounds.start.format(fmt), '2016-04-25T11:00:00+0000')
             assert.equal(bounds.end.format(fmt), '2016-05-02T11:00:00+0000')
         })
         it('The round extrema works on day when the rounds change, during the period after up to the cutoff', function () {
-            options.isoWeekday = 1
-            options.referenceDate = moment.utc('2016-05-02T12:55:00')
+            options.extrema.isoWeekday = 1
+            options.extrema.referenceDate = moment.utc('2016-05-02T12:55:00')
             var bounds = scheduling.getRoundExtrema(options)
             assert.equal(bounds.start.format(fmt), '2016-05-02T11:00:00+0000')
             assert.equal(bounds.end.format(fmt), '2016-05-09T11:00:00+0000')
 
-            options.referenceDate = moment.utc('2016-05-02T11:00:00')
+            options.extrema.referenceDate = moment.utc('2016-05-02T11:00:00')
             bounds = scheduling.getRoundExtrema(options)
             assert.equal(bounds.start.format(fmt), '2016-05-02T11:00:00+0000')
             assert.equal(bounds.end.format(fmt), '2016-05-09T11:00:00+0000')
         })
         it('Test warningHours', function () {
-            options.isoWeekday = 1
-            options.referenceDate = moment.utc('2016-04-07')
-            options.warningHours = 1
+            options.extrema.isoWeekday = 1
+            options.extrema.referenceDate = moment.utc('2016-04-07')
+            options.extrema.warningHours = 1
             var bounds = scheduling.getRoundExtrema(options)
             assert.equal(bounds.start.format(fmt), '2016-04-04T11:00:00+0000')
             assert.equal(bounds.end.format(fmt), '2016-04-11T11:00:00+0000')
@@ -91,10 +98,13 @@ describe('scheduling', function () {
     describe('#parseScheduling()', function () {
         var options = {
             ...defaultOptions,
-            isoWeekday: 1,
-            hour: 22,
-            minute: 0,
-            warningHours: 1,
+            extrema: {
+                ...defaultOptions.extrema,
+                isoWeekday: 1,
+                hour: 22,
+                minute: 0,
+                warningHours: 1,
+            },
         }
         function testParseScheduling(
             message: string,
@@ -106,13 +116,13 @@ describe('scheduling', function () {
             assert.equal(results.black, expected.black)
         }
         it('Test team-scheduling messages', function () {
-            options.referenceDate = moment.utc('2016-04-15')
+            options.extrema.referenceDate = moment.utc('2016-04-15')
 
             // TODO: put a bunch of the team scheduling message in here.
         })
         it('Test lonewolf-scheduling messages', function () {
             this.timeout(5000)
-            //options.referenceDate = moment.utc("2016-04-15");
+            //options.extrema.referenceDate = moment.utc("2016-04-15");
             testParseScheduling(
                 '@autotelic v @explodingllama 4/16 @ 0900 GMT',
                 {
@@ -354,7 +364,7 @@ describe('scheduling', function () {
             )
         })
         it('Test lonewolf-scheduling messages #2', function () {
-            options.referenceDate = moment.utc('2016-04-28')
+            options.extrema.referenceDate = moment.utc('2016-04-28')
             testParseScheduling(
                 'steiger07 vs matuiss2 Sun 01.05.2016 @ 16:00 GMT',
                 {
@@ -399,7 +409,7 @@ describe('scheduling', function () {
             })
         })
         it('Test lonewolf-scheduling messages #3', function () {
-            options.referenceDate = moment.utc('2016-07-27')
+            options.extrema.referenceDate = moment.utc('2016-07-27')
             testParseScheduling('joecupojoe vs carbon752 7/30 @ 13:30 GMT', {
                 white: 'joecupojoe',
                 black: 'carbon752',
@@ -427,7 +437,7 @@ describe('scheduling', function () {
             })
         })
         it('Test lonewolf-scheduling messages #3', function () {
-            options.referenceDate = moment.utc('2016-07-17')
+            options.extrema.referenceDate = moment.utc('2016-07-17')
             testParseScheduling('p_implies_q vs hairbert 7/17 13:30', {
                 white: 'p_implies_q',
                 black: 'hairbert',
@@ -442,10 +452,13 @@ describe('scheduling', function () {
         it('Test lonewolf-scheduling messages that are out of bounds', function () {
             var options = {
                 ...defaultOptions,
-                referenceDate: moment.utc('2016-04-15'),
-                isoWeekday: 1,
-                hour: 22,
-                minute: 0,
+                extrema: {
+                    ...defaultOptions.extrema,
+                    referenceDate: moment.utc('2016-04-15'),
+                    isoWeekday: 1,
+                    hour: 22,
+                    minute: 0,
+                },
             }
             var results = scheduling.parseScheduling(
                 '@autotelic v @explodingllama 4/19 @ 0900 GMT',
@@ -456,10 +469,13 @@ describe('scheduling', function () {
         it('Test lonewolf-scheduling messages that are out of bounds', function () {
             var options = {
                 ...defaultOptions,
-                referenceDate: moment.utc('2016-04-15'),
-                isoWeekday: 1,
-                hour: 22,
-                minute: 0,
+                extrema: {
+                    ...defaultOptions.extrema,
+                    referenceDate: moment.utc('2016-04-15'),
+                    isoWeekday: 1,
+                    hour: 22,
+                    minute: 0,
+                },
             }
             function testParseScheduling(message: string) {
                 var results = scheduling.parseScheduling(message, options)
@@ -473,11 +489,14 @@ describe('scheduling', function () {
         it('Test lonewolf-scheduling messages that are in the warning time-period', function () {
             var options = {
                 ...defaultOptions,
-                referenceDate: moment.utc('2016-04-15'),
-                isoWeekday: 1,
-                hour: 22,
-                minute: 0,
-                warningHours: 1,
+                extrema: {
+                    ...defaultOptions.extrema,
+                    referenceDate: moment.utc('2016-04-15'),
+                    isoWeekday: 1,
+                    hour: 22,
+                    minute: 0,
+                    warningHours: 1,
+                },
             }
             var results = scheduling.parseScheduling(
                 '@autotelic v @explodingllama 4/18 @ 2200 GMT',

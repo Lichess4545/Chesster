@@ -18,11 +18,11 @@ var config = {
         host: 'localhost',
         dialect: 'postgres',
         logging: false,
-    },
-    pool: {
-        max: 5,
-        min: 0,
-        idle: 10000,
+        pool: {
+            max: 5,
+            min: 0,
+            idle: 10000,
+        },
     },
     storage: '',
     watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
@@ -41,13 +41,17 @@ var config = {
     links: {
         source: 'https://github.com/endrawes0/Chesster',
     },
+    heltour: {
+        token: heltour_token,
+        baseEndpoint: 'http://localhost:8000/api/',
+    },
+    welcome: {
+        channel: 'general',
+    },
     leagues: {
         '45+45': {
             name: '45+45',
             alsoKnownAs: ['4545', 'Team', '45'],
-            welcome: {
-                channel: 'general',
-            },
             heltour: {
                 token: heltour_token,
                 baseEndpoint: 'http://localhost:8000/api/',
@@ -105,6 +109,7 @@ var config = {
         lonewolf: {
             name: 'Lone Wolf',
             alsoKnownAs: ['lonewolf', '3030', '30', 'lw', 'lonewolf', 'wolf'],
+            alternate: undefined,
             heltour: {
                 token: heltour_token,
                 baseEndpoint: 'http://localhost:8000/api/',
@@ -138,12 +143,15 @@ var config = {
                 format: 'MM/DD HH:mm',
                 channel: 'lonewolf-scheduling',
             },
+            alternate: undefined,
             links: {
                 faq: 'https://www.lichess4545.com/lonewolf/document/faq/',
                 rules: 'https://www.lichess4545.com/lonewolf/document/rules/',
                 league: 'https://www.lichess4545.com/lonewolf/',
                 pairings: 'https://www.lichess4545.com/lonewolf/pairings/',
                 standings: 'https://www.lichess4545.com/lonewolf/standings/',
+                guide: '',
+                captains: '',
                 registration: 'https://www.lichess45454.com/lonewolf/register/',
                 availability:
                     'https://www.lichess4545.com/lonewolf/availability/edit/',
@@ -155,6 +163,7 @@ var config = {
         blitzbattle: {
             name: 'Blitz Battle',
             alsoKnownAs: ['blitz', '32'],
+            alternate: undefined,
             heltour: {
                 token: heltour_token,
                 baseEndpoint: 'http://localhost:8000/api/',
@@ -174,6 +183,19 @@ var config = {
                 rated: true,
                 variant: 'standard',
             },
+            alternate: undefined,
+            scheduling: {
+                extrema: {
+                    isoWeekday: 0,
+                    hour: 0,
+                    minute: 0,
+                    warningHours: 0,
+                },
+                warningMessage: '',
+                lateMessage: '',
+                format: '',
+                channel: '',
+            },
             links: {
                 faq: 'https://www.lichess4545.com/blitzbattle/document/faq/',
                 rules:
@@ -181,6 +203,8 @@ var config = {
                 league: 'https://www.lichess4545.com/blitzbattle/',
                 pairings: 'https://www.lichess4545.com/blitzbattle/pairings/',
                 standings: 'https://www.lichess4545.com/blitzbattle/standings/',
+                guide: '',
+                captains: '',
                 registration:
                     'https://www.lichess45454.com/blitzbattle/register/',
                 availability:
@@ -193,6 +217,7 @@ var config = {
         chess960: {
             name: 'Lichess 960',
             alsoKnownAs: ['960', '1515'],
+            alternate: undefined,
             heltour: {
                 token: heltour_token,
                 baseEndpoint: 'http://localhost:8000/api/',
@@ -226,12 +251,15 @@ var config = {
                 format: 'MM/DD HH:mm',
                 channel: 'chess960scheduling',
             },
+            alternate: undefined,
             links: {
                 faq: 'https://www.lichess4545.com/chess960/document/faq/',
                 rules: 'https://www.lichess4545.com/chess960/document/rules/',
                 league: 'https://www.lichess4545.com/chess960/',
                 pairings: 'https://www.lichess4545.com/chess960/pairings/',
                 standings: 'https://www.lichess4545.com/chess960/standings/',
+                guide: '',
+                captains: '',
                 registration: 'https://www.lichess45454.com/chess960/register/',
                 availability:
                     'https://www.lichess4545.com/chess960/availability/edit/',

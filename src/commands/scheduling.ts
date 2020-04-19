@@ -7,11 +7,12 @@ import winston from 'winston'
 
 import * as heltour from '../heltour'
 import * as subscription from './subscription'
-import { League, SchedulingOptions } from '../league'
+import * as config from '../config'
+import { League } from '../league'
 import { SlackBot, CommandMessage, LeagueMember } from '../slack'
 import { isDefined } from '../utils'
 
-export interface ExtremaParameters {
+interface ExtremaParameters {
     start: moment.Moment
     end: moment.Moment
     referenceDate: moment.Moment
@@ -27,7 +28,7 @@ export class Extrema {
     ) {}
 }
 // Construct an extrema from default paramters
-export function makeExtrema({
+function makeExtrema({
     start,
     end,
     referenceDate,
@@ -241,7 +242,7 @@ function getPossibleDateStrings(dateString: string, extrema: Extrema) {
 //         before the round end that we want to warn people about.
 export function parseScheduling(
     inputString: string,
-    options: SchedulingOptions
+    options: config.Scheduling
 ): SchedulingResult {
     const parts = getTokensScheduling(inputString)
 
@@ -331,18 +332,21 @@ export function parseScheduling(
 //     extrema.hour: The weekday on which the pairings are released.
 //     extrema.warningHours: The amount of hours before the final scheduling
 //       cutoff during which we will warn users they are cutting it close.
-export function getRoundExtrema(options: SchedulingOptions): Extrema {
+export function getRoundExtrema(options: config.Scheduling): Extrema {
     // Get the reference date, which is either today or the referenceDate
     // from the options
-    const roundStart = (options.referenceDate || moment.utc()).clone()
+    const roundStart = (options.extrema.referenceDate || moment.utc()).clone()
     const referenceDate = roundStart.clone()
     // Make it the right time of day.
-    roundStart.hour(options.hour).minute(options.minute).second(0)
+    roundStart
+        .hour(options.extrema.hour)
+        .minute(options.extrema.minute)
+        .second(0)
 
     // Find the first day that comes before our reference date
     // which is on th same weekday as the round starts.
     while (
-        roundStart.isoWeekday() !== options.isoWeekday ||
+        roundStart.isoWeekday() !== options.extrema.isoWeekday ||
         roundStart.isAfter(referenceDate)
     ) {
         roundStart.subtract(1, 'days')
@@ -350,7 +354,9 @@ export function getRoundExtrema(options: SchedulingOptions): Extrema {
 
     // The end is always 7 days in advance
     const roundEnd = roundStart.clone().add(7, 'days')
-    const warningEnd = roundEnd.clone().subtract(options.warningHours, 'hours')
+    const warningEnd = roundEnd
+        .clone()
+        .subtract(options.extrema.warningHours, 'hours')
     return makeExtrema({
         start: roundStart,
         end: roundEnd,
@@ -385,7 +391,7 @@ function schedulingReplyMissingPairing(bot: SlackBot, message: CommandMessage) {
 function schedulingReplyTooCloseToCutoff(
     bot: SlackBot,
     message: CommandMessage,
-    schedulingOptions: SchedulingOptions,
+    schedulingOptions: config.Scheduling,
     white: LeagueMember,
     black: LeagueMember
 ) {
@@ -468,7 +474,7 @@ function schedulingReplyScheduled(
 function schedulingReplyTooLate(
     bot: SlackBot,
     message: CommandMessage,
-    schedulingOptions: SchedulingOptions
+    schedulingOptions: config.Scheduling
 ) {
     const user = '<@' + message.user + '>'
     bot.reply(message, ':x: ' + user + ' ' + schedulingOptions.lateMessage)
@@ -509,7 +515,7 @@ export async function ambientScheduling(
     if (!isDefined(speakerOr)) return
     const speaker: LeagueMember = speakerOr
 
-    const schedulingOptions = league.scheduling
+    const schedulingOptions = league.config.scheduling
     const channel = message.channel
     if (
         !schedulingOptions ||
@@ -519,7 +525,7 @@ export async function ambientScheduling(
         return
     }
 
-    const heltourOptions = league.heltourConfig
+    const heltourOptions = league.config.heltour
     if (!heltourOptions) {
         winston.error(
             `[SCHEDULING] ${league.name} league doesn't have heltour options!?`

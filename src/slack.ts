@@ -17,9 +17,9 @@ import * as fuzzy from './fuzzy_match'
 import * as models from './models'
 import SlackLogger, { LogWithPrefix } from './logging'
 import { isDefined } from './utils'
+import * as config from './config'
 
 // TODO:
-export type Config = any
 export type SlackUserID = string
 export type SlackUserName = string
 export type SlackChannelName = string
@@ -362,7 +362,7 @@ function findLeagueByMessageText(bot: SlackBot, message: ChessterMessage) {
     }
     _.each(allLeagues, (l) => {
         add_target(l, l.name)
-        _.each(l.alsoKnownAs, (aka) => add_target(l, aka))
+        _.each(l.config.alsoKnownAs, (aka) => add_target(l, aka))
     })
 
     // Now fuzzy match them based on each arg in the message
@@ -402,7 +402,7 @@ function getLeague(
     let targetLeague
     const channel = message.channel
     if (channel && channel.name) {
-        targetLeague = bot.config.channel_map[channel.name]
+        targetLeague = bot.config.channelMap[channel.name]
         l = league.getLeague(bot, targetLeague)
         if (l) {
             message.league = l
@@ -414,7 +414,7 @@ function getLeague(
     // it makes me sad ... :(
     if (channel && channel.id) {
         const channelId = channel.id
-        targetLeague = bot.config.channel_map[channelId]
+        targetLeague = bot.config.channelMap[channelId]
         if (targetLeague) {
             l = league.getLeague(bot, targetLeague)
             if (l) {
@@ -516,7 +516,7 @@ export class SlackEntityLookup<SlackEntity extends SlackEntityWithNameAndId> {
 
 export class SlackBot {
     private log: LogWithPrefix
-    public config: Config
+    public config: config.ChessterConfig
     private token: string
     public users: SlackEntityLookup<LeagueMember>
     public channels: SlackEntityLookup<SlackChannel>
@@ -539,8 +539,10 @@ export class SlackBot {
     ) {
         this.log = new LogWithPrefix(`[SlackBot: ${this.slackName}]`)
         this.log.info(`Loading config from: ${this.configFile}`)
-        this.config = require(this.configFile)
-        this.token = this.config.slack_tokens[this.slackName]
+        this.config = config.ChessterConfigDecoder.decodeJSON(
+            JSON.stringify(require(this.configFile))
+        )
+        this.token = this.config.slackTokens[this.slackName]
 
         if (!this.token) {
             const error = `Failed to load token for ${this.slackName} from ${this.configFile}`

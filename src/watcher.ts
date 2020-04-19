@@ -16,6 +16,7 @@ import Q from 'q'
 import * as games from './commands/games'
 import * as heltour from './heltour'
 import * as lichess from './lichess'
+import * as config from './config'
 import { League, Pairing } from './league'
 import { LogWithPrefix } from './logging'
 import { SlackBot } from './slack'
@@ -159,11 +160,14 @@ class WatcherRequest {
             // 1. perfect match any time, try to update.
             // 2. pairing + time control match any time, warn for other mismatches
             // 3. pairing match during a 4 hour window (+-2 hours), warn for other mismatches
-            if (!isDefined(league.gamelinks) || !isDefined(league.results)) {
+            if (
+                !isDefined(league.config.gamelinks) ||
+                !isDefined(league.config.results)
+            ) {
                 return
             }
-            const gamelinks: Record<string, any> = league.gamelinks
-            const results: Record<string, string> = league.results
+            const gamelinks: Record<string, any> = league.config.gamelinks
+            const results: config.Results = league.config.results
 
             const result = games.validateGameDetails(league, details)
             this.log.info(`Validation result: ${JSON.stringify(result)}`)
@@ -244,7 +248,7 @@ class WatcherRequest {
                             if (updatePairingResult.resultChanged) {
                                 this.bot.say({
                                     text: `<@${white}> ${detailsFromApi.result} <@${black}>`,
-                                    channel: results.channel_id,
+                                    channel: results.channelId,
                                 })
                             }
                         } catch (error) {
@@ -301,7 +305,7 @@ class WatcherRequest {
                 })
                 heltour
                     .sendGameWarning(
-                        league.heltourConfig,
+                        league.config.heltour,
                         white,
                         black,
                         result.reason

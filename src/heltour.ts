@@ -24,6 +24,9 @@ import {
 export interface Config {
     token: string
     baseEndpoint: string
+}
+
+export interface LeagueConfig extends Config {
     leagueTag: string
 }
 
@@ -398,7 +401,7 @@ export async function getAllPairings(
 
 // Update the schedule
 export async function updateSchedule(
-    heltourConfig: Config,
+    heltourConfig: LeagueConfig,
     schedule: UpdateScheduleRequest
 ) {
     const request = heltourRequest(heltourConfig, 'update_pairing')
@@ -415,7 +418,7 @@ export async function updateSchedule(
 
 // Update the pairing with a result or link
 export async function updatePairing(
-    heltourConfig: Config,
+    heltourConfig: LeagueConfig,
     result: UpdatePairingRequest
 ) {
     const pairings = await findPairing(
@@ -483,7 +486,7 @@ export async function linkSlack(
 }
 
 export async function assignAlternate(
-    heltourConfig: Config,
+    heltourConfig: LeagueConfig,
     round: number,
     team: number,
     board: number,
@@ -501,7 +504,7 @@ export async function assignAlternate(
     return heltourApiCall(request, UpdateSucceededDecoder)
 }
 
-export async function getLeagueModerators(heltourConfig: Config) {
+export async function getLeagueModerators(heltourConfig: LeagueConfig) {
     const request = heltourRequest(heltourConfig, 'get_league_moderators')
     request.parameters = {
         league: heltourConfig.leagueTag,
@@ -510,7 +513,7 @@ export async function getLeagueModerators(heltourConfig: Config) {
 }
 
 export async function setAvailability(
-    heltourConfig: Config,
+    heltourConfig: LeagueConfig,
     playerName: string,
     available: boolean,
     roundNumber: number
@@ -527,7 +530,7 @@ export async function setAvailability(
 }
 
 export async function sendGameWarning(
-    heltourConfig: Config,
+    heltourConfig: LeagueConfig,
     white: string,
     black: string,
     reason: string
