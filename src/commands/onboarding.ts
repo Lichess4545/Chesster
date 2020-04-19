@@ -10,6 +10,9 @@ async function welcomeMessageImpl(
     channel: string,
     user: string
 ) {
+    if (!_.isEqual(bot.config.welcome.channel, channel)) {
+        return
+    }
     const result = await heltour.linkSlack(bot.config.heltour, user, '')
     bot.say({
         channel,

@@ -316,6 +316,7 @@ export interface ChessterConfig {
     leagues: Record<string, League>
     channelMap: ChannelMap
     messageForwarding: MessageForwarding
+    welcome: Welcome
 }
 export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
     ['database', DatabaseDecoder],

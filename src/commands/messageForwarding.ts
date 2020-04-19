@@ -25,13 +25,13 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
             const messageToSend = message.attachments[0].text
             const channels: string[] = []
             const users: string[] = []
-            _(targets)
+            _(targets.value)
                 .split('+')
                 .compact()
                 .forEach((t) => {
                     if (_.startsWith(t, '@')) {
-                        const user = chesster.users.getId(t.substr(1))
-                        if (user) users.push(user)
+                        const user = chesster.users.getByNameOrID(t.substr(1))
+                        if (user) users.push(user.id)
                     } else if (_.startsWith(t, '#')) {
                         channels.push(t)
                     } else if (_.startsWith(t, 'g') || _.startsWith(t, 'c')) {
@@ -54,7 +54,7 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
                 })
 
             const promises: Promise<void>[] = []
-            if (users.length > 1) {
+            if (users.length > 0) {
                 promises.push(
                     chesster.startPrivateConversation(users).then((convo) => {
                         chesster.say({

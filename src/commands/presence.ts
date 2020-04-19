@@ -8,6 +8,9 @@ import { SlackBot, CommandMessage } from '../slack'
 import { isDefined } from '../utils'
 
 export async function ambientPresence(bot: SlackBot, message: CommandMessage) {
+    if (!isDefined(message.member)) {
+        return
+    }
     const mpim = bot.mpims.getByNameOrID(message.channel.id)
     if (!mpim) {
         return
