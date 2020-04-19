@@ -10,7 +10,7 @@ import { getAllLeagues } from './league'
 import * as availability from './commands/availability'
 import * as games from './commands/games'
 import * as leagueInfo from './commands/leagueInfo'
-// import messageForwarding from './commands/messageForwarding'
+import * as messageForwarding from './commands/messageForwarding'
 import * as privateURLs from './commands/privateURLs'
 import * as onboarding from './commands/onboarding'
 import * as playerInfo from './commands/playerInfo'
@@ -116,23 +116,17 @@ chesster.hears({
     callback: availability.unassignAlternate,
 })
 
-/*
 // Message Forwarding
-adminSlack.hears(
-    {
-        patterns: ['^forward to'],
-        messageTypes: ['direct_mention', 'bot_message'],
-    },
-    messageForwarding.forwardMessage(chesster, adminSlack)
-)
-adminSlack.hears(
-    {
-        patterns: ['^refresh'],
-        messageTypes: ['direct_mention', 'bot_message'],
-    },
-    messageForwarding.refreshLeague(chesster, adminSlack)
-)
-*/
+adminSlack.hears({
+    patterns: [/^forward to/],
+    messageTypes: ['direct_mention', 'bot_message'],
+    callback: messageForwarding.forwardMessage(chesster, adminSlack),
+})
+adminSlack.hears({
+    patterns: [/^refresh/],
+    messageTypes: ['direct_mention', 'bot_message'],
+    callback: messageForwarding.refreshLeague(chesster, adminSlack),
+})
 
 // private urls
 chesster.hears({

@@ -259,10 +259,10 @@ export function updateAvailability(bot: SlackBot, message: CommandMessage) {
 
 /* assign <player> to board <board-number> during round <round-number> on <team-name>*/
 export function assignAlternate(bot: SlackBot, message: CommandMessage) {
-    const alternateOptions = message.league?.alternate
+    const alternateOptions = message.league?.config.alternate
     if (
         !alternateOptions ||
-        !_.isEqual(message.channel.id, alternateOptions.channel_id)
+        !_.isEqual(message.channel.id, alternateOptions.channelId)
     ) {
         return
     }
@@ -427,10 +427,10 @@ export function assignAlternate(bot: SlackBot, message: CommandMessage) {
 /* unassign alternate for board <board-number> during round <round-number> on <team-name> */
 /* look up the original player and assign him to his board */
 export function unassignAlternate(bot: SlackBot, message: CommandMessage) {
-    const alternateOptions = message.league?.alternate
+    const alternateOptions = message.league?.config.alternate
     if (
         !alternateOptions ||
-        !_.isEqual(message.channel.id, alternateOptions.channel_id)
+        !_.isEqual(message.channel.id, alternateOptions.channelId)
     ) {
         return
     }

@@ -2,11 +2,11 @@ import _ from 'lodash'
 import winston from 'winston'
 import * as commands from '../commands'
 import * as league from '../league'
-import { SlackBot, SlackMessage } from '../slack'
+import { SlackBot, CommandMessage } from '../slack'
 import { isDefined } from '../utils'
 
 export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
-    return async (bot: SlackBot, message: SlackMessage) => {
+    return async (bot: SlackBot, message: CommandMessage) => {
         if (
             !_.isEqual(
                 message.channel,
@@ -103,7 +103,7 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
 }
 
 export function refreshLeague(chesster: SlackBot, adminSlack: SlackBot) {
-    return (bot: SlackBot, message: SlackMessage) => {
+    return (bot: SlackBot, message: CommandMessage) => {
         if (
             !_.isEqual(
                 message.channel,

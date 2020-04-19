@@ -198,6 +198,7 @@ export interface ChessterMessage {
     league?: league.League
     isModerator?: boolean
     ts: string
+    attachments: SlackAttachment[]
 }
 
 export interface CommandMessage extends ChessterMessage {
@@ -206,7 +207,11 @@ export interface CommandMessage extends ChessterMessage {
 
 // -------------------------------------------------------------------------------
 // Callback related types
-export type HearsEventType = 'ambient' | 'direct_message' | 'direct_mention'
+export type HearsEventType =
+    | 'ambient'
+    | 'direct_message'
+    | 'direct_mention'
+    | 'bot_message'
 
 export type MiddlewareFn = (
     bot: SlackBot,
@@ -808,10 +813,10 @@ export class SlackBot {
         return undefined
     }
 
-    async react(message: SlackMessage, emoji: string) {
+    async react(message: CommandMessage, emoji: string) {
         if (!message.ts) return
         return this.web.reactions.add({
-            channel: message.channel,
+            channel: message.channel.id,
             name: emoji,
             timestamp: message.ts.toString(),
         })

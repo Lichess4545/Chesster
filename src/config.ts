@@ -184,7 +184,7 @@ export const LeagueLinksDecoder: Decoder<LeagueLinks> = object(
     })
 )
 
-export interface LeagueWithoutAlternate {
+export interface League {
     name: string
     alsoKnownAs: string[]
     heltour: HeltourLeagueConfig
@@ -192,9 +192,10 @@ export interface LeagueWithoutAlternate {
     gamelinks: GameLinks
     scheduling: Scheduling
     links: LeagueLinks
+    alternate?: Alternate
 }
 
-export const LeagueWithoutAlternateDecoder: Decoder<LeagueWithoutAlternate> = object(
+export const LeagueWithoutAlternateDecoder: Decoder<League> = object(
     ['name', string()],
     ['alsoKnownAs', array(string())],
     ['heltour', HeltourLeagueConfigDecoder],
@@ -210,12 +211,10 @@ export const LeagueWithoutAlternateDecoder: Decoder<LeagueWithoutAlternate> = ob
         gamelinks,
         scheduling,
         links,
+        alternate: undefined,
     })
 )
-export interface LeagueWithAlternate extends LeagueWithoutAlternate {
-    alternate: Alternate
-}
-export const LeagueWithAlternateDecoder: Decoder<LeagueWithAlternate> = andThen(
+export const LeagueWithAlternateDecoder: Decoder<League> = andThen(
     LeagueWithoutAlternateDecoder,
     (leagueWithoutAlternate) =>
         object(['alternate', AlternateDecoder], (alternate) => ({
@@ -223,7 +222,6 @@ export const LeagueWithAlternateDecoder: Decoder<LeagueWithAlternate> = andThen(
             alternate,
         }))
 )
-export type League = LeagueWithAlternate | LeagueWithoutAlternate
 export const LeagueDecoder: Decoder<League> = oneOf(
     LeagueWithAlternateDecoder,
     LeagueWithoutAlternateDecoder
