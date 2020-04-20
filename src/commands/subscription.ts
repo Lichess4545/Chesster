@@ -28,7 +28,7 @@ const events: string[] = [
 // Format the help response message
 // -----------------------------------------------------------------------------
 function formatHelpResponse(bot: SlackBot) {
-    const leagueNames = _.map(league.getAllLeagues(bot), 'options.name')
+    const leagueNames = _.map(league.getAllLeagues(bot), 'name')
 
     return (
         'The subscription system supports the following commands: \n' +
@@ -56,7 +56,7 @@ function formatHelpResponse(bot: SlackBot) {
 // tell them they chose an invalid league
 // -----------------------------------------------------------------------------
 function formatInvalidLeagueResponse(bot: SlackBot) {
-    const leagueNames = _.map(league.getAllLeagues(bot), 'options.name')
+    const leagueNames = _.map(league.getAllLeagues(bot), 'name')
 
     return (
         "You didn't specify a valid league. These are your options:\n" +
@@ -190,7 +190,6 @@ function processTellCommand(
 ): Promise<string> {
     return new Promise((resolve, reject) => {
         const requester = bot.getSlackUserFromNameOrID(message.user)
-        console.log(requester)
         if (!isDefined(requester)) return
         const components = message.text.split(' ')
         const args = _.map(components.slice(0, 7), _.toLower)
@@ -202,16 +201,6 @@ function processTellCommand(
         const _in = args[4]
         const targetLeague = args[5]
         const _for = args[6]
-        console.log(
-            tell,
-            listener,
-            when,
-            event,
-            _in,
-            targetLeague,
-            _for,
-            sourceName
-        )
 
         // Ensure the basic command format is valid
         if (
@@ -390,7 +379,7 @@ export function register(bot: SlackBot, eventName: string, cb: Callback) {
 
     // Handle the event when it happens
     emitter.on(eventName, async (_league, sources, context) => {
-        return getListeners(bot, _league.options.name, sources, eventName).then(
+        return getListeners(bot, _league.name, sources, eventName).then(
             (targets) => {
                 const allDeferreds: Promise<void>[] = targets.map(
                     (target) =>
@@ -530,7 +519,6 @@ export async function tellMeWhenHandler(
     bot: SlackBot,
     message: CommandMessage
 ) {
-    console.log('WTF')
     const convo = await bot.startPrivateConversation([message.user])
     return processTellCommand(bot, message)
         .then((response) => {
