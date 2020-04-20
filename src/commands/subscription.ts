@@ -189,10 +189,8 @@ function processTellCommand(
     message: CommandMessage
 ): Promise<string> {
     return new Promise((resolve, reject) => {
-        if (!isDefined(message.member)) {
-            return
-        }
         const requester = bot.getSlackUserFromNameOrID(message.user)
+        console.log(requester)
         if (!isDefined(requester)) return
         const components = message.text.split(' ')
         const args = _.map(components.slice(0, 7), _.toLower)
@@ -204,10 +202,21 @@ function processTellCommand(
         const _in = args[4]
         const targetLeague = args[5]
         const _for = args[6]
+        console.log(
+            tell,
+            listener,
+            when,
+            event,
+            _in,
+            targetLeague,
+            _for,
+            sourceName
+        )
 
         // Ensure the basic command format is valid
         if (
-            !_.isEqual(['tell', 'when', 'in', 'for'], [tell, when, _in, _for])
+            _.difference([tell, when, _in, _for], ['tell', 'when', 'in', 'for'])
+                .length > 0
         ) {
             const response = formatHelpResponse(bot)
             return resolve("I didn't understand you.\n" + response)
@@ -220,7 +229,7 @@ function processTellCommand(
         }
         message.league = _league
         let team = message.league.getTeamByPlayerName(
-            message.member.lichess_username
+            requester.lichess_username
         )
         const captainName =
             team && _(team.players).filter('isCaptain').map('username').value()
@@ -228,7 +237,7 @@ function processTellCommand(
             captainName &&
             _.isEqual(
                 _.toLower(captainName[0]),
-                _.toLower(message.member.lichess_username)
+                _.toLower(requester.lichess_username)
             )
 
         const possibleListeners = ['me', 'my-team-channel']
@@ -236,7 +245,7 @@ function processTellCommand(
         if (
             !(
                 _.isEqual(listener, 'me') ||
-                _league.isModerator(message.member.lichess_username) ||
+                _league.isModerator(requester.lichess_username) ||
                 (_.isEqual(listener, 'my-team-channel') && isCaptain)
             )
         ) {
@@ -296,7 +305,7 @@ function processTellCommand(
         })
             .then(() =>
                 resolve(
-                    `Great! I will tell ${target} when ${event} for ${source} in ${league}`
+                    `Great! I will tell ${target} when ${event} for ${sourceName} in ${_league.name}`
                 )
             )
             .catch((error) => reject(error))
@@ -517,113 +526,103 @@ function processTeamSubscribeCommand(
 // -----------------------------------------------------------------------------
 // Handler the tell me when command
 // -----------------------------------------------------------------------------
-export function tellMeWhenHandler() {
-    return async (bot: SlackBot, message: CommandMessage) => {
-        const convo = await bot.startPrivateConversation([message.user])
-        return processTellCommand(bot, message)
-            .then((response) => {
-                bot.say({
-                    channel: convo.channel.id,
-                    text: response,
-                })
+export async function tellMeWhenHandler(
+    bot: SlackBot,
+    message: CommandMessage
+) {
+    console.log('WTF')
+    const convo = await bot.startPrivateConversation([message.user])
+    return processTellCommand(bot, message)
+        .then((response) => {
+            bot.say({
+                channel: convo.channel.id,
+                text: response,
             })
-            .catch((error) => {
-                winston.error(JSON.stringify(error))
-                bot.say({
-                    channel: convo.channel.id,
-                    text:
-                        "I'm sorry, but an error occurred processing this subscription command",
-                })
+        })
+        .catch((error) => {
+            winston.error(JSON.stringify(error))
+            bot.say({
+                channel: convo.channel.id,
+                text:
+                    "I'm sorry, but an error occurred processing this subscription command",
             })
-    }
+        })
 }
 
 // -----------------------------------------------------------------------------
 // Handle the help message command
 // -----------------------------------------------------------------------------
-export function helpHandler() {
-    return async (bot: SlackBot, message: CommandMessage) => {
-        const convo = await bot.startPrivateConversation([message.user])
-        bot.say({
-            channel: convo.channel.id,
-            text: formatHelpResponse(bot),
-        })
-    }
+export async function helpHandler(bot: SlackBot, message: CommandMessage) {
+    const convo = await bot.startPrivateConversation([message.user])
+    bot.say({
+        channel: convo.channel.id,
+        text: formatHelpResponse(bot),
+    })
 }
 
 // -----------------------------------------------------------------------------
 // Handle the subscription list command.
 // -----------------------------------------------------------------------------
-export function listHandler() {
-    return async (bot: SlackBot, message: CommandMessage) => {
-        const convo = await bot.startPrivateConversation([message.user])
-        return processSubscriptionListCommand(bot, message)
-            .then((response) => {
-                bot.say({
-                    channel: convo.channel.id,
-                    text: response,
-                })
+export async function listHandler(bot: SlackBot, message: CommandMessage) {
+    const convo = await bot.startPrivateConversation([message.user])
+    return processSubscriptionListCommand(bot, message)
+        .then((response) => {
+            bot.say({
+                channel: convo.channel.id,
+                text: response,
             })
-            .catch((error) => {
-                bot.say({
-                    channel: convo.channel.id,
-                    text:
-                        "I'm sorry, but an error occurred processing this subscription command",
-                })
-                winston.error(JSON.stringify(error))
+        })
+        .catch((error) => {
+            bot.say({
+                channel: convo.channel.id,
+                text:
+                    "I'm sorry, but an error occurred processing this subscription command",
             })
-    }
+            winston.error(JSON.stringify(error))
+        })
 }
 
 // -----------------------------------------------------------------------------
 // Handle the subscription remove command.
 // -----------------------------------------------------------------------------
-export function removeHandler() {
-    return async (bot: SlackBot, message: CommandMessage) => {
-        const convo = await bot.startPrivateConversation([message.user])
-        return processSubscriptionRemoveCommand(
-            bot,
-            message,
-            message.matches[1]
-        )
-            .then((response) => {
-                bot.say({
-                    channel: convo.channel.id,
-                    text: response,
-                })
+export async function removeHandler(bot: SlackBot, message: CommandMessage) {
+    const convo = await bot.startPrivateConversation([message.user])
+    return processSubscriptionRemoveCommand(bot, message, message.matches[1])
+        .then((response) => {
+            bot.say({
+                channel: convo.channel.id,
+                text: response,
             })
-            .catch((error) => {
-                bot.say({
-                    channel: convo.channel.id,
-                    text:
-                        "I'm sorry, but an error occurred processing this subscription command",
-                })
-                winston.error(JSON.stringify(error))
+        })
+        .catch((error) => {
+            bot.say({
+                channel: convo.channel.id,
+                text:
+                    "I'm sorry, but an error occurred processing this subscription command",
             })
-    }
+            winston.error(JSON.stringify(error))
+        })
 }
 
 // -----------------------------------------------------------------------------
 // Handle the subscribe teams command
 // -----------------------------------------------------------------------------
-export function subscribeTeams() {
-    return async (bot: SlackBot, message: CommandMessage) => {
-        const convo = await bot.startPrivateConversation([message.user])
-        return processTeamSubscribeCommand(bot, message)
-            .then((response) => {
-                bot.say({
-                    channel: convo.channel.id,
-                    text: response,
-                })
+export async function subscribeTeams(bot: SlackBot, message: CommandMessage) {
+    const convo = await bot.startPrivateConversation([message.user])
+    return processTeamSubscribeCommand(bot, message)
+        .then((response) => {
+            bot.say({
+                channel: convo.channel.id,
+                text: response,
             })
-            .catch((error) => {
-                bot.say({
-                    channel: convo.channel.id,
-                    text:
-                        "I'm sorry, but an error occurred processing this subscription command",
-                })
-                winston.error(JSON.stringify(error))
+        })
+        .catch((error) => {
+            bot.say({
+                channel: convo.channel.id,
+                text:
+                    "I'm sorry, but an error occurred processing this subscription command",
             })
-    }
+            winston.error(JSON.stringify(error))
+        })
 }
 

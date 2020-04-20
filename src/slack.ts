@@ -790,7 +790,7 @@ export class SlackBot {
     async reply(message: ChessterMessage, response: string) {
         if (!message.channel) return
         return this.say({
-            channel: message.channel?.id,
+            channel: message.channel.id,
             text: response,
         })
     }
@@ -907,6 +907,10 @@ export class SlackBot {
 
     async startOnListener() {
         this.rtm.on('message', async (event: SlackMessage) => {
+            if (event.bot_id && event.bot_id === this.controller?.id) {
+                this.log.warn('FOO')
+                return
+            }
             const channel = await this.getChannel(event.channel)
             if (!channel) {
                 this.log.warn(

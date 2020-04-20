@@ -15,7 +15,7 @@ import * as privateURLs from './commands/privateURLs'
 import * as onboarding from './commands/onboarding'
 import * as playerInfo from './commands/playerInfo'
 import * as scheduling from './commands/scheduling'
-// import subscription from './commands/subscription'
+import * as subscription from './commands/subscription'
 import * as presence from './commands/presence'
 import * as lichess from './lichess'
 
@@ -202,7 +202,7 @@ function prepareCommandsMessage() {
 
 chesster.hears({
     type: 'command',
-    patterns: [/commands/, /command list/, /^help$/],
+    patterns: [/^commands/, /^command list/, /^help$/],
     messageTypes: ['direct_mention', 'direct_message'],
     callback: async (bot: slack.SlackBot, message: slack.CommandMessage) => {
         const convo = await bot.startPrivateConversation([message.user])
@@ -267,48 +267,43 @@ chesster.hears({
     messageTypes: ['ambient'],
     callback: games.ambientGamelinks,
 })
-/*
+chesster.hears({
+    type: 'command',
+    patterns: [/^subscription help$/, /^unsubscribe$/],
+    messageTypes: ['direct_message'],
+    callback: subscription.helpHandler,
+})
+
+chesster.hears({
+    type: 'command',
+    patterns: [/^subscription list$/],
+    messageTypes: ['direct_message'],
+    callback: subscription.listHandler,
+})
+
+chesster.hears({
+    type: 'command',
+    patterns: [/^subscribe teams$/],
+    messageTypes: ['direct_message'],
+    callback: subscription.subscribeTeams,
+})
+
 // subscriptions
 
-chesster.hears(
-    {
-        patterns: ['^tell'],
-        messageTypes: ['direct_message'],
-    },
-    subscription.tellMeWhenHandler(chesster.config)
-)
+chesster.hears({
+    type: 'command',
+    patterns: [/^tell/],
+    messageTypes: ['direct_message'],
+    callback: subscription.tellMeWhenHandler,
+})
 
-chesster.hears(
-    {
-        patterns: ['^subscription help$', '^unsubscribe$'],
-        messageTypes: ['direct_message'],
-    },
-    subscription.helpHandler(chesster.config)
-)
+chesster.hears({
+    type: 'command',
+    patterns: [/^subscription remove (\d+)$/],
+    messageTypes: ['direct_message'],
+    callback: subscription.removeHandler,
+})
 
-chesster.hears(
-    {
-        patterns: ['^subscription list$'],
-        messageTypes: ['direct_message'],
-    },
-    subscription.listHandler(chesster.config)
-)
-
-chesster.hears(
-    {
-        patterns: [/^subscription remove (\d+)$/],
-        messageTypes: ['direct_message'],
-    },
-    subscription.removeHandler(chesster.config)
-)
-
-chesster.hears(
-    {
-        patterns: [/^subscribe teams$/],
-        messageTypes: ['direct_message'],
-    },
-    subscription.subscribeTeams(chesster.config)
-)
 subscription.register(
     chesster,
     'a-game-is-scheduled',
@@ -320,7 +315,6 @@ subscription.register(
     'a-game-is-over',
     subscription.formatAGameIsOver
 )
-*/
 
 chesster.hears({
     type: 'command',
