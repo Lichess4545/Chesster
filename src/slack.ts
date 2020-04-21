@@ -623,7 +623,6 @@ export class SlackBot {
         // would be nice if this was push model, not poll but oh well.
         await this.refresh(120 * SECONDS)
 
-        // TODO: get this working again
         if (this.logToThisSlack) {
             // setup logging
             // Pass in a reference to ourselves.
