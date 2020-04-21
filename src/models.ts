@@ -7,8 +7,6 @@ import winston from 'winston'
 import { Sequelize, Model, DataTypes } from 'sequelize'
 import { ChessterConfig } from './config'
 
-// TODO: better type for this
-
 export class LichessRating extends Model {
     public id!: number
     public lichessUserName!: string
