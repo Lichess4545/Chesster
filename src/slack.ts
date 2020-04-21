@@ -612,7 +612,7 @@ export class SlackBot {
             process.exit(1)
         })
 
-        //------------------------------------------------------------------------------
+        // -----------------------------------------------------------------------------
         // Log lifecycle events
         this.rtm.on('connecting', () => {
             this.log.info('Connecting')
