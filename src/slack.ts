@@ -612,6 +612,36 @@ export class SlackBot {
             process.exit(1)
         })
 
+        //------------------------------------------------------------------------------
+        // Log lifecycle events
+        this.rtm.on('connecting', () => {
+            this.log.info('Connecting')
+        })
+        this.rtm.on('authenticated', (connectData) => {
+            this.log.info(`Authenticating: ${JSON.stringify(connectData)}`)
+        })
+        this.rtm.on('connected', () => {
+            this.log.info('Connected')
+        })
+        this.rtm.on('ready', () => {
+            this.log.info('Ready')
+        })
+        this.rtm.on('disconnecting', () => {
+            this.log.info('Disconnecting')
+        })
+        this.rtm.on('reconnecting', () => {
+            this.log.info('Reconnecting')
+        })
+        this.rtm.on('disconnected', (error) => {
+            this.log.error(`Disconnecting: ${JSON.stringify(error)}`)
+        })
+        this.rtm.on('error', (error) => {
+            this.log.error(`Error: ${JSON.stringify(error)}`)
+        })
+        this.rtm.on('unable_to_rtm_start', (error) => {
+            this.log.error(`Unable to RTM start: ${JSON.stringify(error)}`)
+        })
+
         // connect to the database
         if (this.connectToModels) {
             await models.connect(this.config)
