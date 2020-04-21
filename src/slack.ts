@@ -763,9 +763,6 @@ export class SlackBot {
                 this.refreshCount++
                 this.log.info(`doing refresh ${this.refreshCount}`)
 
-                // TODO: I can't find this in the new api
-                // bot.rtm.ping()
-
                 this.updatesUsers()
                 this.updateChannels()
                 if (this.refreshLeagues) {
