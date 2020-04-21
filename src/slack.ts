@@ -19,7 +19,6 @@ import SlackLogger, { LogWithPrefix } from './logging'
 import { isDefined } from './utils'
 import * as config from './config'
 
-// TODO:
 export type SlackUserID = string
 export type SlackUserName = string
 export type SlackChannelName = string
@@ -625,13 +624,20 @@ export class SlackBot {
         await this.refresh(120 * SECONDS)
 
         // TODO: get this working again
-        // winston.level = 'silly';
-        /*if (self.options.logToThisSlack) {
+        if (this.logToThisSlack) {
             // setup logging
             // Pass in a reference to ourselves.
-            self.config.winston.controller = self;
-            winston.add(new SlackLogger(self.config.winston));
-        }*/
+            winston.info('adding slack logger')
+            winston.add(
+                new SlackLogger(
+                    this,
+                    this.config.winston.channel,
+                    this.config.winston.username,
+                    this.config.winston.level,
+                    this.config.winston.handleExceptions
+                )
+            )
+        }
     }
 
     async updatesUsers() {
@@ -769,8 +775,8 @@ export class SlackBot {
                     setTimeout(() => {
                         this.refresh(delay)
                     }, delay)
-                    resolve()
                 }
+                resolve()
             })
         )
     }
@@ -912,57 +918,70 @@ export class SlackBot {
 
     async startOnListener() {
         this.rtm.on('message', async (event: SlackMessage) => {
-            const channel = await this.getChannel(event.channel)
-            if (!channel) {
-                this.log.warn(
-                    `Unable to get details for channel: ${event.channel}`
-                )
-                return
-            }
-            const chessterMessage: ChessterMessage = {
-                ...event,
-                type: 'message',
-                channel,
-            }
-
-            const isDirectMessage =
-                channel && channel.is_im && !channel.is_group
-            const isDirectMention =
-                chessterMessage.text.indexOf(`<@${this.controller?.id}>`) !== -1
-            const isBotMessage = event.subtype === 'bot_message'
-            const isAmbient = !(
-                isDirectMention ||
-                isDirectMessage ||
-                isBotMessage
-            )
-            this.listeners.map(async (listener) => {
-                let isWanted = false
-                let text = event.text
-                if (isDirectMessage && wantsDirectMessage(listener)) {
-                    isWanted = true
-                } else if (isDirectMention && wantsDirectMention(listener)) {
-                    isWanted = true
-                    text = text.replace(`<@${this.controller?.id}> `, '')
-                    text = text.replace(`<@${this.controller?.id}>`, '')
-                } else if (isAmbient && wantsAmbient(listener)) {
-                    isWanted = true
-                } else if (isBotMessage && wantsBotMessage(listener)) {
-                    isWanted = true
+            try {
+                const channel = await this.getChannel(event.channel)
+                if (!channel) {
+                    this.log.warn(
+                        `Unable to get details for channel: ${event.channel}`
+                    )
+                    return
+                }
+                const chessterMessage: ChessterMessage = {
+                    ...event,
+                    type: 'message',
+                    channel,
                 }
 
-                if (!isWanted) return
+                const isDirectMessage =
+                    channel && channel.is_im && !channel.is_group
+                const isDirectMention =
+                    chessterMessage.text.indexOf(
+                        `<@${this.controller?.id}>`
+                    ) !== -1
+                const isBotMessage = event.subtype === 'bot_message'
+                const isAmbient = !(
+                    isDirectMention ||
+                    isDirectMessage ||
+                    isBotMessage
+                )
+                this.listeners.map(async (listener) => {
+                    let isWanted = false
+                    let text = event.text
+                    if (isDirectMessage && wantsDirectMessage(listener)) {
+                        isWanted = true
+                    } else if (
+                        isDirectMention &&
+                        wantsDirectMention(listener)
+                    ) {
+                        isWanted = true
+                        text = text.replace(`<@${this.controller?.id}> `, '')
+                        text = text.replace(`<@${this.controller?.id}>`, '')
+                    } else if (isAmbient && wantsAmbient(listener)) {
+                        isWanted = true
+                    } else if (isBotMessage && wantsBotMessage(listener)) {
+                        isWanted = true
+                    }
 
-                listener.patterns.some((p) => {
-                    const matches = text.match(p)
-                    if (!matches) return false
-                    this.handleMatch(listener, {
-                        ...chessterMessage,
-                        text: text.trim(),
-                        matches,
+                    if (!isWanted) return
+
+                    listener.patterns.some((p) => {
+                        const matches = text.match(p)
+                        if (!matches) return false
+                        this.handleMatch(listener, {
+                            ...chessterMessage,
+                            text: text.trim(),
+                            matches,
+                        })
+                        return true
                     })
-                    return true
                 })
-            })
+            } catch (error) {
+                this.log.error(
+                    `Uncaught error in handling an rtm message: ${JSON.stringify(
+                        error
+                    )}`
+                )
+            }
         })
     }
 

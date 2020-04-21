@@ -30,10 +30,10 @@ export default class Slack extends Transport {
         public channel: string,
         // public domain: string,
         public username: string,
-        public format?: logform.Format,
         public level?: string,
+        public handleExceptions?: boolean,
         public silent?: boolean,
-        public handleExceptions?: boolean
+        public format?: logform.Format
     ) {
         super({ format, level, silent, handleExceptions })
         this.level = this.level || 'debug'
