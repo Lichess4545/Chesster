@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------------
 import _ from 'lodash'
 import winston from 'winston'
+import { Op } from 'sequelize'
 
 import * as league from '../league'
 import * as db from '../models'
@@ -149,9 +150,9 @@ export function formatAGameIsScheduled(
             .clone()
             .utcOffset(member.tz_offset / 60)
         context.yourDate = targetDate.format(friendlyFormat)
-        message = `${context.white.name} vs ${context.black.name} in ${context.leagueName} has been scheduled for ${realDate}, which is {context.yourDate} for you.`
+        message = `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.leagueName} has been scheduled for ${realDate}, which is ${context.yourDate} for you.`
     } else {
-        message = `${context.white.name} vs ${context.black.name} in ${context.leagueName} has been scheduled for ${realDate}.`
+        message = `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.leagueName} has been scheduled for ${realDate}.`
     }
     return message
 }
@@ -164,7 +165,7 @@ export function formatAGameStarts(
     target: string,
     context: Context
 ) {
-    return `${context.white.name} vs ${context.black.name} in ${context.leagueName} has started: ${context.result.gamelink}`
+    return `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.leagueName} has started: ${context.result.gamelink}`
 }
 
 // -----------------------------------------------------------------------------
@@ -175,7 +176,7 @@ export function formatAGameIsOver(
     target: string,
     context: Context
 ) {
-    return `${context.white.name} vs ${context.black.name} in ${context.leagueName} is over. The result is ${context.result.result}.`
+    return `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.leagueName} is over. The result is ${context.result.result}.`
 }
 
 // -----------------------------------------------------------------------------
@@ -249,7 +250,7 @@ function processTellCommand(
         let target: string = ''
         if (_.isEqual(listener, 'me')) {
             listener = 'you'
-            target = requester.name
+            target = requester.lichess_username
         } else if (_.isEqual(listener, 'my-team-channel')) {
             if (!team) {
                 return formatNoTeamResponse()
@@ -279,13 +280,13 @@ function processTellCommand(
             return resolve(formatInvalidSourceResponse(sourceName))
         }
         if (!_.isUndefined(source)) {
-            sourceName = source.name
+            sourceName = source.lichess_username
         } else if (!_.isUndefined(team)) {
             sourceName = team.name
         }
         return db.Subscription.findOrCreate({
             where: {
-                requester: requester.name.toLowerCase(),
+                requester: requester.lichess_username.toLowerCase(),
                 source: sourceName.toLowerCase(),
                 event: event.toLowerCase(),
                 league: _league.name.toLowerCase(),
@@ -315,7 +316,7 @@ function processSubscriptionListCommand(
         if (!isDefined(requester)) return
         return db.Subscription.findAll({
             where: {
-                requester: requester.name.toLowerCase(),
+                requester: requester.lichess_username.toLowerCase(),
             },
             order: [['id', 'ASC']],
         })
@@ -353,7 +354,7 @@ function processSubscriptionRemoveCommand(
         if (!isDefined(requester)) return
         return db.Subscription.findAll({
             where: {
-                requester: requester.name.toLowerCase(),
+                requester: requester.lichess_username.toLowerCase(),
                 id,
             },
         }).then((subscriptions) => {
@@ -431,7 +432,7 @@ export function getListeners(
         const _league = league.getLeague(bot, leagueName)
         if (!isDefined(_league)) return reject()
         const teamNames = _(sources)
-            .map(_league.getTeamByPlayerName)
+            .map((s) => _league.getTeamByPlayerName(s))
             .filter(isDefined)
             .map('name')
             .map(_.toLower)
@@ -441,7 +442,7 @@ export function getListeners(
             where: {
                 league: leagueName.toLowerCase(),
                 source: {
-                    $in: possibleSources,
+                    [Op.in]: possibleSources,
                 },
                 event: event.toLowerCase(),
             },

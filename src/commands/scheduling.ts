@@ -518,6 +518,7 @@ export async function ambientScheduling(
     const speaker = message.member
 
     const schedulingOptions = league.config.scheduling
+
     const channel = message.channel
     if (!_.isEqual(channel.name, schedulingOptions.channel)) {
         return
@@ -643,7 +644,7 @@ export async function ambientScheduling(
         subscription.emitter.emit(
             'a-game-is-scheduled',
             message.league,
-            [white.name, black.name],
+            [white.lichess_username, black.lichess_username],
             {
                 result: schedulingResults,
                 white,

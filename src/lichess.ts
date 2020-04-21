@@ -473,8 +473,10 @@ export const GameDetailsDecoder: Decoder<GameDetails> = oneOf(
 )
 
 export async function fetchGameDetails(gamelinkID: string) {
-    const url = `https://lichess.org/game/export/${gamelinkID}`
+    const url = `https://lichess.org/game/export/${gamelinkID.substr(0, 8)}`
+    console.log(url)
     const response = await makeRequest(url, false, false, 'application/json')
+    console.log(response.body)
     return GameDetailsDecoder.decodeJSON(response.body)
 }
 

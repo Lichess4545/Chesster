@@ -130,6 +130,7 @@ export interface SlackConversation extends WebAPICallResult {
 interface SlackEntityWithNameAndId {
     id: string
     name?: string
+    lichess_username?: string
 }
 export interface SlackTeam {
     domain: string
@@ -501,10 +502,13 @@ export class SlackEntityLookup<SlackEntity extends SlackEntityWithNameAndId> {
             return
         }
         this.byName[entity.name.toLowerCase()] = entity
+        if (entity.lichess_username) {
+            this.byName[entity.lichess_username.toLowerCase()] = entity
+        }
     }
 
     getId(name: string): string | undefined {
-        const entity = this.byName[_.toLower(name)]
+        const entity = this.byName[name.toLowerCase()]
         if (!entity) {
             this.log.error("Couldn't find entity by name: " + name)
             return undefined
@@ -528,7 +532,8 @@ export class SlackEntityLookup<SlackEntity extends SlackEntityWithNameAndId> {
 
     getByNameOrID(nameOrId: string): SlackEntity | undefined {
         return (
-            this.byId[_.toUpper(nameOrId)] || this.byName[_.toLower(nameOrId)]
+            this.byId[nameOrId.toUpperCase()] ||
+            this.byName[nameOrId.toLowerCase()]
         )
     }
 }
@@ -907,10 +912,6 @@ export class SlackBot {
 
     async startOnListener() {
         this.rtm.on('message', async (event: SlackMessage) => {
-            if (event.bot_id && event.bot_id === this.controller?.id) {
-                this.log.warn('FOO')
-                return
-            }
             const channel = await this.getChannel(event.channel)
             if (!channel) {
                 this.log.warn(
@@ -928,8 +929,12 @@ export class SlackBot {
                 channel && channel.is_im && !channel.is_group
             const isDirectMention =
                 chessterMessage.text.indexOf(`<@${this.controller?.id}>`) !== -1
-            const isAmbient = !(isDirectMention || isDirectMessage)
             const isBotMessage = event.subtype === 'bot_message'
+            const isAmbient = !(
+                isDirectMention ||
+                isDirectMessage ||
+                isBotMessage
+            )
             this.listeners.map(async (listener) => {
                 let isWanted = false
                 let text = event.text
