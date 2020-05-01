@@ -129,7 +129,7 @@ describe('games', function () {
 
     describe('#validateGameDetails', function () {
         it('Tests game details validation.', function () {
-            var configFile = '../config/config.js'
+            var configFile = '../config/testconfig.js'
             let chesster = new slack.SlackBot('lichess4545', configFile)
             let mockLeagueOr = league.getLeague(chesster, '45+45')
             if (!isDefined(mockLeagueOr)) {

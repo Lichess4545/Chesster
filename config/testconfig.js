@@ -1,18 +1,18 @@
 // NOTE: Neither of these files are committed and for good reason.
 //       You must provide your own.
-var token = require('./slack_token.js').token
+let token = require('./slack_token.js').token
+let test_chesster_slack_token = "";
 try {
-    var test_chesster_slack_token = require('./test_chesster_slack_token.js')
+    test_chesster_slack_token = require('./test_chesster_slack_token.js')
         .token
 } catch (e) {
-    var test_chesster_slack_token = null
 }
-var heltour_token = require('./test_heltour_token.js').token
+let heltour_token = require('./test_heltour_token.js').token
 
 const UNSTABLE_BOT_ID = 'C0VCCPMJ8'
 const UNSTABLE_BOT_LONEWOLF_ID = 'C0XQM31SL'
 
-var config = require('./config.js')
+let config = require('./config.js')
 config['watcherBaseURL'] = 'https://lichess.dev/api/stream/games-by-users'
 config['slackTokens']['chesster'] = test_chesster_slack_token
 config['winston']['channel'] = '#modster-logging'
@@ -20,7 +20,7 @@ config['winston']['handleExceptions'] = false
 
 config['welcome']['channel'] = 'dev-testing-lonewolf'
 
-heltour = {
+let heltour = {
     baseEndpoint: 'http://localhost:8000/api/',
     token: heltour_token,
 }
