@@ -106,13 +106,10 @@ function parameterizeVariableToken(
     parameters: Parameters
 ) {
     // create an object splitting the description string into type and name
-    const { type, name } = _.zipObject(
-        ['type', 'name'],
-        _(description)
-            .split(/[\{\:\}]/)
-            .compact()
-            .value()
-    )
+    const [type, name] = _(description)
+        .split(/[\{\:\}]/)
+        .compact()
+        .value()
 
     // if either are not specified, the description string is bad.
     if (_.isNil(type) || _.isNil(name))
