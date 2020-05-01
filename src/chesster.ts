@@ -33,12 +33,12 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const adminSlack = new slack.SlackBot(
-    'chesster',
-    configFile,
-    false,
-    false,
-    false,
-    true
+    'chesster', // slackName
+    configFile, // configFile
+    false, // debug
+    false, // connectToModels
+    false, // refreshLeagues
+    true // logToThisSlack
 )
 
 // A helper for a very common pattern
