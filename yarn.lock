@@ -1742,7 +1742,7 @@ log-symbols@3.0.0:
   dependencies:
     chalk "^2.4.2"
 
-logform@^2.1.1:
+logform@^2.1.1, logform@^2.1.2:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/logform/-/logform-2.1.2.tgz#957155ebeb67a13164069825ce67ddb5bb2dd360"
   integrity sha512-+lZh4OpERDBLqjiwDLpAWNQu6KMjnlXH2ByZwCuSqVPJletw0kTWJf5CgSNAUKn1KUkv3m2cUz/LK8zyEy7wzQ==
