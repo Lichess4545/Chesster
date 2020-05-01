@@ -1,0 +1,3 @@
+module.exports = {
+    token: "xoxb-XXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXX"
+}
