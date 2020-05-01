@@ -43,7 +43,7 @@ var config = {
     },
     heltour: {
         token: heltour_token,
-        baseEndpoint: 'http://localhost:8000/api/',
+        baseEndpoint: 'https://www.lichess4545.com/api/',
     },
     welcome: {
         channel: 'general',
@@ -54,7 +54,7 @@ var config = {
             alsoKnownAs: ['4545', 'Team', '45'],
             heltour: {
                 token: heltour_token,
-                baseEndpoint: 'http://localhost:8000/api/',
+                baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'team4545',
             },
             results: {
@@ -112,7 +112,7 @@ var config = {
             alternate: undefined,
             heltour: {
                 token: heltour_token,
-                baseEndpoint: 'http://localhost:8000/api/',
+                baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'lonewolf',
             },
             results: {
@@ -166,7 +166,7 @@ var config = {
             alternate: undefined,
             heltour: {
                 token: heltour_token,
-                baseEndpoint: 'http://localhost:8000/api/',
+                baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'blitzbattle',
             },
             results: {
@@ -220,7 +220,7 @@ var config = {
             alternate: undefined,
             heltour: {
                 token: heltour_token,
-                baseEndpoint: 'http://localhost:8000/api/',
+                baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'chess960',
             },
             results: {
