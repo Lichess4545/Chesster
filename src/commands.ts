@@ -97,35 +97,35 @@ function getTokens(text: string, numTokens: number) {
  * call the specific token verification routine for the type specified
  * get the key from the description for parameterization
  * add the variable to the parameter object using the key from the description
- * if the name or type cannot be determined from the dscription, throw InvalidTokenDescription
+ * if the name or type cannot be determined from the description, throw InvalidTokenDescription
  * if the type specified is not known, throw InvalidVariableTypeError
  */
 function parameterizeVariableToken(
     token: string,
-    dscription: string,
+    description: string,
     parameters: Parameters
 ) {
     // create an object splitting the description string into type and name
-    const description = _.zipObject(
+    const { type, name } = _.zipObject(
         ['type', 'name'],
-        _(dscription)
+        _(description)
             .split(/[\{\:\}]/)
             .compact()
             .value()
     )
 
     // if either are not specified, the description string is bad.
-    if (_.isNil(description.type) || _.isNil(description.name))
-        throw new InvalidTokenDescriptionError(dscription)
+    if (_.isNil(type) || _.isNil(name))
+        throw new InvalidTokenDescriptionError(description)
 
     // for each type defined, test it to see if it matches
     //   given a match, parse the token and store
 
-    const ctor = VARIABLE_TYPES[description.type]
+    const ctor = VARIABLE_TYPES[type]
     if (ctor) {
-        parameters[description.name] = new ctor(token)
+        parameters[name] = new ctor(token)
     } else {
-        throw new InvalidTypeError(description.type, dscription)
+        throw new InvalidTypeError(type, description)
     }
 }
 
