@@ -6,7 +6,7 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/trusty64"
+  config.vm.box = "ubuntu/bionic64"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -32,11 +32,14 @@ Vagrant.configure(2) do |config|
 
      # Customize the amount of memory on the VM:
      vb.memory = 2048
+     
+     # Enable symlinks for windows
+     vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
   end
 
   config.vm.hostname = "chesster"
 
 
-  config.vm.provision :shell, :path => "./setup/vagrant/vagrant-dependencies.sh"
-  config.vm.provision :shell, :path => "./sysadmin/vagrant/startup.sh", run: "always"
+  config.vm.provision :shell, :path => "./vagrant/dependencies.sh", privileged: false
+  config.vm.provision :shell, :path => "./vagrant/startup.sh", privileged: false, run: "always"
 end

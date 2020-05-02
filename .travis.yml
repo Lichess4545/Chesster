@@ -1,8 +1,8 @@
 language: node_js
-node_js: "5"
-install: npm install
+node_js: "12"
+install: yarn install --dev
 script:
-  - istanbul cover node_modules/mocha/bin/_mocha
-  - npm run lint
-  - npm run hint
-  - npm run send-coverage
+  - yarn run build
+  - istanbul cover node_modules/mocha/bin/_mocha -- --exit
+  - yarn run lint
+  - yarn run send-coverage

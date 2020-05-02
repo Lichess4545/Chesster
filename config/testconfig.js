@@ -1,48 +1,58 @@
 // NOTE: Neither of these files are committed and for good reason.
 //       You must provide your own.
-var token = require("./slack_token.js").token;
+let token = require('./slack_token.js').token
+let test_chesster_slack_token = "";
 try {
-    var test_chesster_slack_token = require("./test_chesster_slack_token.js").token;
+    test_chesster_slack_token = require('./test_chesster_slack_token.js')
+        .token
 } catch (e) {
-    var test_chesster_slack_token = null;
 }
-var heltour_token = require("./test_heltour_token.js").token;
+let heltour_token = require('./test_heltour_token.js').token
 
-const UNSTABLE_BOT_ID = "C0VCCPMJ8";
-const UNSTABLE_BOT_LONEWOLF_ID = "C0XQM31SL";
+const UNSTABLE_BOT_ID = 'C0VCCPMJ8'
+const UNSTABLE_BOT_LONEWOLF_ID = 'C0XQM31SL'
 
-var config = require("./config.js");
-config['watcherBaseURL'] = "https://en.stage.lichess.org/api/stream/games-by-users"
-config['slack_tokens']['chesster'] = test_chesster_slack_token;
-config['winston']['channel'] = "#modster-logging"; 
-config['winston']['handleExceptions'] = false;
+let config = require('./config.js')
+config['watcherBaseURL'] = 'https://lichess.dev/api/stream/games-by-users'
+config['slackTokens']['chesster'] = test_chesster_slack_token
+config['winston']['channel'] = '#modster-logging'
+config['winston']['handleExceptions'] = false
 
-config["welcome"]["channel"] = "unstable_bot-lonewolf";
+config['welcome']['channel'] = 'dev-testing-lonewolf'
 
-config["heltour"]["token"] = heltour_token;
-config["heltour"]["baseEndpoint"] = "https://staging.lichess4545.com/api/";
-config["leagues"]["45+45"]["heltour"]["token"] = heltour_token;
-config["leagues"]["45+45"]["heltour"]["baseEndpoint"] = "https://staging.lichess4545.com/api/";
-config["leagues"]["lonewolf"]["heltour"]["token"] = heltour_token;
-config["leagues"]["lonewolf"]["heltour"]["baseEndpoint"] = "https://staging.lichess4545.com/api/";
+let heltour = {
+    baseEndpoint: 'http://localhost:8000/api/',
+    token: heltour_token,
+}
+let leagues = ['45+45', 'lonewolf', 'blitzbattle', 'chess960']
+config['heltour'] = heltour
+leagues.map((k) => {
+    config['leagues'][k]['heltour'] = {
+        ...heltour,
+        leagueTag: config['leagues'][k]['heltour']['leagueTag'],
+    }
+})
 
-config["leagues"]["45+45"]["scheduling"]["channel"] = "unstable_bot";
-config["leagues"]["45+45"]["results"]["channel"] = "unstable_bot";
-config["leagues"]["45+45"]["results"]["channel_id"] = UNSTABLE_BOT_ID;
-config["leagues"]["45+45"]["gamelinks"]["channel"] = "unstable_bot";
-config["leagues"]["45+45"]["gamelinks"]["channel_id"] = UNSTABLE_BOT_ID;
-config["leagues"]["45+45"]["alternate"]["channel_id"] = UNSTABLE_BOT_ID;
-config["leagues"]["lonewolf"]["scheduling"]["channel"] = "unstable_bot-lonewolf";
-config["leagues"]["lonewolf"]["results"]["channel"] = "unstable_bot-lonewolf";
-config["leagues"]["lonewolf"]["results"]["channel_id"] = UNSTABLE_BOT_LONEWOLF_ID;
-config["leagues"]["lonewolf"]["gamelinks"]["channel"] = "unstable_bot-lonewolf";
-config["leagues"]["lonewolf"]["gamelinks"]["channel_id"] = UNSTABLE_BOT_LONEWOLF_ID;
+config['leagues']['45+45']['scheduling']['channel'] = 'dev-testing'
+config['leagues']['45+45']['results']['channel'] = 'dev-testing'
+config['leagues']['45+45']['results']['channelId'] = UNSTABLE_BOT_ID
+config['leagues']['45+45']['gamelinks']['channel'] = 'dev-testing'
+config['leagues']['45+45']['gamelinks']['channelId'] = UNSTABLE_BOT_ID
+config['leagues']['45+45']['alternate']['channelId'] = UNSTABLE_BOT_ID
+config['leagues']['lonewolf']['scheduling']['channel'] = 'dev-testing-lonewolf'
+config['leagues']['lonewolf']['results']['channel'] = 'dev-testing-lonewolf'
+config['leagues']['lonewolf']['results']['channelId'] = UNSTABLE_BOT_LONEWOLF_ID
+config['leagues']['lonewolf']['gamelinks']['channel'] = 'dev-testing-lonewolf'
+config['leagues']['lonewolf']['gamelinks'][
+    'channelId'
+] = UNSTABLE_BOT_LONEWOLF_ID
 
-config["channel_map"][UNSTABLE_BOT_ID] = "45+45";
-config["channel_map"]["unstable_bot"] = "45+45";
-config["channel_map"]["unstabled_bot-lonewolf"] = "lonewolf";
-config["channel_map"][UNSTABLE_BOT_LONEWOLF_ID] = "lonewolf";
+config['channelMap'][UNSTABLE_BOT_ID] = '45+45'
+config['channelMap']['dev-testing'] = '45+45'
+config['channelMap']['dev-testing-lonewolf'] = 'lonewolf'
+config['channelMap']['dev-testing-blitz'] = 'blitz'
+config['channelMap'][UNSTABLE_BOT_LONEWOLF_ID] = 'lonewolf'
 
-config["messageForwarding"]["channel"] = "N/A";
+config['messageForwarding']['channelId'] = 'G3FJXJ0C9'
 
-module.exports = config;
+module.exports = config
