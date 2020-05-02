@@ -1,2 +1,2 @@
 #!/bin/bash
-node --max_old_space_size=768 ./src/chesster.js $1
+node --max_old_space_size=768 ./build/chesster.js $1
