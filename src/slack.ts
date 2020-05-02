@@ -544,7 +544,6 @@ export class SlackBot {
     public users: SlackEntityLookup<LeagueMember>
     public channels: SlackEntityLookup<SlackChannel>
     public mpims: SlackEntityLookup<SlackChannel>
-    public dms: SlackEntityLookup<SlackChannel>
     public rtm: RTMClient
     public web: WebClient
     public controller?: SlackBotSelf
@@ -587,14 +586,9 @@ export class SlackBot {
             'Channels',
             '#'
         )
-        this.dms = new SlackEntityLookup<SlackChannel>(
-            slackName,
-            'Channels',
-            '#'
-        )
 
         this.rtm = new RTMClient(this.token)
-        this.web = new WebClient(this.token)
+        this.web = new WebClient(this.token, { maxRequestConcurrency: 1 })
     }
     async start() {
         // Connect to Slack
@@ -720,27 +714,20 @@ export class SlackBot {
             this.channels.typePostfix,
             this.channels.idStringPrefix
         )
-        const newDMs = new SlackEntityLookup<SlackChannel>(
-            this.channels.slackName,
-            this.channels.typePostfix,
-            this.channels.idStringPrefix
-        )
         // @ https://api.slack.com/methods/conversations.list
         for await (const page of (this.web.paginate('conversations.list', {
-            types: 'public_channel,private_channel,mpim,im',
+            types: 'public_channel,private_channel,mpim',
             exclude_archived: true,
         }) as unknown) as AsyncIterable<SlackChannelListResponse>) {
             if (page.ok) {
                 page.channels.map((c) => {
                     if (c.is_channel) newChannels.add(c)
-                    if (c.is_im) newDMs.add(c)
                     else newMPIMs.add(c)
                 })
             }
         }
         this.channels = newChannels
         this.mpims = newMPIMs
-        this.dms = newDMs
     }
 
     async getChannelMemberList(
