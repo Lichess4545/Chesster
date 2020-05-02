@@ -870,7 +870,7 @@ export class SlackBot {
         message: CommandMessage
     ) {
         let allowedTypes = ['command', 'league_command']
-        let member = undefined
+        let member
         if (message.user) {
             member = this.users.getByNameOrID(message.user)
         }
