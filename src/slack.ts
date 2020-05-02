@@ -543,7 +543,6 @@ export class SlackBot {
     private token: string
     public users: SlackEntityLookup<LeagueMember>
     public channels: SlackEntityLookup<SlackChannel>
-    public mpims: SlackEntityLookup<SlackChannel>
     public rtm: RTMClient
     public web: WebClient
     public controller?: SlackBotSelf
@@ -577,11 +576,6 @@ export class SlackBot {
             '@'
         )
         this.channels = new SlackEntityLookup<SlackChannel>(
-            slackName,
-            'Channels',
-            '#'
-        )
-        this.mpims = new SlackEntityLookup<SlackChannel>(
             slackName,
             'Channels',
             '#'
@@ -716,18 +710,16 @@ export class SlackBot {
         )
         // @ https://api.slack.com/methods/conversations.list
         for await (const page of (this.web.paginate('conversations.list', {
-            types: 'public_channel,private_channel,mpim',
+            types: 'public_channel,private_channel',
             exclude_archived: true,
         }) as unknown) as AsyncIterable<SlackChannelListResponse>) {
             if (page.ok) {
                 page.channels.map((c) => {
                     if (c.is_channel) newChannels.add(c)
-                    else newMPIMs.add(c)
                 })
             }
         }
         this.channels = newChannels
-        this.mpims = newMPIMs
     }
 
     async getChannelMemberList(

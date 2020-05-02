@@ -8,7 +8,7 @@ import { SlackBot, CommandMessage } from '../slack'
 import { isDefined } from '../utils'
 
 export async function ambientPresence(bot: SlackBot, message: CommandMessage) {
-    const mpim = bot.mpims.getByNameOrID(message.channel.id)
+    /*const mpim = bot.mpims.getByNameOrID(message.channel.id)
     if (!mpim) {
         return
     }
@@ -34,6 +34,6 @@ export async function ambientPresence(bot: SlackBot, message: CommandMessage) {
         bot.config.heltour,
         sender.name,
         recips[0]
-    )
+    )*/
 }
 
