@@ -585,20 +585,7 @@ export async function updateGamelink(
     const leagueName = league.name
     const white = result.white
     const black = result.black
-    if (updatePairingResult.resultChanged && !_.isEmpty(result.result)) {
-        // TODO: Test this.
-        subscription.emitter.emit(
-            'a-game-is-over',
-            league,
-            [white.name, black.name],
-            {
-                result: updatePairingResult,
-                white,
-                black,
-                leagueName,
-            }
-        )
-    } else if (updatePairingResult.gameLinkChanged) {
+    if (updatePairingResult.gameLinkChanged) {
         // TODO: Test this.
         subscription.emitter.emit(
             'a-game-starts',
@@ -606,6 +593,19 @@ export async function updateGamelink(
             [white.name, black.name],
             {
                 result,
+                white,
+                black,
+                leagueName,
+            }
+        )
+    } else if (updatePairingResult.resultChanged && !_.isEmpty(result.result)) {
+        // TODO: Test this.
+        subscription.emitter.emit(
+            'a-game-is-over',
+            league,
+            [white.name, black.name],
+            {
+                result: updatePairingResult,
                 white,
                 black,
                 leagueName,

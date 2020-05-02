@@ -38,7 +38,7 @@ const adminSlack = new slack.SlackBot(
     false, // debug
     false, // connectToModels
     false, // refreshLeagues
-    true // logToThisSlack
+    false // logToThisSlack
 )
 
 // A helper for a very common pattern
