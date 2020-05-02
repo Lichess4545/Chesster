@@ -825,6 +825,7 @@ export class SlackBot {
                 }
             )
         }
+        options.as_user = true
         return this.web.chat.postMessage(options)
     }
 
