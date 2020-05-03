@@ -88,7 +88,9 @@ class WatcherRequest {
         })
         this.req
             .on('response', (res) => {
+                this.log.info('Connected')
                 res.on('data', (chunk) => {
+                    this.log.info('Received data')
                     try {
                         const details = lichess.GameDetailsDecoder.decodeJSON(
                             chunk.toString()
