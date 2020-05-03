@@ -563,7 +563,7 @@ export async function ambientScheduling(
             return
         }
     } else {
-        const pairings = message.league.findPairing(speaker.name)
+        const pairings = message.league.findPairing(speaker.lichess_username)
         if (pairings.length === 1) {
             const pairing = pairings[0]
             schedulingResults.white = pairing.white
