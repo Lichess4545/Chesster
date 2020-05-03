@@ -582,7 +582,7 @@ export class SlackBot {
         )
 
         this.rtm = new RTMClient(this.token)
-        this.web = new WebClient(this.token, { maxRequestConcurrency: 1 })
+        this.web = new WebClient(this.token)
     }
     async start() {
         // Connect to Slack

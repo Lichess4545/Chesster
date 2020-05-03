@@ -150,9 +150,9 @@ export function formatAGameIsScheduled(
             .clone()
             .utcOffset(member.tz_offset / 60)
         context.yourDate = targetDate.format(friendlyFormat)
-        message = `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.leagueName} has been scheduled for ${realDate}, which is ${context.yourDate} for you.`
+        message = `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.league.name} has been scheduled for ${realDate}, which is ${context.yourDate} for you.`
     } else {
-        message = `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.leagueName} has been scheduled for ${realDate}.`
+        message = `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.league.name} has been scheduled for ${realDate}.`
     }
     return message
 }
@@ -165,7 +165,7 @@ export function formatAGameStarts(
     target: string,
     context: Context
 ) {
-    return `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.leagueName} has started: ${context.result.gamelink}`
+    return `${context.white.name} vs ${context.black.name} in ${context.league.name} has started: ${context.details.game_link}`
 }
 
 // -----------------------------------------------------------------------------
@@ -176,7 +176,7 @@ export function formatAGameIsOver(
     target: string,
     context: Context
 ) {
-    return `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.leagueName} is over. The result is ${context.result.result}.`
+    return `${context.white.name} vs ${context.black.name} in ${context.league.name} is over. The result is ${context.details.result}.`
 }
 
 // -----------------------------------------------------------------------------
@@ -380,7 +380,7 @@ export function register(bot: SlackBot, eventName: string, cb: Callback) {
 
     // Handle the event when it happens
     emitter.on(eventName, async (_league, sources, context) => {
-        return getListeners(bot, _league.name, sources, eventName).then(
+        return getListeners(bot, _league, sources, eventName).then(
             (targets) => {
                 const allDeferreds: Promise<void>[] = targets.map(
                     (target) =>
@@ -420,7 +420,7 @@ export function register(bot: SlackBot, eventName: string, cb: Callback) {
 // -----------------------------------------------------------------------------
 export function getListeners(
     bot: SlackBot,
-    leagueName: string,
+    _league: league.League,
     sources: string[],
     event: string
 ): Promise<string[]> {
@@ -429,8 +429,6 @@ export function getListeners(
         // These are names of users, not users. So we have to go get the real
         // user and teams. This is somewhat wasteful - but I'm not sure whether
         // this is the right design or if we should pass in users to this point.
-        const _league = league.getLeague(bot, leagueName)
-        if (!isDefined(_league)) return reject()
         const teamNames = _(sources)
             .map((s) => _league.getTeamByPlayerName(s))
             .filter(isDefined)
@@ -440,7 +438,7 @@ export function getListeners(
         const possibleSources = _.concat(sources, teamNames)
         return db.Subscription.findAll({
             where: {
-                league: leagueName.toLowerCase(),
+                league: _league.name.toLowerCase(),
                 source: {
                     [Op.in]: possibleSources,
                 },
