@@ -10,7 +10,7 @@ import * as heltour from '../heltour'
 import * as lichess from '../lichess'
 import { SlackBot, CommandMessage, LeagueCommandMessage } from '../slack'
 import { isDefined } from '../utils'
-import { League, Pairing as LeaguePairing } from '../league'
+import { League, Pairing as LeaguePairing, ResultsEnum } from '../league'
 
 const TIMEOUT = 33
 const CHEAT = 36
@@ -582,33 +582,36 @@ export async function updateGamelink(
         result
     )
 
-    const leagueName = league.name
     const white = result.white
     const black = result.black
-    if (updatePairingResult.gameLinkChanged) {
-        // TODO: Test this.
+    if (
+        updatePairingResult.gameLinkChanged &&
+        details.result === ResultsEnum.UNKNOWN
+    ) {
         subscription.emitter.emit(
             'a-game-starts',
             league,
             [white.name, black.name],
             {
-                result,
+                league,
+                details,
                 white,
                 black,
-                leagueName,
             }
         )
-    } else if (updatePairingResult.resultChanged && !_.isEmpty(result.result)) {
-        // TODO: Test this.
+    } else if (
+        updatePairingResult.resultChanged &&
+        details.result !== ResultsEnum.UNKNOWN
+    ) {
         subscription.emitter.emit(
             'a-game-is-over',
             league,
             [white.name, black.name],
             {
-                result: updatePairingResult,
+                league,
+                details,
                 white,
                 black,
-                leagueName,
             }
         )
     }

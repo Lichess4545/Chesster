@@ -647,6 +647,7 @@ export async function ambientScheduling(
             [white.lichess_username, black.lichess_username],
             {
                 result: schedulingResults,
+                league: message.league,
                 white,
                 black,
                 leagueName,
