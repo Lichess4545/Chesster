@@ -90,7 +90,7 @@ class WatcherRequest {
             .on('response', (res) => {
                 this.log.info('Connected')
                 res.on('data', (chunk) => {
-                    let incoming = chunk.toString().trim()
+                    const incoming = chunk.toString().trim()
                     this.log.info(`Received data: [${incoming}]`)
                     try {
                         if (incoming === '') {
@@ -363,6 +363,7 @@ export default class Watcher {
             fp
                 .flatMap((l) => l._pairings, this.leagues)
                 .flatMap((p: Pairing) => [p.white, p.black])
+                .map((u) => u.toLowerCase())
                 .sort()
         )
         if (!_.isEqual(newUsernames, this.usernames)) {

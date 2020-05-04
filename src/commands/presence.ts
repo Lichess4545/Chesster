@@ -28,7 +28,7 @@ export async function ambientPresence(bot: SlackBot, message: CommandMessage) {
     if (recips.length !== 1) {
         return
     }
-    let player = bot.getSlackUserFromNameOrID(recips[0])
+    const player = bot.getSlackUserFromNameOrID(recips[0])
     if (!player) {
         return
     }

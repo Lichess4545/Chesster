@@ -309,12 +309,12 @@ export const OpeningDecoder: Decoder<Opening> = object(
 export interface Clock {
     initial: number
     increment: number
-    //totalTime: number
+    // totalTime: number
 }
 export const ClockDecoder: Decoder<Clock> = object(
     ['initial', number()],
     ['increment', number()],
-    //['totalTime', number()],
+    // ['totalTime', number()],
     (initial, increment /*, totalTime*/) => ({
         initial,
         increment /* totalTime */,
@@ -417,7 +417,7 @@ export const BaseGameDetailsDecoder: Decoder<GameDetails> = object(
     ['speed', string()],
     ['perf', string()],
     ['createdAt', number()],
-    //['lastMoveAt', number()],
+    // ['lastMoveAt', number()],
     ['players', PlayersDecoder],
     ['status', oneOf(GameStatusStringDecoder, GameStatusIntDecoder)],
     (
@@ -427,7 +427,7 @@ export const BaseGameDetailsDecoder: Decoder<GameDetails> = object(
         speed,
         perf,
         createdAt,
-        //lastMoveAt,
+        // lastMoveAt,
         players,
         status
     ) => ({
@@ -437,7 +437,7 @@ export const BaseGameDetailsDecoder: Decoder<GameDetails> = object(
         speed,
         perf,
         createdAt,
-        //lastMoveAt,
+        // lastMoveAt,
         players,
         status,
         game_link: `https://lichess.org/${id}`,
