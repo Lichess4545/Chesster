@@ -313,6 +313,7 @@ export interface ChessterConfig {
     heltour: Heltour
     storage: string
     watcherBaseURL: string
+    watcherToken: string
     slackTokens: SlackTokens
     winston: Winston
     links: Links
@@ -326,6 +327,7 @@ export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
     ['heltour', HeltourDecoder],
     ['storage', string()],
     ['watcherBaseURL', string()],
+    ['watcherToken', string()],
     ['slackTokens', SlackTokensDecoder],
     ['winston', WinstonDecoder],
     ['links', LinksDecoder],
@@ -338,6 +340,7 @@ export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
         heltour,
         storage,
         watcherBaseURL,
+        watcherToken,
         slackTokens,
         winston,
         links,
@@ -350,6 +353,7 @@ export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
         heltour,
         storage,
         watcherBaseURL,
+        watcherToken,
         slackTokens,
         winston,
         links,

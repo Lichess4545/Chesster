@@ -26,6 +26,7 @@ var config = {
     },
     storage: '',
     watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
+    watcherToken: lichess_token,
 
     slackTokens: {
         lichess4545: token,

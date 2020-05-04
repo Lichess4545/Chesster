@@ -83,6 +83,7 @@ class WatcherRequest {
             method: 'POST',
             headers: {
                 'Content-Length': Buffer.byteLength(body),
+                Authorization: `Bearer ${this.bot.config.watcherToken}`,
             },
             ...options,
         })
