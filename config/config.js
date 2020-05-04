@@ -1,5 +1,6 @@
 // NOTE: None of these files are committed and for good reason.
 //       You must provide your own.
+var lichess_token = require('./lichess_token.js').token
 var token = require('./slack_token.js').token
 var heltour_token = require('./heltour_token.js').token
 
