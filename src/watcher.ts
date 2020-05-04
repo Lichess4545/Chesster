@@ -251,7 +251,6 @@ class WatcherRequest {
                                     channel: gamelinks.channelId,
                                     attachments: [], // Needed to activate link parsing in the message
                                 })
-                            }
                             } else if (updatePairingResult.resultChanged) {
                                 this.bot.say({
                                     text: `<@${white}> ${detailsFromApi.result} <@${black}>`,
