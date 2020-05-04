@@ -8,8 +8,7 @@ import { SlackBot, CommandMessage } from '../slack'
 import { isDefined } from '../utils'
 
 export async function ambientPresence(bot: SlackBot, message: CommandMessage) {
-    /*const mpim = bot.mpims.getByNameOrID(message.channel.id)
-    if (!mpim) {
+    if (!message.channel.is_group) {
         return
     }
     const sender = bot.users.getByNameOrID(message.user)
@@ -29,11 +28,15 @@ export async function ambientPresence(bot: SlackBot, message: CommandMessage) {
     if (recips.length !== 1) {
         return
     }
+    let player = bot.getSlackUserFromNameOrID(recips[0])
+    if (!player) {
+        return
+    }
 
     return await heltour.playerContact(
         bot.config.heltour,
-        sender.name,
-        recips[0]
-    )*/
+        sender.lichess_username,
+        player.lichess_username
+    )
 }
 
