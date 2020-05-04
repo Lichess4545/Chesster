@@ -12,8 +12,6 @@ import { SlackBot, CommandMessage, LeagueCommandMessage } from '../slack'
 import { isDefined } from '../utils'
 import { League, Pairing as LeaguePairing, ResultsEnum } from '../league'
 
-const TIMEOUT = 33
-const CHEAT = 36
 const SWORDS = '\u2694'
 
 const VALID_RESULTS: Record<string, string> = {
@@ -371,16 +369,26 @@ export function validateGameDetails(
         result.valid = false
         result.variantIsIncorrect = true
         result.reason = 'the variant should be standard.'
-    } else if (_.isEqual(details.status, TIMEOUT)) {
+    } else if (_.isEqual(details.status, lichess.GameStatus.timeout)) {
         // claim victory is not allowed
         result.valid = false
         result.claimVictoryNotAllowed = true
         result.reason = 'using "Claim Victory" is not permitted. Contact a mod.'
-    } else if (_.isEqual(details.status, CHEAT)) {
+    } else if (_.isEqual(details.status, lichess.GameStatus.cheat)) {
         // Cheating is not allowed.
         result.valid = false
         result.cheatDetected = true
         result.reason = 'The game ended with a "Cheat Detected". Contact a mod.'
+    } else if (_.isEqual(details.status, lichess.GameStatus.aborted)) {
+        // Cheating is not allowed.
+        result.valid = false
+        result.reason = 'Game was aborted'
+    } else if (_.isEqual(details.status, lichess.GameStatus.nostart)) {
+        result.valid = false
+        result.reason = 'Game was never started'
+    } else if (_.isEqual(details.status, lichess.GameStatus.unknownfinish)) {
+        result.valid = false
+        result.reason = 'Game has an unknown finish'
     } else {
         // the link is too old or too new
         const extrema = scheduling.getRoundExtrema(schedulingOptions)

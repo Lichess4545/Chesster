@@ -19,6 +19,7 @@ describe('config types', function () {
         },
         storage: '',
         watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
+        watcherToken: 'asdfasdfasdfasdf',
 
         slackTokens: {
             lichess4545: 'foo',

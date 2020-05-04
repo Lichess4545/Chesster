@@ -281,13 +281,18 @@ export const PlayerDecoder: Decoder<Player> = object(
     ['rating', number()],
     (user, rating) => ({ user, rating })
 )
+export const StreamPlayerDecoder: Decoder<Player> = object(
+    ['userId', string()],
+    ['rating', number()],
+    (userId, rating) => ({ user: { id: userId, name: userId }, rating })
+)
 export interface Players {
     white: Player
     black: Player
 }
 export const PlayersDecoder: Decoder<Players> = object(
-    ['white', PlayerDecoder],
-    ['black', PlayerDecoder],
+    ['white', oneOf(PlayerDecoder, StreamPlayerDecoder)],
+    ['black', oneOf(PlayerDecoder, StreamPlayerDecoder)],
     (white, black) => ({ white, black })
 )
 export interface Opening {
@@ -304,13 +309,16 @@ export const OpeningDecoder: Decoder<Opening> = object(
 export interface Clock {
     initial: number
     increment: number
-    totalTime: number
+    // totalTime: number
 }
 export const ClockDecoder: Decoder<Clock> = object(
     ['initial', number()],
     ['increment', number()],
-    ['totalTime', number()],
-    (initial, increment, totalTime) => ({ initial, increment, totalTime })
+    // ['totalTime', number()],
+    (initial, increment /*, totalTime*/) => ({
+        initial,
+        increment /* totalTime */,
+    })
 )
 export enum GameStatus {
     created = 10,
@@ -409,7 +417,7 @@ export const BaseGameDetailsDecoder: Decoder<GameDetails> = object(
     ['speed', string()],
     ['perf', string()],
     ['createdAt', number()],
-    ['lastMoveAt', number()],
+    // ['lastMoveAt', number()],
     ['players', PlayersDecoder],
     ['status', oneOf(GameStatusStringDecoder, GameStatusIntDecoder)],
     (
@@ -419,7 +427,7 @@ export const BaseGameDetailsDecoder: Decoder<GameDetails> = object(
         speed,
         perf,
         createdAt,
-        lastMoveAt,
+        // lastMoveAt,
         players,
         status
     ) => ({
@@ -429,7 +437,7 @@ export const BaseGameDetailsDecoder: Decoder<GameDetails> = object(
         speed,
         perf,
         createdAt,
-        lastMoveAt,
+        // lastMoveAt,
         players,
         status,
         game_link: `https://lichess.org/${id}`,

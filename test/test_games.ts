@@ -185,7 +185,7 @@ describe('games', function () {
                     createdAt: 1476567724919,
                     status: lichess.GameStatus.draw,
                     result: league.ResultsEnum.DRAW,
-                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
+                    clock: { initial: 2700, increment: 45 },
                     players: {
                         white: {
                             user: { id: 'happy0', name: 'happy0' },
@@ -211,7 +211,7 @@ describe('games', function () {
                     createdAt: 1476567724919,
                     status: lichess.GameStatus.draw,
                     result: league.ResultsEnum.DRAW,
-                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
+                    clock: { initial: 2700, increment: 45 },
                     players: {
                         white: {
                             user: { id: 'happy0', name: 'happy0' },
@@ -242,7 +242,7 @@ describe('games', function () {
                     createdAt: 1476567724919,
                     status: lichess.GameStatus.draw,
                     result: league.ResultsEnum.DRAW,
-                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
+                    clock: { initial: 2700, increment: 45 },
                     players: {
                         white: {
                             user: { id: 'happy0', name: 'happy0' },
@@ -273,7 +273,7 @@ describe('games', function () {
                     createdAt: 1476567724919,
                     status: lichess.GameStatus.draw,
                     result: league.ResultsEnum.DRAW,
-                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
+                    clock: { initial: 2700, increment: 45 },
                     players: {
                         white: {
                             user: { id: 'happy0', name: 'happy0' },
@@ -335,7 +335,7 @@ describe('games', function () {
                     createdAt: 1476567724919,
                     status: lichess.GameStatus.draw,
                     result: league.ResultsEnum.DRAW,
-                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
+                    clock: { initial: 2700, increment: 45 },
                     players: {
                         white: {
                             user: { id: 'happy0', name: 'happy0' },
@@ -366,7 +366,7 @@ describe('games', function () {
                     createdAt: 1477567724919,
                     status: lichess.GameStatus.draw,
                     result: league.ResultsEnum.DRAW,
-                    clock: { initial: 2700, increment: 45, totalTime: 6000 },
+                    clock: { initial: 2700, increment: 45 },
                     players: {
                         white: {
                             user: { id: 'happy0', name: 'happy0' },

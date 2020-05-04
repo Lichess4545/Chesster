@@ -17,12 +17,12 @@ import * as games from './commands/games'
 import * as heltour from './heltour'
 import * as lichess from './lichess'
 import * as config from './config'
-import { League, Pairing } from './league'
+import { League, Pairing, ResultsEnum } from './league'
 import { LogWithPrefix } from './logging'
 import { SlackBot } from './slack'
 import { isDefined } from './utils'
 
-const WATCHER_MAX_USERNAMES = 300
+const WATCHER_MAX_USERNAMES = 900
 
 // TODO: stop using these
 const BACKOFF_TIMEOUT = 10
@@ -83,6 +83,7 @@ class WatcherRequest {
             method: 'POST',
             headers: {
                 'Content-Length': Buffer.byteLength(body),
+                Authorization: `Bearer ${this.bot.config.watcherToken}`,
             },
             ...options,
         })
@@ -90,10 +91,15 @@ class WatcherRequest {
             .on('response', (res) => {
                 this.log.info('Connected')
                 res.on('data', (chunk) => {
-                    this.log.info('Received data')
+                    const incoming = chunk.toString().trim()
+                    this.log.info(`Received data: [${incoming}]`)
                     try {
+                        if (incoming === '') {
+                            this.log.info('Received empty ping. :)')
+                            return
+                        }
                         const details = lichess.GameDetailsDecoder.decodeJSON(
-                            chunk.toString()
+                            incoming
                         )
                         this.log.info(
                             `Received game details: ${JSON.stringify(details)}`
@@ -191,7 +197,7 @@ class WatcherRequest {
             }
 
             if (result.valid) {
-                if (result.pairing.result) {
+                if (result.pairing.result !== ResultsEnum.UNKNOWN) {
                     this.log.info(
                         `Received VALID game but result already exists`
                     )
@@ -246,8 +252,7 @@ class WatcherRequest {
                                     channel: gamelinks.channelId,
                                     attachments: [], // Needed to activate link parsing in the message
                                 })
-                            }
-                            if (updatePairingResult.resultChanged) {
+                            } else if (updatePairingResult.resultChanged) {
                                 this.bot.say({
                                     text: `<@${white}> ${detailsFromApi.result} <@${black}>`,
                                     channel: results.channelId,
@@ -359,6 +364,7 @@ export default class Watcher {
             fp
                 .flatMap((l) => l._pairings, this.leagues)
                 .flatMap((p: Pairing) => [p.white, p.black])
+                .map((u) => u.toLowerCase())
                 .sort()
         )
         if (!_.isEqual(newUsernames, this.usernames)) {
