@@ -90,10 +90,15 @@ class WatcherRequest {
             .on('response', (res) => {
                 this.log.info('Connected')
                 res.on('data', (chunk) => {
-                    this.log.info('Received data')
+                    let incoming = chunk.toString().trim()
+                    this.log.info(`Received data: [${incoming}]`)
                     try {
+                        if (incoming === '') {
+                            this.log.info('Received empty ping. :)')
+                            return
+                        }
                         const details = lichess.GameDetailsDecoder.decodeJSON(
-                            chunk.toString()
+                            incoming
                         )
                         this.log.info(
                             `Received game details: ${JSON.stringify(details)}`
