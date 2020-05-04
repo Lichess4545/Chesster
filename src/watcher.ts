@@ -17,12 +17,12 @@ import * as games from './commands/games'
 import * as heltour from './heltour'
 import * as lichess from './lichess'
 import * as config from './config'
-import { League, Pairing } from './league'
+import { League, Pairing, ResultsEnum } from './league'
 import { LogWithPrefix } from './logging'
 import { SlackBot } from './slack'
 import { isDefined } from './utils'
 
-const WATCHER_MAX_USERNAMES = 300
+const WATCHER_MAX_USERNAMES = 900
 
 // TODO: stop using these
 const BACKOFF_TIMEOUT = 10
@@ -191,7 +191,7 @@ class WatcherRequest {
             }
 
             if (result.valid) {
-                if (result.pairing.result) {
+                if (result.pairing.result !== ResultsEnum.UNKNOWN) {
                     this.log.info(
                         `Received VALID game but result already exists`
                     )
@@ -247,7 +247,7 @@ class WatcherRequest {
                                     attachments: [], // Needed to activate link parsing in the message
                                 })
                             }
-                            if (updatePairingResult.resultChanged) {
+                            } else if (updatePairingResult.resultChanged) {
                                 this.bot.say({
                                     text: `<@${white}> ${detailsFromApi.result} <@${black}>`,
                                     channel: results.channelId,
