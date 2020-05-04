@@ -159,7 +159,9 @@ export function updateAvailability(
         if (targetName && commands.isText(targetName)) {
             const speaker = message.member
 
-            const speakerTeam = message.league.getTeamByPlayerName(speaker.name)
+            const speakerTeam = message.league.getTeamByPlayerName(
+                speaker.lichess_username
+            )
             if (!isDefined(speakerTeam)) {
                 bot.reply(message, `I couldn't figure your team`)
                 return
@@ -176,7 +178,7 @@ export function updateAvailability(
                 )
                 return
             }
-            const playerName = slackUser.name
+            const playerName = slackUser.lichess_username
             // get the team associated with the player
             const playerTeam = message.league.getTeamByPlayerName(playerName)
             if (!isDefined(playerTeam)) {
