@@ -18,14 +18,17 @@ function prepareRatingMessage(_player: string, rating: number) {
 }
 
 export async function playerRating(bot: SlackBot, message: CommandMessage) {
-    const player = bot.getLeagueMemberTarget(message)
+    const player = message.member
     if (!player) {
         bot.reply(message, 'I am sorry. I could not find that player.')
         return
     }
-    const rating = await lichess.getPlayerRating(player.name)
+    const rating = await lichess.getPlayerRating(player.lichess_username)
     if (rating) {
-        bot.reply(message, prepareRatingMessage(player.name, rating))
+        bot.reply(
+            message,
+            prepareRatingMessage(player.lichess_username, rating)
+        )
     } else {
         bot.reply(message, 'I am sorry. I could not find that player.')
     }

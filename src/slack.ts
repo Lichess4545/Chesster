@@ -870,7 +870,7 @@ export class SlackBot {
         message: CommandMessage
     ) {
         let allowedTypes = ['command', 'league_command']
-        let member
+        let member: LeagueMember | undefined
         if (message.user) {
             member = this.users.getByNameOrID(message.user)
         }
@@ -885,8 +885,10 @@ export class SlackBot {
                     listener.type === 'command' &&
                     allowedTypes.indexOf('command') !== -1
                 ) {
-                    _.map(listener.middleware, (m) => m(this, message))
-                    listener.callback(this, message)
+                    _.map(listener.middleware, (m) =>
+                        m(this, { member, ...message })
+                    )
+                    listener.callback(this, { member, ...message })
                 } else if (
                     listener.type === 'league_command' &&
                     allowedTypes.indexOf('league_command') !== -1
