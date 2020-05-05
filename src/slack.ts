@@ -941,13 +941,17 @@ export class SlackBot {
                     channel,
                 }
 
+                const isBotMessage =
+                    event.subtype === 'bot_message' || event.bot_id
                 const isDirectMessage =
-                    channel && channel.is_im && !channel.is_group
+                    channel &&
+                    channel.is_im &&
+                    !channel.is_group &&
+                    !isBotMessage
                 const isDirectMention =
                     chessterMessage.text.indexOf(
                         `<@${this.controller?.id}>`
-                    ) !== -1
-                const isBotMessage = event.subtype === 'bot_message'
+                    ) !== -1 && !isBotMessage
                 const isAmbient = !(
                     isDirectMention ||
                     isDirectMessage ||
