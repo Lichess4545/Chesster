@@ -562,6 +562,9 @@ export async function ambientScheduling(
             return
         }
     } else {
+        if (!bot.hasSingleUser(message)) {
+            return
+        }
         const pairings = message.league.findPairing(speaker.lichess_username)
         if (pairings.length === 1) {
             const pairing = pairings[0]

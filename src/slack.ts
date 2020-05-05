@@ -479,6 +479,8 @@ export function requiresLeague(
 export class SlackEntityLookup<SlackEntity extends SlackEntityWithNameAndId> {
     public byName: Record<string, SlackEntity> = {}
     public byId: Record<string, SlackEntity> = {}
+    public nameDuplicates: Record<string, SlackEntity[]> = {}
+    public idDuplicates: Record<string, SlackEntity[]> = {}
     private log: LogWithPrefix
 
     constructor(
@@ -494,15 +496,53 @@ export class SlackEntityLookup<SlackEntity extends SlackEntityWithNameAndId> {
         this.byId = {}
     }
 
+    _addByIdWithDuplicate(id: string, entity: SlackEntity) {
+        if (isDefined(this.byId[id])) {
+            this.idDuplicates[id].push(entity)
+        } else {
+            this.idDuplicates[id] = [entity]
+        }
+        this.byId[id] = entity
+    }
+
+    _addByNameWithDuplicate(key: string, entity: SlackEntity) {
+        if (isDefined(this.byName[key])) {
+            this.nameDuplicates[key].push(entity)
+        } else {
+            this.nameDuplicates[key] = [entity]
+        }
+        this.byName[key] = entity
+    }
+
+    idDuplicateCount(id: string) {
+        id = id.toUpperCase()
+        const l = this.idDuplicates[id]
+        if (isDefined(l)) {
+            return l.length
+        }
+        return 0
+    }
+
+    getIdDuplicates(id: string): SlackEntity[] {
+        id = id.toUpperCase()
+        const l = this.idDuplicates[id]
+        if (isDefined(l)) {
+            return l
+        }
+        return []
+    }
+
     add(entity: SlackEntity) {
-        this.byId[entity.id.toUpperCase()] = entity
+        this._addByIdWithDuplicate(entity.id.toUpperCase(), entity)
         if (entity.name === undefined) {
             this.log.warn(`${entity.id} does not have a name`)
             return
         }
-        this.byName[entity.name.toLowerCase()] = entity
+        const slackName = entity.name.toLowerCase()
+        this._addByNameWithDuplicate(slackName, entity)
         if (entity.lichess_username) {
-            this.byName[entity.lichess_username.toLowerCase()] = entity
+            const lichessId = entity.lichess_username.toLowerCase()
+            this._addByNameWithDuplicate(lichessId, entity)
         }
     }
 
@@ -693,6 +733,16 @@ export class SlackBot {
                 })
             }
         }
+        _.forOwn(slackIDByLichessUsername, (slackID, lichessUsername) => {
+            const slackUser = newUsers.getByNameOrID(slackID)
+            if (!slackUser) {
+                return
+            }
+            newUsers.add({
+                ...slackUser,
+                lichess_username: lichessUsername.toLowerCase(),
+            })
+        })
         this.log.info('Updating Users')
         this.users = newUsers
     }
@@ -784,6 +834,27 @@ export class SlackBot {
                 resolve()
             })
         )
+    }
+
+    async hasSingleUser(message: CommandMessage) {
+        const usernames = Array.from(
+            new Set<string>(
+                this.users
+                    .getIdDuplicates(message.user)
+                    .map((u) => u.lichess_username)
+            )
+        )
+        const c = usernames.length
+        if (c === 1) {
+            return true
+        } else {
+            await this.reply(
+                message,
+                `This command requires you to have a single lichess account associated with your slack account. you have ${c}:
+${usernames.join(', ')}`
+            )
+            return false
+        }
     }
 
     async startPrivateConversation(
