@@ -19,7 +19,7 @@ function prepareRatingMessage(_player: string, rating: number) {
 
 export async function playerRating(bot: SlackBot, message: CommandMessage) {
     let player: LeagueMember | undefined
-    if (message.matches.length == 2 && message.matches[1]) {
+    if (message.matches.length === 2 && message.matches[1]) {
         player = bot.getSlackUserFromNameOrID(message.matches[1])
     } else {
         player = message.member
