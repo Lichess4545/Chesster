@@ -516,10 +516,9 @@ export async function ambientScheduling(
 ) {
     const league = message.league
     const speaker = message.member
-
     const schedulingOptions = league.config.scheduling
-
     const channel = message.channel
+
     if (!_.isEqual(channel.name, schedulingOptions.channel)) {
         return
     }
@@ -532,7 +531,7 @@ export async function ambientScheduling(
         schedulingResults = parseScheduling(message.text, schedulingOptions)
     } catch (e) {
         if (!(e instanceof ScheduleParsingError)) {
-            throw e // const others bubble up
+            throw e // let others bubble up
         } else {
             winston.debug(
                 `[SCHEDULING] Received an exception: ${JSON.stringify(e)}`
@@ -570,6 +569,10 @@ export async function ambientScheduling(
             schedulingResults.black = pairing.black
             white = bot.users.getByNameOrID(pairing.white)
             black = bot.users.getByNameOrID(pairing.black)
+        } else {
+            winston.warn(
+                `[SCHEDULING] Couldn't find pairing for ${speaker.lichess_username} found ${pairings.length} pairings`
+            )
         }
     }
     if (!white || !black) {
