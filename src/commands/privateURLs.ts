@@ -31,11 +31,11 @@ export function availability(bot: SlackBot, message: LeagueCommandMessage) {
 }
 
 // -----------------------------------------------------------------------------
-export async function linkAccounts(
-    bot: SlackBot,
-    message: LeagueCommandMessage
-) {
+export async function linkAccounts(bot: SlackBot, message: CommandMessage) {
     const slackUser = message.member
+    if (!isDefined(slackUser)) {
+        return
+    }
     const result = await heltour.linkSlack(
         bot.config.heltour,
         message.user,

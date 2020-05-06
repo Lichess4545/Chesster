@@ -150,7 +150,7 @@ chesster.hears({
     callback: privateURLs.availability,
 })
 chesster.hears({
-    type: 'league_command',
+    type: 'command',
     patterns: [/link/],
     messageTypes: ['direct_message'],
     callback: privateURLs.linkAccounts,
