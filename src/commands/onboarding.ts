@@ -3,19 +3,24 @@
 // -----------------------------------------------------------------------------
 import _ from 'lodash'
 import * as heltour from '../heltour'
-import { SlackBot, MemberJoinedChannel, CommandMessage } from '../slack'
+import {
+    SlackBot,
+    MemberJoinedChannel,
+    CommandMessage,
+    SlackChannel,
+} from '../slack'
 
 async function welcomeMessageImpl(
     bot: SlackBot,
-    channel: string,
+    channel: SlackChannel,
     user: string
 ) {
-    if (!_.isEqual(bot.config.welcome.channel, channel)) {
+    if (!_.isEqual(bot.config.welcome.channel, channel.name)) {
         return
     }
     const result = await heltour.linkSlack(bot.config.heltour, user, '')
     bot.say({
-        channel,
+        channel: channel.id,
         text:
             'Everyone, please welcome the newest member of the ' +
             `Lichess 45+45 League, <@${user}>!`,
@@ -52,8 +57,12 @@ export async function welcomeMessage(
     event: MemberJoinedChannel | CommandMessage
 ) {
     if (isMemberJoinedChannelEvent(event)) {
-        return welcomeMessageImpl(bot, event.channel, event.user)
+        const channel = await bot.getChannel(event.channel)
+        if (!channel) {
+            return
+        }
+        return welcomeMessageImpl(bot, channel, event.user)
     } else {
-        return welcomeMessageImpl(bot, event.channel.name, event.user)
+        return welcomeMessageImpl(bot, event.channel, event.user)
     }
 }
