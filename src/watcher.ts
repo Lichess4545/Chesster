@@ -408,7 +408,8 @@ export default class Watcher {
                 const req = new WatcherRequest(
                     this.bot,
                     watcherUsernames,
-                    this.leagues
+                    this.leagues,
+                    Math.floor(this.refreshesCount / this.leagues.length)
                 )
                 req.watch()
                 this.watcherRequests.push(req)
