@@ -348,7 +348,7 @@ export default class Watcher {
                     `${l.name} refreshed with ${l._pairings.length} pairings`
                 )
                 this.refreshesCount++
-                if (this.refreshesCount % this.leagues.length == 0) {
+                if (this.refreshesCount % this.leagues.length === 0) {
                     // Only restart when we refresh the last league
                     this.watch()
                 }
