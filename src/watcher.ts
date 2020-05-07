@@ -44,6 +44,7 @@ class WatcherRequest {
     req: undefined | ClientRequest = undefined
     private started?: moment.Moment
     private log: LogWithPrefix = new LogWithPrefix('WatcherRequest')
+    public fullyQuit = false
 
     constructor(
         public bot: SlackBot,
@@ -132,7 +133,7 @@ class WatcherRequest {
                 res.on('end', () => {
                     this.log.info('WatcherRequest response ended')
                     this.req = undefined
-                    this.watch()
+                    if (!this.fullyQuit) this.watch()
                 })
                 hasResponse = true
             })
@@ -142,7 +143,7 @@ class WatcherRequest {
                 // So let the above restart the watcher
                 if (!hasResponse) {
                     this.req = undefined
-                    this.watch()
+                    if (!this.fullyQuit) this.watch()
                 }
             })
         // Setting 0 for initialDelay (2nd param) will leave the value
@@ -347,7 +348,8 @@ export default class Watcher {
                     `${l.name} refreshed with ${l._pairings.length} pairings`
                 )
                 this.refreshesCount++
-                if (this.refreshesCount >= this.leagues.length) {
+                if (this.refreshesCount % this.leagues.length == 0) {
+                    // Only restart when we refresh the last league
                     this.watch()
                 }
             })
@@ -355,7 +357,10 @@ export default class Watcher {
     }
 
     clear() {
-        this.watcherRequests.map((r) => r.stop())
+        this.watcherRequests.map((r) => {
+            r.fullyQuit = true
+            r.stop()
+        })
         this.watcherRequests = []
     }
 
