@@ -44,13 +44,16 @@ class WatcherRequest {
     req: undefined | ClientRequest = undefined
     private started?: moment.Moment
     private log: LogWithPrefix = new LogWithPrefix('WatcherRequest')
-    public fullyQuit = false
+    private fullyQuit = false
 
     constructor(
         public bot: SlackBot,
         public usernames: string[],
-        public leagues: League[]
-    ) {}
+        public leagues: League[],
+        public id: number
+    ) {
+        this.log = new LogWithPrefix(`WatcherRequest: ${this.id}`)
+    }
 
     watch() {
         if (this.stop()) {
@@ -133,7 +136,14 @@ class WatcherRequest {
                 res.on('end', () => {
                     this.log.info('WatcherRequest response ended')
                     this.req = undefined
-                    if (!this.fullyQuit) this.watch()
+                    if (!this.fullyQuit) {
+                        this.log.info(`Restarting watcher`)
+                        this.watch()
+                    } else {
+                        this.log.info(
+                            `Not restarting as I've been asked to go down`
+                        )
+                    }
                 })
                 hasResponse = true
             })
@@ -143,7 +153,14 @@ class WatcherRequest {
                 // So let the above restart the watcher
                 if (!hasResponse) {
                     this.req = undefined
-                    if (!this.fullyQuit) this.watch()
+                    if (!this.fullyQuit) {
+                        this.log.info(`Restarting watcher`)
+                        this.watch()
+                    } else {
+                        this.log.info(
+                            `Not restarting as I've been asked to go down`
+                        )
+                    }
                 }
             })
         // Setting 0 for initialDelay (2nd param) will leave the value
@@ -161,6 +178,12 @@ class WatcherRequest {
             return true
         }
         return false
+    }
+
+    quit(): void {
+        this.log.info('Asked to quit, going down')
+        this.fullyQuit = true
+        this.stop()
     }
 
     // -------------------------------------------------------------------------
@@ -335,7 +358,7 @@ export default class Watcher {
     usernames: string[] = []
     private refreshesCount = 0
 
-    private log: LogWithPrefix = new LogWithPrefix('WatcherRequest')
+    private log: LogWithPrefix = new LogWithPrefix('Watcher')
 
     constructor(public bot: SlackBot, public leagues: League[]) {
         this.watcherRequests = []
@@ -357,10 +380,8 @@ export default class Watcher {
     }
 
     clear() {
-        this.watcherRequests.map((r) => {
-            r.fullyQuit = true
-            r.stop()
-        })
+        this.log.info('Clearing the watcher requests')
+        this.watcherRequests.map((r) => r.quit())
         this.watcherRequests = []
     }
 
@@ -387,7 +408,8 @@ export default class Watcher {
                 const req = new WatcherRequest(
                     this.bot,
                     watcherUsernames,
-                    this.leagues
+                    this.leagues,
+                    Math.floor(this.refreshesCount / this.leagues.length)
                 )
                 req.watch()
                 this.watcherRequests.push(req)
