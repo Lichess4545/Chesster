@@ -23,7 +23,7 @@ export interface Player {
     boardNumber?: number
 }
 export enum ResultsEnum {
-    UNKNOWN = '-',
+    UNKNOWN = '',
     WHITE_WIN = '1-0',
     BLACK_WIN = '0-1',
     DRAW = '1/2-1/2',
