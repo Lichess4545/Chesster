@@ -23,6 +23,7 @@ import {
     union,
     dict,
     equal,
+    succeed,
 } from 'type-safe-json-decoder'
 
 // -----------------------------------------------------------------------------
@@ -129,9 +130,19 @@ export const PairingDecoder: Decoder<Pairing> = oneOf(
     IndividualPairingDecoder
 )
 
-export const PairingsDecoder: Decoder<Pairing[]> = at(
+export const NullPairingsDecoder: Decoder<Pairing[]> = andThen(
+    at(['pairings'], equal(null)),
+    () => succeed([])
+)
+
+export const HasPairingsDecoder: Decoder<Pairing[]> = at(
     ['pairings'],
     array(PairingDecoder)
+)
+
+export const PairingsDecoder: Decoder<Pairing[]> = oneOf(
+    HasPairingsDecoder,
+    NullPairingsDecoder
 )
 
 export type Pairing = IndividualPairing | TeamPairing
@@ -340,7 +351,7 @@ async function heltourApiCall<T extends object>(
 ): Promise<T> {
     const response = await http.fetchURL(request)
     try {
-        const result = union(ErrorDecoder, decoder).decodeJSON(response.body)
+        const result = union(decoder, ErrorDecoder).decodeJSON(response.body)
         if (!isValid<T>(result)) {
             throw new HeltourError(result.error)
         }

@@ -105,6 +105,12 @@ describe('Heltour parsing Tests', () => {
         testPairing1(pairings[0])
         testPairing2(pairings[1])
     })
+    it('PairingsDecoder should decode a empty pairing list when null pairings received.', async function () {
+        let pairings = PairingsDecoder.decodeJSON(
+            `{"pairings": null, "error": "no_matching_rounds"}`
+        )
+        expect(pairings).to.be.empty
+    })
 
     let player1Json = `
         {
