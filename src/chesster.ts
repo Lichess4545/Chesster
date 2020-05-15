@@ -60,42 +60,42 @@ directRequiresLeague(
     leagueInfo.directResponse((l) => l.formatCaptainGuidelinesResponse())
 )
 directRequiresLeague(
-    [/captains/, /captain list/],
+    [/captains/i, /captain list/i],
     leagueInfo.dmResponse((l) => l.formatCaptainsResponse())
 )
 directRequiresLeague(
-    [/faq/],
+    [/faq/i],
     leagueInfo.directResponse((l) => l.formatFAQResponse())
 )
 directRequiresLeague(
-    [/notify mods/, /summon mods/],
+    [/notify mods/i, /summon mods/i],
     leagueInfo.directResponse((l) => l.formatSummonModsResponse())
 )
 directRequiresLeague(
-    [/^mods/, /^moderators/],
+    [/^mods/i, /^moderators/i],
     leagueInfo.directResponse((l) => l.formatModsResponse())
 )
 directRequiresLeague(
-    [/pairings/],
+    [/pairings/i],
     leagueInfo.directResponse((l) => l.formatPairingsLinkResponse())
 )
 directRequiresLeague(
-    [/rules/, /regulations/],
+    [/rules/i, /regulations/i],
     leagueInfo.directResponse((l) => l.formatRulesLinkResponse())
 )
 directRequiresLeague(
-    [/standings/],
+    [/standings/i],
     leagueInfo.directResponse((l) => l.formatStandingsLinkResponse())
 )
 directRequiresLeague(
-    [/welcome$/, /starter guide/, /player handbook/],
+    [/welcome$/i, /starter guide/i, /player handbook/i],
     leagueInfo.directResponse((l) => l.formatStarterGuideResponse())
 )
 
 // availability
 chesster.hears({
     type: 'league_command',
-    patterns: [/available/, /unavailable/],
+    patterns: [/available/i, /unavailable/i],
     messageTypes: ['direct_message', 'direct_mention'],
     callback: availability.updateAvailability,
 })
@@ -103,7 +103,7 @@ chesster.hears({
 // alternate assignment
 chesster.hears({
     type: 'league_command',
-    patterns: [/^assign/],
+    patterns: [/^assign/i],
     messageTypes: ['ambient', 'direct_mention'],
     callback: availability.assignAlternate,
 })
@@ -111,7 +111,7 @@ chesster.hears({
 // alternate unassignment
 chesster.hears({
     type: 'league_command',
-    patterns: [/^unassign/],
+    patterns: [/^unassign/i],
     messageTypes: ['ambient', 'direct_mention'],
     callback: availability.unassignAlternate,
 })
@@ -119,13 +119,13 @@ chesster.hears({
 // Message Forwarding
 adminSlack.hears({
     type: 'command',
-    patterns: [/^forward to/],
+    patterns: [/^forward to/i],
     messageTypes: ['direct_mention', 'bot_message'],
     callback: messageForwarding.forwardMessage(chesster, adminSlack),
 })
 adminSlack.hears({
     type: 'command',
-    patterns: [/^refresh/],
+    patterns: [/^refresh/i],
     messageTypes: ['direct_mention', 'bot_message'],
     callback: messageForwarding.refreshLeague(chesster, adminSlack),
 })
@@ -133,25 +133,25 @@ adminSlack.hears({
 // private urls
 chesster.hears({
     type: 'league_command',
-    patterns: [/get nomination url/, /nomination/],
+    patterns: [/get nomination url/i, /nomination/i],
     messageTypes: ['direct_message'],
     callback: privateURLs.nomination,
 })
 chesster.hears({
     type: 'league_command',
-    patterns: [/get notification url/, /notification/],
+    patterns: [/get notification url/i, /notification/i],
     messageTypes: ['direct_message'],
     callback: privateURLs.notification,
 })
 chesster.hears({
     type: 'league_command',
-    patterns: [/availability/, /edit availability/, /availability edit/],
+    patterns: [/availability/i, /edit availability/i, /availability edit/i],
     messageTypes: ['direct_message'],
     callback: privateURLs.availability,
 })
 chesster.hears({
     type: 'command',
-    patterns: [/link/],
+    patterns: [/link/i],
     messageTypes: ['direct_message'],
     callback: privateURLs.linkAccounts,
 })
@@ -202,7 +202,7 @@ function prepareCommandsMessage() {
 
 chesster.hears({
     type: 'command',
-    patterns: [/^commands/, /^command list/, /^help$/],
+    patterns: [/^commands/i, /^command list/i, /^help$/i],
     messageTypes: ['direct_mention', 'direct_message'],
     callback: async (bot: slack.SlackBot, message: slack.CommandMessage) => {
         const convo = await bot.startPrivateConversation([message.user])
@@ -223,7 +223,7 @@ chesster.on({
 chesster.hears({
     type: 'command',
     middleware: [slack.requiresModerator],
-    patterns: [/^welcome me/],
+    patterns: [/^welcome me/i],
     messageTypes: ['direct_mention'],
     callback: onboarding.welcomeMessage,
 })
@@ -232,7 +232,7 @@ chesster.hears({
 
 chesster.hears({
     type: 'command',
-    patterns: [/source/],
+    patterns: [/source/i],
     messageTypes: ['direct_message', 'direct_mention'],
     callback: (bot, message) =>
         bot.reply(message, chesster.config.links.source),
@@ -269,21 +269,21 @@ chesster.hears({
 })
 chesster.hears({
     type: 'command',
-    patterns: [/^subscription help$/, /^unsubscribe$/],
+    patterns: [/^subscription help$/i, /^unsubscribe$/i],
     messageTypes: ['direct_message'],
     callback: subscription.helpHandler,
 })
 
 chesster.hears({
     type: 'command',
-    patterns: [/^subscription list$/],
+    patterns: [/^subscription list$/i],
     messageTypes: ['direct_message'],
     callback: subscription.listHandler,
 })
 
 chesster.hears({
     type: 'command',
-    patterns: [/^subscribe teams$/],
+    patterns: [/^subscribe teams$/i],
     messageTypes: ['direct_message'],
     callback: subscription.subscribeTeams,
 })
@@ -292,14 +292,14 @@ chesster.hears({
 
 chesster.hears({
     type: 'command',
-    patterns: [/^tell/],
+    patterns: [/^tell/i],
     messageTypes: ['direct_message'],
     callback: subscription.tellMeWhenHandler,
 })
 
 chesster.hears({
     type: 'command',
-    patterns: [/^subscription remove (\d+)$/],
+    patterns: [/^subscription remove (\d+)$/i],
     messageTypes: ['direct_message'],
     callback: subscription.removeHandler,
 })
