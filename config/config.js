@@ -83,7 +83,7 @@ var config = {
                 warningMessage:
                     "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
                 lateMessage:
-                    "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 12:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
+                    "Hi! Sorry, that is not an acceptable time. It looks like if you start at that time, you won't be done by the end of the round! If you are scheduling for today, I sometimes get confused - try using the date and time format 'yyyy-mm-dd hhmm'. Otherwise, please try and find a better time, and if you cannot, please contact the moderators.",
                 format: 'MM/DD @ HH:mm',
                 channel: 'team-scheduling',
             },
