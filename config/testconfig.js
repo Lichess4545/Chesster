@@ -1,12 +1,12 @@
 // NOTE: Neither of these files are committed and for good reason.
 //       You must provide your own.
-let test_chesster_slack_token = "";
+let test_chesster_slack_token = "FAKE-YOU-NEED-A-REAL-ONE";
 try {
     test_chesster_slack_token = require('./test_chesster_slack_token.js')
         .token
 } catch (e) {
 }
-let test_heltour_token = "";
+let test_heltour_token = "FAKE-YOU-NEED-A-REAL-ONE";
 try {
     heltour_token = require('./test_heltour_token.js').token
 } catch (e) {
