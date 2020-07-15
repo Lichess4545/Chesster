@@ -6,7 +6,11 @@ try {
         .token
 } catch (e) {
 }
-let heltour_token = require('./test_heltour_token.js').token
+let test_heltour_token = "";
+try {
+    heltour_token = require('./test_heltour_token.js').token
+} catch (e) {
+}
 
 const UNSTABLE_BOT_ID = 'C0VCCPMJ8'
 const UNSTABLE_BOT_LONEWOLF_ID = 'C0XQM31SL'
@@ -21,7 +25,7 @@ config['welcome']['channel'] = 'dev-testing-lonewolf'
 
 let heltour = {
     baseEndpoint: 'http://localhost:8000/api/',
-    token: heltour_token,
+    token: test_heltour_token,
 }
 let leagues = ['45+45', 'lonewolf', 'blitzbattle', 'chess960']
 config['heltour'] = heltour
