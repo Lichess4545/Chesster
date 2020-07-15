@@ -1,8 +1,14 @@
 // NOTE: None of these files are committed and for good reason.
 //       You must provide your own.
-var lichess_token = require('./lichess_token.js').token
-var token = require('./slack_token.js').token
-var heltour_token = require('./heltour_token.js').token
+var lichess_token = ""
+var token = ""
+var heltour_token = ""
+try {
+    lichess_token = require('./lichess_token.js').token
+    token = require('./slack_token.js').token
+    heltour_token = require('./heltour_token.js').token
+} catch (e) {
+}
 
 try {
     var chesster_slack_token = require('./chesster_slack_token.js').token
