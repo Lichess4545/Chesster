@@ -1,5 +1,11 @@
 // NOTE: Neither of these files are committed and for good reason.
 //       You must provide your own.
+let test_slack_token = "FAKE-YOU-NEED-A-REAL-ONE";
+try {
+    test_slack_token = require('./test_slack_token.js')
+        .token
+} catch (e) {
+}
 let test_chesster_slack_token = "FAKE-YOU-NEED-A-REAL-ONE";
 try {
     test_chesster_slack_token = require('./test_chesster_slack_token.js')
@@ -17,6 +23,7 @@ const UNSTABLE_BOT_LONEWOLF_ID = 'C0XQM31SL'
 
 let config = require('./config.js')
 config['watcherBaseURL'] = 'https://lichess.dev/api/stream/games-by-users'
+config['slackTokens']['lichess4545'] = test_slack_token
 config['slackTokens']['chesster'] = test_chesster_slack_token
 config['winston']['channel'] = '#modster-logging'
 config['winston']['handleExceptions'] = false
