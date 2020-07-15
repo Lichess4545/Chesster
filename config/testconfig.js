@@ -1,6 +1,5 @@
 // NOTE: Neither of these files are committed and for good reason.
 //       You must provide your own.
-let token = require('./slack_token.js').token
 let test_chesster_slack_token = "";
 try {
     test_chesster_slack_token = require('./test_chesster_slack_token.js')
