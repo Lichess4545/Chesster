@@ -3,6 +3,5 @@ node_js: "12"
 install: yarn install --dev
 script:
   - yarn run build
-  - istanbul cover node_modules/mocha/bin/_mocha -- --exit
+  - yarn run test
   - yarn run lint
-  - yarn run send-coverage
