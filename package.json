@@ -58,7 +58,7 @@
   "scripts": {
     "build": "tsc",
     "start": "tsc && node build/chesster.js ../config/testconfig",
-    "test": "nyc --reporter=lcov mocha",
+    "test": "nyc --reporter=json mocha",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "migrate": "tsc && node_modules/.bin/sequelize db:migrate --config"
   },

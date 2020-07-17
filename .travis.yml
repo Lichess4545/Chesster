@@ -10,4 +10,5 @@ script:
   - yarn run lint
   - yarn run test
 after_script:
-  - ./cc-test-reporter after-build --exit-code coverage/lcov.info
+  - ./cc-test-reporter upload-coverage -i coverage/coverage-final.json
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
