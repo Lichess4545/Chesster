@@ -1,6 +1,6 @@
 {
   "name": "chesster",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Bot for Lichess4545 Slack group",
   "main": "chesster.js",
   "directories": {
@@ -58,8 +58,7 @@
   "scripts": {
     "build": "tsc",
     "start": "tsc && node build/chesster.js ../config/testconfig",
-    "test": "nyc mocha",
-    "send-coverage": "tsc && node_modules/.bin/codeclimate-test-reporter < coverage/lcov.info; exit 0",
+    "test": "nyc --reporter=lcov mocha",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "migrate": "tsc && node_modules/.bin/sequelize db:migrate --config"
   },

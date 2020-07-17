@@ -22,3 +22,4 @@ db/database.sqlite
 npm-debug.log
 .vscode
 build
+.nyc_output

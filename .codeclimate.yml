@@ -15,7 +15,7 @@ engines:
 ratings:
   paths:
   - "**.inc"
-  - "**.js"
+  - "**.ts"
   - "**.jsx"
   - "**.module"
   - "**.php"
@@ -23,3 +23,7 @@ ratings:
   - "**.rb"
 exclude_paths:
 - test/
+plugins:
+  tslint:
+    enabled: true
+    config: tslint.json
