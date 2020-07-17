@@ -1,6 +1,6 @@
 {
   "name": "chesster",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Bot for Lichess4545 Slack group",
   "main": "chesster.js",
   "directories": {
