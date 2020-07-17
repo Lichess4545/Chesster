@@ -1,4 +1,4 @@
-# CHESSTER [![Build Status](https://travis-ci.org/endrawes0/Chesster.svg?branch=master)](https://travis-ci.org/endrawes0/Chesster) [![Test Coverage](https://codeclimate.com/github/endrawes0/Chesster/badges/coverage.svg)](https://codeclimate.com/github/endrawes0/Chesster/coverage) 
+# CHESSTER [![Build Status](https://travis-ci.org/Lichess4545/Chesster.svg?branch=master)](https://travis-ci.org/Lichess4545/Chesster) [![Test Coverage](https://codeclimate.com/github/Lichess4545/Chesster/badges/coverage.svg)](https://codeclimate.com/github/Lichess4545/Chesster/coverage) 
 ## Introduction
 This bot was created to help moderate the Lichess45+45 league.
 
