@@ -1,30 +1,10 @@
 // NOTE: Neither of these files are committed and for good reason.
 //       You must provide your own.
-let test_slack_token = "FAKE-YOU-NEED-A-REAL-ONE";
-try {
-    test_slack_token = require('./test_slack_token.js')
-        .token
-} catch (e) {
-}
-let test_chesster_slack_token = "FAKE-YOU-NEED-A-REAL-ONE";
-try {
-    test_chesster_slack_token = require('./test_chesster_slack_token.js')
-        .token
-} catch (e) {
-}
-let test_heltour_token = "FAKE-YOU-NEED-A-REAL-ONE";
-try {
-    heltour_token = require('./test_heltour_token.js').token
-} catch (e) {
-}
-
-const UNSTABLE_BOT_ID = 'C0VCCPMJ8'
-const UNSTABLE_BOT_LONEWOLF_ID = 'C0XQM31SL'
+const UNSTABLE_BOT_ID = 'C016G6T5QTW'
+const UNSTABLE_BOT_LONEWOLF_ID = 'C015V92UJUX'
 
 let config = require('./config.js')
 config['watcherBaseURL'] = 'https://lichess.dev/api/stream/games-by-users'
-config['slackTokens']['lichess4545'] = test_slack_token
-config['slackTokens']['chesster'] = test_chesster_slack_token
 config['winston']['channel'] = '#modster-logging'
 config['winston']['handleExceptions'] = false
 
@@ -32,7 +12,7 @@ config['welcome']['channel'] = 'dev-testing-lonewolf'
 
 let heltour = {
     baseEndpoint: 'http://localhost:8000/api/',
-    token: test_heltour_token,
+    token: config['heltour']['token']
 }
 let leagues = ['45+45', 'lonewolf', 'blitzbattle', 'chess960']
 config['heltour'] = heltour
