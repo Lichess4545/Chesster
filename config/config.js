@@ -2,10 +2,11 @@
 //       You must provide your own.
 const dotenv = require('dotenv')
 dotenv.config()
-let _4545_SLACK_TOKEN = process.env.CHESSTER_4545_SLACK_TOKEN
-let CHESSTER_SLACK_TOKEN = process.env.CHESSTER_CHESSTER_SLACK_TOKEN
-let HELTOUR_TOKEN = process.env.CHESSTER_HELTOUR_TOKEN
-let LICHESS_TOKEN = process.env.CHESSTER_LICHESS_TOKEN
+let _4545_SLACK_TOKEN = process.env.CHESSTER_4545_SLACK_TOKEN || "It won't work without this token"
+let CHESSTER_SLACK_TOKEN = process.env.CHESSTER_CHESSTER_SLACK_TOKEN || "It won't work without this token"
+let HELTOUR_TOKEN = process.env.CHESSTER_HELTOUR_TOKEN || "It won't work without this token"
+let LICHESS_TOKEN = process.env.CHESSTER_LICHESS_TOKEN || "It won't work without this token"
+
 
 var config = {
     // Unfortunately this all has to be at the top level due to sequelize-cli
