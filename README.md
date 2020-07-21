@@ -4,31 +4,25 @@ This bot was created to help moderate the Lichess45+45 league.
 
 It has a simple interface that integrates our Slack team, with Lichess and Website HTTP API.
 
-If you have any issues, reach out to me here on github or on Slack.
-
-Cheers.
-Andrew W. Haddad
-
 ## Installation
 0. Clone this repo
 1. Install vagrant
 2. Use the included Vagrantfile to bring up the environment - `vagrant up`, `vagrant ssh`, and `cd chesster`
 3. Install the yarn modules - `yarn install --dev`
-4. Generate a bot token in your Slack Team's Services and Customization.
-5. `cp config/slack_token.js.example config/slack_token.js`
-6. update config/slack_token.js with your token 
-7. `cp config/heltour_token.js.example config/test_heltour_token.js`
-8. `cp config/heltour_token.js.example config/heltour_token.js`
-9. update config/config/test_heltour_token.js with a token from the heltour site
-10. Migrate databases: `yarn run migrate config/testconfig.js`
-11. Install your bot's token in the start script, start_chesster.
-12. Start the bot. `./bin/start ../config/config.js`
+4. Generate a classic bot token in your Slack Team's Services and Customization.
+5. Generate a heltour token from Heltour's Administration interfaces.
+6. Add both to your `.env`:
+    ```
+    CHESSTER_4545_SLACK_TOKEN="xoxb-<token>"
+    CHESSTER_CHESSTER_SLACK_TOKEN="xoxb-<token>"
+    CHESSTER_HELTOUR_TOKEN="<token>"
+    CHESSTER_LICHESS_TOKEN="<token>"
+    ```
+7. Migrate databases: `yarn run migrate config/testconfig.js`
+8. Install your bot's token in the start script, start_chesster.
+9. Start the bot. `yarn run start`
 
 ## Useful Commands
-
-Run this to test the bot against the staging site:
-
-- `./bin/start ../config/testconfig.js`
 
 Run these before submitting a PR:
 

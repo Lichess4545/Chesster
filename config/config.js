@@ -1,20 +1,11 @@
 // NOTE: None of these files are committed and for good reason.
 //       You must provide your own.
-var lichess_token = ""
-var token = ""
-var heltour_token = ""
-try {
-    lichess_token = require('./lichess_token.js').token
-    token = require('./slack_token.js').token
-    heltour_token = require('./heltour_token.js').token
-} catch (e) {
-}
-
-try {
-    var chesster_slack_token = require('./chesster_slack_token.js').token
-} catch (e) {
-    var chesster_slack_token = null
-}
+const dotenv = require('dotenv')
+dotenv.config()
+let _4545_SLACK_TOKEN = process.env.CHESSTER_4545_SLACK_TOKEN
+let CHESSTER_SLACK_TOKEN = process.env.CHESSTER_CHESSTER_SLACK_TOKEN
+let HELTOUR_TOKEN = process.env.CHESSTER_HELTOUR_TOKEN
+let LICHESS_TOKEN = process.env.CHESSTER_LICHESS_TOKEN
 
 var config = {
     // Unfortunately this all has to be at the top level due to sequelize-cli
@@ -33,11 +24,11 @@ var config = {
     },
     storage: '',
     watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
-    watcherToken: lichess_token,
+    watcherToken: LICHESS_TOKEN,
 
     slackTokens: {
-        lichess4545: token,
-        chesster: chesster_slack_token,
+        lichess4545: _4545_SLACK_TOKEN,
+        chesster: CHESSTER_SLACK_TOKEN,
     },
     winston: {
         domain: 'chesster',
@@ -50,7 +41,7 @@ var config = {
         source: 'https://github.com/endrawes0/Chesster',
     },
     heltour: {
-        token: heltour_token,
+        token: HELTOUR_TOKEN,
         baseEndpoint: 'https://www.lichess4545.com/api/',
     },
     welcome: {
@@ -61,7 +52,7 @@ var config = {
             name: '45+45',
             alsoKnownAs: ['4545', 'Team', '45'],
             heltour: {
-                token: heltour_token,
+                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'team4545',
             },
@@ -119,7 +110,7 @@ var config = {
             alsoKnownAs: ['lonewolf', '3030', '30', 'lw', 'lonewolf', 'wolf'],
             alternate: undefined,
             heltour: {
-                token: heltour_token,
+                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'lonewolf',
             },
@@ -173,7 +164,7 @@ var config = {
             alsoKnownAs: ['blitz', '32'],
             alternate: undefined,
             heltour: {
-                token: heltour_token,
+                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'blitzbattle',
             },
@@ -227,7 +218,7 @@ var config = {
             alsoKnownAs: ['960', '1515'],
             alternate: undefined,
             heltour: {
-                token: heltour_token,
+                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'chess960',
             },
