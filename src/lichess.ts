@@ -374,7 +374,7 @@ export function gameResult(
     status: GameStatus,
     winner?: GameWinner
 ): ResultsEnum {
-    if (status === GameStatus.draw) {
+    if (status === GameStatus.draw || status === GameStatus.stalemate) {
         return ResultsEnum.DRAW
     }
     if (!isDefined(winner)) {
