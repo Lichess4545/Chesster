@@ -40,15 +40,7 @@ module.exports = {
                 updatedAt: {
                     type: Sequelize.DATE, allowNull: true
                 }
-            }),
-            queryInterface.addIndex(
-                'Subscriptions',
-                ['requester', 'source', 'event', 'target', 'league'],
-                {
-                    indexName: 'eventUnique',
-                    indicesType: 'UNIQUE'
-                }
-            )
+            })
         ]);
     },
 
@@ -61,11 +53,7 @@ module.exports = {
             return queryInterface.dropTable('users');
         */
         return Q.all([
-            queryInterface.dropTable('Subscriptions'),
-            queryInterface.removeIndex(
-                'Subscriptions',
-                ['requester', 'source', 'event', 'target']
-            )
+            queryInterface.dropTable('Subscriptions')
         ]);
     }
 };

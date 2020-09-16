@@ -10,18 +10,12 @@ let LICHESS_TOKEN = process.env.CHESSTER_LICHESS_TOKEN || "It won't work without
 
 var config = {
     // Unfortunately this all has to be at the top level due to sequelize-cli
-    database: {
-        name: 'chesster',
+    development: {
+        database: 'chesster',
         username: 'chesster',
-        password: 'asdfasdf',
+        password: 'scrappy pulpit gourde hinders',
         host: 'localhost',
         dialect: 'postgres',
-        logging: false,
-        pool: {
-            max: 5,
-            min: 0,
-            idle: 10000,
-        },
     },
     storage: '',
     watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
