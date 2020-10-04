@@ -10,10 +10,11 @@ let LICHESS_TOKEN = process.env.CHESSTER_LICHESS_TOKEN || "It won't work without
 
 var config = {
     // Unfortunately this all has to be at the top level due to sequelize-cli
+    // TODO: this should be a URL and should be from process.env long term
     database: {
         name: 'chesster',
         username: 'chesster',
-        password: 'asdfasdf',
+        password: 'scrappy pulpit gourde hinders',
         host: 'localhost',
         dialect: 'postgres',
         logging: false,
