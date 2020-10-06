@@ -57,11 +57,11 @@
     "typescript": "^3.8.3"
   },
   "scripts": {
-    "build": "tsc",
-    "start": "tsc && node build/chesster.js ../config/testconfig",
-    "test": "nyc --reporter=lcov mocha",
-    "lint": "tslint -c tslint.json 'src/**/*.ts'",
-    "migrate": "tsc && sequelize db:migrate --config config/testconfig.js"
+    "build": "node_modules/typescript/bin/tsc",
+    "start": "node_modules/typescript/bin/tsc && node build/chesster.js ../config/testconfig",
+    "test": "node node_modules/nyc/bin/nyc.js --reporter=lcov mocha",
+    "lint": "node_modules/tslint/bin/tslint -c tslint.json 'src/**/*.ts'",
+    "migrate": "node_modules/typescript/bin/tsc && node_modules/sequelize-cli/lib/sequelize db:migrate --config config/testconfig.js"
   },
   "nyc": {
     "include": [
