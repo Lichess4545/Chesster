@@ -400,9 +400,9 @@ function schedulingReplyTooCloseToCutoff(
     bot.reply(
         message,
         ':heavy_exclamation_mark: @' +
-            white.name +
+            white.id +
             ' @' +
-            black.name +
+            black.id +
             ' ' +
             schedulingOptions.warningMessage
     )
