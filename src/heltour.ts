@@ -4,7 +4,7 @@
 import _ from 'lodash'
 import winston from 'winston'
 import moment from 'moment'
-import { parse } from 'url'
+import {parse} from 'url'
 import * as http from './http'
 import {
     Heltour as Config,
@@ -34,7 +34,7 @@ export interface Error {
 }
 export const ErrorDecoder: Decoder<Error> = object(
     ['error', string()],
-    (error) => ({ error })
+    (error) => ({error})
 )
 export function isValid<T extends object>(obj: T | Error): obj is T {
     return !obj.hasOwnProperty('error')
@@ -65,14 +65,16 @@ export interface IndividualPairing {
     datetime?: moment.Moment
 }
 
+const ratingOrDefault = (rating: null | number): number => rating === null ? 1500 : rating;
+
 export const IndividualPairingDecoder: Decoder<IndividualPairing> = object(
     ['league', string()],
     ['season', string()],
     ['round', number()],
     ['white', string()],
-    ['white_rating', number()],
+    ['white_rating', oneOf(number(), equal(null))],
     ['black', string()],
-    ['black_rating', number()],
+    ['black_rating', oneOf(number(), equal(null))],
     ['game_link', string()],
     ['result', string()],
     ['datetime', oneOf(string(), equal(null))],
@@ -92,9 +94,9 @@ export const IndividualPairingDecoder: Decoder<IndividualPairing> = object(
         season,
         round,
         white,
-        whiteRating,
+        whiteRating: ratingOrDefault(whiteRating),
         black,
-        blackRating,
+        blackRating: ratingOrDefault(blackRating),
         gameLink,
         result,
         datetime: datetime ? moment.utc(datetime) : undefined,
@@ -202,7 +204,7 @@ export interface Player {
 export const PlayerDecoder: Decoder<Player> = object(
     ['username', string()],
     ['rating', number()],
-    (username, rating) => ({ username, rating })
+    (username, rating) => ({username, rating})
 )
 export interface TeamPlayer {
     username: string
@@ -244,7 +246,7 @@ export interface BoardAlternates {
 export const BoardAlternatesDecoder: Decoder<BoardAlternates> = object(
     ['board_number', number()],
     ['usernames', array(string())],
-    (boardNumber, usernames) => ({ boardNumber, usernames })
+    (boardNumber, usernames) => ({boardNumber, usernames})
 )
 export interface IndividualLeagueRoster {
     league: string
@@ -308,7 +310,7 @@ export const SlackLinkDecoder: Decoder<SlackLink> = object(
     ['url', string()],
     ['already_linked', array(string())],
     ['expires', string()],
-    (url, alreadyLinked, expires) => ({ url, alreadyLinked, expires })
+    (url, alreadyLinked, expires) => ({url, alreadyLinked, expires})
 )
 
 // -----------------------------------------------------------------------------
@@ -319,7 +321,7 @@ export interface UpdateSucceeded {
 }
 export const UpdateSucceededDecoder: Decoder<UpdateSucceeded> = object(
     ['updated', number()],
-    (updated) => ({ updated })
+    (updated) => ({updated})
 )
 
 // -----------------------------------------------------------------------------
@@ -379,7 +381,7 @@ export async function findPairing(
     leagueTag?: string
 ) {
     const request = heltourRequest(heltourConfig, 'find_pairing')
-    request.parameters = { white, black }
+    request.parameters = {white, black}
     if (!_.isNil(leagueTag)) {
         request.parameters.league = leagueTag
     }
@@ -487,7 +489,7 @@ export async function linkSlack(
     displayName: string
 ) {
     const request = heltourRequest(heltourConfig, 'link_slack')
-    request.parameters = { user_id: userId, display_name: displayName }
+    request.parameters = {user_id: userId, display_name: displayName}
     return heltourApiCall(request, SlackLinkDecoder)
 }
 
@@ -559,7 +561,7 @@ export async function playerContact(
 ) {
     const request = heltourRequest(heltourConfig, 'player_contact')
     request.method = 'POST'
-    request.bodyParameters = { sender, recip }
+    request.bodyParameters = {sender, recip}
     return heltourApiCall(request, UpdateSucceededDecoder)
 }
 
