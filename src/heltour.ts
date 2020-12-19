@@ -203,8 +203,8 @@ export interface Player {
 }
 export const PlayerDecoder: Decoder<Player> = object(
     ['username', string()],
-    ['rating', number()],
-    (username, rating) => ({username, rating})
+    ['rating', oneOf(number(), equal(null))],
+    (username, rating) => ({username, rating: ratingOrDefault(rating)})
 )
 export interface TeamPlayer {
     username: string
