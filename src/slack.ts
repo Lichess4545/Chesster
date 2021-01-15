@@ -1067,6 +1067,7 @@ ${usernames.join(', ')}`
                         error
                     )}`
                 )
+                this.log.error(`Stack: ${new Error().stack}`);
             }
         })
     }

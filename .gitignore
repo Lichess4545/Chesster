@@ -23,3 +23,4 @@ npm-debug.log
 .vscode
 build
 .nyc_output
+.yarnrc
