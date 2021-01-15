@@ -59,7 +59,7 @@
   "scripts": {
     "build": "node_modules/typescript/bin/tsc",
     "start": "node_modules/typescript/bin/tsc && node build/chesster.js ../config/testconfig",
-    "test": "node node_modules/nyc/bin/nyc.js --reporter=lcov mocha",
+    "test": "node node_modules/nyc/bin/nyc.js --reporter=lcov node_modules/mocha/bin/mocha",
     "lint": "node_modules/tslint/bin/tslint -c tslint.json 'src/**/*.ts'",
     "migrate": "node_modules/typescript/bin/tsc && node_modules/sequelize-cli/lib/sequelize db:migrate --config config/testconfig.js"
   },

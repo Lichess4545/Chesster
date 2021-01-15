@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { expect } from 'chai'
+import {expect} from 'chai'
 import {
     IndividualPairingDecoder,
     PairingDecoder,
@@ -64,6 +64,202 @@ describe('Heltour parsing Tests', () => {
       "result": "0-1",
       "datetime": "2020-03-29T20:13:59Z"
     }`
+    let buggyPairingJson = `{
+        "pairings": [
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "fruend",
+                "white_rating": 1289,
+                "black": "GaliciaD",
+                "black_rating": 1481,
+                "game_link": "https://en.lichess.org/Rl8YrMR5",
+                "result": "1-0",
+                "datetime": "2020-12-16T19:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "Tranzoo",
+                "white_rating": 1482,
+                "black": "DonPauleone",
+                "black_rating": 1232,
+                "game_link": "https://en.lichess.org/Z7ILFs0l",
+                "result": "1-0",
+                "datetime": "2020-12-17T17:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "JeremyIsFishing",
+                "white_rating": 1498,
+                "black": "momor",
+                "black_rating": 1278,
+                "game_link": "",
+                "result": "",
+                "datetime": "2020-12-18T19:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "mmgoo",
+                "white_rating": 1524,
+                "black": "mynameismund",
+                "black_rating": 1384,
+                "game_link": "https://en.lichess.org/oSgYPTmz",
+                "result": "1-0",
+                "datetime": "2020-12-18T20:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "Vegemite_Fighter",
+                "white_rating": 1382,
+                "black": "PsychoVGC",
+                "black_rating": 1565,
+                "game_link": "https://en.lichess.org/K15IkyRg",
+                "result": "1/2-1/2",
+                "datetime": "2020-12-18T09:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "Lupo_Jones",
+                "white_rating": 1432,
+                "black": "Sesquipedalism",
+                "black_rating": 1693,
+                "game_link": "https://en.lichess.org/iZdokdvS",
+                "result": "0-1",
+                "datetime": "2020-12-15T22:05:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "Ferchosalgado",
+                "white_rating": null,
+                "black": "glbert",
+                "black_rating": 1511,
+                "game_link": "",
+                "result": "",
+                "datetime": null
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "WightUnderscore",
+                "white_rating": 1390,
+                "black": "Bole1981",
+                "black_rating": 1769,
+                "game_link": "",
+                "result": "",
+                "datetime": "2020-12-19T16:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "pulsar512b",
+                "white_rating": 1472,
+                "black": "SycoraxCirce",
+                "black_rating": 1809,
+                "game_link": "",
+                "result": "1X-0F",
+                "datetime": "2020-12-18T21:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "arian13862007",
+                "white_rating": 1886,
+                "black": "sgis",
+                "black_rating": 1392,
+                "game_link": "https://en.lichess.org/vReFMZuV",
+                "result": "1-0",
+                "datetime": "2020-12-18T09:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "MoistvonLipwig",
+                "white_rating": 1811,
+                "black": "LostEarthworm",
+                "black_rating": 1683,
+                "game_link": "https://en.lichess.org/zbDeSNP1",
+                "result": "1-0",
+                "datetime": "2020-12-16T19:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "lenguyenthanh",
+                "white_rating": 1820,
+                "black": "lion88",
+                "black_rating": 1704,
+                "game_link": "https://en.lichess.org/Hl68kPOa",
+                "result": "1-0",
+                "datetime": "2020-12-18T16:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "AACtrl",
+                "white_rating": 1657,
+                "black": "Scrooge",
+                "black_rating": 1882,
+                "game_link": "https://en.lichess.org/K9pZvXnM",
+                "result": "0-1",
+                "datetime": "2020-12-16T15:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "MoiRon",
+                "white_rating": 1685,
+                "black": "eie24",
+                "black_rating": 1939,
+                "game_link": "https://en.lichess.org/isCrTBTm",
+                "result": "0-1",
+                "datetime": "2020-12-17T20:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "CoachJohn",
+                "white_rating": 1983,
+                "black": "Narf64",
+                "black_rating": 1717,
+                "game_link": "https://en.lichess.org/fZh83oQ5",
+                "result": "1-0",
+                "datetime": "2020-12-16T19:00:00Z"
+            },
+            {
+                "league": "chess960",
+                "season": "14",
+                "round": 2,
+                "white": "Mixalaki2705",
+                "white_rating": 1779,
+                "black": "Silkthewanderer",
+                "black_rating": 1991,
+                "game_link": "",
+                "result": "0F-1X",
+                "datetime": "2020-12-20T21:00:00Z"
+            }
+        ]}
+    `
     let testPairing1 = (p: Pairing) => {
         expect(p.round).to.equal(7)
         expect(p.league).to.equal('chess960')
@@ -156,5 +352,9 @@ describe('Heltour parsing Tests', () => {
         expect(roster.season).to.equal('10')
         testPlayer1(roster.players[0])
         testPlayer2(roster.players[1])
+    })
+    it('PairingsDecoder should decode a pairings list.', async function () {
+        let pairings = PairingsDecoder.decodeJSON(buggyPairingJson)
+        expect(pairings.length).to.equal(16)
     })
 })
