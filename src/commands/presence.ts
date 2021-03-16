@@ -8,7 +8,7 @@ import { SlackBot, CommandMessage } from '../slack'
 import { isDefined } from '../utils'
 
 export async function ambientPresence(bot: SlackBot, message: CommandMessage) {
-    if (!message.channel.is_group) {
+    if (!message.channel.is_mpim) {
         return
     }
     const sender = bot.users.getByNameOrID(message.user)
@@ -39,4 +39,3 @@ export async function ambientPresence(bot: SlackBot, message: CommandMessage) {
         player.lichess_username
     )
 }
-
