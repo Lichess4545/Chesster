@@ -213,6 +213,21 @@ chesster.hears({
     },
 })
 
+// Channel pings
+
+chesster.hears({
+    type: 'league_command',
+    patterns: [/^ping channel$/i],
+    messageTypes: ['direct_mention'],
+    callback: async (bot: slack.SlackBot, message: slack.LeagueCommandMessage) => {
+        if (message.isModerator) {
+            bot.reply(message, "<!channel>")
+        } else {
+            bot.reply(message, "Sorry, you do not have permission to ping this channel.")
+        }
+    },
+})
+
 // welcome
 
 chesster.on({
