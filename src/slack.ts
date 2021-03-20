@@ -972,7 +972,7 @@ ${usernames.join(', ')}`
                             ...message,
                             league: _league,
                             member,
-                            isModerator: _league.isModerator(message.user),
+                            isModerator: _league.isModerator(member.lichess_username),
                         }
                         listener.callback(this, leagueCommandMessage)
                     } else {
