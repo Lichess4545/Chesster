@@ -1,17 +1,5 @@
 ---
-engines:
-  duplication:
-    enabled: true
-    config:
-      languages:
-      - ruby
-      - javascript
-      - python
-      - php
-  eslint:
-    enabled: true
-  fixme:
-    enabled: true
+version: 2
 ratings:
   paths:
   - "**.inc"
