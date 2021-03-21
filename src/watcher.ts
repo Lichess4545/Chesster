@@ -78,7 +78,7 @@ class WatcherRequest {
             return
         }
         const body = this.usernames.join(',')
-        this.log.info(
+        this.log.debug(
             `Watching ${this.bot.config.watcherBaseURL} with ${body} users`
         )
         const options = url.parse(this.bot.config.watcherBaseURL)
@@ -93,10 +93,10 @@ class WatcherRequest {
         })
         this.req
             .on('response', (res) => {
-                this.log.info('Connected')
+                this.log.debug('Connected')
                 res.on('data', (chunk) => {
                     const incoming = chunk.toString().trim()
-                    this.log.info(`Received data: [${incoming}]`)
+                    this.log.debug(`Received data: [${incoming}]`)
                     try {
                         if (incoming === '') {
                             this.log.info('Received empty ping. :)')
@@ -353,10 +353,16 @@ class WatcherRequest {
     }
 }
 
+type RefreshInfo = {
+    length: number
+    name: string
+}
+
 export default class Watcher {
     watcherRequests: WatcherRequest[]
     usernames: string[] = []
     private refreshesCount = 0
+    private leaguesRefreshed: RefreshInfo[] = []
 
     private log: LogWithPrefix = new LogWithPrefix('Watcher')
 
@@ -367,11 +373,23 @@ export default class Watcher {
         // Whenever any of the leagues refresh, potentially restart watcher requests
         this.leagues.map((l) =>
             l.onRefreshPairings(() => {
-                this.log.info(
-                    `${l.name} refreshed with ${l._pairings.length} pairings`
-                )
+                this.leaguesRefreshed.push({
+                    length: l._pairings.length,
+                    name: l.name,
+                })
                 this.refreshesCount++
                 if (this.refreshesCount % this.leagues.length === 0) {
+                    const leagues = this.leaguesRefreshed
+                        .map((i) => i.name)
+                        .join(', ')
+                    const totalPairings = this.leaguesRefreshed.reduce(
+                        (total, current) => total + current.length,
+                        0
+                    )
+                    this.log.info(
+                        `Refreshed leagues ${leagues} with ${totalPairings} pairings`
+                    )
+                    this.leaguesRefreshed = []
                     // Only restart when we refresh the last league
                     this.watch()
                 }
@@ -380,7 +398,7 @@ export default class Watcher {
     }
 
     clear() {
-        this.log.info('Clearing the watcher requests')
+        this.log.debug('Clearing the watcher requests')
         this.watcherRequests.map((r) => r.quit())
         this.watcherRequests = []
     }
@@ -394,10 +412,8 @@ export default class Watcher {
                 .sort()
         )
         if (!_.isEqual(newUsernames, this.usernames)) {
-            this.log.info(`Restarting because usernames have changed`)
             this.clear()
             this.usernames = newUsernames
-            this.log.info(`Watching with ${this.usernames.length} names`)
             let i = 0
             while (i < this.usernames.length) {
                 const watcherUsernames = _.slice(
@@ -416,7 +432,7 @@ export default class Watcher {
                 i += WATCHER_MAX_USERNAMES
             }
             this.log.info(
-                `Watching with ${this.watcherRequests.length} requests`
+                `Watching ${this.usernames.length} names with ${this.watcherRequests.length} requests`
             )
         }
     }
