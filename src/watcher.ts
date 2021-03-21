@@ -380,7 +380,7 @@ export default class Watcher {
                 })
                 this.refreshesCount++
                 if (this.refreshesCount % this.leagues.length === 0) {
-                    const leagues = this.leaguesRefreshed
+                    const leagueNames = this.leaguesRefreshed
                         .map((i) => i.name)
                         .join(', ')
                     const totalPairings = this.leaguesRefreshed.reduce(
@@ -388,7 +388,7 @@ export default class Watcher {
                         0
                     )
                     this.log.info(
-                        `Refreshed leagues ${leagues} with ${totalPairings} pairings`
+                        `Refreshed leagues ${leagueNames} with ${totalPairings} pairings`
                     )
                     this.leaguesRefreshed = []
                     // Only restart when we refresh the last league
