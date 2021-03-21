@@ -23,7 +23,6 @@ import { isDefined } from './utils'
 
 const WATCHER_MAX_USERNAMES = 900
 
-// Trigger another build. :(
 // TODO: stop using these
 const BACKOFF_TIMEOUT = 10
 // const CREATED = 10;
