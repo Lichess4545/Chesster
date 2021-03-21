@@ -45,6 +45,7 @@ class WatcherRequest {
     private started?: moment.Moment
     private log: LogWithPrefix = new LogWithPrefix('WatcherRequest')
     private fullyQuit = false
+    needsRestart: boolean = false
 
     constructor(
         public bot: SlackBot,
@@ -74,7 +75,7 @@ class WatcherRequest {
                     this.started.unix() - lastStarted.unix()
                 }s`
             )
-            this.usernames = []
+            this.needsRestart = true
             return
         }
         const body = this.usernames.join(',')
@@ -411,7 +412,16 @@ export default class Watcher {
                 .map((u) => u.toLowerCase())
                 .sort()
         )
-        if (!_.isEqual(newUsernames, this.usernames)) {
+        // See if any of our requests are down due to a bad request.
+        const forceRestart = this.watcherRequests.reduce(
+            (v, n) => v || n.needsRestart,
+            false
+        )
+        if (!_.isEqual(newUsernames, this.usernames) || forceRestart) {
+            // Check to see if we were restarted due to a bad request.
+            if (forceRestart) {
+                this.log.info('Restart forced.')
+            }
             this.clear()
             this.usernames = newUsernames
             let i = 0
