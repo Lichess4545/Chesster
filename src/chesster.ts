@@ -216,13 +216,10 @@ chesster.hears({
 // Channel pings
 
 chesster.hears({
-    type: 'league_command',
+    type: 'command',
     patterns: [/^ping channel$/i],
     messageTypes: ['direct_mention'],
-    callback: async (
-        bot: slack.SlackBot,
-        message: slack.LeagueCommandMessage
-    ) => {
+    callback: async (bot: slack.SlackBot, message: slack.CommandMessage) => {
         if (message.isModerator || message.isPingModerator) {
             bot.reply(message, '<!channel>')
         } else {
