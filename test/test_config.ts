@@ -299,6 +299,7 @@ describe('config types', function () {
         messageForwarding: {
             channelId: 'G3D6N2HNF',
         },
+        pingMods: {},
     }
     describe('config parsing', () => {
         it('Test full config decoder', () => {
