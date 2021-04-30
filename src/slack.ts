@@ -204,6 +204,7 @@ export interface ChessterMessage {
     isModerator?: boolean
     ts: string
     attachments: SlackAttachment[]
+    isPingModerator: boolean
 }
 
 export interface CommandMessage extends ChessterMessage {
@@ -214,7 +215,6 @@ export interface LeagueCommandMessage extends ChessterMessage {
     member: LeagueMember
     league: league.League
     isModerator: boolean
-    isPingModerator: boolean
     matches: RegExpMatchArray
 }
 
@@ -950,6 +950,10 @@ ${usernames.join(', ')}`
         if (!_league || !member) {
             allowedTypes = ['command']
         }
+        message.isPingModerator =
+            message.channel.id in this.config.pingMods &&
+            !!member &&
+            this.config.pingMods[message.channel.id].includes(member.id)
 
         try {
             try {
@@ -969,11 +973,6 @@ ${usernames.join(', ')}`
                         // Typescript should have been able know that they are set appropriately
                         // here.
                         _.map(listener.middleware, (m) => m(this, message))
-                        const isPingModerator =
-                            message.channel.id in this.config.pingMods &&
-                            this.config.pingMods[message.channel.id].includes(
-                                member.id
-                            )
                         const leagueCommandMessage: LeagueCommandMessage = {
                             ...message,
                             league: _league,
@@ -981,7 +980,6 @@ ${usernames.join(', ')}`
                             isModerator: _league.isModerator(
                                 member.lichess_username
                             ),
-                            isPingModerator,
                         }
                         listener.callback(this, leagueCommandMessage)
                     } else {
@@ -1021,6 +1019,7 @@ ${usernames.join(', ')}`
                     ...event,
                     type: 'message',
                     channel,
+                    isPingModerator: false,
                 }
 
                 const isBotMessage =
