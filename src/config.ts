@@ -270,7 +270,7 @@ export const MessageForwardingDecoder: Decoder<MessageForwarding> = object(
     (channelId) => ({ channelId })
 )
 
-export type ChannelModMap = Record<string, Array<string>>
+export type ChannelModMap = Record<string, string[]>
 export const ChannelModMapDecoder: Decoder<ChannelModMap> = dict(
     array(string())
 )
