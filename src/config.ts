@@ -269,6 +269,12 @@ export const MessageForwardingDecoder: Decoder<MessageForwarding> = object(
     ['channelId', string()],
     (channelId) => ({ channelId })
 )
+
+export type ChannelModMap = Record<string, Array<string>>
+export const ChannelModMapDecoder: Decoder<ChannelModMap> = dict(
+    array(string())
+)
+
 export interface Pool {
     max: number
     min: number
@@ -320,6 +326,7 @@ export interface ChessterConfig {
     leagues: Record<string, League>
     channelMap: ChannelMap
     messageForwarding: MessageForwarding
+    pingMods: ChannelModMap
     welcome: Welcome
 }
 export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
@@ -334,6 +341,7 @@ export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
     ['leagues', dict(LeagueDecoder)],
     ['channelMap', ChannelMapDecoder],
     ['messageForwarding', MessageForwardingDecoder],
+    ['pingMods', ChannelModMapDecoder],
     ['welcome', WelcomeDecoder],
     (
         database,
@@ -347,6 +355,7 @@ export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
         leagues,
         channelMap,
         messageForwarding,
+        pingMods,
         welcome
     ) => ({
         database,
@@ -360,6 +369,7 @@ export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
         leagues,
         channelMap,
         messageForwarding,
+        pingMods,
         welcome,
     })
 )

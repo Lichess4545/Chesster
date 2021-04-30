@@ -14,7 +14,7 @@ var config = {
     database: {
         name: 'chesster',
         username: 'chesster',
-        password: 'scrappy pulpit gourde hinders',
+        password: 'scrappypulpitgourdehinders',
         host: 'localhost',
         dialect: 'postgres',
         logging: false,
@@ -232,8 +232,8 @@ var config = {
                 channel: 'chess960games',
                 channelId: 'CAG3R6HL6',
                 clock: {
-                    initial: 15,
-                    increment: 15,
+                    initial: 20,
+                    increment: 20,
                 },
                 rated: true,
                 variant: 'chess960',
@@ -289,5 +289,8 @@ var config = {
     messageForwarding: {
         channelId: 'G3D6N2HNF',
     },
+    pingMods: {
+        "C0VCCPMJ8": ["U0J2J60F8"],
+    }
 }
 module.exports = config

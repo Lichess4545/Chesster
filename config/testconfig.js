@@ -44,5 +44,10 @@ config['channelMap']['dev-testing-blitz'] = 'blitz'
 config['channelMap'][UNSTABLE_BOT_LONEWOLF_ID] = 'lonewolf'
 
 config['messageForwarding']['channelId'] = 'G3FJXJ0C9'
+config['pingMods'] = {
+    "C016G6T5QTW": [ // #dev-testing
+        "U0164C6FXLK" // @lakinwecker
+    ],
+}
 
 module.exports = config

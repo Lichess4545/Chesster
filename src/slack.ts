@@ -214,6 +214,7 @@ export interface LeagueCommandMessage extends ChessterMessage {
     member: LeagueMember
     league: league.League
     isModerator: boolean
+    isPingModerator: boolean
     matches: RegExpMatchArray
 }
 
@@ -968,11 +969,19 @@ ${usernames.join(', ')}`
                         // Typescript should have been able know that they are set appropriately
                         // here.
                         _.map(listener.middleware, (m) => m(this, message))
+                        const isPingModerator =
+                            message.channel.id in this.config.pingMods &&
+                            this.config.pingMods[message.channel.id].includes(
+                                member.id
+                            )
                         const leagueCommandMessage: LeagueCommandMessage = {
                             ...message,
                             league: _league,
                             member,
-                            isModerator: _league.isModerator(member.lichess_username),
+                            isModerator: _league.isModerator(
+                                member.lichess_username
+                            ),
+                            isPingModerator,
                         }
                         listener.callback(this, leagueCommandMessage)
                     } else {
