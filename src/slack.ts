@@ -678,9 +678,10 @@ export class SlackBot {
 
         this.startOnListener()
 
-        // refresh your user and channel list every 2 minutes
+        // refresh your user and channel list every 10 minutes.
+        // used to be every 2 minutes but we started to hit rate limits.
         // would be nice if this was push model, not poll but oh well.
-        await this.refresh(120 * SECONDS)
+        await this.refresh(600 * SECONDS)
 
         if (this.logToThisSlack) {
             // setup logging
