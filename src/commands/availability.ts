@@ -71,11 +71,12 @@ function replyMisunderstood(
     bot: SlackBot,
     message: CommandMessage,
     command: string,
-    syntax: string
+    syntax: string,
+    syntaxHints?: string
 ) {
     bot.reply(message, `Sorry, I did not understand your ${command}`)
     bot.reply(message, 'Please use the following syntax:')
-    bot.reply(message, `\`${syntax}\``)
+    bot.reply(message, `\`${syntax}\`${syntaxHints ? '\n' + syntaxHints : ''}`)
 }
 
 function replyMisunderstoodAvailability(
@@ -98,7 +99,8 @@ function replyMisunderstoodAlternateAssignment(
         bot,
         message,
         'alternate assignment',
-        'assign <player> to board <board-number> during round <round-number> on <team-name>'
+        'assign <player> to board <board-number> during round <round-number> on <team-name>',
+        'If you are the team captain, you can use my-team in place of <team-name>'
     )
 }
 
@@ -110,7 +112,8 @@ function replyMisunderstoodAlternateUnassignment(
         bot,
         message,
         'alternate unassignment',
-        'unassign alternate for board <board-number> during round <round-number> on <team-name>'
+        'unassign alternate for board <board-number> during round <round-number> on <team-name>',
+        'If you are the team captain, you can use my-team in place of <team-name>'
     )
 }
 
@@ -184,7 +187,7 @@ export function updateAvailability(
             if (!isDefined(playerTeam)) {
                 bot.reply(
                     message,
-                    `I couldn't figure the team for the payer you specified.`
+                    `I couldn't figure the team for the player you specified.`
                 )
                 return
             }
@@ -248,7 +251,8 @@ export function updateAvailability(
     }
 }
 
-/* assign <player> to board <board-number> during round <round-number> on <team-name>*/
+/* assign <player> to board <board-number> during round <round-number> on <team-name> */
+/* can also use my-team */
 export function assignAlternate(bot: SlackBot, message: LeagueCommandMessage) {
     const alternateOptions = message.league.config.alternate
     if (
@@ -282,14 +286,14 @@ export function assignAlternate(bot: SlackBot, message: LeagueCommandMessage) {
 
         const teamNameVar = parameters.teamName
         if (!commands.isText(teamNameVar)) {
-            bot.reply(message, 'Round number is incorrect')
+            bot.reply(message, 'Team name is incorrect')
             return
         }
         const teamName = teamNameVar.value
 
         const playerNameVar = parameters.playerName
         if (!commands.isText(playerNameVar)) {
-            bot.reply(message, 'Round number is incorrect')
+            bot.reply(message, 'Player name is incorrect')
             return
         }
         let playerName = playerNameVar.value
@@ -317,7 +321,7 @@ export function assignAlternate(bot: SlackBot, message: LeagueCommandMessage) {
 
         const boardNumberVar = parameters.boardNumber
         if (!commands.isNumber(boardNumberVar)) {
-            bot.reply(message, 'Round number is incorrect')
+            bot.reply(message, 'Board number is incorrect')
             return
         }
         const boardNumber = boardNumberVar.value
@@ -328,7 +332,7 @@ export function assignAlternate(bot: SlackBot, message: LeagueCommandMessage) {
         }
         const roundNumber = roundNumberVar.value
 
-        const team = message.league.getTeam(teamName)
+        const team = _.isEqual(teamName, 'my-team') ? speakerTeam : message.league.getTeam(teamName)
         if (!team) {
             replyUnrecognizedTeam(bot, message, teamName)
             return
@@ -361,7 +365,7 @@ export function assignAlternate(bot: SlackBot, message: LeagueCommandMessage) {
             .then(() => {
                 bot.reply(
                     message,
-                    `*${playerName}* has been assigned to *board ${boardNumber}* for *${teamName}* during *round ${roundNumber}*`
+                    `*${playerName}* has been assigned to *board ${boardNumber}* for *${team.name}* during *round ${roundNumber}*`
                 )
             })
             .catch((error) => {
@@ -398,6 +402,7 @@ export function assignAlternate(bot: SlackBot, message: LeagueCommandMessage) {
 }
 
 /* unassign alternate for board <board-number> during round <round-number> on <team-name> */
+/* can also use my-team */
 /* look up the original player and assign him to his board */
 export function unassignAlternate(
     bot: SlackBot,
@@ -428,7 +433,7 @@ export function unassignAlternate(
 
     const speaker = bot.getSlackUserFromNameOrID(message.user)
     if (!isDefined(speaker)) {
-        bot.reply(message, `I don't reocgnize you, sorry.`)
+        bot.reply(message, `I don't recognize you, sorry.`)
         return
     }
 
@@ -473,7 +478,7 @@ export function unassignAlternate(
         return
     }
 
-    const team = message.league.getTeam(teamName)
+    const team = _.isEqual(teamName, 'my-team') ? speakerTeam : message.league.getTeam(teamName)
     if (!team) {
         replyUnrecognizedTeam(bot, message, teamName)
         return
@@ -494,7 +499,7 @@ export function unassignAlternate(
                     ' has been assigned to board ' +
                     boardNumber +
                     ' for ' +
-                    teamName +
+                    team.name +
                     ' during round ' +
                     roundNumber
             )
