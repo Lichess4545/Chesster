@@ -117,6 +117,10 @@ function replyMisunderstoodAlternateUnassignment(
     )
 }
 
+function determineTeam(message: LeagueCommandMessage, inputTeamName: string, speakerTeam: Team): Team | undefined {
+    return _.isEqual(inputTeamName, 'my-team') ? speakerTeam : message.league.getTeam(inputTeamName)
+}
+
 /* [player <player-name> is] {available, unavailable} for round <round-number> in <league> */
 export function updateAvailability(
     bot: SlackBot,
@@ -332,7 +336,7 @@ export function assignAlternate(bot: SlackBot, message: LeagueCommandMessage) {
         }
         const roundNumber = roundNumberVar.value
 
-        const team = _.isEqual(teamName, 'my-team') ? speakerTeam : message.league.getTeam(teamName)
+        const team = determineTeam(message, teamName, speakerTeam)
         if (!team) {
             replyUnrecognizedTeam(bot, message, teamName)
             return
@@ -478,7 +482,7 @@ export function unassignAlternate(
         return
     }
 
-    const team = _.isEqual(teamName, 'my-team') ? speakerTeam : message.league.getTeam(teamName)
+    const team = determineTeam(message, teamName, speakerTeam)
     if (!team) {
         replyUnrecognizedTeam(bot, message, teamName)
         return
