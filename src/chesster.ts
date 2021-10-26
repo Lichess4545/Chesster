@@ -152,7 +152,7 @@ chesster.hears({
 chesster.hears({
     type: 'command',
     patterns: [/link/i],
-    messageTypes: ['direct_message'],
+    messageTypes: ['direct_mention', 'direct_message'],
     callback: privateURLs.linkAccounts,
 })
 
