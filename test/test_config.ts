@@ -33,7 +33,7 @@ describe('config types', function () {
             handleExceptions: true,
         },
         links: {
-            source: 'https://github.com/endrawes0/Chesster',
+            source: 'https://github.com/Lichess4545/Chesster',
         },
         welcome: {
             channel: 'general',

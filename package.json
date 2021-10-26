@@ -83,12 +83,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/endrawes0/Chesster.git"
+    "url": "git+https://github.com/Lichess4545/Chesster.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/endrawes0/Chesster/issues"
+    "url": "https://github.com/Lichess4545/Chesster/issues"
   },
-  "homepage": "https://github.com/endrawes0/Chesster"
+  "homepage": "https://github.com/Lichess4545/Chesster"
 }
