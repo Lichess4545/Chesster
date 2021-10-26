@@ -1,5 +1,4 @@
 # https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-# https://docs.codeclimate.com/docs/github-actions-test-coverage
 
 name: Build
 
@@ -31,6 +30,3 @@ jobs:
 
       - name: Run tests
         run: yarn test
-
-      - name: Coverage
-        uses: paambaati/codeclimate-action@v3.0.0
