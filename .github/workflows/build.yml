@@ -1,13 +1,13 @@
 # https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+# https://docs.codeclimate.com/docs/github-actions-test-coverage
 
 name: Build
 
 on:
-  [push]
-#  push:
-#    branches: [main]
-#  pull_request:
-#    branches: [main]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
@@ -19,7 +19,6 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '12'
-          cache: 'yarn'
 
       - name: Install packages
         run: yarn install
@@ -32,3 +31,6 @@ jobs:
 
       - name: Run tests
         run: yarn test
+
+      - name: Coverage
+        uses: paambaati/codeclimate-action@v3.0.0
