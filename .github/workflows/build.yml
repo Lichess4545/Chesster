@@ -1,0 +1,34 @@
+# https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Build
+
+on:
+  [push]
+#  push:
+#    branches: [main]
+#  pull_request:
+#    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+          cache: 'yarn'
+
+      - name: Install packages
+        run: yarn install
+
+      - name: Build project
+        run: yarn build
+
+      - name: Run TSLint
+        run: yarn lint
+
+      - name: Run tests
+        run: yarn test

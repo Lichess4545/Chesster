@@ -1,4 +1,4 @@
-// TODO: reinstate these tests. See: https://github.com/endrawes0/Chesster/issues/148
+// TODO: reinstate these tests. See: https://github.com/Lichess4545/Chesster/issues/148
 /*const assert = require('chai').assert;
 const Q = require("q");
 const _ = require("lodash");
