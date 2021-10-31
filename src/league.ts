@@ -506,17 +506,19 @@ export class League {
     getTeamByPlayerName(playerName: string) {
         playerName = playerName.toLowerCase()
         const directTeamMapping =
-            this._playerLookup[playerName.toLowerCase()] &&
-            this._playerLookup[playerName.toLowerCase()].team
+            this._playerLookup[playerName] &&
+            this._playerLookup[playerName].team
         if (directTeamMapping) return directTeamMapping
         // Try to find the team by looking through the pairings for this
         // playername.  This will find alternates.
-        const teams: Team[] = this._teams.filter((t) => {
-            const playerIds = t.players.map((p) => p.username.toLowerCase())
-            return playerIds.filter((n) => n === playerName).length > 0
-        })
-        if (teams.length > 0) {
-            return teams[0]
+        const possiblePairings = this.findPairing(playerName)
+        if (possiblePairings.length === 1) {
+            const pairing = possiblePairings[0]
+            if (_.isEqual(pairing.white.toLowerCase(), playerName)) {
+                return pairing.white_team
+            } else if (_.isEqual(pairing.black.toLowerCase(), playerName)) {
+                return pairing.black_team
+            }
         }
         return undefined
     }
