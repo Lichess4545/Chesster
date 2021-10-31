@@ -18,6 +18,17 @@ export const emitter = new ChessLeagueEmitter()
 type Context = any
 type Callback = any
 
+type SourceWithContext = {
+    source: string
+    sourceContext: SourceContext
+}
+type TargetWithSourceContext = {
+    target: string
+    sourceContext: SourceContext[]
+}
+// could support more contexts in the future
+type SourceContext = 'black' | 'white'
+
 const events: string[] = [
     // 'a-game-starts',
     // 'a-game-is-scheduled',
@@ -142,7 +153,7 @@ export function formatAGameIsScheduled(
     // TODO: put these date formats somewhere, probably config?
     const friendlyFormat = 'ddd @ HH:mm'
     const member = bot.getSlackUserFromNameOrID(target)
-    let message = ''
+    let message: string
     const fullFormat = 'YYYY-MM-DD @ HH:mm UTC'
     const realDate = context.result.date.format(fullFormat)
     if (member && member.tz_offset) {
@@ -157,6 +168,16 @@ export function formatAGameIsScheduled(
     return message
 }
 
+function formatGameLink(context: Context): string {
+    // Flip board to black only if listener subscribes to black
+    const hasOnlyBlack: boolean = context?.sourceContext?.includes('black') && !context?.sourceContext?.includes('white')
+    let gameLink = `${context.details.game_link}`
+    if (hasOnlyBlack) {
+        gameLink += `/black`
+    }
+    return gameLink
+}
+
 // -----------------------------------------------------------------------------
 // Format the A Game Starts response.
 // -----------------------------------------------------------------------------
@@ -165,7 +186,8 @@ export function formatAGameStarts(
     target: string,
     context: Context
 ) {
-    return `${context.white.name} vs ${context.black.name} in ${context.league.name} has started: ${context.details.game_link}`
+    const gameLink = formatGameLink(context)
+    return `${context.white.name} vs ${context.black.name} in ${context.league.name} has started: ${gameLink}`
 }
 
 // -----------------------------------------------------------------------------
@@ -196,7 +218,7 @@ function processTellCommand(
         const args = _.map(components.slice(0, 7), _.toLower)
         let sourceName = components.splice(7).join(' ')
         const tell = args[0]
-        let listener = args[1]
+        const listener = args[1]
         const when = args[2]
         const event = args[3]
         const _in = args[4]
@@ -249,13 +271,11 @@ function processTellCommand(
         // TODO: hrmmm. this seems bad.
         let target: string = ''
         if (_.isEqual(listener, 'me')) {
-            listener = 'you'
             target = requester.lichess_username
         } else if (_.isEqual(listener, 'my-team-channel')) {
             if (!team) {
                 return formatNoTeamResponse()
             }
-            listener = 'your team channel'
             target = 'channel_id:' + team.slack_channel
         }
 
@@ -381,10 +401,12 @@ export function register(bot: SlackBot, eventName: string, cb: Callback) {
     // Handle the event when it happens
     emitter.on(eventName, async (_league, sources, context) => {
         return getListeners(bot, _league, sources, eventName).then(
-            (targets) => {
-                const allDeferreds: Promise<void>[] = targets.map(
-                    (target) =>
+            (targetsWithSourceContext) => {
+                const allDeferreds: Promise<void>[] = targetsWithSourceContext.map(
+                    (targetWithSourceContext) =>
                         new Promise((resolve, reject) => {
+                            const target = targetWithSourceContext.target
+                            context.sourceContext = targetWithSourceContext.sourceContext
                             const message = cb(bot, target, _.clone(context))
                             if (_.startsWith(target, 'channel_id:')) {
                                 const channelID = _.toUpper(target.substr(11))
@@ -415,6 +437,9 @@ export function register(bot: SlackBot, eventName: string, cb: Callback) {
     })
 }
 
+// source comes in as [whiteUsername, blackUsername] - since we don't change the order we can join with this
+// for both player names and team names
+const SOURCE_CONTEXT_ARRAY: SourceContext[] = ['white', 'black']
 // -----------------------------------------------------------------------------
 // Get listeners for a given event and source
 // -----------------------------------------------------------------------------
@@ -423,19 +448,21 @@ export function getListeners(
     _league: league.League,
     sources: string[],
     event: string
-): Promise<string[]> {
+): Promise<TargetWithSourceContext[]> {
     return new Promise((resolve, reject) => {
-        sources = _.map(sources, _.toLower)
+        const playerNamesWithContext: SourceWithContext[] = sources
+            .map((source, index) => [source.toLowerCase(), SOURCE_CONTEXT_ARRAY[index]] as [string, SourceContext])
+            .map(transformZippedSourceContext)
         // These are names of users, not users. So we have to go get the real
         // user and teams. This is somewhat wasteful - but I'm not sure whether
         // this is the right design or if we should pass in users to this point.
-        const teamNames = _(sources)
-            .map((s) => _league.getTeamByPlayerName(s))
-            .filter(isDefined)
-            .map('name')
-            .map(_.toLower)
-            .value()
-        const possibleSources = _.concat(sources, teamNames)
+        const teamNamesWithContext: SourceWithContext[] = sources
+            .map((source, index) => [_league.getTeamByPlayerName(source.toLowerCase())?.name?.toLowerCase(), SOURCE_CONTEXT_ARRAY[index]] as [string, SourceContext])
+            .filter((zippedSourceContext) => isDefined(zippedSourceContext[0]))
+            .map(transformZippedSourceContext)
+        const sourceContext: SourceWithContext[] = playerNamesWithContext.concat(teamNamesWithContext)
+        const sourceContextMap: Map<string, SourceContext> = new Map(sourceContext.map(s => [s.source, s.sourceContext]))
+        const possibleSources: string[] = [...sourceContextMap.keys()]
         return db.Subscription.findAll({
             where: {
                 league: _league.name.toLowerCase(),
@@ -445,8 +472,37 @@ export function getListeners(
                 event: event.toLowerCase(),
             },
         }).then((subscriptions) => {
-            return resolve(_(subscriptions).map('target').uniq().value())
+            return resolve(resolveSubscriptionTargetsWithSourceContext(subscriptions, sourceContextMap))
         })
+    })
+}
+
+function transformZippedSourceContext(zippedSourceWithContext: [string, SourceContext]): SourceWithContext {
+    return {
+        source: zippedSourceWithContext[0],
+        sourceContext: zippedSourceWithContext[1]
+    }
+}
+
+function resolveSubscriptionTargetsWithSourceContext(subscriptions: db.Subscription[], sourceContextMap: Map<string, SourceContext>): TargetWithSourceContext[] {
+    const targetsWithGroupedContext: Map<string, Set<SourceContext>> = new Map()
+    subscriptions.forEach((subscription) => {
+        const target = subscription.target
+        const sourceContext: SourceContext = sourceContextMap.get(subscription.source.toLowerCase()) ?? 'white'
+        let sourceContextSet = targetsWithGroupedContext.get(target)
+        if (sourceContextSet) {
+            sourceContextSet.add(sourceContext)
+        } else {
+            sourceContextSet = new Set<SourceContext>()
+            sourceContextSet.add(sourceContext)
+            targetsWithGroupedContext.set(target, sourceContextSet)
+        }
+    })
+    return [...targetsWithGroupedContext.entries()].map(entry => {
+        return {
+            target: entry[0],
+            sourceContext: [...(entry[1].values())]
+        }
     })
 }
 
@@ -541,7 +597,7 @@ export async function tellMeWhenHandler(
 // -----------------------------------------------------------------------------
 export async function helpHandler(bot: SlackBot, message: CommandMessage) {
     const convo = await bot.startPrivateConversation([message.user])
-    bot.say({
+    return bot.say({
         channel: convo.channel.id,
         text: formatHelpResponse(bot),
     })
