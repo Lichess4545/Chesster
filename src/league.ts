@@ -11,6 +11,7 @@ import { League as LeagueConfig } from './config'
 import { EventEmitter } from 'events'
 import { SlackBot, LeagueMember, localTime } from './slack'
 import { LogWithPrefix } from './logging'
+import {isDefined} from "./utils";
 
 // An emitter for league events
 class ChessLeagueEmitter extends EventEmitter {}
@@ -503,7 +504,7 @@ export class League {
     // -------------------------------------------------------------------------
     // Get the team for a given player name
     // -------------------------------------------------------------------------
-    getTeamByPlayerName(playerName: string) {
+    getTeamByPlayerName(playerName: string): Team | undefined {
         playerName = playerName.toLowerCase()
         const directTeamMapping =
             this._playerLookup[playerName] &&
@@ -515,9 +516,9 @@ export class League {
         if (possiblePairings.length === 1) {
             const pairing = possiblePairings[0]
             if (_.isEqual(pairing.white.toLowerCase(), playerName)) {
-                return pairing.white_team
+                return this.getTeam(pairing.white_team)
             } else if (_.isEqual(pairing.black.toLowerCase(), playerName)) {
-                return pairing.black_team
+                return this.getTeam(pairing.black_team)
             }
         }
         return undefined
@@ -526,7 +527,10 @@ export class League {
     // -------------------------------------------------------------------------
     // Get the team for a given team name
     // -------------------------------------------------------------------------
-    getTeam(teamName: string) {
+    getTeam(teamName: string | undefined): Team | undefined {
+        if (!isDefined(teamName)) {
+            return undefined
+        }
         return this._teamLookup[teamName.toLowerCase()]
     }
 
