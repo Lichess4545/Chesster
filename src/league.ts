@@ -516,9 +516,13 @@ export class League {
         if (possiblePairings.length === 1) {
             const pairing = possiblePairings[0]
             if (_.isEqual(pairing.white.toLowerCase(), playerName)) {
-                return this.getTeam(pairing.white_team)
+                if (isDefined(pairing.white_team)) {
+                    return this.getTeam(pairing.white_team)
+                }
             } else if (_.isEqual(pairing.black.toLowerCase(), playerName)) {
-                return this.getTeam(pairing.black_team)
+                if (isDefined(pairing.black_team)) {
+                    return this.getTeam(pairing.black_team)
+                }
             }
         }
         return undefined
@@ -527,10 +531,7 @@ export class League {
     // -------------------------------------------------------------------------
     // Get the team for a given team name
     // -------------------------------------------------------------------------
-    getTeam(teamName: string | undefined): Team | undefined {
-        if (!isDefined(teamName)) {
-            return undefined
-        }
+    getTeam(teamName: string): Team | undefined {
         return this._teamLookup[teamName.toLowerCase()]
     }
 
