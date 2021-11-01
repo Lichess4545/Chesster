@@ -170,7 +170,7 @@ export function formatAGameIsScheduled(
 
 function formatGameLink(context: Context): string {
     // Flip board to black only if listener subscribes to black
-    const hasOnlyBlack: boolean = context?.sourceContext?.includes('black') && !context?.sourceContext?.includes('white')
+    const hasOnlyBlack: boolean = context.sourceContext.includes('black') && !context.sourceContext.includes('white')
     let gameLink = `${context.details.game_link}`
     if (hasOnlyBlack) {
         gameLink += `/black`
