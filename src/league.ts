@@ -255,9 +255,11 @@ export class League {
             })
         }
 
-        this.log.info('Setting new teams')
+        this.log.info('Setting new teams and players')
         this._teams = newTeams
         this._teamLookup = newTeamLookup
+        this._players = newPlayers
+        this._playerLookup = newPlayerLookup
     }
 
     // -------------------------------------------------------------------------
@@ -281,13 +283,18 @@ export class League {
                 const newPairings: Pairing[] = []
                 _.each(pairings, (heltourPairing) => {
                     const date = moment.utc(heltourPairing.datetime)
-                    newPairings.push({
+                    const newPairing: Pairing = {
                         white: heltourPairing.white,
                         black: heltourPairing.black,
                         scheduledDate: date.isValid() ? date : undefined,
                         url: heltourPairing.gameLink,
                         result: resultFromString(heltourPairing.result),
-                    })
+                    }
+                    if (heltour.isTeamPairing(heltourPairing)) {
+                        newPairing.white_team = heltourPairing.whiteTeam
+                        newPairing.black_team = heltourPairing.blackTeam
+                    }
+                    newPairings.push(newPairing)
                 })
                 this._pairings = newPairings
                 return this._pairings
