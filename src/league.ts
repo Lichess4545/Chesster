@@ -255,9 +255,11 @@ export class League {
             })
         }
 
-        this.log.info('Setting new teams')
+        this.log.info('Setting new teams and players')
         this._teams = newTeams
         this._teamLookup = newTeamLookup
+        this._players = newPlayers
+        this._playerLookup = newPlayerLookup
     }
 
     // -------------------------------------------------------------------------
