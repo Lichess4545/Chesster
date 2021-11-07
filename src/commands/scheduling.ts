@@ -634,7 +634,6 @@ export async function ambientScheduling(
             )
         }
 
-        const leagueName = league.name
         const whiteName = updateScheduleResults.white
         const blackName = updateScheduleResults.black
         schedulingReplyScheduled(
@@ -652,11 +651,11 @@ export async function ambientScheduling(
             message.league,
             [white.lichess_username, black.lichess_username],
             {
+                eventType: 'a-game-is-scheduled',
                 result: schedulingResults,
-                league: message.league,
-                white,
-                black,
-                leagueName,
+                league,
+                white: white.lichess_username,
+                black: black.lichess_username,
             }
         )
     } catch (error) {
