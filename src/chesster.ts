@@ -324,14 +324,12 @@ chesster.hears({
 
 subscription.register(
     chesster,
-    'a-game-is-scheduled',
-    subscription.formatAGameIsScheduled
+    'a-game-is-scheduled'
 )
-subscription.register(chesster, 'a-game-starts', subscription.formatAGameStarts)
+subscription.register(chesster, 'a-game-starts')
 subscription.register(
     chesster,
-    'a-game-is-over',
-    subscription.formatAGameIsOver
+    'a-game-is-over'
 )
 
 chesster.hears({

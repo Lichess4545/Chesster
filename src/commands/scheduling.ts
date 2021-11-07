@@ -36,7 +36,7 @@ function makeExtrema({
     return new Extrema(start, end, referenceDate, warning)
 }
 
-interface SchedulingResult {
+export interface SchedulingResult {
     white?: string
     black?: string
     date: moment.Moment
@@ -647,7 +647,7 @@ export async function ambientScheduling(
             blackName
         )
         // TODO: test this.
-        subscription.emitter.emit(
+        subscription.emitEvent(
             'a-game-is-scheduled',
             message.league,
             [white.lichess_username, black.lichess_username],

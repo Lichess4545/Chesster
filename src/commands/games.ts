@@ -166,25 +166,11 @@ export async function ambientResults(
                 // current speaker is a moderator for the league
                 // update the pairing with the result bc there was no link found
                 // TODO: update error handling
-                const updatePairingResult = await heltour.updatePairing(
+                await heltour.updatePairing(
                     heltourOptions,
                     updateRequest
                 )
                 resultReplyUpdated(bot, message, result)
-
-                if (updatePairingResult.resultChanged) {
-                    subscription.emitter.emit(
-                        'a-game-is-over',
-                        message.league,
-                        [white.name, black.name],
-                        {
-                            result: updatePairingResult,
-                            white,
-                            black,
-                            leagueName: league.name,
-                        }
-                    )
-                }
             } else {
                 resultReplyMissingGamelink(bot, message)
             }
@@ -596,30 +582,32 @@ export async function updateGamelink(
         updatePairingResult.gameLinkChanged &&
         details.result === ResultsEnum.UNKNOWN
     ) {
-        subscription.emitter.emit(
+        subscription.emitEvent(
             'a-game-starts',
             league,
             [white.name, black.name],
             {
+                eventType: 'a-game-starts',
                 league,
                 details,
-                white,
-                black,
+                white: white.name,
+                black: black.name,
             }
         )
     } else if (
         updatePairingResult.resultChanged &&
         details.result !== ResultsEnum.UNKNOWN
     ) {
-        subscription.emitter.emit(
+        subscription.emitEvent(
             'a-game-is-over',
             league,
             [white.name, black.name],
             {
+                eventType: 'a-game-is-over',
                 league,
-                details,
-                white,
-                black,
+                result: details.result,
+                white: white.name,
+                black: black.name,
             }
         )
     }
