@@ -302,7 +302,7 @@ class WatcherRequest {
             ) {
                 this.log.info('Received INVALID game')
 
-                const hours = Math.abs(now.diff(scheduledDate))
+                const hours = Math.abs(now.diff(scheduledDate, 'hours'))
                 if (
                     (!scheduledDate || hours >= 2) &&
                     result.timeControlIsIncorrect
