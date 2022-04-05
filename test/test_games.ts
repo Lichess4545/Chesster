@@ -321,7 +321,41 @@ describe('games', function () {
                     ...mockValidationResult,
                     valid: false,
                     timeControlIsIncorrect: true,
-                    reason: 'the time control is incorrect.',
+                    reason: 'the game is unlimited or correspondence.',
+                }
+            )
+            testValidateGameDetails(
+                {
+                    id: 'gVbuwhK4',
+                    game_link: 'https://lichess.org/gVbuwhK3',
+                    rated: true,
+                    variant: 'standard',
+                    speed: 'correspondence',
+                    perf: 'correspondence',
+                    createdAt: 1476567724919,
+                    status: lichess.GameStatus.draw,
+                    result: league.ResultsEnum.DRAW,
+                    clock: {
+                        initial: 900,
+                        increment: 15
+                    },
+                    players: {
+                        white: {
+                            user: { id: 'happy0', name: 'happy0' },
+                            rating: 1680,
+                        },
+                        black: {
+                            user: { id: 'tephra', name: 'tephra' },
+                            rating: 1418,
+                        },
+                    },
+                },
+                [mockPairing('happy0', 'tephra')],
+                {
+                    ...mockValidationResult,
+                    valid: false,
+                    timeControlIsIncorrect: true,
+                    reason: 'the time control is incorrect. Correct time control is 45+45. Detected time control was 900 starting time and 15 inc.',
                 }
             )
             testValidateGameDetails(
