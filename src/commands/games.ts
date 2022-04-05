@@ -334,7 +334,7 @@ export function validateGameDetails(
     const black = details.players.black.user.id
 
     const potentialPairings = league.findPairing(white, black)
-    if (potentialPairings.length < 1) {
+    if (potentialPairings.length !== 1) {
         result.valid = false
         result.pairingWasNotFound = true
         result.reason = 'the pairing was not found.'
@@ -342,15 +342,19 @@ export function validateGameDetails(
     }
     const pairing = (result.pairing = potentialPairings[0])
     if (
-        !details.clock || // no clock - unlimited or coorespondence
-        (details.clock && // clock
-            (!_.isEqual(details.clock.initial, options.clock.initial * 60) || // initial time
-                !_.isEqual(details.clock.increment, options.clock.increment))) // increment
+        !details.clock
+    ) {
+        result.valid = false
+        result.timeControlIsIncorrect = true
+        result.reason = `the game is unlimited or correspondence.`
+    } else if (
+        (!_.isEqual(details.clock.initial, options.clock.initial * 60) || // initial time
+            !_.isEqual(details.clock.increment, options.clock.increment)) // increment
     ) {
         // the time control does not match options
         result.valid = false
         result.timeControlIsIncorrect = true
-        result.reason = 'the time control is incorrect.'
+        result.reason = `the time control is incorrect. Correct time control is ${options.clock.initial}+${options.clock.increment}. Detected time control was ${details.clock.initial} starting time and ${details.clock.increment} inc.`
     } else if (
         potentialPairings.length === 1 &&
         pairing &&
@@ -405,12 +409,12 @@ export function validateGameDetails(
     return result
 }
 
-function gamelinkReplyInvalid(
+async function gamelinkReplyInvalid(
     bot: SlackBot,
     message: CommandMessage,
     reason: string
 ) {
-    bot.reply(
+    await bot.reply(
         message,
         'I am sorry, <@' +
             message.user +
@@ -420,7 +424,7 @@ function gamelinkReplyInvalid(
             reason +
             '*'
     )
-    bot.reply(
+    await bot.reply(
         message,
         'If this was a mistake, please correct it and ' +
             'try again. If intentional, please contact one ' +
@@ -509,7 +513,7 @@ async function processGamelink(
         if (isDefined(userResult)) {
             const validity = validateUserResult(details, userResult)
             if (!validity.valid) {
-                gamelinkReplyInvalid(bot, message, validity.reason)
+                await gamelinkReplyInvalid(bot, message, validity.reason)
                 return
             }
         }
@@ -543,7 +547,7 @@ async function processGameDetails(
     const validity = validateGameDetails(message.league, details)
     if (!validity.valid) {
         // game was not valid
-        gamelinkReplyInvalid(bot, message, validity.reason)
+        await gamelinkReplyInvalid(bot, message, validity.reason)
         return
     }
     const updatePairingResult = await updateGamelink(message.league, details)
