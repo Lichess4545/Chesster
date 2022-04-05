@@ -336,7 +336,7 @@ describe('games', function () {
                     status: lichess.GameStatus.draw,
                     result: league.ResultsEnum.DRAW,
                     clock: {
-                        initial: 15,
+                        initial: 900,
                         increment: 15
                     },
                     players: {
@@ -355,7 +355,7 @@ describe('games', function () {
                     ...mockValidationResult,
                     valid: false,
                     timeControlIsIncorrect: true,
-                    reason: 'the time control is incorrect. Correct time control is 45+45.',
+                    reason: 'the time control is incorrect. Correct time control is 45+45. Detected time control was 900 starting time and 15 inc.',
                 }
             )
             testValidateGameDetails(
