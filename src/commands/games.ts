@@ -341,9 +341,7 @@ export function validateGameDetails(
         return result
     }
     const pairing = (result.pairing = potentialPairings[0])
-    if (
-        !details.clock
-    ) {
+    if (!details.clock) {
         result.valid = false
         result.timeControlIsIncorrect = true
         result.reason = `the game is unlimited or correspondence.`
@@ -354,7 +352,7 @@ export function validateGameDetails(
         // the time control does not match options
         result.valid = false
         result.timeControlIsIncorrect = true
-        result.reason = `the time control is incorrect. Correct time control is ${options.clock.initial}+${options.clock.increment}. Detected time control was ${details.clock.initial} starting time and ${details.clock.increment} inc.`
+        result.reason = `the time control is incorrect. Correct time control is ${options.clock.initial}+${options.clock.increment}. Detected time control was ${details.clock.initial/60}+${details.clock.increment}.`
     } else if (
         potentialPairings.length === 1 &&
         pairing &&
@@ -372,7 +370,7 @@ export function validateGameDetails(
         // the variant does not match
         result.valid = false
         result.variantIsIncorrect = true
-        result.reason = 'the variant should be standard.'
+        result.reason = `the variant should be ${options.variant}.`
     } else if (_.isEqual(details.status, lichess.GameStatus.timeout)) {
         // claim victory is not allowed
         result.valid = false
