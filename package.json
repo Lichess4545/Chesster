@@ -52,7 +52,9 @@
     "monocle-ts": "^2.1.0",
     "newtype-ts": "^0.3.4",
     "nyc": "^15.1.0",
+    "sinon-chai": "^3.7.0",
     "ts-node": "^8.8.1",
+    "ts-sinon": "^2.0.2",
     "typescript": "^3.8.3"
   },
   "scripts": {

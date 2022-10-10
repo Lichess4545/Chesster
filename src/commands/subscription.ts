@@ -1,24 +1,61 @@
 // -----------------------------------------------------------------------------
+// The emitter we will use.
+import { EventEmitter } from 'events'
 // Commands and helpers related to subscriptions
 // -----------------------------------------------------------------------------
 import _ from 'lodash'
-import winston from 'winston'
 import { Op } from 'sequelize'
-
-import * as league from '../league'
+import winston from 'winston'
+import * as league from "../league";
+import { League, ResultsEnum } from "../league";
+import { GameDetails } from "../lichess";
 import * as db from '../models'
-import { SlackBot, CommandMessage } from '../slack'
+import { CommandMessage, SlackBot } from '../slack'
 import { isDefined } from '../utils'
+import { SchedulingResult } from "./scheduling";
 
-// The emitter we will use.
-import { EventEmitter } from 'events'
 class ChessLeagueEmitter extends EventEmitter {}
-export const emitter = new ChessLeagueEmitter()
+const emitter = new ChessLeagueEmitter()
 
-type Context = any
-type Callback = any
+type Context =
+    | GameScheduledContext
+    | GameStartedContext
+    | GameOverContext
+type EventType = 'a-game-is-scheduled' | 'a-game-starts' | 'a-game-is-over'
+type GameScheduledContext = {
+    eventType: 'a-game-is-scheduled',
+    white: string,
+    black: string,
+    league: League,
+    result: SchedulingResult
+}
+type GameStartedContext = {
+    eventType: 'a-game-starts',
+    white: string,
+    black: string,
+    league: League,
+    details: GameDetails
+}
+type GameOverContext = {
+    eventType: 'a-game-is-over',
+    result: ResultsEnum,
+    white: string,
+    black: string,
+    league: League
+}
 
-const events: string[] = [
+type SourceWithContext = {
+    source: string
+    sourceContext: SourceContext
+}
+type TargetWithSourceContext = {
+    target: string
+    sourceContext: SourceContext[]
+}
+// could support more contexts in the future
+type SourceContext = 'black' | 'white'
+
+const events: EventType[] = [
     // 'a-game-starts',
     // 'a-game-is-scheduled',
     // 'a-game-is-over',
@@ -131,52 +168,73 @@ function formatNoTeamResponse() {
     return "You can't use my-team or my-team-channel since you don't have a team right now."
 }
 
+export function emitEvent(eventName: string, _league: League, sources: [string, string], context: Context): void {
+    emitter.emit(
+        eventName,
+        _league,
+        sources,
+        context
+    )
+}
+
 // -----------------------------------------------------------------------------
 // Format the a-game-is-scheduled response
 // -----------------------------------------------------------------------------
-export function formatAGameIsScheduled(
+function formatAGameIsScheduled(
     bot: SlackBot,
     target: string,
-    context: Context
+    context: GameScheduledContext
 ) {
     // TODO: put these date formats somewhere, probably config?
     const friendlyFormat = 'ddd @ HH:mm'
     const member = bot.getSlackUserFromNameOrID(target)
-    let message = ''
+    let message: string
     const fullFormat = 'YYYY-MM-DD @ HH:mm UTC'
     const realDate = context.result.date.format(fullFormat)
     if (member && member.tz_offset) {
         const targetDate = context.result.date
             .clone()
             .utcOffset(member.tz_offset / 60)
-        context.yourDate = targetDate.format(friendlyFormat)
-        message = `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.league.name} has been scheduled for ${realDate}, which is ${context.yourDate} for you.`
+        const yourDate = targetDate.format(friendlyFormat)
+        message = `${context.white} vs ${context.black} in ${context.league.name} has been scheduled for ${realDate}, which is ${yourDate} for you.`
     } else {
-        message = `${context.white.lichess_username} vs ${context.black.lichess_username} in ${context.league.name} has been scheduled for ${realDate}.`
+        message = `${context.white} vs ${context.black} in ${context.league.name} has been scheduled for ${realDate}.`
     }
     return message
+}
+
+function formatGameLink(gameContext: GameStartedContext, sourceContext: SourceContext[]): string {
+    // Flip board to black only if listener subscribes to black
+    const hasOnlyBlack: boolean = sourceContext.includes('black') && !sourceContext.includes('white')
+    let gameLink = `${gameContext.details.game_link}`
+    if (hasOnlyBlack) {
+        gameLink += `/black`
+    }
+    return gameLink
 }
 
 // -----------------------------------------------------------------------------
 // Format the A Game Starts response.
 // -----------------------------------------------------------------------------
-export function formatAGameStarts(
+function formatAGameStarts(
     bot: SlackBot,
     target: string,
-    context: Context
+    context: GameStartedContext,
+    sourceContext: SourceContext[]
 ) {
-    return `${context.white.name} vs ${context.black.name} in ${context.league.name} has started: ${context.details.game_link}`
+    const gameLink = formatGameLink(context, sourceContext)
+    return `${context.white} vs ${context.black} in ${context.league.name} has started: ${gameLink}`
 }
 
 // -----------------------------------------------------------------------------
 // Format the a game is over response.
 // -----------------------------------------------------------------------------
-export function formatAGameIsOver(
+function formatAGameIsOver(
     bot: SlackBot,
     target: string,
-    context: Context
+    context: GameOverContext
 ) {
-    return `${context.white.name} vs ${context.black.name} in ${context.league.name} is over. The result is ${context.details.result}.`
+    return `${context.white} vs ${context.black} in ${context.league.name} is over. The result is ${context.result}.`
 }
 
 // -----------------------------------------------------------------------------
@@ -196,7 +254,7 @@ function processTellCommand(
         const args = _.map(components.slice(0, 7), _.toLower)
         let sourceName = components.splice(7).join(' ')
         const tell = args[0]
-        let listener = args[1]
+        const listener = args[1]
         const when = args[2]
         const event = args[3]
         const _in = args[4]
@@ -249,13 +307,11 @@ function processTellCommand(
         // TODO: hrmmm. this seems bad.
         let target: string = ''
         if (_.isEqual(listener, 'me')) {
-            listener = 'you'
             target = requester.lichess_username
         } else if (_.isEqual(listener, 'my-team-channel')) {
             if (!team) {
                 return formatNoTeamResponse()
             }
-            listener = 'your team channel'
             target = 'channel_id:' + team.slack_channel
         }
 
@@ -323,11 +379,11 @@ function processSubscriptionListCommand(
             .then((subscriptions) => {
                 let response = ''
                 _.each(subscriptions, (subscription) => {
-                    const context: Context = subscription.get()
-                    if (_.startsWith(context.target, 'channel_id:')) {
-                        context.target = 'your team channel'
+                    let target = subscription.target
+                    if (_.startsWith(target, 'channel_id:')) {
+                        target = 'your team channel'
                     }
-                    response += `\nID ${context.id} -> tell ${context.target} when ${context.event} for ${context.source} in ${context.league}`
+                    response += `\nID ${subscription.id} -> tell ${target} when ${subscription.event} for ${subscription.source} in ${subscription.league}`
                 })
                 if (response.length === 0) {
                     response = 'You have no subscriptions'
@@ -374,18 +430,19 @@ function processSubscriptionRemoveCommand(
 // -----------------------------------------------------------------------------
 // Register an event + message handler
 // -----------------------------------------------------------------------------
-export function register(bot: SlackBot, eventName: string, cb: Callback) {
+export function register(bot: SlackBot, eventName: EventType) {
     // Ensure this is a known event.
     events.push(eventName)
 
     // Handle the event when it happens
-    emitter.on(eventName, async (_league, sources, context) => {
+    emitter.on(eventName, async (_league: League, sources: [string, string], context: Context) => {
         return getListeners(bot, _league, sources, eventName).then(
-            (targets) => {
-                const allDeferreds: Promise<void>[] = targets.map(
-                    (target) =>
+            (targetsWithSourceContext) => {
+                const allDeferreds: Promise<void>[] = targetsWithSourceContext.map(
+                    (targetWithSourceContext) =>
                         new Promise((resolve, reject) => {
-                            const message = cb(bot, target, _.clone(context))
+                            const target = targetWithSourceContext.target
+                            const message = format(bot, target, context, targetWithSourceContext.sourceContext)
                             if (_.startsWith(target, 'channel_id:')) {
                                 const channelID = _.toUpper(target.substr(11))
                                 bot.say({
@@ -415,27 +472,43 @@ export function register(bot: SlackBot, eventName: string, cb: Callback) {
     })
 }
 
+function format(bot: SlackBot, target: string, context: Context, sourceContext: SourceContext[]): string {
+    switch(context.eventType) {
+        case 'a-game-is-scheduled':
+            return formatAGameIsScheduled(bot, target, context)
+        case 'a-game-starts':
+            return formatAGameStarts(bot, target, context, sourceContext)
+        case 'a-game-is-over':
+            return formatAGameIsOver(bot, target, context)
+    }
+}
+
+// source comes in as [whiteUsername, blackUsername] - since we don't change the order we can join with this
+// for both player names and team names
+const SOURCE_CONTEXT_ARRAY: SourceContext[] = ['white', 'black']
 // -----------------------------------------------------------------------------
 // Get listeners for a given event and source
 // -----------------------------------------------------------------------------
 export function getListeners(
     bot: SlackBot,
     _league: league.League,
-    sources: string[],
+    sources: [string, string],
     event: string
-): Promise<string[]> {
+): Promise<TargetWithSourceContext[]> {
     return new Promise((resolve, reject) => {
-        sources = _.map(sources, _.toLower)
+        const playerNamesWithContext: SourceWithContext[] = sources
+            .map((source, index) => [source.toLowerCase(), SOURCE_CONTEXT_ARRAY[index]] as [string, SourceContext])
+            .map(transformZippedSourceContext)
         // These are names of users, not users. So we have to go get the real
         // user and teams. This is somewhat wasteful - but I'm not sure whether
         // this is the right design or if we should pass in users to this point.
-        const teamNames = _(sources)
-            .map((s) => _league.getTeamByPlayerName(s))
-            .filter(isDefined)
-            .map('name')
-            .map(_.toLower)
-            .value()
-        const possibleSources = _.concat(sources, teamNames)
+        const teamNamesWithContext: SourceWithContext[] = sources
+            .map((source, index) => [_league.getTeamByPlayerName(source.toLowerCase())?.name?.toLowerCase(), SOURCE_CONTEXT_ARRAY[index]] as [string, SourceContext])
+            .filter((zippedSourceContext) => isDefined(zippedSourceContext[0]))
+            .map(transformZippedSourceContext)
+        const sourceContext: SourceWithContext[] = playerNamesWithContext.concat(teamNamesWithContext)
+        const sourceContextMap: Map<string, SourceContext> = new Map(sourceContext.map(s => [s.source, s.sourceContext]))
+        const possibleSources: string[] = [...sourceContextMap.keys()]
         return db.Subscription.findAll({
             where: {
                 league: _league.name.toLowerCase(),
@@ -445,8 +518,37 @@ export function getListeners(
                 event: event.toLowerCase(),
             },
         }).then((subscriptions) => {
-            return resolve(_(subscriptions).map('target').uniq().value())
+            return resolve(resolveSubscriptionTargetsWithSourceContext(subscriptions, sourceContextMap))
         })
+    })
+}
+
+function transformZippedSourceContext(zippedSourceWithContext: [string, SourceContext]): SourceWithContext {
+    return {
+        source: zippedSourceWithContext[0],
+        sourceContext: zippedSourceWithContext[1]
+    }
+}
+
+function resolveSubscriptionTargetsWithSourceContext(subscriptions: db.Subscription[], sourceContextMap: Map<string, SourceContext>): TargetWithSourceContext[] {
+    const targetsWithGroupedContext: Map<string, Set<SourceContext>> = new Map()
+    subscriptions.forEach((subscription) => {
+        const target = subscription.target
+        const sourceContext: SourceContext = sourceContextMap.get(subscription.source.toLowerCase()) ?? 'white'
+        let sourceContextSet = targetsWithGroupedContext.get(target)
+        if (sourceContextSet) {
+            sourceContextSet.add(sourceContext)
+        } else {
+            sourceContextSet = new Set<SourceContext>()
+            sourceContextSet.add(sourceContext)
+            targetsWithGroupedContext.set(target, sourceContextSet)
+        }
+    })
+    return [...targetsWithGroupedContext.entries()].map(entry => {
+        return {
+            target: entry[0],
+            sourceContext: [...(entry[1].values())]
+        }
     })
 }
 
@@ -541,7 +643,7 @@ export async function tellMeWhenHandler(
 // -----------------------------------------------------------------------------
 export async function helpHandler(bot: SlackBot, message: CommandMessage) {
     const convo = await bot.startPrivateConversation([message.user])
-    bot.say({
+    return bot.say({
         channel: convo.channel.id,
         text: formatHelpResponse(bot),
     })
