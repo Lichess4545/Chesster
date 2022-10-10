@@ -149,10 +149,10 @@ export const PairingsDecoder: Decoder<Pairing[]> = oneOf(
 
 export type Pairing = IndividualPairing | TeamPairing
 export function isIndividualPairing(obj: Pairing): obj is IndividualPairing {
-    return !obj.hasOwnProperty('white_team')
+    return !obj.hasOwnProperty('whiteTeam')
 }
 export function isTeamPairing(obj: Pairing): obj is TeamPairing {
-    return obj.hasOwnProperty('white_team')
+    return obj.hasOwnProperty('whiteTeam')
 }
 
 // -----------------------------------------------------------------------------
