@@ -10,7 +10,7 @@
     "@slack/rtm-api": "^5.0.3",
     "@slack/web-api": "^5.8.0",
     "@types/fast-levenshtein": "^0.0.1",
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "botkit": "^0.1.1",
     "chai": "^4.2.0",
     "codeclimate-test-reporter": "^0.5.1",
