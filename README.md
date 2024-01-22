@@ -18,7 +18,7 @@ It has a simple interface that integrates our Slack team, with Lichess and Websi
     CHESSTER_HELTOUR_TOKEN="<token>"
     CHESSTER_LICHESS_TOKEN="<token>"
     ```
-7. Migrate databases: `yarn run migrate config/testconfig.js`
+7. Migrate databases: `yarn run migrate --url "postgres://<user>:<password>@localhost/chesster"`
 8. Install your bot's token in the start script, start_chesster.
 9. Start the bot. `yarn run start`
 
