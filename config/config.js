@@ -2,28 +2,21 @@
 //       You must provide your own.
 const dotenv = require('dotenv')
 dotenv.config()
-let _4545_SLACK_TOKEN = process.env.CHESSTER_4545_SLACK_TOKEN || "It won't work without this token"
-let CHESSTER_SLACK_TOKEN = process.env.CHESSTER_CHESSTER_SLACK_TOKEN || "It won't work without this token"
-let HELTOUR_TOKEN = process.env.CHESSTER_HELTOUR_TOKEN || "It won't work without this token"
-let LICHESS_TOKEN = process.env.CHESSTER_LICHESS_TOKEN || "It won't work without this token"
-
+let db = require('./db.js')
+let _4545_SLACK_TOKEN =
+    process.env.CHESSTER_4545_SLACK_TOKEN || "It won't work without this token"
+let CHESSTER_SLACK_TOKEN =
+    process.env.CHESSTER_CHESSTER_SLACK_TOKEN ||
+    "It won't work without this token"
+let HELTOUR_TOKEN =
+    process.env.CHESSTER_HELTOUR_TOKEN || "It won't work without this token"
+let LICHESS_TOKEN =
+    process.env.CHESSTER_LICHESS_TOKEN || "It won't work without this token"
 
 var config = {
     // Unfortunately this all has to be at the top level due to sequelize-cli
     // TODO: this should be a URL and should be from process.env long term
-    database: {
-        name: 'chesster',
-        username: 'chesster',
-        password: 'scrappypulpitgourdehinders',
-        host: 'localhost',
-        dialect: 'postgres',
-        logging: false,
-        pool: {
-            max: 5,
-            min: 0,
-            idle: 10000,
-        },
-    },
+    database: db.development,
     storage: '',
     watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
     watcherToken: LICHESS_TOKEN,
@@ -95,8 +88,7 @@ var config = {
                 league: 'https://www.lichess4545.com/team4545/',
                 pairings: 'https://www.lichess4545.com/team4545/pairings/',
                 standings: 'https://www.lichess4545.com/team4545/standings/',
-                guide:
-                    'https://www.lichess4545.com/team4545/document/player-handbook/',
+                guide: 'https://www.lichess4545.com/team4545/document/player-handbook/',
                 captains:
                     'https://www.lichess4545.com/team4545/document/captains/',
                 registration: 'https://www.lichess4545.com/team4545/register/',
@@ -199,8 +191,7 @@ var config = {
             },
             links: {
                 faq: 'https://www.lichess4545.com/blitzbattle/document/faq/',
-                rules:
-                    'https://www.lichess4545.com/blitzbattle/document/rules/',
+                rules: 'https://www.lichess4545.com/blitzbattle/document/rules/',
                 league: 'https://www.lichess4545.com/blitzbattle/',
                 pairings: 'https://www.lichess4545.com/blitzbattle/pairings/',
                 standings: 'https://www.lichess4545.com/blitzbattle/standings/',
@@ -290,7 +281,7 @@ var config = {
         channelId: 'G3D6N2HNF',
     },
     pingMods: {
-        "C0VCCPMJ8": ["U0J2J60F8"],
-    }
+        C0VCCPMJ8: ['U0J2J60F8'],
+    },
 }
 module.exports = config

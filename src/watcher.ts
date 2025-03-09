@@ -70,8 +70,7 @@ class WatcherRequest {
             this.started.unix() - lastStarted.unix() < BACKOFF_TIMEOUT
         ) {
             this.log.warn(
-                `Backing off the watcher due to two starts in 10s: ${
-                    this.started.unix() - lastStarted.unix()
+                `Backing off the watcher due to two starts in 10s: ${this.started.unix() - lastStarted.unix()
                 }s`
             )
             this.needsRestart = true
