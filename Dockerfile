@@ -17,6 +17,7 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm fetch
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install
 COPY . .
 RUN pnpm build
+RUN ls -la dist
 
 FROM base
 WORKDIR /app
@@ -29,8 +30,6 @@ RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/ap
 
 # Default to production, can be overridden in docker-compose for dev
 ENV NODE_ENV=production
-
 EXPOSE 3000
-
 # Default command runs the production app
 CMD ["node", "./dist/index.js"]
