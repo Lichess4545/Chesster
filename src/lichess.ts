@@ -144,7 +144,7 @@ const { makeRequest, startRequests, stopRequests } = (() => {
                                 }
                             }
                             setTimeout(processRequests, requestDelay)
-                        } catch (e) {
+                        } catch (e: any) {
                             winston.error('[LICHESS] Exception: ' + e)
                             winston.error('[LICHESS] Stack: ' + e.stack)
                             winston.error('[LICHESS] URL: ' + url)
@@ -160,7 +160,7 @@ const { makeRequest, startRequests, stopRequests } = (() => {
                         reject(error)
                     }
                 )
-            } catch (e) {
+            } catch (e: any) {
                 winston.error('[LICHESS] Exception: ' + e)
                 winston.error('[LICHESS] Stack: ' + e.stack)
                 reject(e)
@@ -459,9 +459,8 @@ export const GameDetailsWithWinnerDecoder: Decoder<GameDetails> = andThen(
             result: gameResult(gameDetails.status, winner),
         }))
 )
-export const GameDetailsWithClockWithWinnerDecoder: Decoder<GameDetails> = andThen(
-    BaseGameDetailsDecoder,
-    (gameDetails) =>
+export const GameDetailsWithClockWithWinnerDecoder: Decoder<GameDetails> =
+    andThen(BaseGameDetailsDecoder, (gameDetails) =>
         object(
             ['clock', ClockDecoder],
             ['winner', GameWinnerDecoder],
@@ -472,7 +471,7 @@ export const GameDetailsWithClockWithWinnerDecoder: Decoder<GameDetails> = andTh
                 result: gameResult(gameDetails.status, winner),
             })
         )
-)
+    )
 export const GameDetailsDecoder: Decoder<GameDetails> = oneOf(
     GameDetailsWithClockWithWinnerDecoder,
     GameDetailsWithClockDecoder,

@@ -53,9 +53,8 @@ export function fetchURL(
             options.headers = options.headers || {}
             options.headers['Content-Type'] =
                 'application/x-www-form-urlencoded'
-            options.headers['Content-Length'] = Buffer.byteLength(
-                bodyParameters
-            )
+            options.headers['Content-Length'] =
+                Buffer.byteLength(bodyParameters)
         }
         const req = http
             .request(options, (res) => {
@@ -105,7 +104,7 @@ export function fetchURLIntoJSON(
                                 JSON.stringify(result.body)
                         )
                     }
-                } catch (e) {
+                } catch (e: any) {
                     winston.error('[HTTP] Options: ' + JSON.stringify(options))
                     winston.error('[HTTP] Exception: ' + e)
                     winston.error('[HTTP] Stack: ' + e.stack)

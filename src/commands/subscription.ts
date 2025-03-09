@@ -161,8 +161,8 @@ export function formatAGameIsScheduled(
 // Format the A Game Starts response.
 // -----------------------------------------------------------------------------
 export function formatAGameStarts(
-    bot: SlackBot,
-    target: string,
+    _bot: SlackBot,
+    _target: string,
     context: Context
 ) {
     return `${context.white.name} vs ${context.black.name} in ${context.league.name} has started: ${context.details.game_link}`
@@ -172,8 +172,8 @@ export function formatAGameStarts(
 // Format the a game is over response.
 // -----------------------------------------------------------------------------
 export function formatAGameIsOver(
-    bot: SlackBot,
-    target: string,
+    _bot: SlackBot,
+    _target: string,
     context: Context
 ) {
     return `${context.white.name} vs ${context.black.name} in ${context.league.name} is over. The result is ${context.details.result}.`
@@ -419,12 +419,12 @@ export function register(bot: SlackBot, eventName: string, cb: Callback) {
 // Get listeners for a given event and source
 // -----------------------------------------------------------------------------
 export function getListeners(
-    bot: SlackBot,
+    _bot: SlackBot,
     _league: league.League,
     sources: string[],
     event: string
 ): Promise<string[]> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
         sources = _.map(sources, _.toLower)
         // These are names of users, not users. So we have to go get the real
         // user and teams. This is somewhat wasteful - but I'm not sure whether
@@ -530,8 +530,7 @@ export async function tellMeWhenHandler(
             winston.error(JSON.stringify(error))
             bot.say({
                 channel: convo.channel.id,
-                text:
-                    "I'm sorry, but an error occurred processing this subscription command",
+                text: "I'm sorry, but an error occurred processing this subscription command",
             })
         })
 }
@@ -562,8 +561,7 @@ export async function listHandler(bot: SlackBot, message: CommandMessage) {
         .catch((error) => {
             bot.say({
                 channel: convo.channel.id,
-                text:
-                    "I'm sorry, but an error occurred processing this subscription command",
+                text: "I'm sorry, but an error occurred processing this subscription command",
             })
             winston.error(JSON.stringify(error))
         })
@@ -584,8 +582,7 @@ export async function removeHandler(bot: SlackBot, message: CommandMessage) {
         .catch((error) => {
             bot.say({
                 channel: convo.channel.id,
-                text:
-                    "I'm sorry, but an error occurred processing this subscription command",
+                text: "I'm sorry, but an error occurred processing this subscription command",
             })
             winston.error(JSON.stringify(error))
         })
@@ -606,10 +603,8 @@ export async function subscribeTeams(bot: SlackBot, message: CommandMessage) {
         .catch((error) => {
             bot.say({
                 channel: convo.channel.id,
-                text:
-                    "I'm sorry, but an error occurred processing this subscription command",
+                text: "I'm sorry, but an error occurred processing this subscription command",
             })
             winston.error(JSON.stringify(error))
         })
 }
-
