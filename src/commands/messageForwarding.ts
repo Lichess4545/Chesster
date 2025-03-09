@@ -102,7 +102,7 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
     }
 }
 
-export function refreshLeague(chesster: SlackBot, adminSlack: SlackBot) {
+export function refreshLeague(_chesster: SlackBot, adminSlack: SlackBot) {
     return (bot: SlackBot, message: CommandMessage) => {
         if (
             !_.isEqual(

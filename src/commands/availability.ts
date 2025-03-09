@@ -117,8 +117,14 @@ function replyMisunderstoodAlternateUnassignment(
     )
 }
 
-function determineTeam(message: LeagueCommandMessage, inputTeamName: string, speakerTeam: Team): Team | undefined {
-    return _.isEqual(inputTeamName, 'my-team') ? speakerTeam : message.league.getTeam(inputTeamName)
+function determineTeam(
+    message: LeagueCommandMessage,
+    inputTeamName: string,
+    speakerTeam: Team
+): Team | undefined {
+    return _.isEqual(inputTeamName, 'my-team')
+        ? speakerTeam
+        : message.league.getTeam(inputTeamName)
 }
 
 /* [player <player-name> is] {available, unavailable} for round <round-number> in <league> */
@@ -253,6 +259,7 @@ export function updateAvailability(
             throw error
         }
     }
+    return
 }
 
 /* assign <player> to board <board-number> during round <round-number> on <team-name> */
@@ -403,6 +410,7 @@ export function assignAlternate(bot: SlackBot, message: LeagueCommandMessage) {
             throw error
         }
     }
+    return
 }
 
 /* unassign alternate for board <board-number> during round <round-number> on <team-name> */

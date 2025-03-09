@@ -20,7 +20,7 @@ export function dmResponse(fn: FormatFn) {
         return new Promise(async (resolve, _) => {
             const convo = await bot.startPrivateConversation([message.user])
             bot.say({ text: msg, channel: convo.channel.id })
-            resolve()
+            resolve(null)
         })
     }
 }

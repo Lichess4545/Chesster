@@ -189,8 +189,8 @@ export async function ambientResults(
                 resultReplyMissingGamelink(bot, message)
             }
         }
-    } catch (error) {
-        handleHeltourErrors(bot, message, error)
+    } catch (error: any) {
+        handleHeltourErrors(bot, message, `${error}`)
         return
     }
 }
@@ -346,13 +346,13 @@ export function validateGameDetails(
         result.timeControlIsIncorrect = true
         result.reason = `the game is unlimited or correspondence.`
     } else if (
-        (!_.isEqual(details.clock.initial, options.clock.initial * 60) || // initial time
-            !_.isEqual(details.clock.increment, options.clock.increment)) // increment
+        !_.isEqual(details.clock.initial, options.clock.initial * 60) || // initial time
+        !_.isEqual(details.clock.increment, options.clock.increment) // increment
     ) {
         // the time control does not match options
         result.valid = false
         result.timeControlIsIncorrect = true
-        result.reason = `the time control is incorrect. Correct time control is ${options.clock.initial}+${options.clock.increment}. Detected time control was ${details.clock.initial/60}+${details.clock.increment}.`
+        result.reason = `the time control is incorrect. Correct time control is ${options.clock.initial}+${options.clock.increment}. Detected time control was ${details.clock.initial / 60}+${details.clock.increment}.`
     } else if (
         potentialPairings.length === 1 &&
         pairing &&
@@ -516,7 +516,7 @@ async function processGamelink(
             }
         }
         return processGameDetails(bot, message, details)
-    } catch (error) {
+    } catch (error: any) {
         winston.error(JSON.stringify(error))
         bot.reply(
             message,
@@ -650,7 +650,7 @@ export function ambientGamelinks(bot: SlackBot, message: CommandMessage) {
 
     try {
         return processGamelink(bot, message, message.text)
-    } catch (e) {
+    } catch (e: any) {
         // at the moment, we do not throw from inside the api - rethrow
         throw e
     }
