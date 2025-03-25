@@ -1,21 +1,17 @@
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "noImplicitAny": true,
-    "outDir": "./build",
-    "allowJs": true,
-    "alwaysStrict": true,
-    "strict": true,
-    "target": "es2019",
-    "moduleResolution": "node"
-  },
-  "include": [
-    "./src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "**/*.spec.ts"
-  ]
+    "compilerOptions": {
+        "module": "commonjs",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "noImplicitAny": true,
+        "outDir": "./build",
+        "allowJs": true,
+        "alwaysStrict": true,
+        "strict": true,
+        "target": "es2019",
+        "moduleResolution": "node",
+        "skipLibCheck": true
+    },
+    "include": ["./src/**/*"],
+    "exclude": ["node_modules", "**/*.spec.ts"]
 }

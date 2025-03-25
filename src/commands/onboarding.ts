@@ -21,7 +21,7 @@ async function welcomeMessageImpl(
     const result = await heltour.linkSlack(bot.config.heltour, user, '')
     const convo = await bot.startPrivateConversation([user])
     const text = `*<${result.url}|click here to associate your Lichess account with your slack account.>*`
-    bot.say({ channel: convo.channel.id, text, attachments: [] })
+    bot.say({ channel: convo.channel!.id!, text, attachments: [] })
 }
 
 export function isMemberJoinedChannelEvent(

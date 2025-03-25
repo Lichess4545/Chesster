@@ -11,7 +11,7 @@ import { League as LeagueConfig } from './config'
 import { EventEmitter } from 'events'
 import { SlackBot, LeagueMember, localTime } from './slack'
 import { LogWithPrefix } from './logging'
-import { isDefined } from "./utils";
+import { isDefined } from './utils'
 
 // An emitter for league events
 class ChessLeagueEmitter extends EventEmitter {}

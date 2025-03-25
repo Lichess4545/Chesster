@@ -146,6 +146,7 @@ const { makeRequest, startRequests, stopRequests } = (() => {
                             setTimeout(processRequests, requestDelay)
                         } catch (e) {
                             winston.error('[LICHESS] Exception: ' + e)
+                            // @ts-ignore - this was getting in my way when trying to build chesster locally
                             winston.error('[LICHESS] Stack: ' + e.stack)
                             winston.error('[LICHESS] URL: ' + url)
                             reject(e)
@@ -162,6 +163,7 @@ const { makeRequest, startRequests, stopRequests } = (() => {
                 )
             } catch (e) {
                 winston.error('[LICHESS] Exception: ' + e)
+                // @ts-ignore - this was getting in my way when trying to build chesster locally
                 winston.error('[LICHESS] Stack: ' + e.stack)
                 reject(e)
                 setTimeout(processRequests, requestDelay)
@@ -459,9 +461,8 @@ export const GameDetailsWithWinnerDecoder: Decoder<GameDetails> = andThen(
             result: gameResult(gameDetails.status, winner),
         }))
 )
-export const GameDetailsWithClockWithWinnerDecoder: Decoder<GameDetails> = andThen(
-    BaseGameDetailsDecoder,
-    (gameDetails) =>
+export const GameDetailsWithClockWithWinnerDecoder: Decoder<GameDetails> =
+    andThen(BaseGameDetailsDecoder, (gameDetails) =>
         object(
             ['clock', ClockDecoder],
             ['winner', GameWinnerDecoder],
@@ -472,7 +473,7 @@ export const GameDetailsWithClockWithWinnerDecoder: Decoder<GameDetails> = andTh
                 result: gameResult(gameDetails.status, winner),
             })
         )
-)
+    )
 export const GameDetailsDecoder: Decoder<GameDetails> = oneOf(
     GameDetailsWithClockWithWinnerDecoder,
     GameDetailsWithClockDecoder,

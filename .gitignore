@@ -26,3 +26,5 @@ build
 .yarnrc
 .env
 .idea
+local.env
+copilot-instructions.md

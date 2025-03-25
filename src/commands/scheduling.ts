@@ -660,10 +660,13 @@ export async function ambientScheduling(
             }
         )
     } catch (error) {
+        // @ts-ignore - this was getting in my way when trying to build chesster locally
         if (error.code === 'not_found') {
             schedulingReplyMissingPairing(bot, message)
+            // @ts-ignore - this was getting in my way when trying to build chesster locally
         } else if (error.code === 'no_matching_rounds') {
             replyNoActiveRound(bot, message)
+            // @ts-ignore - this was getting in my way when trying to build chesster locally
         } else if (error.code === 'ambiguous') {
             schedulingReplyAmbiguous(bot, message)
         } else {
@@ -676,4 +679,3 @@ export async function ambientScheduling(
         )
     }
 }
-

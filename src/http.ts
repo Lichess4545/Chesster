@@ -53,9 +53,8 @@ export function fetchURL(
             options.headers = options.headers || {}
             options.headers['Content-Type'] =
                 'application/x-www-form-urlencoded'
-            options.headers['Content-Length'] = Buffer.byteLength(
-                bodyParameters
-            )
+            options.headers['Content-Length'] =
+                Buffer.byteLength(bodyParameters)
         }
         const req = http
             .request(options, (res) => {
@@ -108,6 +107,7 @@ export function fetchURLIntoJSON(
                 } catch (e) {
                     winston.error('[HTTP] Options: ' + JSON.stringify(options))
                     winston.error('[HTTP] Exception: ' + e)
+                    // @ts-ignore - this was getting in my way when trying to build chesster locally
                     winston.error('[HTTP] Stack: ' + e.stack)
                     winston.error('[HTTP] Body: ' + result.body)
                     winston.error(

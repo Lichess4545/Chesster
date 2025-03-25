@@ -93,7 +93,7 @@ function filterPlayerTokens(tokens: string[]): string[] {
 function handleHeltourErrors(
     bot: SlackBot,
     message: CommandMessage,
-    error: string
+    error: unknown
 ) {
     if (_.isEqual(error, 'no_matching_rounds')) {
         replyNoActiveRound(bot, message)
@@ -346,13 +346,17 @@ export function validateGameDetails(
         result.timeControlIsIncorrect = true
         result.reason = `the game is unlimited or correspondence.`
     } else if (
-        (!_.isEqual(details.clock.initial, options.clock.initial * 60) || // initial time
-            !_.isEqual(details.clock.increment, options.clock.increment)) // increment
+        !_.isEqual(details.clock.initial, options.clock.initial * 60) || // initial time
+        !_.isEqual(details.clock.increment, options.clock.increment) // increment
     ) {
         // the time control does not match options
         result.valid = false
         result.timeControlIsIncorrect = true
-        result.reason = `the time control is incorrect. Correct time control is ${options.clock.initial}+${options.clock.increment}. Detected time control was ${details.clock.initial/60}+${details.clock.increment}.`
+        result.reason = `the time control is incorrect. Correct time control is ${
+            options.clock.initial
+        }+${options.clock.increment}. Detected time control was ${
+            details.clock.initial / 60
+        }+${details.clock.increment}.`
     } else if (
         potentialPairings.length === 1 &&
         pairing &&

@@ -17,9 +17,9 @@ export function directResponse(fn: FormatFn) {
 export function dmResponse(fn: FormatFn) {
     return (bot: SlackBot, message: LeagueCommandMessage) => {
         const msg = fn(message.league)
-        return new Promise(async (resolve, _) => {
+        return new Promise<void>(async (resolve, _) => {
             const convo = await bot.startPrivateConversation([message.user])
-            bot.say({ text: msg, channel: convo.channel.id })
+            bot.say({ text: msg, channel: convo.channel!.id! })
             resolve()
         })
     }

@@ -1,5 +1,7 @@
 // -----------------------------------------------------------------------------
 // Commands related to game nomination
+
+// Events API migration difficulty: 1/5, just bot.reply
 // -----------------------------------------------------------------------------
 import _ from 'lodash'
 import * as heltour from '../heltour'
@@ -43,7 +45,7 @@ export async function linkAccounts(bot: SlackBot, message: CommandMessage) {
     )
     const convo = await bot.startPrivateConversation([message.user])
 
-    const channelId = convo.channel.id
+    const channelId = convo.channel!.id!
     let text = ''
 
     _.each(result.alreadyLinked, (username) => {

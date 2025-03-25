@@ -1,5 +1,7 @@
 // -----------------------------------------------------------------------------
 // Commands related to availability
+
+// Events API migration difficulty: 1/5 I think. Just get users by slack ID name etc, and bot.reply
 // -----------------------------------------------------------------------------
 import winston from 'winston'
 import _ from 'lodash'
@@ -117,8 +119,14 @@ function replyMisunderstoodAlternateUnassignment(
     )
 }
 
-function determineTeam(message: LeagueCommandMessage, inputTeamName: string, speakerTeam: Team): Team | undefined {
-    return _.isEqual(inputTeamName, 'my-team') ? speakerTeam : message.league.getTeam(inputTeamName)
+function determineTeam(
+    message: LeagueCommandMessage,
+    inputTeamName: string,
+    speakerTeam: Team
+): Team | undefined {
+    return _.isEqual(inputTeamName, 'my-team')
+        ? speakerTeam
+        : message.league.getTeam(inputTeamName)
 }
 
 /* [player <player-name> is] {available, unavailable} for round <round-number> in <league> */

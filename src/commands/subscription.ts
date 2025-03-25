@@ -9,6 +9,7 @@ import * as league from '../league'
 import * as db from '../models'
 import { SlackBot, CommandMessage } from '../slack'
 import { isDefined } from '../utils'
+import * as heltour from '../heltour'
 
 // The emitter we will use.
 import { EventEmitter } from 'events'
@@ -221,6 +222,7 @@ function processTellCommand(
         let team = message.league.getTeamByPlayerName(
             requester.lichess_username
         )
+
         const captainName =
             team && _(team.players).filter('isCaptain').map('username').value()
         const isCaptain =
@@ -272,6 +274,7 @@ function processTellCommand(
         }
         // Ensure the source is a valid user or team within slack
         const source = bot.getSlackUserFromNameOrID(sourceName)
+
         const teams = _league.getTeams()
         team = _.find(teams, (t) => {
             return t.name.toLowerCase() === sourceName.toLowerCase()
@@ -284,6 +287,7 @@ function processTellCommand(
         } else if (!_.isUndefined(team)) {
             sourceName = team.name
         }
+
         return db.Subscription.findOrCreate({
             where: {
                 requester: requester.lichess_username.toLowerCase(),
@@ -293,12 +297,15 @@ function processTellCommand(
                 target: target.toLowerCase(),
             },
         })
-            .then(() =>
-                resolve(
+            .then(([subscription, created]) => {
+                return resolve(
                     `Great! I will tell ${target} when ${event} for ${sourceName} in ${_league.name}`
                 )
-            )
-            .catch((error) => reject(error))
+            })
+            .catch((error) => {
+                winston.error('Database error:', error)
+                return reject(error)
+            })
     })
 }
 
@@ -397,7 +404,7 @@ export function register(bot: SlackBot, eventName: string, cb: Callback) {
                                 bot.startPrivateConversation([target])
                                     .then((convo) => {
                                         bot.say({
-                                            channel: convo.channel.id,
+                                            channel: convo.channel!.id!,
                                             text: message,
                                         })
                                         resolve()
@@ -519,19 +526,22 @@ export async function tellMeWhenHandler(
     message: CommandMessage
 ) {
     const convo = await bot.startPrivateConversation([message.user])
+    bot.say({
+        channel: convo.channel!.id!,
+        text: 'Dicks dicks extra dicks',
+    })
     return processTellCommand(bot, message)
         .then((response) => {
             bot.say({
-                channel: convo.channel.id,
+                channel: convo.channel!.id!,
                 text: response,
             })
         })
         .catch((error) => {
             winston.error(JSON.stringify(error))
             bot.say({
-                channel: convo.channel.id,
-                text:
-                    "I'm sorry, but an error occurred processing this subscription command",
+                channel: convo.channel!.id!,
+                text: "I'm sorry, but an error occurred processing this subscription command",
             })
         })
 }
@@ -542,7 +552,7 @@ export async function tellMeWhenHandler(
 export async function helpHandler(bot: SlackBot, message: CommandMessage) {
     const convo = await bot.startPrivateConversation([message.user])
     bot.say({
-        channel: convo.channel.id,
+        channel: convo.channel!.id!,
         text: formatHelpResponse(bot),
     })
 }
@@ -553,17 +563,16 @@ export async function helpHandler(bot: SlackBot, message: CommandMessage) {
 export async function listHandler(bot: SlackBot, message: CommandMessage) {
     const convo = await bot.startPrivateConversation([message.user])
     return processSubscriptionListCommand(bot, message)
-        .then((response) => {
-            bot.say({
-                channel: convo.channel.id,
+        .then(async (response) => {
+            await bot.say({
+                channel: convo.channel!.id!,
                 text: response,
             })
         })
         .catch((error) => {
             bot.say({
-                channel: convo.channel.id,
-                text:
-                    "I'm sorry, but an error occurred processing this subscription command",
+                channel: convo.channel!.id!,
+                text: "I'm sorry, but an error occurred processing this subscription command",
             })
             winston.error(JSON.stringify(error))
         })
@@ -577,15 +586,14 @@ export async function removeHandler(bot: SlackBot, message: CommandMessage) {
     return processSubscriptionRemoveCommand(bot, message, message.matches[1])
         .then((response) => {
             bot.say({
-                channel: convo.channel.id,
+                channel: convo.channel!.id!,
                 text: response,
             })
         })
         .catch((error) => {
             bot.say({
-                channel: convo.channel.id,
-                text:
-                    "I'm sorry, but an error occurred processing this subscription command",
+                channel: convo.channel!.id!,
+                text: "I'm sorry, but an error occurred processing this subscription command",
             })
             winston.error(JSON.stringify(error))
         })
@@ -599,17 +607,15 @@ export async function subscribeTeams(bot: SlackBot, message: CommandMessage) {
     return processTeamSubscribeCommand(bot, message)
         .then((response) => {
             bot.say({
-                channel: convo.channel.id,
+                channel: convo.channel!.id!,
                 text: response,
             })
         })
         .catch((error) => {
             bot.say({
-                channel: convo.channel.id,
-                text:
-                    "I'm sorry, but an error occurred processing this subscription command",
+                channel: convo.channel!.id!,
+                text: "I'm sorry, but an error occurred processing this subscription command",
             })
             winston.error(JSON.stringify(error))
         })
 }
-

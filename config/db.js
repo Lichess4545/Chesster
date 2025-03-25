@@ -2,6 +2,7 @@ var config = {
     development: {
         name: 'chesster',
         username: 'chesster',
+        databaseName: 'chesster',
         password: 'scrappypulpitgourdehinders',
         host: 'localhost',
         dialect: 'postgres',

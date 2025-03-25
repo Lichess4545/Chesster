@@ -95,18 +95,19 @@ export async function connect(config: ChessterConfig) {
             "We don't support anything but postgresql because I'm lazy"
         )
     }
+
+    // TODO Events Api: This path will obviously have to be changed in prod, this is my local path
     const sequelize = new Sequelize(
-        config.database.name,
-        config.database.username,
-        config.database.password,
-        { ...config.database, dialect: 'postgres' }
+        'sqlite:/Users/a/Documents/personalprojects/chessterstuff/Chesster/chesster.db.sqlite'
     )
 
     try {
+        winston.info('[models.connect()] Attempting to connect to database...')
         await sequelize.authenticate()
+        winston.info('[models.connect()] Database connection successful')
         defineModels(sequelize)
     } catch (e) {
-        winston.error(`[models.connect()] Error connection to db: ${e}`)
+        winston.error(`[models.connect()] Error connecting to db: ${e}`)
         throw e
     }
 }

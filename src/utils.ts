@@ -1,4 +1,5 @@
 export function hasKey<O>(obj: O, key: keyof any): key is keyof O {
+    // @ts-ignore - this was getting in my way when trying to build chesster locally
     return key in obj
 }
 export function isDefined<T>(obj: T | undefined): obj is T {
