@@ -77,8 +77,8 @@ class WatcherRequest {
             return
         }
         const body = this.usernames.join(',')
-        this.log.debug(
-            `Watching ${this.bot.config.watcherBaseURL} with ${body} users`
+        this.log.info(
+            `[CONNECT] Starting stream to ${this.bot.config.watcherBaseURL} for ${this.usernames.length} users`
         )
         const options = url.parse(this.bot.config.watcherBaseURL)
         let hasResponse = false
@@ -92,20 +92,22 @@ class WatcherRequest {
         })
         this.req
             .on('response', (res) => {
-                this.log.debug('Connected')
+                this.log.info(`[CONNECT] Connected to Lichess stream (status: ${res.statusCode})`)
                 res.on('data', (chunk) => {
                     const incoming = chunk.toString().trim()
                     this.log.debug(`Received data: [${incoming}]`)
                     try {
                         if (incoming === '') {
-                            this.log.info('Received empty ping. :)')
+                            this.log.debug('Received empty ping. :)')
                             return
                         }
+                        this.log.debug(`[STREAM] Received chunk: ${chunk.length} bytes`)
                         const details = lichess.GameDetailsDecoder.decodeJSON(
                             incoming
                         )
                         this.log.info(
-                            `Received game details: ${JSON.stringify(details)}`
+                            `[GAME] Received: id=${details.id}, status=${details.status}, ` +
+                            `white=${details.players.white.user}, black=${details.players.black.user}`
                         )
                         Q.all(
                             this.leagues.map((l) =>
@@ -124,8 +126,8 @@ class WatcherRequest {
                             }
                         )
                     } catch (e) {
-                        this.log.error(JSON.stringify(e))
-                        this.log.error('Ending request due to error in content')
+                        this.log.error(`[STREAM] JSON parse error: ${e instanceof Error ? e.message : String(e)}`)
+                        this.log.error(`[STREAM] Failed chunk (${incoming.length} bytes): [${incoming.substring(0, 200)}]${incoming.length > 200 ? '...' : ''}`)
                         if (this.req) {
                             this.req.abort()
                         }
@@ -147,7 +149,7 @@ class WatcherRequest {
                 hasResponse = true
             })
             .on('error', (e) => {
-                this.log.error(JSON.stringify(e))
+                this.log.error(`[CONNECT] Request error (hasResponse=${hasResponse}): ${JSON.stringify(e)}`))
                 // If we have a response, the above res.on('end') gets called even in this case.
                 // So let the above restart the watcher
                 if (!hasResponse) {
@@ -187,6 +189,7 @@ class WatcherRequest {
 
     // -------------------------------------------------------------------------
     async processGameDetails(details: lichess.GameDetails) {
+        this.log.info(`[PROCESS] Processing game ${details.id}: ${details.players.white.user} vs ${details.players.black.user}`) //First step
         fp.each(async (league) => {
             // 1. perfect match any time, try to update.
             // 2. pairing + time control match any time, warn for other mismatches
@@ -195,17 +198,18 @@ class WatcherRequest {
                 !isDefined(league.config.gamelinks) ||
                 !isDefined(league.config.results)
             ) {
+                this.log.debug(`[PROCESS] ${league.name}: Skipping - no gamelinks/results config`)
                 return
             }
             const gamelinks: config.GameLinks = league.config.gamelinks
             const results: config.Results = league.config.results
 
             const result = games.validateGameDetails(league, details)
-            this.log.info(`Validation result: ${JSON.stringify(result)}`)
+            this.log.info(`[PROCESS] ${league.name}: valid=${result.valid}, reason=${result.reason || 'none'}`)
             // If we don't have a pairing from this information, then it will
             // never be valid. Ignore it.
             if (!result.pairing) {
-                this.log.info(`No pairing so ignoring!`)
+                this.log.debug(`[PROCESS] ${league.name}: No matching pairing, ignoring`)
                 return
             }
             const white = result.pairing.white.toLowerCase()
@@ -222,7 +226,7 @@ class WatcherRequest {
             if (result.valid) {
                 if (result.pairing.result !== ResultsEnum.UNKNOWN) {
                     this.log.info(
-                        `Received VALID game but result already exists`
+                        `[PROCESS] ${league.name}: Game ${details.id} valid but result already exists`
                     )
                     if (details.status === STARTED) {
                         this.bot.say({
@@ -238,7 +242,7 @@ class WatcherRequest {
                     !result.pairing.url.endsWith(details.id)
                 ) {
                     this.log.info(
-                        `Received VALID game but game link does not match`
+                        `[PROCESS] ${league.name}: Game ${details.id} valid but gamelink mismatch (existing: ${result.pairing.url})`
                     )
                     if (details.status === STARTED) {
                         this.bot.say({
@@ -250,7 +254,7 @@ class WatcherRequest {
                         })
                     }
                 } else {
-                    this.log.info('Received VALID AND NEEDED game!')
+                    this.log.info(`[PROCESS] ${league.name}: Game ${details.id} valid and needed`)
                     // Fetch the game details from the lichess games API because updateGamelink is more picky about the details format
                     // This could be obviated by an enhancement to the game-stream API
                     try {
@@ -299,7 +303,7 @@ class WatcherRequest {
                 result.claimVictoryNotAllowed ||
                 result.cheatDetected
             ) {
-                this.log.info('Received INVALID game')
+                this.log.info(`[PROCESS] ${league.name}: Game ${details.id} invalid - ${result.reason}`)
 
                 const hours = Math.abs(now.diff(scheduledDate, 'hours'))
                 if (
@@ -442,6 +446,9 @@ export default class Watcher {
             this.log.info(
                 `Watching ${this.usernames.length} names with ${this.watcherRequests.length} requests`
             )
+        } else {
+             // Visibility of potential exceptions
+            this.log.debug('[WATCHER] No restart needed - usernames unchanged and no forceRestart')
         }
     }
 }
