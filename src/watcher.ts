@@ -127,6 +127,7 @@ class WatcherRequest {
                         )
                     } catch (e) {
                         this.log.error(`[STREAM] JSON parse error: ${e instanceof Error ? e.message : String(e)}`)
+                        this.needsRestart = true
                         this.log.error(`[STREAM] Failed chunk (${incoming.length} bytes): [${incoming.substring(0, 200)}]${incoming.length > 200 ? '...' : ''}`)
                         if (this.req) {
                             this.req.abort()
