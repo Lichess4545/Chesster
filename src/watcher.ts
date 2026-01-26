@@ -190,7 +190,7 @@ class WatcherRequest {
 
     // -------------------------------------------------------------------------
     async processGameDetails(details: lichess.GameDetails) {
-        this.log.info(`[PROCESS] Processing game ${details.id}: ${details.players.white.user} vs ${details.players.black.user}`) //First step
+        this.log.info(`[PROCESS] Processing game ${details.id}: ${details.players.white.user} vs ${details.players.black.user}`)
         fp.each(async (league) => {
             // 1. perfect match any time, try to update.
             // 2. pairing + time control match any time, warn for other mismatches
