@@ -150,7 +150,7 @@ class WatcherRequest {
                 hasResponse = true
             })
             .on('error', (e) => {
-                this.log.error(`[CONNECT] Request error (hasResponse=${hasResponse}): ${JSON.stringify(e)}`))
+                this.log.error(`[CONNECT] Request error (hasResponse=${hasResponse}): ${JSON.stringify(e)}`)
                 // If we have a response, the above res.on('end') gets called even in this case.
                 // So let the above restart the watcher
                 if (!hasResponse) {
@@ -448,7 +448,7 @@ export default class Watcher {
                 `Watching ${this.usernames.length} names with ${this.watcherRequests.length} requests`
             )
         } else {
-             // Visibility of potential exceptions
+            // Visibility of potential exceptions
             this.log.debug('[WATCHER] No restart needed - usernames unchanged and no forceRestart')
         }
     }
