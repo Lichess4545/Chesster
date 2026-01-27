@@ -1,15 +1,19 @@
 import { assert } from 'chai'
 import moment from 'moment'
 import * as games from '../src/commands/games'
-import * as slack from '../src/slack'
+import { SlackBot } from '../src/slack'
 import * as league from '../src/league'
 import * as lichess from '../src/lichess'
-import { isDefined } from '../src/utils'
+import * as config from '../src/config'
 import winston from 'winston'
 winston.add(
     new winston.transports.Console({
         format: winston.format.simple(),
     })
+)
+
+const testConfig: config.ChessterConfig = config.ChessterConfigDecoder.decodeJSON(
+    JSON.stringify(require('../config/testconfig.js'))
 )
 
 interface ExpectedResults {
@@ -129,14 +133,10 @@ describe('games', function () {
 
     describe('#validateGameDetails', function () {
         it('Tests game details validation.', function () {
-            var configFile = '../config/testconfig.js'
-            let chesster = new slack.SlackBot('lichess4545', configFile)
-            let mockLeagueOr = league.getLeague(chesster, '45+45')
-            if (!isDefined(mockLeagueOr)) {
-                assert.fail('Unable to load league')
-                return
-            }
-            let mockLeague: league.League = mockLeagueOr
+            const leagueConfig = testConfig.leagues['45+45']
+            leagueConfig.name = '45+45'
+            const mockBot = {} as SlackBot
+            const mockLeague = new league.League(mockBot, '45+45', leagueConfig)
 
             // Set the reference date for testing.
             if (mockLeague.config.scheduling)
