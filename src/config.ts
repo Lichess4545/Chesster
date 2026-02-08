@@ -12,6 +12,7 @@ import {
     andThen,
     oneOf,
     dict,
+    succeed,
 } from 'type-safe-json-decoder'
 
 export interface Heltour {
@@ -330,6 +331,27 @@ export const DatabaseDecoder: Decoder<Database> = object(
     })
 )
 
+export interface WatcherConfig {
+    inactivityTimeoutMinutes: number
+    maxBackoffSeconds: number
+    healthLogIntervalMinutes: number
+}
+export const WatcherConfigDecoder: Decoder<WatcherConfig> = object(
+    ['inactivityTimeoutMinutes', number()],
+    ['maxBackoffSeconds', number()],
+    ['healthLogIntervalMinutes', number()],
+    (inactivityTimeoutMinutes, maxBackoffSeconds, healthLogIntervalMinutes) => ({
+        inactivityTimeoutMinutes,
+        maxBackoffSeconds,
+        healthLogIntervalMinutes,
+    })
+)
+export const DEFAULT_WATCHER_CONFIG: WatcherConfig = {
+    inactivityTimeoutMinutes: 10,
+    maxBackoffSeconds: 60,
+    healthLogIntervalMinutes: 5,
+}
+
 export interface ChessterConfig {
     database: Database
     heltour: Heltour
@@ -344,8 +366,10 @@ export interface ChessterConfig {
     messageForwarding: MessageForwarding
     pingMods: ChannelModMap
     welcome: Welcome
+    watcher: WatcherConfig
 }
-export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
+
+const BaseChessterConfigDecoder: Decoder<Omit<ChessterConfig, 'watcher'>> = object(
     ['database', DatabaseDecoder],
     ['heltour', HeltourDecoder],
     ['storage', string()],
@@ -388,4 +412,27 @@ export const ChessterConfigDecoder: Decoder<ChessterConfig> = object(
         pingMods,
         welcome,
     })
+)
+
+const ChessterConfigWithWatcherDecoder: Decoder<ChessterConfig> = andThen(
+    BaseChessterConfigDecoder,
+    (base) =>
+        object(['watcher', WatcherConfigDecoder], (watcher) => ({
+            ...base,
+            watcher,
+        }))
+)
+
+const ChessterConfigWithDefaultsDecoder: Decoder<ChessterConfig> = andThen(
+    BaseChessterConfigDecoder,
+    (base) =>
+        succeed({
+            ...base,
+            watcher: DEFAULT_WATCHER_CONFIG,
+        })
+)
+
+export const ChessterConfigDecoder: Decoder<ChessterConfig> = oneOf(
+    ChessterConfigWithWatcherDecoder,
+    ChessterConfigWithDefaultsDecoder
 )

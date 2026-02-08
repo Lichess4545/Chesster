@@ -9,7 +9,6 @@ import { ClientRequest } from 'http'
 import _https from 'https'
 import url from 'url'
 import moment from 'moment-timezone'
-import Q from 'q'
 
 // local imports
 import * as games from './commands/games'
@@ -22,29 +21,31 @@ import { SlackBot } from './slack'
 import { isDefined } from './utils'
 
 const WATCHER_MAX_USERNAMES = 900
-
-// TODO: stop using these
-const BACKOFF_TIMEOUT = 10
-// const CREATED = 10;
 const STARTED = 20
-// const ABORTED = 25;
-// const MATE = 30;
-// const RESIGN = 31;
-// const STALEMATE = 32;
-// const TIMEOUT = 33;
-// const DRAW = 34;
-// const OUT_OF_TIME = 35;
-// const CHEAT = 36;
-// const NO_START = 37;
-// const UNKNOWN_FINISH = 38;
-// const VARIANT_END = 60;
+
+type ConnectionState =
+    | 'disconnected'
+    | 'connecting'
+    | 'connected'
+    | 'backing_off'
 
 class WatcherRequest {
     req: undefined | ClientRequest = undefined
-    private started?: moment.Moment
-    private log: LogWithPrefix = new LogWithPrefix('WatcherRequest')
+    private log: LogWithPrefix
     private fullyQuit = false
-    needsRestart: boolean = false
+
+    private state: ConnectionState = 'disconnected'
+    private connectedAt: number | undefined
+    private lastDataAt: number | undefined
+
+    private backoffSeconds = 1
+    private reconnectTimer: ReturnType<typeof setTimeout> | undefined
+    private inactivityTimer: ReturnType<typeof setTimeout> | undefined
+    private healthTimer: ReturnType<typeof setInterval> | undefined
+
+    private lineBuffer = ''
+
+    private watcherConfig: config.WatcherConfig
 
     constructor(
         public bot: SlackBot,
@@ -53,29 +54,89 @@ class WatcherRequest {
         public id: number
     ) {
         this.log = new LogWithPrefix(`WatcherRequest: ${this.id}`)
+        this.watcherConfig = bot.config.watcher
+    }
+
+    get isDown(): boolean {
+        return this.state === 'backing_off' || this.state === 'disconnected'
+    }
+
+    private setState(newState: ConnectionState) {
+        if (this.state !== newState) {
+            this.log.info(`State: ${this.state} -> ${newState}`)
+            this.state = newState
+        }
+    }
+
+    private resetInactivityTimer() {
+        if (this.inactivityTimer) {
+            clearTimeout(this.inactivityTimer)
+        }
+        const timeoutMs =
+            this.watcherConfig.inactivityTimeoutMinutes * 60 * 1000
+        this.inactivityTimer = setTimeout(() => {
+            this.log.warn(
+                `No data received for ${this.watcherConfig.inactivityTimeoutMinutes} minutes, reconnecting`
+            )
+            this.destroyAndReconnect()
+        }, timeoutMs)
+    }
+
+    private startHealthLogging() {
+        this.stopHealthLogging()
+        const intervalMs =
+            this.watcherConfig.healthLogIntervalMinutes * 60 * 1000
+        this.healthTimer = setInterval(() => {
+            const now = Date.now()
+            const uptimeSeconds = this.connectedAt
+                ? Math.round((now - this.connectedAt) / 1000)
+                : 0
+            const lastDataSeconds = this.lastDataAt
+                ? Math.round((now - this.lastDataAt) / 1000)
+                : -1
+            this.log.info(
+                `Health: state=${this.state} uptime=${uptimeSeconds}s lastData=${lastDataSeconds}s users=${this.usernames.length}`
+            )
+        }, intervalMs)
+    }
+
+    private stopHealthLogging() {
+        if (this.healthTimer) {
+            clearInterval(this.healthTimer)
+            this.healthTimer = undefined
+        }
+    }
+
+    private scheduleReconnect() {
+        if (this.fullyQuit) {
+            this.setState('disconnected')
+            return
+        }
+        this.setState('backing_off')
+        this.log.info(`Reconnecting in ${this.backoffSeconds}s`)
+        this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = undefined
+            this.watch()
+        }, this.backoffSeconds * 1000)
+        this.backoffSeconds = Math.min(
+            this.backoffSeconds * 2,
+            this.watcherConfig.maxBackoffSeconds
+        )
+    }
+
+    private destroyAndReconnect() {
+        if (this.req) {
+            this.req.destroy()
+            this.req = undefined
+        }
+        this.scheduleReconnect()
     }
 
     watch() {
-        if (this.stop()) {
-            return // The .on('end') handler will restart us.
-        }
+        this.stop()
+        this.setState('connecting')
+        this.lineBuffer = ''
 
-        // Guard against hammering lichess when it's down and feeding us errors.
-        // In this case, if we get two errors in 10s, we'll wait till the next
-        // refressh which will eventually wait 2 minutes between requests.
-        const lastStarted = this.started
-        this.started = moment.utc()
-        if (
-            lastStarted &&
-            this.started.unix() - lastStarted.unix() < BACKOFF_TIMEOUT
-        ) {
-            this.log.warn(
-                `Backing off the watcher due to two starts in 10s: ${this.started.unix() - lastStarted.unix()
-                }s`
-            )
-            this.needsRestart = true
-            return
-        }
         const body = this.usernames.join(',')
         this.log.info(
             `[CONNECT] Starting stream to ${this.bot.config.watcherBaseURL} for ${this.usernames.length} users`
@@ -92,105 +153,144 @@ class WatcherRequest {
         })
         this.req
             .on('response', (res) => {
-                this.log.info(`[CONNECT] Connected to Lichess stream (status: ${res.statusCode})`)
-                res.on('data', (chunk) => {
-                    const incoming = chunk.toString().trim()
-                    this.log.debug(`Received data: [${incoming}]`)
-                    try {
-                        if (incoming === '') {
-                            this.log.debug('Received empty ping. :)')
-                            return
-                        }
-                        this.log.debug(`[STREAM] Received chunk: ${chunk.length} bytes`)
-                        const details = lichess.GameDetailsDecoder.decodeJSON(
-                            incoming
+                hasResponse = true
+
+                if (res.statusCode !== 200) {
+                    let errorBody = ''
+                    res.on('data', (chunk) => {
+                        errorBody += chunk.toString()
+                    })
+                    res.on('end', () => {
+                        this.log.error(
+                            `HTTP ${res.statusCode}: ${errorBody.slice(0, 500)}`
                         )
-                        this.log.info(
-                            `[GAME] Received: id=${details.id}, status=${details.status}, ` +
-                            `white=${details.players.white.user}, black=${details.players.black.user}`
-                        )
-                        Q.all(
-                            this.leagues.map((l) =>
-                                l.refreshCurrentRoundSchedules()
-                            )
-                        ).then(
-                            () => {
-                                this.processGameDetails(details)
-                            },
-                            (error) => {
-                                this.log.error(
-                                    `Error refreshing pairings: ${JSON.stringify(
-                                        error
-                                    )}`
-                                )
-                            }
-                        )
-                    } catch (e) {
-                        this.log.error(`[STREAM] JSON parse error: ${e instanceof Error ? e.message : String(e)}`)
-                        this.needsRestart = true
-                        this.log.error(`[STREAM] Failed chunk (${incoming.length} bytes): [${incoming.substring(0, 200)}]${incoming.length > 200 ? '...' : ''}`)
-                        if (this.req) {
-                            this.req.abort()
-                        }
                         this.req = undefined
+                        if (res.statusCode === 429) {
+                            this.backoffSeconds = Math.max(
+                                this.backoffSeconds,
+                                60
+                            )
+                        }
+                        this.scheduleReconnect()
+                    })
+                    return
+                }
+
+                this.setState('connected')
+                this.connectedAt = Date.now()
+                this.resetInactivityTimer()
+                this.startHealthLogging()
+
+                res.on('data', (chunk) => {
+                    this.lastDataAt = Date.now()
+                    this.resetInactivityTimer()
+
+                    this.lineBuffer += chunk.toString()
+                    const lines = this.lineBuffer.split('\n')
+                    this.lineBuffer = lines.pop()!
+
+                    for (const line of lines) {
+                        const trimmed = line.trim()
+                        if (trimmed === '') {
+                            this.log.debug('Received ping')
+                            this.backoffSeconds = 1
+                            continue
+                        }
+                        this.backoffSeconds = 1
+                        this.log.debug(`Received data: [${trimmed}]`)
+                        try {
+                            const details =
+                                lichess.GameDetailsDecoder.decodeJSON(trimmed)
+                            this.log.info(
+                                `Received game details: ${JSON.stringify(details)}`
+                            )
+                            Promise.all(
+                                this.leagues.map((l) =>
+                                    l.refreshCurrentRoundSchedules()
+                                )
+                            ).then(
+                                () => {
+                                    this.processGameDetails(details)
+                                },
+                                (error) => {
+                                    this.log.error(
+                                        `Error refreshing pairings: ${JSON.stringify(
+                                            error
+                                        )}`
+                                    )
+                                }
+                            )
+                        } catch (e) {
+                            this.log.error(
+                                `JSON parse error (continuing): ${e instanceof Error ? e.message : JSON.stringify(e)}`
+                            )
+                        }
                     }
                 })
                 res.on('end', () => {
-                    this.log.info('WatcherRequest response ended')
+                    this.log.info('Response stream ended')
                     this.req = undefined
+                    this.stopHealthLogging()
+                    if (this.inactivityTimer) {
+                        clearTimeout(this.inactivityTimer)
+                        this.inactivityTimer = undefined
+                    }
                     if (!this.fullyQuit) {
-                        this.log.info(`Restarting watcher`)
-                        this.watch()
+                        this.scheduleReconnect()
                     } else {
+                        this.setState('disconnected')
                         this.log.info(
-                            `Not restarting as I've been asked to go down`
+                            "Not restarting as I've been asked to go down"
                         )
                     }
                 })
-                hasResponse = true
             })
             .on('error', (e) => {
-                this.log.error(`[CONNECT] Request error (hasResponse=${hasResponse}): ${JSON.stringify(e)}`)
-                // If we have a response, the above res.on('end') gets called even in this case.
-                // So let the above restart the watcher
+                this.log.error(
+                    `[CONNECT] Request error (hasResponse=${hasResponse}): ${e instanceof Error ? e.message : JSON.stringify(e)}`
+                )
                 if (!hasResponse) {
                     this.req = undefined
                     if (!this.fullyQuit) {
-                        this.log.info(`Restarting watcher`)
-                        this.watch()
+                        this.scheduleReconnect()
                     } else {
-                        this.log.info(
-                            `Not restarting as I've been asked to go down`
-                        )
+                        this.setState('disconnected')
                     }
                 }
             })
-        // Setting 0 for initialDelay (2nd param) will leave the value
-        // unchanged from the default (or previous) setting.
         this.req.setSocketKeepAlive(true, 0)
         this.req.write(body)
         this.req.end()
     }
 
-    stop(): boolean {
-        // Ensure we close/abort any previous request before starting a new one.
+    stop() {
         if (this.req) {
-            this.req.abort()
+            this.req.destroy()
             this.req = undefined
-            return true
         }
-        return false
     }
 
-    quit(): void {
+    quit() {
         this.log.info('Asked to quit, going down')
         this.fullyQuit = true
         this.stop()
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer)
+            this.reconnectTimer = undefined
+        }
+        if (this.inactivityTimer) {
+            clearTimeout(this.inactivityTimer)
+            this.inactivityTimer = undefined
+        }
+        this.stopHealthLogging()
+        this.setState('disconnected')
     }
 
     // -------------------------------------------------------------------------
     async processGameDetails(details: lichess.GameDetails) {
-        this.log.info(`[PROCESS] Processing game ${details.id}: ${details.players.white.user} vs ${details.players.black.user}`)
+        this.log.info(
+            `[PROCESS] Processing game ${details.id}: ${details.players.white.user} vs ${details.players.black.user}`
+        )
         fp.each(async (league) => {
             // 1. perfect match any time, try to update.
             // 2. pairing + time control match any time, warn for other mismatches
@@ -199,18 +299,24 @@ class WatcherRequest {
                 !isDefined(league.config.gamelinks) ||
                 !isDefined(league.config.results)
             ) {
-                this.log.debug(`[PROCESS] ${league.name}: Skipping - no gamelinks/results config`)
+                this.log.debug(
+                    `[PROCESS] ${league.name}: Skipping - no gamelinks/results config`
+                )
                 return
             }
             const gamelinks: config.GameLinks = league.config.gamelinks
             const results: config.Results = league.config.results
 
             const result = games.validateGameDetails(league, details)
-            this.log.info(`[PROCESS] ${league.name}: valid=${result.valid}, reason=${result.reason || 'none'}`)
+            this.log.info(
+                `[PROCESS] ${league.name}: valid=${result.valid}, reason=${result.reason || 'none'}`
+            )
             // If we don't have a pairing from this information, then it will
             // never be valid. Ignore it.
             if (!result.pairing) {
-                this.log.debug(`[PROCESS] ${league.name}: No matching pairing, ignoring`)
+                this.log.debug(
+                    `[PROCESS] ${league.name}: No matching pairing, ignoring`
+                )
                 return
             }
             const white = result.pairing.white.toLowerCase()
@@ -255,7 +361,9 @@ class WatcherRequest {
                         })
                     }
                 } else {
-                    this.log.info(`[PROCESS] ${league.name}: Game ${details.id} valid and needed`)
+                    this.log.info(
+                        `[PROCESS] ${league.name}: Game ${details.id} valid and needed`
+                    )
                     // Fetch the game details from the lichess games API because updateGamelink is more picky about the details format
                     // This could be obviated by an enhancement to the game-stream API
                     try {
@@ -263,10 +371,11 @@ class WatcherRequest {
                             details.id
                         )
                         try {
-                            const updatePairingResult = await games.updateGamelink(
-                                league,
-                                detailsFromApi
-                            )
+                            const updatePairingResult =
+                                await games.updateGamelink(
+                                    league,
+                                    detailsFromApi
+                                )
                             if (updatePairingResult.gameLinkChanged) {
                                 this.bot.say({
                                     text:
@@ -304,7 +413,9 @@ class WatcherRequest {
                 result.claimVictoryNotAllowed ||
                 result.cheatDetected
             ) {
-                this.log.info(`[PROCESS] ${league.name}: Game ${details.id} invalid - ${result.reason}`)
+                this.log.info(
+                    `[PROCESS] ${league.name}: Game ${details.id} invalid - ${result.reason}`
+                )
 
                 const hours = Math.abs(now.diff(scheduledDate, 'hours'))
                 if (
@@ -370,7 +481,10 @@ export default class Watcher {
 
     private log: LogWithPrefix = new LogWithPrefix('Watcher')
 
-    constructor(public bot: SlackBot, public leagues: League[]) {
+    constructor(
+        public bot: SlackBot,
+        public leagues: League[]
+    ) {
         this.watcherRequests = []
         this.log.info('Starting watcher')
 
@@ -415,15 +529,10 @@ export default class Watcher {
                 .map((u) => u.toLowerCase())
                 .sort()
         )
-        // See if any of our requests are down due to a bad request.
-        const forceRestart = this.watcherRequests.reduce(
-            (v, n) => v || n.needsRestart,
-            false
-        )
+        const forceRestart = this.watcherRequests.some((r) => r.isDown)
         if (!_.isEqual(newUsernames, this.usernames) || forceRestart) {
-            // Check to see if we were restarted due to a bad request.
             if (forceRestart) {
-                this.log.info('Restart forced.')
+                this.log.info('Restart forced due to down watcher request.')
             }
             this.clear()
             this.usernames = newUsernames
@@ -449,7 +558,9 @@ export default class Watcher {
             )
         } else {
             // Visibility of potential exceptions
-            this.log.debug('[WATCHER] No restart needed - usernames unchanged and no forceRestart')
+            this.log.debug(
+                '[WATCHER] No restart needed - usernames unchanged and no forceRestart'
+            )
         }
     }
 }
