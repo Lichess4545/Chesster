@@ -281,6 +281,61 @@ var config = {
                     'https://www.lichess4545.com/chess960/notifications/',
             },
         },
+        blindfold: {
+            name: 'Blindfold',
+            alsoKnownAs: ['blindfold', 'bf'],
+            alternate: undefined,
+            heltour: {
+                token: HELTOUR_TOKEN,
+                baseEndpoint: 'https://www.lichess4545.com/api/',
+                leagueTag: 'blindfold',
+            },
+            results: {
+                channel: 'blindfold-games',
+                channelId: 'CFCL0RWET',
+            },
+            gamelinks: {
+                channel: 'blindfold-games',
+                channelId: 'CFCL0RWET',
+                clock: {
+                    initial: 15,
+                    increment: 15,
+                },
+                rated: true,
+                variant: 'standard',
+            },
+            alternate: undefined,
+            scheduling: {
+                extrema: {
+                    isoWeekday: 1,
+                    hour: 22,
+                    minute: 0,
+                    warningHours: 1,
+                },
+                warningMessage:
+                    "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
+                lateMessage:
+                    "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
+                format: 'MM/DD HH:mm',
+                channel: 'blindfold-scheduling',
+            },
+            links: {
+                faq: '',
+                rules: 'https://www.lichess4545.com/blindfold/document/rules/',
+                league: 'https://www.lichess4545.com/blindfold/',
+                pairings: 'https://www.lichess4545.com/blindfold/pairings/',
+                standings: 'https://www.lichess4545.com/blindfold/standings/',
+                guide: '',
+                captains: '',
+                registration:
+                    'https://www.lichess4545.com/blindfold/register/',
+                availability:
+                    'https://www.lichess4545.com/blindfold/availability/edit/',
+                nominate: 'https://www.lichess4545.com/blindfold/nominate/',
+                notifications:
+                    'https://www.lichess4545.com/blindfold/notifications/',
+            },
+        },
     },
     channelMap: {
         'lonewolf-general': 'lonewolf',
@@ -297,6 +352,9 @@ var config = {
         chess960: 'chess960',
         chess960games: 'chess960',
         chess960scheduling: 'chess960',
+        'blindfold-scheduling': 'blindfold',
+        'blindfold-games': 'blindfold',
+        'blindfold': 'blindfold',
     },
     messageForwarding: {
         channelId: 'C08HZL49YH0',
