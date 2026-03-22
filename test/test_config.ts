@@ -313,5 +313,35 @@ describe('config types', function () {
             assert(config.leagues['45+45'].scheduling.extrema.hour == 11)
             assert(config.leagues['45+45'].scheduling.extrema.warningHours == 1)
         })
+
+        it('applies default watcher config when not provided', () => {
+            const decoded = ChessterConfigDecoder.decodeJSON(
+                JSON.stringify(config)
+            )
+            assert.deepEqual(decoded.watcher, {
+                inactivityTimeoutMinutes: 10,
+                maxBackoffSeconds: 60,
+                healthLogIntervalMinutes: 5,
+            })
+        })
+
+        it('decodes explicit watcher config', () => {
+            const configWithWatcher = {
+                ...config,
+                watcher: {
+                    inactivityTimeoutMinutes: 15,
+                    maxBackoffSeconds: 120,
+                    healthLogIntervalMinutes: 2,
+                },
+            }
+            const decoded = ChessterConfigDecoder.decodeJSON(
+                JSON.stringify(configWithWatcher)
+            )
+            assert.deepEqual(decoded.watcher, {
+                inactivityTimeoutMinutes: 15,
+                maxBackoffSeconds: 120,
+                healthLogIntervalMinutes: 2,
+            })
+        })
     })
 })
