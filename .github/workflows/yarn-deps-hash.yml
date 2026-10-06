@@ -1,0 +1,40 @@
+name: Yarn deps hash
+
+on:
+  pull_request:
+    paths: [yarn.lock, yarn-deps.hash]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.head_ref }}
+      - uses: cachix/install-nix-action@v31
+
+      - id: hash
+        run: ci/yarn-deps-hash.sh || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Push hash
+        if: >-
+          steps.hash.outputs.changed == 'true'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && github.actor != 'dependabot[bot]'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: update yarn-deps.hash for yarn.lock" yarn-deps.hash
+          git push
+
+      - name: Fail on stale hash
+        if: >-
+          steps.hash.outputs.changed == 'true'
+          && (github.event.pull_request.head.repo.full_name != github.repository
+          || github.actor == 'dependabot[bot]')
+        run: |
+          echo "::error::yarn-deps.hash is stale. Run ci/yarn-deps-hash.sh and commit yarn-deps.hash."
+          exit 1

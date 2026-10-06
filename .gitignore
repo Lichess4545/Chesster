@@ -31,3 +31,4 @@ copilot-instructions.md
 .devenv
 .devenv.flake.nix
 result
+.pre-commit-config.yaml
