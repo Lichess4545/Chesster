@@ -1,0 +1,14 @@
+services:
+  app:
+    image: ghcr.io/lichess4545/chesster:1.0.3
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=${DATABASE_URL:?required}
+      - CHESSTER_HELTOUR_TOKEN=${CHESSTER_HELTOUR_TOKEN:?required}
+      - CHESSTER_LICHESS_TOKEN=${CHESSTER_LICHESS_TOKEN:?required}
+      - LICHESS_4545_APP_TOKEN=${LICHESS_4545_APP_TOKEN:?required}
+      - LICHESS_4545_SIGNING_SECRET=${LICHESS_4545_SIGNING_SECRET:?required}
+      - LICHESS_4545_BOT_TOKEN=${LICHESS_4545_BOT_TOKEN:?required}
+      - FORWARD_APP_TOKEN=${FORWARD_APP_TOKEN:?required}
+      - FORWARD_SIGNING_SECRET=${FORWARD_SIGNING_SECRET:?required}
+      - FORWARD_BOT_TOKEN=${FORWARD_BOT_TOKEN:?required}

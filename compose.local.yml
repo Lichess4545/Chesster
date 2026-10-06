@@ -1,0 +1,6 @@
+services:
+  app:
+    image: chesster:latest
+    network_mode: host
+    env_file: .env
+    command: ["../config/testconfig"]

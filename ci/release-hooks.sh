@@ -35,13 +35,18 @@ describe() {
   fi
   printf '%-9s %s:%s\n' image "$published_image" "${version#v}"
   printf '%-9s %s\n' ':latest' "$latest"
+  printf '%-9s %s\n' compose "compose.yml deploys ${version#v}"
 }
 
 set_version() {
-  local version=${1-} updated
+  local version=${1-} updated pattern="^(    image: $published_image:).*$"
+  (($(grep -cE "$pattern" compose.yml) == 1)) \
+    || refuse "compose.yml must have exactly one '    image: $published_image:' line"
+
   updated=$(jq --indent 4 --arg version "${version#v}" '.version = $version' package.json) || return 1
   printf '%s\n' "$updated" >package.json
-  printf 'package.json\n'
+  sed -i -E "s|$pattern|\\1${version#v}|" compose.yml
+  printf 'package.json\ncompose.yml\n'
 }
 
 case ${1-} in
