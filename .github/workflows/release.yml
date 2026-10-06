@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@v31
+
+      - name: Add release guards to PATH
+        run: |
+          guards=$(nix build --no-link --print-out-paths .#release-guards)
+          echo "$guards/bin" >> "$GITHUB_PATH"
+
+      - name: Resolve version
+        run: |
+          release-guards assert-releasable "$GITHUB_REF_NAME"
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          echo "RELEASE_COMMIT=$(git rev-parse "$GITHUB_SHA^{commit}")" >> "$GITHUB_ENV"
+          if release-guards is-stable "$GITHUB_REF_NAME"; then
+            echo "IS_STABLE_RELEASE=true" >> "$GITHUB_ENV"
+          else
+            echo "IS_STABLE_RELEASE=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Require a commit on main
+        run: release-guards assert-on-main "$RELEASE_COMMIT"
+
+      - name: Write registries.conf
+        run: |
+          cat > "$RUNNER_TEMP/registries.conf" <<'CONF'
+          unqualified-search-registries = ["docker.io"]
+          CONF
+          echo "CONTAINERS_REGISTRIES_CONF=$RUNNER_TEMP/registries.conf" >> "$GITHUB_ENV"
+
+      - name: Log in to ghcr.io
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$REGISTRY_TOKEN" | nix run nixpkgs#skopeo -- login \
+            --username "$GITHUB_ACTOR" \
+            --password-stdin \
+            --authfile "$RUNNER_TEMP/ghcr-auth.json" \
+            ghcr.io
+          echo "GHCR_AUTHFILE=$RUNNER_TEMP/ghcr-auth.json" >> "$GITHUB_ENV"
+
+      - name: Require an unpublished version
+        run: ci/release-hooks.sh assert-unpublished "$GITHUB_REF_NAME"
+
+      - run: nix flake check --print-build-logs
+
+      - name: Build image
+        run: nix build .#container --print-build-logs
+
+      - name: Push version tag
+        run: |
+          nix run nixpkgs#skopeo -- copy \
+            --dest-authfile "$GHCR_AUTHFILE" \
+            docker-archive:result \
+            "docker://$(ci/release-hooks.sh image):${VERSION}"
+
+      - name: Push latest tag
+        if: env.IS_STABLE_RELEASE == 'true'
+        run: |
+          nix run nixpkgs#skopeo -- copy \
+            --dest-authfile "$GHCR_AUTHFILE" \
+            docker-archive:result \
+            "docker://$(ci/release-hooks.sh image):latest"
