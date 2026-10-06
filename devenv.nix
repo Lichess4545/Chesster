@@ -16,4 +16,13 @@
       pass = "scrappypulpitgourdehinders";
     }];
   };
+
+  packages = [
+    pkgs.gh
+    pkgs.git-cliff
+    pkgs.jq
+    pkgs.skopeo
+  ];
+
+  scripts.release.exec = ''cd "$DEVENV_ROOT" && exec nix run "$DEVENV_ROOT#release" -- "$@"'';
 }

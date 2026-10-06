@@ -52,11 +52,20 @@
         };
       in
       {
-        checks = { inherit container; };
+        checks = {
+          inherit container;
+          release-guards-hold = pkgs.releaseGuardsTest;
+        };
 
         packages = {
           inherit chesster container;
           default = container;
+          release = pkgs.mkReleaseCommand {
+            repositoryUrl = "https://github.com/Lichess4545/Chesster";
+            hooks = ./ci/release-hooks.sh;
+            releaseWorkflow = "release.yml";
+          };
+          release-guards = pkgs.releaseGuards;
         };
       });
 }
