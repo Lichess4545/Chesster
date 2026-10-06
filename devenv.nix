@@ -9,6 +9,11 @@
 
   services.postgres = {
     enable = true;
-    initialDatabases = [{ name = "chesster"; }];
+    listen_addresses = "127.0.0.1";
+    initialDatabases = [{
+      name = "chesster";
+      user = "chesster";
+      pass = "scrappypulpitgourdehinders";
+    }];
   };
 }
