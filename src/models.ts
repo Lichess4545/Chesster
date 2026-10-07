@@ -5,7 +5,8 @@
 // -----------------------------------------------------------------------------
 import winston from 'winston'
 import { Sequelize, Model, DataTypes } from 'sequelize'
-import { ChessterConfig } from './config'
+import { ChessterConfig, databaseUrl } from './config'
+import { formatError } from './utils'
 
 export class LichessRating extends Model {
     public id!: number
@@ -104,12 +105,16 @@ export async function connect(config: ChessterConfig) {
     )
 
     try {
-        winston.info('[models.connect()] Attempting to connect to database...')
+        winston.info(
+            `[models.connect()] Attempting to connect to database at ${databaseUrl(
+                config.database
+            )}`
+        )
         await sequelize.authenticate()
         winston.info('[models.connect()] Database connection successful')
         defineModels(sequelize)
     } catch (e) {
-        winston.error(`[models.connect()] Error connecting to db: ${e}`)
+        winston.error(`[models.connect()] Error connecting to db: ${formatError(e)}`)
         throw e
     }
 }

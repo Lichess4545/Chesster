@@ -344,6 +344,9 @@ export const DatabaseDecoder: Decoder<Database> = oneOf(
     DatabaseWithPortDecoder,
     DatabaseWithDefaultPortDecoder
 )
+export function databaseUrl(database: Database): string {
+    return `postgres://${database.username}@${database.host}:${database.port}/${database.name}`
+}
 
 export interface WatcherConfig {
     inactivityTimeoutMinutes: number
