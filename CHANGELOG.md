@@ -4,6 +4,12 @@ Rendered by [git-cliff](https://git-cliff.org) from the conventional commits
 behind each tag. `release` rewrites this file in full on every release, so an
 edit made here is lost — edit the commit messages instead.
 
+## v1.2.2 — 2026-10-07
+
+### Fixes
+
+- use the same SSL settings for migrations as for the bot ([#434](https://github.com/Lichess4545/Chesster/pull/434)) ([6adbfc9](https://github.com/Lichess4545/Chesster/commit/6adbfc9486f4aa34eadafb0203351162f2752dc0))
+
 ## v1.2.1 — 2026-10-07
 
 ### Fixes
