@@ -4,6 +4,16 @@ Rendered by [git-cliff](https://git-cliff.org) from the conventional commits
 behind each tag. `release` rewrites this file in full on every release, so an
 edit made here is lost — edit the commit messages instead.
 
+## v1.2.0 — 2026-10-07
+
+### Features
+
+- read secrets from Docker secret files and harden container startup ([defe0b7](https://github.com/Lichess4545/Chesster/commit/defe0b7af240ed6251d0c90c3f6d22b90ac4fe78))
+
+### Tooling
+
+- redeploy the Portainer stack after a release ([#431](https://github.com/Lichess4545/Chesster/pull/431)) ([23b3121](https://github.com/Lichess4545/Chesster/commit/23b31219d3cfd75f70e5dd3ad5efe490d08a0278))
+
 ## v1.1.0 — 2026-10-07
 
 ### Features
