@@ -343,6 +343,64 @@ describe('config types', function () {
             assert.equal(decoded.database.port, 5433)
         })
 
+        it('leaves ssl undefined when not provided', () => {
+            const decoded = ChessterConfigDecoder.decodeJSON(
+                JSON.stringify(config)
+            )
+            assert.isUndefined(decoded.database.ssl)
+        })
+
+        it('decodes ssl set to false', () => {
+            const configWithSslDisabled = {
+                ...config,
+                database: {
+                    ...config.database,
+                    ssl: false,
+                },
+            }
+            const decoded = ChessterConfigDecoder.decodeJSON(
+                JSON.stringify(configWithSslDisabled)
+            )
+            assert.strictEqual(decoded.database.ssl, false)
+        })
+
+        it('decodes ssl without a ca', () => {
+            const configWithSsl = {
+                ...config,
+                database: {
+                    ...config.database,
+                    ssl: { rejectUnauthorized: true },
+                },
+            }
+            const decoded = ChessterConfigDecoder.decodeJSON(
+                JSON.stringify(configWithSsl)
+            )
+            assert.deepEqual(decoded.database.ssl, {
+                rejectUnauthorized: true,
+                ca: undefined,
+            })
+        })
+
+        it('decodes ssl with a ca', () => {
+            const configWithSsl = {
+                ...config,
+                database: {
+                    ...config.database,
+                    ssl: {
+                        rejectUnauthorized: false,
+                        ca: '/path/to/ca.pem',
+                    },
+                },
+            }
+            const decoded = ChessterConfigDecoder.decodeJSON(
+                JSON.stringify(configWithSsl)
+            )
+            assert.deepEqual(decoded.database.ssl, {
+                rejectUnauthorized: false,
+                ca: '/path/to/ca.pem',
+            })
+        })
+
         it('decodes explicit watcher config', () => {
             const configWithWatcher = {
                 ...config,

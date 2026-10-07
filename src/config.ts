@@ -13,6 +13,8 @@ import {
     oneOf,
     dict,
     succeed,
+    equal,
+    union,
 } from 'type-safe-json-decoder'
 
 export interface Heltour {
@@ -303,6 +305,27 @@ export const PoolDecoder: Decoder<Pool> = object(
     ['idle', number()],
     (max, min, idle) => ({ max, min, idle })
 )
+export interface Ssl {
+    rejectUnauthorized: boolean
+    ca?: string
+}
+const SslWithoutCaDecoder: Decoder<Ssl> = object(
+    ['rejectUnauthorized', boolean()],
+    (rejectUnauthorized) => ({ rejectUnauthorized, ca: undefined })
+)
+const SslWithCaDecoder: Decoder<Ssl> = andThen(
+    SslWithoutCaDecoder,
+    (base) => object(['ca', string()], (ca) => ({ ...base, ca }))
+)
+export const SslDecoder: Decoder<Ssl> = oneOf(
+    SslWithCaDecoder,
+    SslWithoutCaDecoder
+)
+export const DatabaseSslFieldDecoder: Decoder<Ssl | false> = union(
+    equal<false>(false),
+    SslDecoder
+)
+
 export interface Database {
     name: string
     username: string
@@ -312,9 +335,10 @@ export interface Database {
     dialect: string
     logging: boolean
     pool: Pool
+    ssl?: Ssl | false
 }
 export const DEFAULT_DATABASE_PORT = 5432
-const BaseDatabaseDecoder: Decoder<Omit<Database, 'port'>> = object(
+const BaseDatabaseDecoder: Decoder<Omit<Database, 'port' | 'ssl'>> = object(
     ['name', string()],
     ['username', string()],
     ['password', string()],
@@ -332,17 +356,31 @@ const BaseDatabaseDecoder: Decoder<Omit<Database, 'port'>> = object(
         pool,
     })
 )
-const DatabaseWithPortDecoder: Decoder<Database> = andThen(
+const DatabaseWithPortDecoder: Decoder<Omit<Database, 'ssl'>> = andThen(
     BaseDatabaseDecoder,
     (base) => object(['port', number()], (port) => ({ ...base, port }))
 )
-const DatabaseWithDefaultPortDecoder: Decoder<Database> = andThen(
-    BaseDatabaseDecoder,
-    (base) => succeed({ ...base, port: DEFAULT_DATABASE_PORT })
+const DatabaseWithDefaultPortDecoder: Decoder<
+    Omit<Database, 'ssl'>
+> = andThen(BaseDatabaseDecoder, (base) =>
+    succeed({ ...base, port: DEFAULT_DATABASE_PORT })
 )
-export const DatabaseDecoder: Decoder<Database> = oneOf(
+const DatabaseWithResolvedPortDecoder: Decoder<Omit<Database, 'ssl'>> = oneOf(
     DatabaseWithPortDecoder,
     DatabaseWithDefaultPortDecoder
+)
+const DatabaseWithSslDecoder: Decoder<Database> = andThen(
+    DatabaseWithResolvedPortDecoder,
+    (base) =>
+        object(['ssl', DatabaseSslFieldDecoder], (ssl) => ({ ...base, ssl }))
+)
+const DatabaseWithoutSslDecoder: Decoder<Database> = andThen(
+    DatabaseWithResolvedPortDecoder,
+    (base) => succeed({ ...base, ssl: undefined })
+)
+export const DatabaseDecoder: Decoder<Database> = oneOf(
+    DatabaseWithSslDecoder,
+    DatabaseWithoutSslDecoder
 )
 export function databaseUrl(database: Database): string {
     return `postgres://${database.username}@${database.host}:${database.port}/${database.name}`
