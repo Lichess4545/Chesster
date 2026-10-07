@@ -19,6 +19,14 @@ import * as models from './models'
 import SlackLogger, { LogWithPrefix } from './logging'
 import { isDefined, formatError } from './utils'
 import * as config from './config'
+import { production } from './config/production'
+import { development } from './config/development'
+import { Env } from './env'
+
+const configsByName: Record<config.ConfigName, config.ChessterConfig> = {
+    production,
+    development,
+}
 
 export type SlackUserID = string
 export type SlackUserName = string
@@ -598,7 +606,7 @@ export type SlackName = 'forwarding' | 'lichess4545'
 
 export class SlackBot {
     private log: LogWithPrefix
-    public config: config.ChessterConfig
+    public config: config.RuntimeChessterConfig
     public users: SlackEntityLookup<LeagueMember>
     public channels: SlackEntityLookup<SlackChannel>
     // public rtm: RTMClient
@@ -611,16 +619,17 @@ export class SlackBot {
 
     constructor(
         public slackName: SlackName,
-        public configFile = './config/config.js',
+        public env: Env,
         public debug = false,
         public connectToModels = true,
         public refreshLeagues = true,
         public logToThisSlack = false
     ) {
         this.log = new LogWithPrefix(`[SlackBot: ${this.slackName}]`)
-        this.log.info(`Loading config from: ${this.configFile}`)
-        this.config = config.ChessterConfigDecoder.decodeJSON(
-            JSON.stringify(require(this.configFile))
+        this.log.info(`Loading config: ${this.env.CHESSTER_CONFIG}`)
+        this.config = config.withHeltourToken(
+            configsByName[this.env.CHESSTER_CONFIG],
+            this.env.CHESSTER_HELTOUR_TOKEN
         )
 
         // May need changing with events API migration
@@ -638,8 +647,16 @@ export class SlackBot {
 
         const tokens =
             this.slackName === 'lichess4545'
-                ? this.config.slackTokens.lichess4545
-                : this.config.slackTokens.forwarding
+                ? {
+                      token: this.env.LICHESS_4545_BOT_TOKEN,
+                      signingSecret: this.env.LICHESS_4545_SIGNING_SECRET,
+                      appToken: this.env.LICHESS_4545_APP_TOKEN,
+                  }
+                : {
+                      token: this.env.FORWARD_BOT_TOKEN,
+                      signingSecret: this.env.FORWARD_SIGNING_SECRET,
+                      appToken: this.env.FORWARD_APP_TOKEN,
+                  }
 
         this.web = new WebClient(tokens.token)
 
@@ -664,7 +681,7 @@ export class SlackBot {
                     '[SlackBot.start()] Attempting to connect to database...'
                 )
 
-                await models.connect(this.config)
+                await models.connect(this.env.DATABASE_URL)
                 winston.info('Database connected successfully')
             } catch (error) {
                 this.log.error(

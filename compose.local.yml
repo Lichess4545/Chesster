@@ -1,0 +1,7 @@
+services:
+  app:
+    image: chesster:latest
+    network_mode: host
+    env_file: .env
+    environment:
+      - CHESSTER_CONFIG=development

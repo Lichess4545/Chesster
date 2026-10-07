@@ -1,51 +1,8 @@
-// NOTE: None of these files are committed and for good reason.
-// You must provide your own.
-const dotenv = require('dotenv')
-dotenv.config()
-let db = require('./db.js')
+import { ChessterConfig, DEFAULT_WATCHER_CONFIG } from '../config'
 
-let LICHESS_4545_APP_TOKEN =
-    process.env.LICHESS_4545_APP_TOKEN || "It won't work without this token"
-let LICHESS_4545_SIGNING_SECRET =
-    process.env.LICHESS_4545_SIGNING_SECRET ||
-    "It won't work without this token"
-let LICHESS_4545_BOT_TOKEN =
-    process.env.LICHESS_4545_BOT_TOKEN || "It won't work without this token"
-
-let FORWARD_APP_TOKEN =
-    process.env.FORWARD_APP_TOKEN || "It won't work without this token"
-let FORWARD_SIGNING_SECRET =
-    process.env.FORWARD_SIGNING_SECRET || "It won't work without this token"
-let FORWARD_BOT_TOKEN =
-    process.env.FORWARD_BOT_TOKEN || "It won't work without this token"
-
-let HELTOUR_TOKEN =
-    process.env.CHESSTER_HELTOUR_TOKEN || "It won't work without this token"
-
-let LICHESS_TOKEN =
-    process.env.CHESSTER_LICHESS_TOKEN || "It won't work without this token"
-
-var config = {
-    // Unfortunately this all has to be at the top level due to sequelize-cli
-    // TODO: this should be a URL and should be from process.env long term
-    database: db.development,
+export const production: ChessterConfig = {
     storage: '',
     watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
-    watcherToken: LICHESS_TOKEN,
-
-    // These are never actually used, the variables are accessed another way
-    slackTokens: {
-        lichess4545: {
-            token: LICHESS_4545_BOT_TOKEN,
-            signingSecret: LICHESS_4545_SIGNING_SECRET,
-            appToken: LICHESS_4545_APP_TOKEN,
-        },
-        forwarding: {
-            token: FORWARD_BOT_TOKEN,
-            signingSecret: FORWARD_SIGNING_SECRET,
-            appToken: FORWARD_APP_TOKEN,
-        },
-    },
     winston: {
         domain: 'chesster',
         channel: '#lichess4545-logging',
@@ -57,7 +14,6 @@ var config = {
         source: 'https://github.com/Lichess4545/Chesster',
     },
     heltour: {
-        token: HELTOUR_TOKEN,
         baseEndpoint: 'https://www.lichess4545.com/api/',
     },
     welcome: {
@@ -68,7 +24,6 @@ var config = {
             name: '45+45',
             alsoKnownAs: ['4545', 'Team', '45'],
             heltour: {
-                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'team4545',
             },
@@ -92,11 +47,12 @@ var config = {
                     hour: 11,
                     minute: 0,
                     warningHours: 1,
+                    referenceDate: undefined,
                 },
                 warningMessage:
                     "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
                 lateMessage:
-                    "Hi! Sorry, that is not an acceptable time. It looks like if you start at that time, you won't be done by the end of the round! If you are scheduling for today, I sometimes get confused - try using the date and time format 'yyyy-mm-dd hhmm'. Otherwise, please try and find a better time, and if you cannot, please contact the moderators.",
+                    "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 12:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
                 format: 'MM/DD @ HH:mm',
                 channel: 'team-scheduling',
             },
@@ -125,7 +81,6 @@ var config = {
             alsoKnownAs: ['lonewolf', '3030', '30', 'lw', 'lonewolf', 'wolf'],
             alternate: undefined,
             heltour: {
-                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'lonewolf',
             },
@@ -146,9 +101,10 @@ var config = {
             scheduling: {
                 extrema: {
                     isoWeekday: 1,
-                    hour: 22,
+                    hour: 21,
                     minute: 0,
                     warningHours: 1,
+                    referenceDate: undefined,
                 },
                 warningMessage:
                     "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
@@ -157,7 +113,6 @@ var config = {
                 format: 'MM/DD HH:mm',
                 channel: 'lonewolf-scheduling',
             },
-            alternate: undefined,
             links: {
                 faq: 'https://www.lichess4545.com/lonewolf/document/faq/',
                 rules: 'https://www.lichess4545.com/lonewolf/document/rules/',
@@ -179,7 +134,6 @@ var config = {
             alsoKnownAs: ['blitz', '32'],
             alternate: undefined,
             heltour: {
-                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'blitzbattle',
             },
@@ -197,13 +151,13 @@ var config = {
                 rated: true,
                 variant: 'standard',
             },
-            alternate: undefined,
             scheduling: {
                 extrema: {
-                    isoWeekday: 0,
-                    hour: 0,
+                    isoWeekday: 1,
+                    hour: 22,
                     minute: 0,
-                    warningHours: 0,
+                    warningHours: 1,
+                    referenceDate: undefined,
                 },
                 warningMessage: '',
                 lateMessage: '',
@@ -232,7 +186,6 @@ var config = {
             alsoKnownAs: ['960', '1515'],
             alternate: undefined,
             heltour: {
-                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'chess960',
             },
@@ -256,6 +209,7 @@ var config = {
                     hour: 17,
                     minute: 0,
                     warningHours: 1,
+                    referenceDate: undefined,
                 },
                 warningMessage:
                     "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
@@ -264,7 +218,6 @@ var config = {
                 format: 'MM/DD HH:mm',
                 channel: 'chess960scheduling',
             },
-            alternate: undefined,
             links: {
                 faq: 'https://www.lichess4545.com/chess960/document/faq/',
                 rules: 'https://www.lichess4545.com/chess960/document/rules/',
@@ -286,7 +239,6 @@ var config = {
             alsoKnownAs: ['blindfold', 'bf'],
             alternate: undefined,
             heltour: {
-                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'blindfold',
             },
@@ -304,13 +256,13 @@ var config = {
                 rated: true,
                 variant: 'standard',
             },
-            alternate: undefined,
             scheduling: {
                 extrema: {
                     isoWeekday: 1,
-                    hour: 22,
+                    hour: 11,
                     minute: 0,
                     warningHours: 1,
+                    referenceDate: undefined,
                 },
                 warningMessage:
                     "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
@@ -354,13 +306,24 @@ var config = {
         chess960scheduling: 'chess960',
         'blindfold-scheduling': 'blindfold',
         'blindfold-games': 'blindfold',
-        'blindfold': 'blindfold',
+        blindfold: 'blindfold',
     },
     messageForwarding: {
-        channelId: 'C08HZL49YH0',
+        channelId: 'G3D6N2HNF',
     },
     pingMods: {
         C0VCCPMJ8: ['U0J2J60F8'],
+        C01DY4QLQAG: ['U010X50FD41'],
+        G01AR80H206: ['UJ0HC8K5Y'],
+        C9J5NSPHB: ['UBBGAAALB', 'UUPCRBX26'],
+        C011PE5N5CZ: ['UUPCRBX26'],
+        C7CEBCE7M: ['UCP95FF0C'],
+        CE28V81RD: ['UBBGAAALB'],
+        C3N2S4DUN: ['UBBGAAALB'],
+        CEWRSQF7X: ['UBBGAAALB'],
+        CBAA5T16V: ['UBBGAAALB'],
+        C2HRVEZGW: ['UBBGAAALB'],
+        C01E4PHL5HN: ['U0119TT0NPJ', 'U39RGVDG9'],
     },
+    watcher: DEFAULT_WATCHER_CONFIG,
 }
-module.exports = config

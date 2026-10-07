@@ -1,423 +1,149 @@
 import { assert } from 'chai'
-import { ChessterConfigDecoder } from '../src/config'
+import { production } from '../src/config/production'
+import { development } from '../src/config/development'
+import {
+    ChessterConfig,
+    withHeltourToken,
+    databaseSslOptions,
+    databaseSslMode,
+    databaseSslRootCertPath,
+    redactDatabaseUrl,
+    resolveDatabaseSslMode,
+    stripDatabaseSslParams,
+} from '../src/config'
 
-describe('config types', function () {
-    let config = {
-        // Unfortunately this all has to be at the top level due to sequelize-cli
-        database: {
-            name: 'chesster',
-            username: 'chesster',
-            password: 'asdfasdf',
-            host: 'localhost',
-            dialect: 'postgres',
-            logging: false,
-            pool: {
-                max: 5,
-                min: 0,
-                idle: 10000,
-            },
-        },
-        storage: '',
-        watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
-        watcherToken: 'asdfasdfasdfasdf',
+function assertLeaguesAreComplete(config: ChessterConfig) {
+    Object.values(config.leagues).forEach((league) => {
+        assert.isString(league.name)
+        assert.isArray(league.alsoKnownAs)
+        assert.isString(league.heltour.baseEndpoint)
+        assert.isString(league.heltour.leagueTag)
+        assert.isString(league.results.channel)
+        assert.isString(league.results.channelId)
+        assert.isString(league.gamelinks.channel)
+        assert.isString(league.gamelinks.channelId)
+        assert.isNumber(league.scheduling.extrema.isoWeekday)
+        assert.isString(league.links.league)
+    })
+}
 
-        // These are never actually used
-        slackTokens: {
-            lichess4545: {
-                token: 'foo',
-                signingSecret: 'foo',
-                appToken: 'foo',
-            },
-            forwarding: {
-                token: 'foo',
-                signingSecret: 'foo',
-                appToken: 'foo',
-            },
-        },
-        winston: {
-            domain: 'chesster',
-            channel: '#lichess4545-logging',
-            username: 'chesster',
-            level: 'debug',
-            handleExceptions: true,
-        },
-        links: {
-            source: 'https://github.com/Lichess4545/Chesster',
-        },
-        welcome: {
-            channel: 'general',
-        },
-        heltour: {
-            token: 'foo',
-            baseEndpoint: 'http://localhost:8000/api/',
-        },
-        leagues: {
-            '45+45': {
-                name: '45+45',
-                alsoKnownAs: ['4545', 'Team', '45'],
-                heltour: {
-                    token: 'foo',
-                    baseEndpoint: 'http://localhost:8000/api/',
-                    leagueTag: 'team4545',
-                },
-                results: {
-                    channel: 'team-games',
-                    channelId: 'C0CSAHD43',
-                },
-                gamelinks: {
-                    channel: 'team-games',
-                    channelId: 'C0CSAHD43',
-                    // TODO events API: Change this time control back from bullet when done testing
-                    clock: {
-                        initial: 1,
-                        increment: 0,
-                    },
-                    rated: true,
-                    variant: 'standard',
-                },
-                scheduling: {
-                    extrema: {
-                        isoWeekday: 1,
-                        hour: 11,
-                        minute: 0,
-                        warningHours: 1,
-                    },
-                    warningMessage:
-                        "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
-                    lateMessage:
-                        "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 12:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
-                    format: 'MM/DD @ HH:mm',
-                    channel: 'team-scheduling',
-                },
-                alternate: {
-                    channelId: 'G0DFRURGQ',
-                },
-                links: {
-                    faq: 'https://www.lichess4545.com/team4545/document/faq/',
-                    rules: 'https://www.lichess4545.com/team4545/document/rules/',
-                    league: 'https://www.lichess4545.com/team4545/',
-                    pairings: 'https://www.lichess4545.com/team4545/pairings/',
-                    standings:
-                        'https://www.lichess4545.com/team4545/standings/',
-                    guide: 'https://www.lichess4545.com/team4545/document/player-handbook/',
-                    captains:
-                        'https://www.lichess4545.com/team4545/document/captains/',
-                    registration:
-                        'https://www.lichess4545.com/team4545/register/',
-                    availability:
-                        'https://www.lichess4545.com/team4545/availability/edit/',
-                    nominate: 'https://www.lichess4545.com/team4545/nominate/',
-                    notifications:
-                        'https://www.lichess4545.com/team4545/notifications/',
-                },
-            },
-            lonewolf: {
-                name: 'Lone Wolf',
-                alsoKnownAs: [
-                    'lonewolf',
-                    '3030',
-                    '30',
-                    'lw',
-                    'lonewolf',
-                    'wolf',
-                ],
-                alternate: undefined,
-                heltour: {
-                    token: 'foo',
-                    baseEndpoint: 'http://localhost:8000/api/',
-                    leagueTag: 'lonewolf',
-                },
-                results: {
-                    channel: 'lonewolf-games',
-                    channelId: 'C0SD3SCAH',
-                },
-                gamelinks: {
-                    channel: 'lonewolf-games',
-                    channelId: 'C0SD3SCAH',
-                    clock: {
-                        initial: 1,
-                        increment: 0,
-                    },
-                    rated: true,
-                    variant: 'standard',
-                },
-                scheduling: {
-                    extrema: {
-                        isoWeekday: 1,
-                        hour: 22,
-                        minute: 0,
-                        warningHours: 1,
-                    },
-                    warningMessage:
-                        "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
-                    lateMessage:
-                        "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
-                    format: 'MM/DD HH:mm',
-                    channel: 'lonewolf-scheduling',
-                },
-                links: {
-                    faq: 'https://www.lichess4545.com/lonewolf/document/faq/',
-                    rules: 'https://www.lichess4545.com/lonewolf/document/rules/',
-                    league: 'https://www.lichess4545.com/lonewolf/',
-                    pairings: 'https://www.lichess4545.com/lonewolf/pairings/',
-                    standings:
-                        'https://www.lichess4545.com/lonewolf/standings/',
-                    guide: '',
-                    captains: '',
-                    registration:
-                        'https://www.lichess45454.com/lonewolf/register/',
-                    availability:
-                        'https://www.lichess4545.com/lonewolf/availability/edit/',
-                    nominate: 'https://www.lichess4545.com/lonewolf/nominate/',
-                    notifications:
-                        'https://www.lichess4545.com/lonewolf/notifications/',
-                },
-            },
-            blitzbattle: {
-                name: 'Blitz Battle',
-                alsoKnownAs: ['blitz', '32'],
-                alternate: undefined,
-                heltour: {
-                    token: 'foo',
-                    baseEndpoint: 'http://localhost:8000/api/',
-                    leagueTag: 'blitzbattle',
-                },
-                results: {
-                    channel: 'blitz-battle-games',
-                    channelId: 'C3TV7T648',
-                },
-                gamelinks: {
-                    channel: 'blitz-battle-games',
-                    channelId: 'C3TV7T648',
-                    clock: {
-                        initial: 3,
-                        increment: 2,
-                    },
-                    rated: true,
-                    variant: 'standard',
-                },
-                scheduling: {
-                    extrema: {
-                        isoWeekday: 0,
-                        hour: 0,
-                        minute: 0,
-                        warningHours: 0,
-                    },
-                    warningMessage: '',
-                    lateMessage: '',
-                    format: '',
-                    channel: '',
-                },
-                links: {
-                    faq: 'https://www.lichess4545.com/blitzbattle/document/faq/',
-                    rules: 'https://www.lichess4545.com/blitzbattle/document/rules/',
-                    league: 'https://www.lichess4545.com/blitzbattle/',
-                    pairings:
-                        'https://www.lichess4545.com/blitzbattle/pairings/',
-                    standings:
-                        'https://www.lichess4545.com/blitzbattle/standings/',
-                    guide: '',
-                    captains: '',
-                    registration:
-                        'https://www.lichess45454.com/blitzbattle/register/',
-                    availability:
-                        'https://www.lichess4545.com/blitzbattle/availability/edit/',
-                    nominate:
-                        'https://www.lichess4545.com/blitzbattle/nominate/',
-                    notifications:
-                        'https://www.lichess4545.com/blitzbattle/notifications/',
-                },
-            },
-            chess960: {
-                name: 'Lichess 960',
-                alsoKnownAs: ['960', '1515'],
-                alternate: undefined,
-                heltour: {
-                    token: 'foo',
-                    baseEndpoint: 'http://localhost:8000/api/',
-                    leagueTag: 'chess960',
-                },
-                results: {
-                    channel: 'chess960games',
-                    channelId: 'C08KHN4FTUY',
-                },
-                gamelinks: {
-                    channel: 'chess960games',
-                    channelId: 'C08KHN4FTUY',
-                    clock: {
-                        initial: 1,
-                        increment: 0,
-                    },
-                    rated: true,
-                    variant: 'chess960',
-                },
-                scheduling: {
-                    extrema: {
-                        isoWeekday: 1,
-                        hour: 17,
-                        minute: 0,
-                        warningHours: 1,
-                    },
-                    warningMessage:
-                        "Hi! Glad you got your game scheduled. Be warned though - it's cutting it pretty close to deadline! Please be on time and prompt with your game time, the league depends on it! Thanks, and if you have any questions, please contact the moderators.",
-                    lateMessage:
-                        "Hi! Sorry, that time you posted is not an acceptable time. We need all games to end by 23:00 GMT on Monday, and we believe if you start then, you won't be done then! Please try and find a better time, and if you cannot, please contact the moderators.",
-                    format: 'MM/DD HH:mm',
-                    channel: 'chess960scheduling',
-                },
-                links: {
-                    faq: 'https://www.lichess4545.com/chess960/document/faq/',
-                    rules: 'https://www.lichess4545.com/chess960/document/rules/',
-                    league: 'https://www.lichess4545.com/chess960/',
-                    pairings: 'https://www.lichess4545.com/chess960/pairings/',
-                    standings:
-                        'https://www.lichess4545.com/chess960/standings/',
-                    guide: '',
-                    captains: '',
-                    registration:
-                        'https://www.lichess45454.com/chess960/register/',
-                    availability:
-                        'https://www.lichess4545.com/chess960/availability/edit/',
-                    nominate: 'https://www.lichess4545.com/chess960/nominate/',
-                    notifications:
-                        'https://www.lichess4545.com/chess960/notifications/',
-                },
-            },
-        },
-        channelMap: {
-            'lonewolf-general': 'lonewolf',
-            'lonewolf-games': 'lonewolf',
-            'lonewolf-scheduling': 'lonewolf',
-            'blitz-battle': 'blitzbattle',
-            'blitz-battle-games': 'blitzbattle',
-            general: '45+45',
-            'team-general': '45+45',
-            'team-games': '45+45',
-            'team-scheduling': '45+45',
-            captains: '45+45',
-            G0DFRURGQ: '45+45',
-            chess960: 'chess960',
-            chess960games: 'chess960',
-            chess960scheduling: 'chess960',
-        },
-        messageForwarding: {
-            channelId: 'C08HZL49YH0',
-        },
-        pingMods: {},
-    }
-    describe('config parsing', () => {
-        it('Test full config decoder', () => {
-            ChessterConfigDecoder.decodeJSON(JSON.stringify(config))
-            assert(true)
-            assert(config.leagues['45+45'].scheduling.extrema.isoWeekday == 1)
-            assert(config.leagues['45+45'].scheduling.extrema.hour == 11)
-            assert(config.leagues['45+45'].scheduling.extrema.warningHours == 1)
+describe('config', function () {
+    it('loads the production config with complete leagues', () => {
+        assertLeaguesAreComplete(production)
+    })
+
+    it('loads the development config with complete leagues', () => {
+        assertLeaguesAreComplete(development)
+    })
+
+    it('attaches the heltour token to the config and every league', () => {
+        const withToken = withHeltourToken(production, 'test-heltour-token')
+        assert.equal(withToken.heltour.token, 'test-heltour-token')
+        Object.values(withToken.leagues).forEach((league) => {
+            assert.equal(league.heltour.token, 'test-heltour-token')
+        })
+    })
+
+    describe('database ssl mode', () => {
+        it('prefers ssl when no sslmode is given', () => {
+            assert.equal(resolveDatabaseSslMode(null), 'prefer')
         })
 
-        it('applies default watcher config when not provided', () => {
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(config)
-            )
-            assert.deepEqual(decoded.watcher, {
-                inactivityTimeoutMinutes: 10,
-                maxBackoffSeconds: 60,
-                healthLogIntervalMinutes: 5,
-            })
+        it('disables ssl for sslmode=disable', () => {
+            assert.equal(resolveDatabaseSslMode('disable'), 'disable')
         })
 
-        it('defaults the database port when not provided', () => {
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(config)
-            )
-            assert.equal(decoded.database.port, 5432)
+        it('requires ssl without verification for sslmode=require', () => {
+            assert.equal(resolveDatabaseSslMode('require'), 'require')
         })
 
-        it('decodes an explicit database port', () => {
-            const configWithPort = {
-                ...config,
-                database: { ...config.database, port: 5433 },
-            }
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(configWithPort)
-            )
-            assert.equal(decoded.database.port, 5433)
+        it('requires ssl without verification for sslmode=no-verify', () => {
+            assert.equal(resolveDatabaseSslMode('no-verify'), 'require')
         })
 
-        it('leaves ssl undefined when not provided', () => {
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(config)
-            )
-            assert.isUndefined(decoded.database.ssl)
+        it('requires verified ssl for sslmode=verify-ca', () => {
+            assert.equal(resolveDatabaseSslMode('verify-ca'), 'verify')
         })
 
-        it('decodes ssl set to false', () => {
-            const configWithSslDisabled = {
-                ...config,
-                database: {
-                    ...config.database,
-                    ssl: false,
-                },
-            }
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(configWithSslDisabled)
-            )
-            assert.strictEqual(decoded.database.ssl, false)
+        it('requires verified ssl for sslmode=verify-full', () => {
+            assert.equal(resolveDatabaseSslMode('verify-full'), 'verify')
         })
 
-        it('decodes ssl without a ca', () => {
-            const configWithSsl = {
-                ...config,
-                database: {
-                    ...config.database,
-                    ssl: { rejectUnauthorized: true },
-                },
-            }
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(configWithSsl)
+        it('reads the sslmode from the database url', () => {
+            assert.equal(
+                databaseSslMode(
+                    'postgres://chesster@localhost:5432/chesster?sslmode=require'
+                ),
+                'require'
             )
-            assert.deepEqual(decoded.database.ssl, {
-                rejectUnauthorized: true,
-                ca: undefined,
-            })
         })
 
-        it('decodes ssl with a ca', () => {
-            const configWithSsl = {
-                ...config,
-                database: {
-                    ...config.database,
-                    ssl: {
-                        rejectUnauthorized: false,
-                        ca: '/path/to/ca.pem',
-                    },
-                },
-            }
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(configWithSsl)
+        it('reads the sslrootcert from the database url', () => {
+            assert.equal(
+                databaseSslRootCertPath(
+                    'postgres://chesster@localhost:5432/chesster?sslmode=verify-full&sslrootcert=/path/to/ca.pem'
+                ),
+                '/path/to/ca.pem'
             )
-            assert.deepEqual(decoded.database.ssl, {
+        })
+
+        it('maps disable to no ssl options', () => {
+            assert.isUndefined(databaseSslOptions('disable'))
+        })
+
+        it('maps require to ssl without verification', () => {
+            assert.deepEqual(databaseSslOptions('require'), {
                 rejectUnauthorized: false,
+            })
+        })
+
+        it('maps prefer to ssl without verification', () => {
+            assert.deepEqual(databaseSslOptions('prefer'), {
+                rejectUnauthorized: false,
+            })
+        })
+
+        it('maps verify to ssl with verification and a ca', () => {
+            assert.deepEqual(databaseSslOptions('verify', '/path/to/ca.pem'), {
+                rejectUnauthorized: true,
                 ca: '/path/to/ca.pem',
             })
         })
 
-        it('decodes explicit watcher config', () => {
-            const configWithWatcher = {
-                ...config,
-                watcher: {
-                    inactivityTimeoutMinutes: 15,
-                    maxBackoffSeconds: 120,
-                    healthLogIntervalMinutes: 2,
-                },
-            }
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(configWithWatcher)
+        it('strips sslmode and sslrootcert from the database url', () => {
+            assert.equal(
+                stripDatabaseSslParams(
+                    'postgres://chesster:asdfasdf@localhost:5432/chesster?sslmode=verify-full&sslrootcert=/path/to/ca.pem'
+                ),
+                'postgres://chesster:asdfasdf@localhost:5432/chesster'
             )
-            assert.deepEqual(decoded.watcher, {
-                inactivityTimeoutMinutes: 15,
-                maxBackoffSeconds: 120,
-                healthLogIntervalMinutes: 2,
-            })
+        })
+
+        it('leaves other query params in place when stripping ssl params', () => {
+            assert.equal(
+                stripDatabaseSslParams(
+                    'postgres://chesster@localhost:5432/chesster?sslmode=disable&foo=bar'
+                ),
+                'postgres://chesster@localhost:5432/chesster?foo=bar'
+            )
+        })
+    })
+
+    describe('database url redaction', () => {
+        it('removes the password but keeps user, host, port, db and query', () => {
+            assert.equal(
+                redactDatabaseUrl(
+                    'postgres://chesster:asdfasdf@localhost:5432/chesster?sslmode=require'
+                ),
+                'postgres://chesster@localhost:5432/chesster?sslmode=require'
+            )
+        })
+
+        it('leaves a url without a password unchanged', () => {
+            assert.equal(
+                redactDatabaseUrl('postgres://chesster@localhost:5432/chesster'),
+                'postgres://chesster@localhost:5432/chesster'
+            )
         })
     })
 })

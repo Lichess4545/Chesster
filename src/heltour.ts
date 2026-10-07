@@ -7,8 +7,8 @@ import moment from 'moment'
 import { parse } from 'url'
 import * as http from './http'
 import {
-    Heltour as Config,
-    HeltourLeagueConfig as LeagueConfig,
+    RuntimeHeltour as Config,
+    RuntimeHeltourLeagueConfig as LeagueConfig,
 } from './config'
 import {
     Decoder,
