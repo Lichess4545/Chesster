@@ -350,12 +350,16 @@ chesster.hears({
     callback: presence.ambientPresence,
 })
 
-chesster.start()
-adminSlack.start()
+async function main() {
+    await slack.verifyCredentialsOrExit([chesster, adminSlack])
 
-// -----------------------------------------------------------------------------
-// Start the watcher.
-const watcher = new Watcher(chesster, getAllLeagues(chesster))
-watcher.watch()
+    chesster.start()
+    adminSlack.start()
 
-lichess.startQueue()
+    const watcher = new Watcher(chesster, getAllLeagues(chesster))
+    watcher.watch()
+
+    lichess.startQueue()
+}
+
+main()

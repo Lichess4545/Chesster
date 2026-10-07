@@ -604,6 +604,82 @@ export class SlackEntityLookup<SlackEntity extends SlackEntityWithNameAndId> {
 
 export type SlackName = 'forwarding' | 'lichess4545'
 
+export interface SlackCredentialEnvVars {
+    botToken: keyof Env
+    signingSecret: keyof Env
+    appToken: keyof Env
+}
+
+export const credentialEnvVarsBySlackName: Record<
+    SlackName,
+    SlackCredentialEnvVars
+> = {
+    lichess4545: {
+        botToken: 'LICHESS_4545_BOT_TOKEN',
+        signingSecret: 'LICHESS_4545_SIGNING_SECRET',
+        appToken: 'LICHESS_4545_APP_TOKEN',
+    },
+    forwarding: {
+        botToken: 'FORWARD_BOT_TOKEN',
+        signingSecret: 'FORWARD_SIGNING_SECRET',
+        appToken: 'FORWARD_APP_TOKEN',
+    },
+}
+
+interface SlackCredentialFailure {
+    slackName: SlackName
+    envVar: string
+    reason: string
+}
+
+function slackErrorReason(error: unknown): string {
+    const data = (error as { data?: { error?: string } } | undefined)?.data
+    if (data && typeof data.error === 'string') {
+        return data.error
+    }
+    return formatError(error)
+}
+
+async function checkBotToken(
+    bot: SlackBot
+): Promise<SlackCredentialFailure | undefined> {
+    const envVar = credentialEnvVarsBySlackName[bot.slackName].botToken
+    try {
+        await bot.web.auth.test()
+        return undefined
+    } catch (error) {
+        return { slackName: bot.slackName, envVar, reason: slackErrorReason(error) }
+    }
+}
+
+async function checkAppToken(
+    bot: SlackBot
+): Promise<SlackCredentialFailure | undefined> {
+    const envVar = credentialEnvVarsBySlackName[bot.slackName].appToken
+    try {
+        await new WebClient(bot.env[envVar]).apps.connections.open()
+        return undefined
+    } catch (error) {
+        return { slackName: bot.slackName, envVar, reason: slackErrorReason(error) }
+    }
+}
+
+export async function verifyCredentialsOrExit(bots: SlackBot[]): Promise<void> {
+    const checks = await Promise.all(
+        bots.flatMap((bot) => [checkBotToken(bot), checkAppToken(bot)])
+    )
+    const failures = checks.filter(isDefined)
+    if (failures.length === 0) {
+        return
+    }
+    failures.forEach((failure) => {
+        winston.error(
+            `[SlackBot: ${failure.slackName}] ${failure.envVar} was rejected by Slack: ${failure.reason}`
+        )
+    })
+    process.exit(1)
+}
+
 export class SlackBot {
     private log: LogWithPrefix
     public config: config.RuntimeChessterConfig
@@ -645,18 +721,12 @@ export class SlackBot {
             '#'
         )
 
-        const tokens =
-            this.slackName === 'lichess4545'
-                ? {
-                      token: this.env.LICHESS_4545_BOT_TOKEN,
-                      signingSecret: this.env.LICHESS_4545_SIGNING_SECRET,
-                      appToken: this.env.LICHESS_4545_APP_TOKEN,
-                  }
-                : {
-                      token: this.env.FORWARD_BOT_TOKEN,
-                      signingSecret: this.env.FORWARD_SIGNING_SECRET,
-                      appToken: this.env.FORWARD_APP_TOKEN,
-                  }
+        const credentialEnvVars = credentialEnvVarsBySlackName[this.slackName]
+        const tokens = {
+            token: this.env[credentialEnvVars.botToken],
+            signingSecret: this.env[credentialEnvVars.signingSecret],
+            appToken: this.env[credentialEnvVars.appToken],
+        }
 
         this.web = new WebClient(tokens.token)
 
@@ -665,6 +735,7 @@ export class SlackBot {
             signingSecret: tokens.signingSecret,
             socketMode: true,
             appToken: tokens.appToken,
+            tokenVerificationEnabled: false,
         })
     }
     async start() {
