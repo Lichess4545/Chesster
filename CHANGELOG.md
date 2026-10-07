@@ -4,6 +4,12 @@ Rendered by [git-cliff](https://git-cliff.org) from the conventional commits
 behind each tag. `release` rewrites this file in full on every release, so an
 edit made here is lost — edit the commit messages instead.
 
+## v1.2.1 — 2026-10-07
+
+### Fixes
+
+- read DATABASE_URL_FILE when running migrations ([#433](https://github.com/Lichess4545/Chesster/pull/433)) ([f8eb2db](https://github.com/Lichess4545/Chesster/commit/f8eb2db2caeb8e66c601a4e1b178e07bce630732))
+
 ## v1.2.0 — 2026-10-07
 
 ### Features
