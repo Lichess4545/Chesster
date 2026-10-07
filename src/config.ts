@@ -308,11 +308,13 @@ export interface Database {
     username: string
     password: string
     host: string
+    port: number
     dialect: string
     logging: boolean
     pool: Pool
 }
-export const DatabaseDecoder: Decoder<Database> = object(
+export const DEFAULT_DATABASE_PORT = 5432
+const BaseDatabaseDecoder: Decoder<Omit<Database, 'port'>> = object(
     ['name', string()],
     ['username', string()],
     ['password', string()],
@@ -329,6 +331,18 @@ export const DatabaseDecoder: Decoder<Database> = object(
         logging,
         pool,
     })
+)
+const DatabaseWithPortDecoder: Decoder<Database> = andThen(
+    BaseDatabaseDecoder,
+    (base) => object(['port', number()], (port) => ({ ...base, port }))
+)
+const DatabaseWithDefaultPortDecoder: Decoder<Database> = andThen(
+    BaseDatabaseDecoder,
+    (base) => succeed({ ...base, port: DEFAULT_DATABASE_PORT })
+)
+export const DatabaseDecoder: Decoder<Database> = oneOf(
+    DatabaseWithPortDecoder,
+    DatabaseWithDefaultPortDecoder
 )
 
 export interface WatcherConfig {
