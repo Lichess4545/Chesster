@@ -5,7 +5,7 @@ import { z } from 'zod'
 dotenv.config()
 
 export const DEFAULT_DATABASE_URL =
-    'postgres://chesster:scrappypulpitgourdehinders@localhost:5432/chesster'
+    'postgres://chesster:scrappypulpitgourdehinders@localhost:5432/chesster?sslmode=disable'
 
 function isPostgresUrl(value: string): boolean {
     try {

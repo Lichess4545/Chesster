@@ -31,7 +31,7 @@ automatically with direnv. It provides node, yarn and a local postgres.
 | `FORWARD_APP_TOKEN`, `FORWARD_SIGNING_SECRET`, `FORWARD_BOT_TOKEN` | The Slack app that receives forwarded messages |
 | `CHESSTER_HELTOUR_TOKEN` | heltour API token |
 | `CHESSTER_LICHESS_TOKEN` | lichess API token, used by the game watcher |
-| `DATABASE_URL` | Postgres connection URL; `sslmode` in the query string controls SSL (defaults to prefer-but-fall-back) |
+| `DATABASE_URL` | Postgres connection URL; `sslmode` in the query string controls SSL (defaults to SSL without certificate verification) |
 | `CHESSTER_CONFIG` | `production` or `development`, selects which config in `src/config/` to run with (defaults to `production`) |
 
 ## Container image
