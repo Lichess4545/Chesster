@@ -17,7 +17,7 @@ import * as heltour from './heltour'
 import * as fuzzy from './fuzzy_match'
 import * as models from './models'
 import SlackLogger, { LogWithPrefix } from './logging'
-import { isDefined } from './utils'
+import { isDefined, formatError } from './utils'
 import * as config from './config'
 
 export type SlackUserID = string
@@ -667,7 +667,9 @@ export class SlackBot {
                 await models.connect(this.config)
                 winston.info('Database connected successfully')
             } catch (error) {
-                this.log.error(`Database connection error: ${error}`)
+                this.log.error(
+                    `Database connection error: ${formatError(error)}`
+                )
                 // Continue execution even after database error
                 this.log.warn(
                     'Continuing without database connection (features requiring database will not work)'
