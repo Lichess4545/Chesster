@@ -36,5 +36,12 @@ describe('env', function () {
                 /CHESSTER_HELTOUR_TOKEN/
             )
         })
+
+        it('rejects a DATABASE_URL that is not a postgres URL', () => {
+            assert.throws(
+                () => parseEnv({ ...validEnv, DATABASE_URL: '1' }),
+                /DATABASE_URL/
+            )
+        })
     })
 })

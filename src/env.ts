@@ -6,8 +6,22 @@ dotenv.config()
 export const DEFAULT_DATABASE_URL =
     'postgres://chesster:scrappypulpitgourdehinders@localhost:5432/chesster'
 
+function isPostgresUrl(value: string): boolean {
+    try {
+        const url = new URL(value)
+        return url.protocol === 'postgres:' || url.protocol === 'postgresql:'
+    } catch {
+        return false
+    }
+}
+
 export const EnvSchema = z.object({
-    DATABASE_URL: z.string().default(DEFAULT_DATABASE_URL),
+    DATABASE_URL: z
+        .string()
+        .default(DEFAULT_DATABASE_URL)
+        .refine(isPostgresUrl, {
+            message: 'must be a valid postgres:// or postgresql:// URL',
+        }),
     LICHESS_4545_APP_TOKEN: z.string(),
     LICHESS_4545_SIGNING_SECRET: z.string(),
     LICHESS_4545_BOT_TOKEN: z.string(),
