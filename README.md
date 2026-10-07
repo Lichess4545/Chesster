@@ -75,9 +75,22 @@ explicitly instead, e.g. `release v1.1.0`, since `package.json` is already at
 
 ## Deployment
 
-`compose.yml` is the production stack for Portainer. Set the variables listed
-above as stack variables; `DATABASE_URL` points at an external managed
-postgres. The stack pins an explicit image version, which `release` updates;
+`compose.yml` is the production stack for Portainer. It reads its secrets
+from Docker secrets, created in Portainer before the stack is deployed:
+
+| Secret | Holds |
+| --- | --- |
+| `chesster_database_url` | `DATABASE_URL`; points at an external managed postgres |
+| `chesster_heltour_token` | `CHESSTER_HELTOUR_TOKEN` |
+| `chesster_lichess_token` | `CHESSTER_LICHESS_TOKEN` |
+| `chesster_lichess_4545_app_token` | `LICHESS_4545_APP_TOKEN` |
+| `chesster_lichess_4545_signing_secret` | `LICHESS_4545_SIGNING_SECRET` |
+| `chesster_lichess_4545_bot_token` | `LICHESS_4545_BOT_TOKEN` |
+| `chesster_forward_app_token` | `FORWARD_APP_TOKEN` |
+| `chesster_forward_signing_secret` | `FORWARD_SIGNING_SECRET` |
+| `chesster_forward_bot_token` | `FORWARD_BOT_TOKEN` |
+
+The stack pins an explicit image version, which `release` updates;
 redeploying the stack picks it up. The bot uses Slack socket mode, so it
 exposes no ports.
 

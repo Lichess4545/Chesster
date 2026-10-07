@@ -22,9 +22,6 @@ import * as lichess from './lichess'
 
 /* static entry point */
 
-const env = loadEnv()
-const chesster = new slack.SlackBot('lichess4545', env)
-
 if (process.env.NODE_ENV !== 'production') {
     winston.add(
         new winston.transports.Console({
@@ -32,6 +29,9 @@ if (process.env.NODE_ENV !== 'production') {
         })
     )
 }
+
+const env = loadEnv()
+const chesster = new slack.SlackBot('lichess4545', env)
 
 const adminSlack = new slack.SlackBot(
     'forwarding', // slackName
