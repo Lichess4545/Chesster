@@ -24,19 +24,22 @@ export interface HeltourLeagueConfig extends Heltour {
     leagueTag: string
 }
 
-export const HeltourDecoder: Decoder<Heltour> = object(
-    ['token', string()],
-    ['baseEndpoint', string()],
-    (token, baseEndpoint) => ({ token, baseEndpoint })
-)
-export const HeltourLeagueConfigDecoder: Decoder<HeltourLeagueConfig> = andThen(
-    HeltourDecoder,
-    (heltour) =>
+export function heltourDecoder(heltourToken: string): Decoder<Heltour> {
+    return object(
+        ['baseEndpoint', string()],
+        (baseEndpoint) => ({ token: heltourToken, baseEndpoint })
+    )
+}
+export function heltourLeagueConfigDecoder(
+    heltourToken: string
+): Decoder<HeltourLeagueConfig> {
+    return andThen(heltourDecoder(heltourToken), (heltour) =>
         object(['leagueTag', string()], (leagueTag) => ({
             ...heltour,
             leagueTag,
         }))
-)
+    )
+}
 
 export interface Welcome {
     channel: string
@@ -199,54 +202,55 @@ export interface League {
     alternate?: Alternate
 }
 
-export const LeagueWithoutAlternateDecoder: Decoder<League> = object(
-    ['name', string()],
-    ['alsoKnownAs', array(string())],
-    ['heltour', HeltourLeagueConfigDecoder],
-    ['results', ResultsDecoder],
-    ['gamelinks', GameLinksDecoder],
-    ['scheduling', SchedulingDecoder],
-    ['links', LeagueLinksDecoder],
-    (name, alsoKnownAs, heltour, results, gamelinks, scheduling, links) => ({
-        name,
-        alsoKnownAs,
-        heltour,
-        results,
-        gamelinks,
-        scheduling,
-        links,
-        alternate: undefined,
-    })
-)
-export const LeagueWithAlternateDecoder: Decoder<League> = andThen(
-    LeagueWithoutAlternateDecoder,
-    (leagueWithoutAlternate) =>
-        object(['alternate', AlternateDecoder], (alternate) => ({
-            ...leagueWithoutAlternate,
-            alternate,
-        }))
-)
-export const LeagueDecoder: Decoder<League> = oneOf(
-    LeagueWithAlternateDecoder,
-    LeagueWithoutAlternateDecoder
-)
-export interface SlackToken {
-    token: string
-    signingSecret: string
-    appToken: string
+export function leagueWithoutAlternateDecoder(
+    heltourToken: string
+): Decoder<League> {
+    return object(
+        ['name', string()],
+        ['alsoKnownAs', array(string())],
+        ['heltour', heltourLeagueConfigDecoder(heltourToken)],
+        ['results', ResultsDecoder],
+        ['gamelinks', GameLinksDecoder],
+        ['scheduling', SchedulingDecoder],
+        ['links', LeagueLinksDecoder],
+        (
+            name,
+            alsoKnownAs,
+            heltour,
+            results,
+            gamelinks,
+            scheduling,
+            links
+        ) => ({
+            name,
+            alsoKnownAs,
+            heltour,
+            results,
+            gamelinks,
+            scheduling,
+            links,
+            alternate: undefined,
+        })
+    )
 }
-export const SlackTokenDecoder: Decoder<SlackToken> = object(
-    ['token', string()],
-    ['signingSecret', string()],
-    ['appToken', string()],
-    (token, signingSecret, appToken) => ({
-        token,
-        signingSecret,
-        appToken,
-    })
-)
-export type SlackTokens = Record<string, SlackToken>
-export const SlackTokensDecoder: Decoder<SlackTokens> = dict(SlackTokenDecoder)
+export function leagueWithAlternateDecoder(
+    heltourToken: string
+): Decoder<League> {
+    return andThen(
+        leagueWithoutAlternateDecoder(heltourToken),
+        (leagueWithoutAlternate) =>
+            object(['alternate', AlternateDecoder], (alternate) => ({
+                ...leagueWithoutAlternate,
+                alternate,
+            }))
+    )
+}
+export function leagueDecoder(heltourToken: string): Decoder<League> {
+    return oneOf(
+        leagueWithAlternateDecoder(heltourToken),
+        leagueWithoutAlternateDecoder(heltourToken)
+    )
+}
 
 export interface Winston {
     domain: string
@@ -314,12 +318,9 @@ export const DEFAULT_WATCHER_CONFIG: WatcherConfig = {
 }
 
 export interface ChessterConfig {
-    database: string
     heltour: Heltour
     storage: string
     watcherBaseURL: string
-    watcherToken: string
-    slackTokens: SlackTokens
     winston: Winston
     links: Links
     leagues: Record<string, League>
@@ -330,73 +331,76 @@ export interface ChessterConfig {
     watcher: WatcherConfig
 }
 
-const BaseChessterConfigDecoder: Decoder<Omit<ChessterConfig, 'watcher'>> = object(
-    ['database', string()],
-    ['heltour', HeltourDecoder],
-    ['storage', string()],
-    ['watcherBaseURL', string()],
-    ['watcherToken', string()],
-    ['slackTokens', SlackTokensDecoder],
-    ['winston', WinstonDecoder],
-    ['links', LinksDecoder],
-    ['leagues', dict(LeagueDecoder)],
-    ['channelMap', ChannelMapDecoder],
-    ['messageForwarding', MessageForwardingDecoder],
-    ['pingMods', ChannelModMapDecoder],
-    ['welcome', WelcomeDecoder],
-    (
-        database,
-        heltour,
-        storage,
-        watcherBaseURL,
-        watcherToken,
-        slackTokens,
-        winston,
-        links,
-        leagues,
-        channelMap,
-        messageForwarding,
-        pingMods,
-        welcome
-    ) => ({
-        database,
-        heltour,
-        storage,
-        watcherBaseURL,
-        watcherToken,
-        slackTokens,
-        winston,
-        links,
-        leagues,
-        channelMap,
-        messageForwarding,
-        pingMods,
-        welcome,
-    })
-)
+function baseChessterConfigDecoder(
+    heltourToken: string
+): Decoder<Omit<ChessterConfig, 'watcher'>> {
+    return object(
+        ['heltour', heltourDecoder(heltourToken)],
+        ['storage', string()],
+        ['watcherBaseURL', string()],
+        ['winston', WinstonDecoder],
+        ['links', LinksDecoder],
+        ['leagues', dict(leagueDecoder(heltourToken))],
+        ['channelMap', ChannelMapDecoder],
+        ['messageForwarding', MessageForwardingDecoder],
+        ['pingMods', ChannelModMapDecoder],
+        ['welcome', WelcomeDecoder],
+        (
+            heltour,
+            storage,
+            watcherBaseURL,
+            winston,
+            links,
+            leagues,
+            channelMap,
+            messageForwarding,
+            pingMods,
+            welcome
+        ) => ({
+            heltour,
+            storage,
+            watcherBaseURL,
+            winston,
+            links,
+            leagues,
+            channelMap,
+            messageForwarding,
+            pingMods,
+            welcome,
+        })
+    )
+}
 
-const ChessterConfigWithWatcherDecoder: Decoder<ChessterConfig> = andThen(
-    BaseChessterConfigDecoder,
-    (base) =>
+function chessterConfigWithWatcherDecoder(
+    heltourToken: string
+): Decoder<ChessterConfig> {
+    return andThen(baseChessterConfigDecoder(heltourToken), (base) =>
         object(['watcher', WatcherConfigDecoder], (watcher) => ({
             ...base,
             watcher,
         }))
-)
+    )
+}
 
-const ChessterConfigWithDefaultsDecoder: Decoder<ChessterConfig> = andThen(
-    BaseChessterConfigDecoder,
-    (base) =>
+function chessterConfigWithDefaultsDecoder(
+    heltourToken: string
+): Decoder<ChessterConfig> {
+    return andThen(baseChessterConfigDecoder(heltourToken), (base) =>
         succeed({
             ...base,
             watcher: DEFAULT_WATCHER_CONFIG,
         })
-)
+    )
+}
 
-export const ChessterConfigDecoder: Decoder<ChessterConfig> = oneOf(
-    ChessterConfigWithWatcherDecoder,
-    ChessterConfigWithDefaultsDecoder
-)
+export function chessterConfigDecoder(
+    heltourToken: string
+): Decoder<ChessterConfig> {
+    return oneOf(
+        chessterConfigWithWatcherDecoder(heltourToken),
+        chessterConfigWithDefaultsDecoder(heltourToken)
+    )
+}
 
 export type DatabaseSslMode = 'disable' | 'require' | 'verify' | 'prefer'
 

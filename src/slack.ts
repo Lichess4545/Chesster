@@ -19,6 +19,7 @@ import * as models from './models'
 import SlackLogger, { LogWithPrefix } from './logging'
 import { isDefined, formatError } from './utils'
 import * as config from './config'
+import { Env } from './env'
 
 export type SlackUserID = string
 export type SlackUserName = string
@@ -611,6 +612,7 @@ export class SlackBot {
 
     constructor(
         public slackName: SlackName,
+        public env: Env,
         public configFile = './config/config.js',
         public debug = false,
         public connectToModels = true,
@@ -619,9 +621,9 @@ export class SlackBot {
     ) {
         this.log = new LogWithPrefix(`[SlackBot: ${this.slackName}]`)
         this.log.info(`Loading config from: ${this.configFile}`)
-        this.config = config.ChessterConfigDecoder.decodeJSON(
-            JSON.stringify(require(this.configFile))
-        )
+        this.config = config.chessterConfigDecoder(
+            this.env.CHESSTER_HELTOUR_TOKEN
+        ).decodeJSON(JSON.stringify(require(this.configFile)))
 
         // May need changing with events API migration
         this.users = new SlackEntityLookup<LeagueMember>(
@@ -638,8 +640,16 @@ export class SlackBot {
 
         const tokens =
             this.slackName === 'lichess4545'
-                ? this.config.slackTokens.lichess4545
-                : this.config.slackTokens.forwarding
+                ? {
+                      token: this.env.LICHESS_4545_BOT_TOKEN,
+                      signingSecret: this.env.LICHESS_4545_SIGNING_SECRET,
+                      appToken: this.env.LICHESS_4545_APP_TOKEN,
+                  }
+                : {
+                      token: this.env.FORWARD_BOT_TOKEN,
+                      signingSecret: this.env.FORWARD_SIGNING_SECRET,
+                      appToken: this.env.FORWARD_APP_TOKEN,
+                  }
 
         this.web = new WebClient(tokens.token)
 
@@ -664,7 +674,7 @@ export class SlackBot {
                     '[SlackBot.start()] Attempting to connect to database...'
                 )
 
-                await models.connect(this.config)
+                await models.connect(this.env.DATABASE_URL)
                 winston.info('Database connected successfully')
             } catch (error) {
                 this.log.error(

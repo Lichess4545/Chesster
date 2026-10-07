@@ -6,6 +6,7 @@ import winston from 'winston'
 import * as slack from './slack'
 import Watcher from './watcher'
 import { getAllLeagues } from './league'
+import { loadEnv } from './env'
 
 import * as availability from './commands/availability'
 import * as games from './commands/games'
@@ -21,8 +22,9 @@ import * as lichess from './lichess'
 
 /* static entry point */
 
+const env = loadEnv()
 const configFile = process.argv[2] || '../config/config.js'
-const chesster = new slack.SlackBot('lichess4545', configFile)
+const chesster = new slack.SlackBot('lichess4545', env, configFile)
 
 if (process.env.NODE_ENV !== 'production') {
     winston.add(
@@ -34,6 +36,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 const adminSlack = new slack.SlackBot(
     'forwarding', // slackName
+    env, // env
     configFile, // configFile
     false, // debug
     false, // connectToModels

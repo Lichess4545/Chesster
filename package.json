@@ -27,7 +27,8 @@
         "type-safe-json-decoder": "^0.2.0",
         "utility-types": "^3.10.0",
         "winston": "^3.2.1",
-        "winston-transport": "^4.3.0"
+        "winston-transport": "^4.3.0",
+        "zod": "^4.6.5"
     },
     "resolutions": {
         "graceful-fs": "4.2.3"

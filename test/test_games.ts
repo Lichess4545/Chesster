@@ -12,9 +12,9 @@ winston.add(
     })
 )
 
-const testConfig: config.ChessterConfig = config.ChessterConfigDecoder.decodeJSON(
-    JSON.stringify(require('../config/testconfig.js'))
-)
+const testConfig: config.ChessterConfig = config
+    .chessterConfigDecoder('test-heltour-token')
+    .decodeJSON(JSON.stringify(require('../config/testconfig.js')))
 
 interface ExpectedResults {
     white: string | undefined

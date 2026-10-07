@@ -1,5 +1,3 @@
-// NOTE: Neither of these files are committed and for good reason.
-//       You must provide your own.
 const UNSTABLE_BOT_ID = 'C016G6T5QTW'
 const UNSTABLE_BOT_LONEWOLF_ID = 'C015V92UJUX'
 
@@ -20,11 +18,8 @@ config['winston']['handleExceptions'] = false
 
 config['welcome']['channel'] = 'dev-testing-lonewolf'
 
-const heltourToken = config['heltour']['token']
-
 let heltour = {
     baseEndpoint: 'http://127.0.0.1:8000/api/',
-    token: config['heltour']['token'],
 }
 let leagues = ['45+45', 'lonewolf', 'blitzbattle', 'chess960']
 config['heltour'] = heltour

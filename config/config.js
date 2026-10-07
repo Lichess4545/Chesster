@@ -1,50 +1,6 @@
-// NOTE: None of these files are committed and for good reason.
-// You must provide your own.
-const dotenv = require('dotenv')
-dotenv.config()
-let db = require('./db.js')
-
-let LICHESS_4545_APP_TOKEN =
-    process.env.LICHESS_4545_APP_TOKEN || "It won't work without this token"
-let LICHESS_4545_SIGNING_SECRET =
-    process.env.LICHESS_4545_SIGNING_SECRET ||
-    "It won't work without this token"
-let LICHESS_4545_BOT_TOKEN =
-    process.env.LICHESS_4545_BOT_TOKEN || "It won't work without this token"
-
-let FORWARD_APP_TOKEN =
-    process.env.FORWARD_APP_TOKEN || "It won't work without this token"
-let FORWARD_SIGNING_SECRET =
-    process.env.FORWARD_SIGNING_SECRET || "It won't work without this token"
-let FORWARD_BOT_TOKEN =
-    process.env.FORWARD_BOT_TOKEN || "It won't work without this token"
-
-let HELTOUR_TOKEN =
-    process.env.CHESSTER_HELTOUR_TOKEN || "It won't work without this token"
-
-let LICHESS_TOKEN =
-    process.env.CHESSTER_LICHESS_TOKEN || "It won't work without this token"
-
 var config = {
-    // Unfortunately this all has to be at the top level due to sequelize-cli
-    database: db.development.url,
     storage: '',
     watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
-    watcherToken: LICHESS_TOKEN,
-
-    // These are never actually used, the variables are accessed another way
-    slackTokens: {
-        lichess4545: {
-            token: LICHESS_4545_BOT_TOKEN,
-            signingSecret: LICHESS_4545_SIGNING_SECRET,
-            appToken: LICHESS_4545_APP_TOKEN,
-        },
-        forwarding: {
-            token: FORWARD_BOT_TOKEN,
-            signingSecret: FORWARD_SIGNING_SECRET,
-            appToken: FORWARD_APP_TOKEN,
-        },
-    },
     winston: {
         domain: 'chesster',
         channel: '#lichess4545-logging',
@@ -56,7 +12,6 @@ var config = {
         source: 'https://github.com/Lichess4545/Chesster',
     },
     heltour: {
-        token: HELTOUR_TOKEN,
         baseEndpoint: 'https://www.lichess4545.com/api/',
     },
     welcome: {
@@ -67,7 +22,6 @@ var config = {
             name: '45+45',
             alsoKnownAs: ['4545', 'Team', '45'],
             heltour: {
-                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'team4545',
             },
@@ -124,7 +78,6 @@ var config = {
             alsoKnownAs: ['lonewolf', '3030', '30', 'lw', 'lonewolf', 'wolf'],
             alternate: undefined,
             heltour: {
-                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'lonewolf',
             },
@@ -178,7 +131,6 @@ var config = {
             alsoKnownAs: ['blitz', '32'],
             alternate: undefined,
             heltour: {
-                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'blitzbattle',
             },
@@ -231,7 +183,6 @@ var config = {
             alsoKnownAs: ['960', '1515'],
             alternate: undefined,
             heltour: {
-                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'chess960',
             },
@@ -285,7 +236,6 @@ var config = {
             alsoKnownAs: ['blindfold', 'bf'],
             alternate: undefined,
             heltour: {
-                token: HELTOUR_TOKEN,
                 baseEndpoint: 'https://www.lichess4545.com/api/',
                 leagueTag: 'blindfold',
             },

@@ -147,7 +147,7 @@ class WatcherRequest {
             method: 'POST',
             headers: {
                 'Content-Length': Buffer.byteLength(body),
-                Authorization: `Bearer ${this.bot.config.watcherToken}`,
+                Authorization: `Bearer ${this.bot.env.CHESSTER_LICHESS_TOKEN}`,
             },
             ...options,
         })

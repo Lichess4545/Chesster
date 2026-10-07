@@ -1,6 +1,6 @@
 import { assert } from 'chai'
 import {
-    ChessterConfigDecoder,
+    chessterConfigDecoder,
     databaseSslOptions,
     databaseSslMode,
     databaseSslRootCertPath,
@@ -9,27 +9,12 @@ import {
     stripDatabaseSslParams,
 } from '../src/config'
 
+const testHeltourToken = 'test-heltour-token'
+
 describe('config types', function () {
     let config = {
-        // Unfortunately this all has to be at the top level due to sequelize-cli
-        database: 'postgres://chesster:asdfasdf@localhost:5432/chesster',
         storage: '',
         watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
-        watcherToken: 'asdfasdfasdfasdf',
-
-        // These are never actually used
-        slackTokens: {
-            lichess4545: {
-                token: 'foo',
-                signingSecret: 'foo',
-                appToken: 'foo',
-            },
-            forwarding: {
-                token: 'foo',
-                signingSecret: 'foo',
-                appToken: 'foo',
-            },
-        },
         winston: {
             domain: 'chesster',
             channel: '#lichess4545-logging',
@@ -44,7 +29,6 @@ describe('config types', function () {
             channel: 'general',
         },
         heltour: {
-            token: 'foo',
             baseEndpoint: 'http://localhost:8000/api/',
         },
         leagues: {
@@ -52,7 +36,6 @@ describe('config types', function () {
                 name: '45+45',
                 alsoKnownAs: ['4545', 'Team', '45'],
                 heltour: {
-                    token: 'foo',
                     baseEndpoint: 'http://localhost:8000/api/',
                     leagueTag: 'team4545',
                 },
@@ -119,7 +102,6 @@ describe('config types', function () {
                 ],
                 alternate: undefined,
                 heltour: {
-                    token: 'foo',
                     baseEndpoint: 'http://localhost:8000/api/',
                     leagueTag: 'lonewolf',
                 },
@@ -174,7 +156,6 @@ describe('config types', function () {
                 alsoKnownAs: ['blitz', '32'],
                 alternate: undefined,
                 heltour: {
-                    token: 'foo',
                     baseEndpoint: 'http://localhost:8000/api/',
                     leagueTag: 'blitzbattle',
                 },
@@ -229,7 +210,6 @@ describe('config types', function () {
                 alsoKnownAs: ['960', '1515'],
                 alternate: undefined,
                 heltour: {
-                    token: 'foo',
                     baseEndpoint: 'http://localhost:8000/api/',
                     leagueTag: 'chess960',
                 },
@@ -303,7 +283,9 @@ describe('config types', function () {
     }
     describe('config parsing', () => {
         it('Test full config decoder', () => {
-            ChessterConfigDecoder.decodeJSON(JSON.stringify(config))
+            chessterConfigDecoder(testHeltourToken).decodeJSON(
+                JSON.stringify(config)
+            )
             assert(true)
             assert(config.leagues['45+45'].scheduling.extrema.isoWeekday == 1)
             assert(config.leagues['45+45'].scheduling.extrema.hour == 11)
@@ -311,7 +293,7 @@ describe('config types', function () {
         })
 
         it('applies default watcher config when not provided', () => {
-            const decoded = ChessterConfigDecoder.decodeJSON(
+            const decoded = chessterConfigDecoder(testHeltourToken).decodeJSON(
                 JSON.stringify(config)
             )
             assert.deepEqual(decoded.watcher, {
@@ -321,14 +303,12 @@ describe('config types', function () {
             })
         })
 
-        it('decodes the database as a connection URL string', () => {
-            const decoded = ChessterConfigDecoder.decodeJSON(
+        it('fills in the heltour token from outside the decoded config', () => {
+            const decoded = chessterConfigDecoder(testHeltourToken).decodeJSON(
                 JSON.stringify(config)
             )
-            assert.equal(
-                decoded.database,
-                'postgres://chesster:asdfasdf@localhost:5432/chesster'
-            )
+            assert.equal(decoded.heltour.token, testHeltourToken)
+            assert.equal(decoded.leagues['45+45'].heltour.token, testHeltourToken)
         })
     })
 
@@ -450,7 +430,7 @@ describe('config types', function () {
                     healthLogIntervalMinutes: 2,
                 },
             }
-            const decoded = ChessterConfigDecoder.decodeJSON(
+            const decoded = chessterConfigDecoder(testHeltourToken).decodeJSON(
                 JSON.stringify(configWithWatcher)
             )
             assert.deepEqual(decoded.watcher, {

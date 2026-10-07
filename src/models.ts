@@ -7,7 +7,6 @@ import fs from 'fs'
 import winston from 'winston'
 import { Sequelize, Model, DataTypes } from 'sequelize'
 import {
-    ChessterConfig,
     DatabaseSsl,
     databaseSslMode,
     databaseSslOptions,
@@ -92,13 +91,6 @@ function defineModels(sequelize: Sequelize) {
     )
 }
 
-// -------------------------------------------------------------------------
-// Connection function that ensures we have a connection and the models
-// are defined.
-//
-// Parameters: config - the config option that contains the database
-//                      information.
-// -------------------------------------------------------------------------
 function buildSequelize(url: string, ssl: DatabaseSsl | undefined): Sequelize {
     const dialectOptions = ssl
         ? {
@@ -122,10 +114,10 @@ function isSslUnsupportedError(e: unknown): boolean {
     )
 }
 
-export async function connect(config: ChessterConfig) {
-    const url = stripDatabaseSslParams(config.database)
-    const mode = databaseSslMode(config.database)
-    const ca = databaseSslRootCertPath(config.database)
+export async function connect(databaseUrl: string) {
+    const url = stripDatabaseSslParams(databaseUrl)
+    const mode = databaseSslMode(databaseUrl)
+    const ca = databaseSslRootCertPath(databaseUrl)
     const effectiveSsl = databaseSslOptions(mode, ca)
     const preferSsl = mode === 'prefer'
 
@@ -134,7 +126,7 @@ export async function connect(config: ChessterConfig) {
     try {
         winston.info(
             `[models.connect()] Attempting to connect to database at ${redactDatabaseUrl(
-                config.database
+                databaseUrl
             )}`
         )
         try {
