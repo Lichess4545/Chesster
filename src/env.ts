@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs'
 import dotenv from 'dotenv'
 import { z } from 'zod'
 
@@ -35,8 +36,29 @@ export const EnvSchema = z.object({
 
 export type Env = z.infer<typeof EnvSchema>
 
+function resolveFileBackedEnv(
+    source: Record<string, string | undefined>
+): Record<string, string | undefined> {
+    const resolved = { ...source }
+    for (const key of Object.keys(EnvSchema.shape)) {
+        const fileKey = `${key}_FILE`
+        const filePath = source[fileKey]
+        if (filePath === undefined) {
+            continue
+        }
+        if (source[key] !== undefined) {
+            throw new Error(
+                `Invalid environment configuration: ${key} and ${fileKey} cannot both be set`
+            )
+        }
+        resolved[key] = readFileSync(filePath, 'utf8').replace(/\r?\n$/, '')
+    }
+    return resolved
+}
+
 export function parseEnv(source: Record<string, string | undefined>): Env {
-    const result = EnvSchema.safeParse(source)
+    const resolved = resolveFileBackedEnv(source)
+    const result = EnvSchema.safeParse(resolved)
     if (!result.success) {
         const issues = result.error.issues
             .map((issue) => `${issue.path.join('.')}: ${issue.message}`)

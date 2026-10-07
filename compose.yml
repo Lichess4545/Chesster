@@ -3,12 +3,42 @@ services:
     image: ghcr.io/lichess4545/chesster:1.1.0
     restart: unless-stopped
     environment:
-      - DATABASE_URL=${DATABASE_URL:?required}
-      - CHESSTER_HELTOUR_TOKEN=${CHESSTER_HELTOUR_TOKEN:?required}
-      - CHESSTER_LICHESS_TOKEN=${CHESSTER_LICHESS_TOKEN:?required}
-      - LICHESS_4545_APP_TOKEN=${LICHESS_4545_APP_TOKEN:?required}
-      - LICHESS_4545_SIGNING_SECRET=${LICHESS_4545_SIGNING_SECRET:?required}
-      - LICHESS_4545_BOT_TOKEN=${LICHESS_4545_BOT_TOKEN:?required}
-      - FORWARD_APP_TOKEN=${FORWARD_APP_TOKEN:?required}
-      - FORWARD_SIGNING_SECRET=${FORWARD_SIGNING_SECRET:?required}
-      - FORWARD_BOT_TOKEN=${FORWARD_BOT_TOKEN:?required}
+      DATABASE_URL_FILE: /run/secrets/chesster_database_url
+      CHESSTER_HELTOUR_TOKEN_FILE: /run/secrets/chesster_heltour_token
+      CHESSTER_LICHESS_TOKEN_FILE: /run/secrets/chesster_lichess_token
+      LICHESS_4545_APP_TOKEN_FILE: /run/secrets/chesster_lichess_4545_app_token
+      LICHESS_4545_SIGNING_SECRET_FILE: /run/secrets/chesster_lichess_4545_signing_secret
+      LICHESS_4545_BOT_TOKEN_FILE: /run/secrets/chesster_lichess_4545_bot_token
+      FORWARD_APP_TOKEN_FILE: /run/secrets/chesster_forward_app_token
+      FORWARD_SIGNING_SECRET_FILE: /run/secrets/chesster_forward_signing_secret
+      FORWARD_BOT_TOKEN_FILE: /run/secrets/chesster_forward_bot_token
+    secrets:
+      - chesster_database_url
+      - chesster_heltour_token
+      - chesster_lichess_token
+      - chesster_lichess_4545_app_token
+      - chesster_lichess_4545_signing_secret
+      - chesster_lichess_4545_bot_token
+      - chesster_forward_app_token
+      - chesster_forward_signing_secret
+      - chesster_forward_bot_token
+
+secrets:
+  chesster_database_url:
+    external: true
+  chesster_heltour_token:
+    external: true
+  chesster_lichess_token:
+    external: true
+  chesster_lichess_4545_app_token:
+    external: true
+  chesster_lichess_4545_signing_secret:
+    external: true
+  chesster_lichess_4545_bot_token:
+    external: true
+  chesster_forward_app_token:
+    external: true
+  chesster_forward_signing_secret:
+    external: true
+  chesster_forward_bot_token:
+    external: true

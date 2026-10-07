@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from 'fs'
+import { tmpdir } from 'os'
+import { join } from 'path'
 import { assert } from 'chai'
 import { parseEnv, DEFAULT_DATABASE_URL } from '../src/env'
 
@@ -41,6 +44,32 @@ describe('env', function () {
             assert.throws(
                 () => parseEnv({ ...validEnv, DATABASE_URL: '1' }),
                 /DATABASE_URL/
+            )
+        })
+
+        it('reads a value from a file referenced by <NAME>_FILE', () => {
+            const dir = mkdtempSync(join(tmpdir(), 'chesster-env-'))
+            const filePath = join(dir, 'heltour-token')
+            writeFileSync(filePath, 'file-heltour-token\n')
+            const { CHESSTER_HELTOUR_TOKEN, ...envWithoutToken } = validEnv
+            const env = parseEnv({
+                ...envWithoutToken,
+                CHESSTER_HELTOUR_TOKEN_FILE: filePath,
+            })
+            assert.equal(env.CHESSTER_HELTOUR_TOKEN, 'file-heltour-token')
+        })
+
+        it('throws when both <NAME> and <NAME>_FILE are set', () => {
+            const dir = mkdtempSync(join(tmpdir(), 'chesster-env-'))
+            const filePath = join(dir, 'heltour-token')
+            writeFileSync(filePath, 'file-heltour-token\n')
+            assert.throws(
+                () =>
+                    parseEnv({
+                        ...validEnv,
+                        CHESSTER_HELTOUR_TOKEN_FILE: filePath,
+                    }),
+                /CHESSTER_HELTOUR_TOKEN.*CHESSTER_HELTOUR_TOKEN_FILE/
             )
         })
     })
