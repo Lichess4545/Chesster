@@ -76,3 +76,14 @@ jobs:
             --dest-authfile "$GHCR_AUTHFILE" \
             docker-archive:result \
             "docker://$(ci/release-hooks.sh image):latest"
+
+      - name: Redeploy
+        if: env.IS_STABLE_RELEASE == 'true'
+        env:
+          PORTAINER_WEBHOOK_URL: ${{ secrets.PORTAINER_WEBHOOK_URL }}
+        run: |
+          if [ -z "$PORTAINER_WEBHOOK_URL" ]; then
+            echo "::notice::PORTAINER_WEBHOOK_URL is not set, skipping redeploy"
+            exit 0
+          fi
+          curl -fsS -X POST "$PORTAINER_WEBHOOK_URL"
