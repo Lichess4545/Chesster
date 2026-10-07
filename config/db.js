@@ -2,7 +2,7 @@ const DEFAULT_DATABASE_URL =
     'postgres://chesster:scrappypulpitgourdehinders@localhost:5432/chesster'
 
 var config = {
-    development: {
+    chesster: {
         url: process.env.DATABASE_URL || DEFAULT_DATABASE_URL,
         dialect: 'postgres',
     },

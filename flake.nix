@@ -34,7 +34,7 @@
 
         start = pkgs.writeShellScript "chesster-start" ''
           cd ${chesster}
-          ${nodejs}/bin/node node_modules/sequelize-cli/lib/sequelize db:migrate --config config/db.js
+          ${nodejs}/bin/node node_modules/sequelize-cli/lib/sequelize db:migrate --config config/db.js --env chesster
           exec ${nodejs}/bin/node --max_old_space_size=768 build/chesster.js "$@"
         '';
 
