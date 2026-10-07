@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------------
 // Models for our locally stored data
 // -----------------------------------------------------------------------------
+import fs from 'fs'
 import winston from 'winston'
 import { Sequelize, Model, DataTypes } from 'sequelize'
 import { ChessterConfig, databaseUrl } from './config'
@@ -90,6 +91,37 @@ function defineModels(sequelize: Sequelize) {
 // Parameters: config - the config option that contains the database
 //                      information.
 // -------------------------------------------------------------------------
+type EffectiveSsl = { rejectUnauthorized: boolean; ca?: string } | undefined
+
+function buildSequelize(config: ChessterConfig, ssl: EffectiveSsl): Sequelize {
+    const { ssl: _unusedSsl, ...databaseOptions } = config.database
+    const dialectOptions = ssl
+        ? {
+              ssl: {
+                  rejectUnauthorized: ssl.rejectUnauthorized,
+                  ...(ssl.ca ? { ca: fs.readFileSync(ssl.ca, 'utf8') } : {}),
+              },
+          }
+        : undefined
+    return new Sequelize(
+        config.database.name,
+        config.database.username,
+        config.database.password,
+        {
+            ...databaseOptions,
+            dialect: 'postgres',
+            ...(dialectOptions ? { dialectOptions } : {}),
+        }
+    )
+}
+
+function isSslUnsupportedError(e: unknown): boolean {
+    return (
+        e instanceof Error &&
+        e.message.includes('The server does not support SSL connections')
+    )
+}
+
 export async function connect(config: ChessterConfig) {
     if (config.database.dialect !== 'postgres') {
         throw new Error(
@@ -97,12 +129,18 @@ export async function connect(config: ChessterConfig) {
         )
     }
 
-    const sequelize = new Sequelize(
-        config.database.name,
-        config.database.username,
-        config.database.password,
-        { ...config.database, dialect: 'postgres' }
-    )
+    const { ssl } = config.database
+    let effectiveSsl: EffectiveSsl
+    if (ssl === false) {
+        effectiveSsl = undefined
+    } else if (ssl === undefined) {
+        effectiveSsl = { rejectUnauthorized: false }
+    } else {
+        effectiveSsl = ssl
+    }
+    const preferSsl = ssl === undefined
+
+    let sequelize = buildSequelize(config, effectiveSsl)
 
     try {
         winston.info(
@@ -110,7 +148,20 @@ export async function connect(config: ChessterConfig) {
                 config.database
             )}`
         )
-        await sequelize.authenticate()
+        try {
+            await sequelize.authenticate()
+        } catch (e) {
+            if (preferSsl && isSslUnsupportedError(e)) {
+                winston.info(
+                    '[models.connect()] Database does not support SSL, retrying without it'
+                )
+                await sequelize.close()
+                sequelize = buildSequelize(config, undefined)
+                await sequelize.authenticate()
+            } else {
+                throw e
+            }
+        }
         winston.info('[models.connect()] Database connection successful')
         defineModels(sequelize)
     } catch (e) {
