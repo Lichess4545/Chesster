@@ -32,11 +32,15 @@
           '';
         };
 
-        start = pkgs.writeShellScript "chesster-start" ''
-          cd ${chesster}
-          ${nodejs}/bin/node node_modules/sequelize-cli/lib/sequelize db:migrate --config config/db.js --env chesster
-          exec ${nodejs}/bin/node --max_old_space_size=768 build/chesster.js "$@"
-        '';
+        start = pkgs.writeShellApplication {
+          name = "chesster-start";
+          runtimeInputs = [ nodejs ];
+          text = ''
+            cd ${chesster}
+            node node_modules/sequelize-cli/lib/sequelize db:migrate --config config/db.js --env chesster
+            exec node --max_old_space_size=768 build/chesster.js "$@"
+          '';
+        };
 
         container = pkgs.dockerTools.buildLayeredImage {
           name = "chesster";
@@ -44,7 +48,7 @@
           contents = [ pkgs.dockerTools.fakeNss pkgs.dockerTools.caCertificates ];
           extraCommands = "mkdir -m 1777 tmp";
           config = {
-            Entrypoint = [ start ];
+            Entrypoint = [ "${start}/bin/chesster-start" ];
             User = "nobody";
             Env = [ "HOME=/tmp" "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt" ];
             Labels."org.opencontainers.image.source" = "https://github.com/Lichess4545/Chesster";
