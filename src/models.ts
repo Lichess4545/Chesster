@@ -3,17 +3,9 @@
 // -----------------------------------------------------------------------------
 // Models for our locally stored data
 // -----------------------------------------------------------------------------
-import fs from 'fs'
 import winston from 'winston'
 import { Sequelize, Model, DataTypes } from 'sequelize'
-import {
-    DatabaseSsl,
-    databaseSslMode,
-    databaseSslOptions,
-    databaseSslRootCertPath,
-    redactDatabaseUrl,
-    stripDatabaseSslParams,
-} from './config'
+import { databaseDialectOptions, redactDatabaseUrl, stripDatabaseSslParams } from './config'
 import { formatError } from './utils'
 
 export class LichessRating extends Model {
@@ -91,15 +83,9 @@ function defineModels(sequelize: Sequelize) {
     )
 }
 
-function buildSequelize(url: string, ssl: DatabaseSsl | undefined): Sequelize {
-    const dialectOptions = ssl
-        ? {
-              ssl: {
-                  rejectUnauthorized: ssl.rejectUnauthorized,
-                  ...(ssl.ca ? { ca: fs.readFileSync(ssl.ca, 'utf8') } : {}),
-              },
-          }
-        : undefined
+function buildSequelize(databaseUrl: string): Sequelize {
+    const url = stripDatabaseSslParams(databaseUrl)
+    const dialectOptions = databaseDialectOptions(databaseUrl)
     return new Sequelize(url, {
         dialect: 'postgres',
         logging: false,
@@ -107,21 +93,8 @@ function buildSequelize(url: string, ssl: DatabaseSsl | undefined): Sequelize {
     })
 }
 
-function isSslUnsupportedError(e: unknown): boolean {
-    return (
-        e instanceof Error &&
-        e.message.includes('The server does not support SSL connections')
-    )
-}
-
 export async function connect(databaseUrl: string) {
-    const url = stripDatabaseSslParams(databaseUrl)
-    const mode = databaseSslMode(databaseUrl)
-    const ca = databaseSslRootCertPath(databaseUrl)
-    const effectiveSsl = databaseSslOptions(mode, ca)
-    const preferSsl = mode === 'prefer'
-
-    let sequelize = buildSequelize(url, effectiveSsl)
+    const sequelize = buildSequelize(databaseUrl)
 
     try {
         winston.info(
@@ -129,20 +102,7 @@ export async function connect(databaseUrl: string) {
                 databaseUrl
             )}`
         )
-        try {
-            await sequelize.authenticate()
-        } catch (e) {
-            if (preferSsl && isSslUnsupportedError(e)) {
-                winston.info(
-                    '[models.connect()] Database does not support SSL, retrying without it'
-                )
-                await sequelize.close()
-                sequelize = buildSequelize(url, undefined)
-                await sequelize.authenticate()
-            } else {
-                throw e
-            }
-        }
+        await sequelize.authenticate()
         winston.info('[models.connect()] Database connection successful')
         defineModels(sequelize)
     } catch (e) {

@@ -45,8 +45,8 @@ describe('config', function () {
     })
 
     describe('database ssl mode', () => {
-        it('prefers ssl when no sslmode is given', () => {
-            assert.equal(resolveDatabaseSslMode(null), 'prefer')
+        it('requires ssl without verification when no sslmode is given', () => {
+            assert.equal(resolveDatabaseSslMode(null), 'require')
         })
 
         it('disables ssl for sslmode=disable', () => {
@@ -59,6 +59,10 @@ describe('config', function () {
 
         it('requires ssl without verification for sslmode=no-verify', () => {
             assert.equal(resolveDatabaseSslMode('no-verify'), 'require')
+        })
+
+        it('requires ssl without verification for sslmode=prefer', () => {
+            assert.equal(resolveDatabaseSslMode('prefer'), 'require')
         })
 
         it('requires verified ssl for sslmode=verify-ca', () => {
@@ -93,12 +97,6 @@ describe('config', function () {
 
         it('maps require to ssl without verification', () => {
             assert.deepEqual(databaseSslOptions('require'), {
-                rejectUnauthorized: false,
-            })
-        })
-
-        it('maps prefer to ssl without verification', () => {
-            assert.deepEqual(databaseSslOptions('prefer'), {
                 rejectUnauthorized: false,
             })
         })

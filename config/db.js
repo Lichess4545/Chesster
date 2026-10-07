@@ -1,7 +1,8 @@
 const fs = require('fs')
+const { databaseDialectOptions, stripDatabaseSslParams } = require('../build/config')
 
 const DEFAULT_DATABASE_URL =
-    'postgres://chesster:scrappypulpitgourdehinders@localhost:5432/chesster'
+    'postgres://chesster:scrappypulpitgourdehinders@localhost:5432/chesster?sslmode=disable'
 
 function resolveDatabaseUrl() {
     const filePath = process.env.DATABASE_URL_FILE
@@ -16,10 +17,14 @@ function resolveDatabaseUrl() {
     return process.env.DATABASE_URL || DEFAULT_DATABASE_URL
 }
 
+const databaseUrl = resolveDatabaseUrl()
+const dialectOptions = databaseDialectOptions(databaseUrl)
+
 var config = {
     chesster: {
-        url: resolveDatabaseUrl(),
+        url: stripDatabaseSslParams(databaseUrl),
         dialect: 'postgres',
+        ...(dialectOptions ? { dialectOptions } : {}),
     },
 }
 

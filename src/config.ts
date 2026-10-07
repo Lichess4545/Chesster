@@ -1,6 +1,7 @@
 // -----------------------------------------------------------------------------
 // Types for the chesster config.
 // -----------------------------------------------------------------------------
+import fs from 'fs'
 import moment from 'moment'
 
 export interface Heltour {
@@ -160,20 +161,17 @@ export function withHeltourToken(
     }
 }
 
-export type DatabaseSslMode = 'disable' | 'require' | 'verify' | 'prefer'
+export type DatabaseSslMode = 'disable' | 'require' | 'verify'
 
 export function resolveDatabaseSslMode(sslmode: string | null): DatabaseSslMode {
     switch (sslmode) {
         case 'disable':
             return 'disable'
-        case 'require':
-        case 'no-verify':
-            return 'require'
         case 'verify-ca':
         case 'verify-full':
             return 'verify'
         default:
-            return 'prefer'
+            return 'require'
     }
 }
 
@@ -190,7 +188,6 @@ export function databaseSslOptions(
         case 'disable':
             return undefined
         case 'require':
-        case 'prefer':
             return { rejectUnauthorized: false }
         case 'verify':
             return { rejectUnauthorized: true, ca }
@@ -210,6 +207,30 @@ export function databaseSslRootCertPath(databaseUrl: string): string | undefined
 
 export function databaseSslMode(databaseUrl: string): DatabaseSslMode {
     return resolveDatabaseSslMode(new URL(databaseUrl).searchParams.get('sslmode'))
+}
+
+export interface DatabaseDialectOptions {
+    ssl: {
+        rejectUnauthorized: boolean
+        ca?: string
+    }
+}
+
+export function databaseDialectOptions(
+    databaseUrl: string
+): DatabaseDialectOptions | undefined {
+    const mode = databaseSslMode(databaseUrl)
+    const caPath = databaseSslRootCertPath(databaseUrl)
+    const ssl = databaseSslOptions(mode, caPath)
+    if (!ssl) {
+        return undefined
+    }
+    return {
+        ssl: {
+            rejectUnauthorized: ssl.rejectUnauthorized,
+            ...(ssl.ca ? { ca: fs.readFileSync(ssl.ca, 'utf8') } : {}),
+        },
+    }
 }
 
 export function redactDatabaseUrl(databaseUrl: string): string {
