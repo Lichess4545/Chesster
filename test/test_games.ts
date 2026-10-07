@@ -4,7 +4,8 @@ import * as games from '../src/commands/games'
 import { SlackBot } from '../src/slack'
 import * as league from '../src/league'
 import * as lichess from '../src/lichess'
-import * as config from '../src/config'
+import { withHeltourToken } from '../src/config'
+import { development } from '../src/config/development'
 import winston from 'winston'
 winston.add(
     new winston.transports.Console({
@@ -12,9 +13,7 @@ winston.add(
     })
 )
 
-const testConfig: config.ChessterConfig = config
-    .chessterConfigDecoder('test-heltour-token')
-    .decodeJSON(JSON.stringify(require('../config/testconfig.js')))
+const testConfig = withHeltourToken(development, 'test-heltour-token')
 
 interface ExpectedResults {
     white: string | undefined

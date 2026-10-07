@@ -23,8 +23,7 @@ import * as lichess from './lichess'
 /* static entry point */
 
 const env = loadEnv()
-const configFile = process.argv[2] || '../config/config.js'
-const chesster = new slack.SlackBot('lichess4545', env, configFile)
+const chesster = new slack.SlackBot('lichess4545', env)
 
 if (process.env.NODE_ENV !== 'production') {
     winston.add(
@@ -37,7 +36,6 @@ if (process.env.NODE_ENV !== 'production') {
 const adminSlack = new slack.SlackBot(
     'forwarding', // slackName
     env, // env
-    configFile, // configFile
     false, // debug
     false, // connectToModels
     false, // refreshLeagues

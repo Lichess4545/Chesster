@@ -1,2 +1,2 @@
 #!/bin/bash
-yarn run ts-node debug ./src/chesster.js $1
+yarn run ts-node debug ./src/chesster.js

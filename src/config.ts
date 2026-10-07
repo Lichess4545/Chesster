@@ -1,22 +1,9 @@
 // -----------------------------------------------------------------------------
-// Types and parsing for the chesster config.
+// Types for the chesster config.
 // -----------------------------------------------------------------------------
 import moment from 'moment'
-import {
-    Decoder,
-    array,
-    object,
-    number,
-    string,
-    boolean,
-    andThen,
-    oneOf,
-    dict,
-    succeed,
-} from 'type-safe-json-decoder'
 
 export interface Heltour {
-    token: string
     baseEndpoint: string
 }
 
@@ -24,50 +11,19 @@ export interface HeltourLeagueConfig extends Heltour {
     leagueTag: string
 }
 
-export function heltourDecoder(heltourToken: string): Decoder<Heltour> {
-    return object(
-        ['baseEndpoint', string()],
-        (baseEndpoint) => ({ token: heltourToken, baseEndpoint })
-    )
-}
-export function heltourLeagueConfigDecoder(
-    heltourToken: string
-): Decoder<HeltourLeagueConfig> {
-    return andThen(heltourDecoder(heltourToken), (heltour) =>
-        object(['leagueTag', string()], (leagueTag) => ({
-            ...heltour,
-            leagueTag,
-        }))
-    )
-}
-
 export interface Welcome {
     channel: string
 }
-export const WelcomeDecoder: Decoder<Welcome> = object(
-    ['channel', string()],
-    (channel) => ({ channel })
-)
 
 export interface Results {
     channel: string
     channelId: string
 }
-export const ResultsDecoder: Decoder<Results> = object(
-    ['channel', string()],
-    ['channelId', string()],
-    (channel, channelId) => ({ channel, channelId })
-)
 
 export interface GameLinksClock {
     initial: number
     increment: number
 }
-export const GameLinksClockDecoder: Decoder<GameLinksClock> = object(
-    ['initial', number()],
-    ['increment', number()],
-    (initial, increment) => ({ initial, increment })
-)
 
 export interface GameLinks {
     channel: string
@@ -76,20 +32,6 @@ export interface GameLinks {
     rated: boolean
     variant: string
 }
-export const GameLinksDecoder: Decoder<GameLinks> = object(
-    ['channel', string()],
-    ['channelId', string()],
-    ['clock', GameLinksClockDecoder],
-    ['rated', boolean()],
-    ['variant', string()],
-    (channel, channelId, clock, rated, variant) => ({
-        channel,
-        channelId,
-        clock,
-        rated,
-        variant,
-    })
-)
 
 export interface SchedulingExtrema {
     isoWeekday: number
@@ -98,19 +40,7 @@ export interface SchedulingExtrema {
     warningHours: number
     referenceDate: moment.Moment | undefined
 }
-export const SchedulingExtremaDecoder: Decoder<SchedulingExtrema> = object(
-    ['isoWeekday', number()],
-    ['hour', number()],
-    ['minute', number()],
-    ['warningHours', number()],
-    (isoWeekday, hour, minute, warningHours) => ({
-        isoWeekday,
-        hour,
-        minute,
-        warningHours,
-        referenceDate: undefined,
-    })
-)
+
 export interface Scheduling {
     extrema: SchedulingExtrema
     warningMessage: string
@@ -118,27 +48,11 @@ export interface Scheduling {
     format: string
     channel: string
 }
-export const SchedulingDecoder: Decoder<Scheduling> = object(
-    ['extrema', SchedulingExtremaDecoder],
-    ['warningMessage', string()],
-    ['lateMessage', string()],
-    ['format', string()],
-    ['channel', string()],
-    (extrema, warningMessage, lateMessage, format, channel) => ({
-        extrema,
-        warningMessage,
-        lateMessage,
-        format,
-        channel,
-    })
-)
+
 export interface Alternate {
     channelId: string
 }
-export const AlternateDecoder: Decoder<Alternate> = object(
-    ['channelId', string()],
-    (channelId) => ({ channelId })
-)
+
 export interface LeagueLinks {
     faq: string
     rules: string
@@ -152,44 +66,6 @@ export interface LeagueLinks {
     nominate: string
     notifications: string
 }
-export const LeagueLinksDecoder: Decoder<LeagueLinks> = object(
-    ['faq', string()],
-    ['rules', string()],
-    ['league', string()],
-    ['pairings', string()],
-    ['standings', string()],
-    ['guide', string()],
-    ['captains', string()],
-    ['registration', string()],
-    ['availability', string()],
-    ['nominate', string()],
-    ['notifications', string()],
-    (
-        faq,
-        rules,
-        league,
-        pairings,
-        standings,
-        guide,
-        captains,
-        registration,
-        availability,
-        nominate,
-        notifications
-    ) => ({
-        faq,
-        rules,
-        league,
-        pairings,
-        standings,
-        guide,
-        captains,
-        registration,
-        availability,
-        nominate,
-        notifications,
-    })
-)
 
 export interface League {
     name: string
@@ -202,56 +78,6 @@ export interface League {
     alternate?: Alternate
 }
 
-export function leagueWithoutAlternateDecoder(
-    heltourToken: string
-): Decoder<League> {
-    return object(
-        ['name', string()],
-        ['alsoKnownAs', array(string())],
-        ['heltour', heltourLeagueConfigDecoder(heltourToken)],
-        ['results', ResultsDecoder],
-        ['gamelinks', GameLinksDecoder],
-        ['scheduling', SchedulingDecoder],
-        ['links', LeagueLinksDecoder],
-        (
-            name,
-            alsoKnownAs,
-            heltour,
-            results,
-            gamelinks,
-            scheduling,
-            links
-        ) => ({
-            name,
-            alsoKnownAs,
-            heltour,
-            results,
-            gamelinks,
-            scheduling,
-            links,
-            alternate: undefined,
-        })
-    )
-}
-export function leagueWithAlternateDecoder(
-    heltourToken: string
-): Decoder<League> {
-    return andThen(
-        leagueWithoutAlternateDecoder(heltourToken),
-        (leagueWithoutAlternate) =>
-            object(['alternate', AlternateDecoder], (alternate) => ({
-                ...leagueWithoutAlternate,
-                alternate,
-            }))
-    )
-}
-export function leagueDecoder(heltourToken: string): Decoder<League> {
-    return oneOf(
-        leagueWithAlternateDecoder(heltourToken),
-        leagueWithoutAlternateDecoder(heltourToken)
-    )
-}
-
 export interface Winston {
     domain: string
     channel: string
@@ -259,58 +85,25 @@ export interface Winston {
     level: 'error' | 'warning' | 'info' | 'debug'
     handleExceptions: boolean
 }
-export const WinstonDecoder: Decoder<Winston> = object(
-    ['domain', string()],
-    ['channel', string()],
-    ['username', string()],
-    ['level', string()],
-    ['handleExceptions', boolean()],
-    (domain, channel, username, level, handleExceptions) => ({
-        domain,
-        channel,
-        username,
-        level: level as 'error' | 'warning' | 'info' | 'debug',
-        handleExceptions,
-    })
-)
+
 export interface Links {
     source: string
 }
-export const LinksDecoder: Decoder<Links> = object(
-    ['source', string()],
-    (source) => ({ source })
-)
+
 export type ChannelMap = Record<string, string>
-export const ChannelMapDecoder: Decoder<ChannelMap> = dict(string())
 
 export interface MessageForwarding {
     channelId: string
 }
-export const MessageForwardingDecoder: Decoder<MessageForwarding> = object(
-    ['channelId', string()],
-    (channelId) => ({ channelId })
-)
 
 export type ChannelModMap = Record<string, string[]>
-export const ChannelModMapDecoder: Decoder<ChannelModMap> = dict(
-    array(string())
-)
 
 export interface WatcherConfig {
     inactivityTimeoutMinutes: number
     maxBackoffSeconds: number
     healthLogIntervalMinutes: number
 }
-export const WatcherConfigDecoder: Decoder<WatcherConfig> = object(
-    ['inactivityTimeoutMinutes', number()],
-    ['maxBackoffSeconds', number()],
-    ['healthLogIntervalMinutes', number()],
-    (inactivityTimeoutMinutes, maxBackoffSeconds, healthLogIntervalMinutes) => ({
-        inactivityTimeoutMinutes,
-        maxBackoffSeconds,
-        healthLogIntervalMinutes,
-    })
-)
+
 export const DEFAULT_WATCHER_CONFIG: WatcherConfig = {
     inactivityTimeoutMinutes: 10,
     maxBackoffSeconds: 60,
@@ -331,75 +124,40 @@ export interface ChessterConfig {
     watcher: WatcherConfig
 }
 
-function baseChessterConfigDecoder(
-    heltourToken: string
-): Decoder<Omit<ChessterConfig, 'watcher'>> {
-    return object(
-        ['heltour', heltourDecoder(heltourToken)],
-        ['storage', string()],
-        ['watcherBaseURL', string()],
-        ['winston', WinstonDecoder],
-        ['links', LinksDecoder],
-        ['leagues', dict(leagueDecoder(heltourToken))],
-        ['channelMap', ChannelMapDecoder],
-        ['messageForwarding', MessageForwardingDecoder],
-        ['pingMods', ChannelModMapDecoder],
-        ['welcome', WelcomeDecoder],
-        (
-            heltour,
-            storage,
-            watcherBaseURL,
-            winston,
-            links,
-            leagues,
-            channelMap,
-            messageForwarding,
-            pingMods,
-            welcome
-        ) => ({
-            heltour,
-            storage,
-            watcherBaseURL,
-            winston,
-            links,
-            leagues,
-            channelMap,
-            messageForwarding,
-            pingMods,
-            welcome,
-        })
-    )
+export type ConfigName = 'production' | 'development'
+
+// -----------------------------------------------------------------------------
+// The heltour token is a secret that lives in the environment, never in the
+// config. These runtime types describe the config once the token has been
+// attached, which is what the rest of the application actually works with.
+// -----------------------------------------------------------------------------
+export type RuntimeHeltour = Heltour & { token: string }
+export type RuntimeHeltourLeagueConfig = HeltourLeagueConfig & { token: string }
+export type RuntimeLeague = Omit<League, 'heltour'> & {
+    heltour: RuntimeHeltourLeagueConfig
+}
+export type RuntimeChessterConfig = Omit<ChessterConfig, 'heltour' | 'leagues'> & {
+    heltour: RuntimeHeltour
+    leagues: Record<string, RuntimeLeague>
 }
 
-function chessterConfigWithWatcherDecoder(
+export function withHeltourToken(
+    config: ChessterConfig,
     heltourToken: string
-): Decoder<ChessterConfig> {
-    return andThen(baseChessterConfigDecoder(heltourToken), (base) =>
-        object(['watcher', WatcherConfigDecoder], (watcher) => ({
-            ...base,
-            watcher,
-        }))
-    )
-}
-
-function chessterConfigWithDefaultsDecoder(
-    heltourToken: string
-): Decoder<ChessterConfig> {
-    return andThen(baseChessterConfigDecoder(heltourToken), (base) =>
-        succeed({
-            ...base,
-            watcher: DEFAULT_WATCHER_CONFIG,
-        })
-    )
-}
-
-export function chessterConfigDecoder(
-    heltourToken: string
-): Decoder<ChessterConfig> {
-    return oneOf(
-        chessterConfigWithWatcherDecoder(heltourToken),
-        chessterConfigWithDefaultsDecoder(heltourToken)
-    )
+): RuntimeChessterConfig {
+    const leagues: Record<string, RuntimeLeague> = {}
+    for (const key of Object.keys(config.leagues)) {
+        const l = config.leagues[key]
+        leagues[key] = {
+            ...l,
+            heltour: { ...l.heltour, token: heltourToken },
+        }
+    }
+    return {
+        ...config,
+        heltour: { ...config.heltour, token: heltourToken },
+        leagues,
+    }
 }
 
 export type DatabaseSslMode = 'disable' | 'require' | 'verify' | 'prefer'

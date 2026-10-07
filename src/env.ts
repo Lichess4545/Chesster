@@ -16,6 +16,7 @@ export const EnvSchema = z.object({
     FORWARD_BOT_TOKEN: z.string(),
     CHESSTER_HELTOUR_TOKEN: z.string(),
     CHESSTER_LICHESS_TOKEN: z.string(),
+    CHESSTER_CONFIG: z.enum(['production', 'development']).default('production'),
 })
 
 export type Env = z.infer<typeof EnvSchema>

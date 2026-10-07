@@ -19,7 +19,14 @@ import * as models from './models'
 import SlackLogger, { LogWithPrefix } from './logging'
 import { isDefined, formatError } from './utils'
 import * as config from './config'
+import { production } from './config/production'
+import { development } from './config/development'
 import { Env } from './env'
+
+const configsByName: Record<config.ConfigName, config.ChessterConfig> = {
+    production,
+    development,
+}
 
 export type SlackUserID = string
 export type SlackUserName = string
@@ -599,7 +606,7 @@ export type SlackName = 'forwarding' | 'lichess4545'
 
 export class SlackBot {
     private log: LogWithPrefix
-    public config: config.ChessterConfig
+    public config: config.RuntimeChessterConfig
     public users: SlackEntityLookup<LeagueMember>
     public channels: SlackEntityLookup<SlackChannel>
     // public rtm: RTMClient
@@ -613,17 +620,17 @@ export class SlackBot {
     constructor(
         public slackName: SlackName,
         public env: Env,
-        public configFile = './config/config.js',
         public debug = false,
         public connectToModels = true,
         public refreshLeagues = true,
         public logToThisSlack = false
     ) {
         this.log = new LogWithPrefix(`[SlackBot: ${this.slackName}]`)
-        this.log.info(`Loading config from: ${this.configFile}`)
-        this.config = config.chessterConfigDecoder(
+        this.log.info(`Loading config: ${this.env.CHESSTER_CONFIG}`)
+        this.config = config.withHeltourToken(
+            configsByName[this.env.CHESSTER_CONFIG],
             this.env.CHESSTER_HELTOUR_TOKEN
-        ).decodeJSON(JSON.stringify(require(this.configFile)))
+        )
 
         // May need changing with events API migration
         this.users = new SlackEntityLookup<LeagueMember>(

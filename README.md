@@ -20,7 +20,7 @@ automatically with direnv. It provides node, yarn and a local postgres.
    role and database the default `DATABASE_URL` expects, so no `DATABASE_URL`
    is needed locally.
 5. Apply migrations: `yarn run migrate`.
-6. Start the bot against `config/testconfig.js`: `yarn run start`.
+6. Start the bot against the development config: `yarn run start`.
 7. Stop postgres with `devenv processes down`.
 
 ### Environment variables
@@ -32,6 +32,7 @@ automatically with direnv. It provides node, yarn and a local postgres.
 | `CHESSTER_HELTOUR_TOKEN` | heltour API token |
 | `CHESSTER_LICHESS_TOKEN` | lichess API token, used by the game watcher |
 | `DATABASE_URL` | Postgres connection URL; `sslmode` in the query string controls SSL (defaults to prefer-but-fall-back) |
+| `CHESSTER_CONFIG` | `production` or `development`, selects which config in `src/config/` to run with (defaults to `production`) |
 
 ## Container image
 
@@ -46,7 +47,7 @@ the `Yarn deps hash` workflow pushes the fix. Fork and dependabot branches
 can't be pushed to; run `ci/yarn-deps-hash.sh` and commit `yarn-deps.hash`.
 
 `compose.local.yml` runs that image on the host network against the devenv
-postgres, with `config/testconfig.js` and the secrets in `.env`. With
+postgres, with the development config and the secrets in `.env`. With
 `devenv up -d` running:
 
 ```
