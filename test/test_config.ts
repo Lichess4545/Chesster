@@ -1,22 +1,18 @@
 import { assert } from 'chai'
-import { ChessterConfigDecoder } from '../src/config'
+import {
+    ChessterConfigDecoder,
+    databaseSslOptions,
+    databaseSslMode,
+    databaseSslRootCertPath,
+    redactDatabaseUrl,
+    resolveDatabaseSslMode,
+    stripDatabaseSslParams,
+} from '../src/config'
 
 describe('config types', function () {
     let config = {
         // Unfortunately this all has to be at the top level due to sequelize-cli
-        database: {
-            name: 'chesster',
-            username: 'chesster',
-            password: 'asdfasdf',
-            host: 'localhost',
-            dialect: 'postgres',
-            logging: false,
-            pool: {
-                max: 5,
-                min: 0,
-                idle: 10000,
-            },
-        },
+        database: 'postgres://chesster:asdfasdf@localhost:5432/chesster',
         storage: '',
         watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
         watcherToken: 'asdfasdfasdfasdf',
@@ -325,82 +321,126 @@ describe('config types', function () {
             })
         })
 
-        it('defaults the database port when not provided', () => {
+        it('decodes the database as a connection URL string', () => {
             const decoded = ChessterConfigDecoder.decodeJSON(
                 JSON.stringify(config)
             )
-            assert.equal(decoded.database.port, 5432)
+            assert.equal(
+                decoded.database,
+                'postgres://chesster:asdfasdf@localhost:5432/chesster'
+            )
+        })
+    })
+
+    describe('database ssl mode', () => {
+        it('prefers ssl when no sslmode is given', () => {
+            assert.equal(resolveDatabaseSslMode(null), 'prefer')
         })
 
-        it('decodes an explicit database port', () => {
-            const configWithPort = {
-                ...config,
-                database: { ...config.database, port: 5433 },
-            }
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(configWithPort)
-            )
-            assert.equal(decoded.database.port, 5433)
+        it('disables ssl for sslmode=disable', () => {
+            assert.equal(resolveDatabaseSslMode('disable'), 'disable')
         })
 
-        it('leaves ssl undefined when not provided', () => {
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(config)
-            )
-            assert.isUndefined(decoded.database.ssl)
+        it('requires ssl without verification for sslmode=require', () => {
+            assert.equal(resolveDatabaseSslMode('require'), 'require')
         })
 
-        it('decodes ssl set to false', () => {
-            const configWithSslDisabled = {
-                ...config,
-                database: {
-                    ...config.database,
-                    ssl: false,
-                },
-            }
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(configWithSslDisabled)
-            )
-            assert.strictEqual(decoded.database.ssl, false)
+        it('requires ssl without verification for sslmode=no-verify', () => {
+            assert.equal(resolveDatabaseSslMode('no-verify'), 'require')
         })
 
-        it('decodes ssl without a ca', () => {
-            const configWithSsl = {
-                ...config,
-                database: {
-                    ...config.database,
-                    ssl: { rejectUnauthorized: true },
-                },
-            }
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(configWithSsl)
-            )
-            assert.deepEqual(decoded.database.ssl, {
-                rejectUnauthorized: true,
-                ca: undefined,
-            })
+        it('requires verified ssl for sslmode=verify-ca', () => {
+            assert.equal(resolveDatabaseSslMode('verify-ca'), 'verify')
         })
 
-        it('decodes ssl with a ca', () => {
-            const configWithSsl = {
-                ...config,
-                database: {
-                    ...config.database,
-                    ssl: {
-                        rejectUnauthorized: false,
-                        ca: '/path/to/ca.pem',
-                    },
-                },
-            }
-            const decoded = ChessterConfigDecoder.decodeJSON(
-                JSON.stringify(configWithSsl)
+        it('requires verified ssl for sslmode=verify-full', () => {
+            assert.equal(resolveDatabaseSslMode('verify-full'), 'verify')
+        })
+
+        it('reads the sslmode from the database url', () => {
+            assert.equal(
+                databaseSslMode(
+                    'postgres://chesster@localhost:5432/chesster?sslmode=require'
+                ),
+                'require'
             )
-            assert.deepEqual(decoded.database.ssl, {
+        })
+
+        it('reads the sslrootcert from the database url', () => {
+            assert.equal(
+                databaseSslRootCertPath(
+                    'postgres://chesster@localhost:5432/chesster?sslmode=verify-full&sslrootcert=/path/to/ca.pem'
+                ),
+                '/path/to/ca.pem'
+            )
+        })
+
+        it('maps disable to no ssl options', () => {
+            assert.isUndefined(databaseSslOptions('disable'))
+        })
+
+        it('maps require to ssl without verification', () => {
+            assert.deepEqual(databaseSslOptions('require'), {
                 rejectUnauthorized: false,
-                ca: '/path/to/ca.pem',
             })
         })
 
+        it('maps prefer to ssl without verification', () => {
+            assert.deepEqual(databaseSslOptions('prefer'), {
+                rejectUnauthorized: false,
+            })
+        })
+
+        it('maps verify to ssl with verification and a ca', () => {
+            assert.deepEqual(
+                databaseSslOptions('verify', '/path/to/ca.pem'),
+                {
+                    rejectUnauthorized: true,
+                    ca: '/path/to/ca.pem',
+                }
+            )
+        })
+
+        it('strips sslmode and sslrootcert from the database url', () => {
+            assert.equal(
+                stripDatabaseSslParams(
+                    'postgres://chesster:asdfasdf@localhost:5432/chesster?sslmode=verify-full&sslrootcert=/path/to/ca.pem'
+                ),
+                'postgres://chesster:asdfasdf@localhost:5432/chesster'
+            )
+        })
+
+        it('leaves other query params in place when stripping ssl params', () => {
+            assert.equal(
+                stripDatabaseSslParams(
+                    'postgres://chesster@localhost:5432/chesster?sslmode=disable&foo=bar'
+                ),
+                'postgres://chesster@localhost:5432/chesster?foo=bar'
+            )
+        })
+    })
+
+    describe('database url redaction', () => {
+        it('removes the password but keeps user, host, port, db and query', () => {
+            assert.equal(
+                redactDatabaseUrl(
+                    'postgres://chesster:asdfasdf@localhost:5432/chesster?sslmode=require'
+                ),
+                'postgres://chesster@localhost:5432/chesster?sslmode=require'
+            )
+        })
+
+        it('leaves a url without a password unchanged', () => {
+            assert.equal(
+                redactDatabaseUrl(
+                    'postgres://chesster@localhost:5432/chesster'
+                ),
+                'postgres://chesster@localhost:5432/chesster'
+            )
+        })
+    })
+
+    describe('watcher config parsing', () => {
         it('decodes explicit watcher config', () => {
             const configWithWatcher = {
                 ...config,

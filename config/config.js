@@ -27,8 +27,7 @@ let LICHESS_TOKEN =
 
 var config = {
     // Unfortunately this all has to be at the top level due to sequelize-cli
-    // TODO: this should be a URL and should be from process.env long term
-    database: db.development,
+    database: db.development.url,
     storage: '',
     watcherBaseURL: 'https://lichess.org/api/stream/games-by-users',
     watcherToken: LICHESS_TOKEN,
