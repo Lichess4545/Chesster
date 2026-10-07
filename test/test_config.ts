@@ -325,6 +325,24 @@ describe('config types', function () {
             })
         })
 
+        it('defaults the database port when not provided', () => {
+            const decoded = ChessterConfigDecoder.decodeJSON(
+                JSON.stringify(config)
+            )
+            assert.equal(decoded.database.port, 5432)
+        })
+
+        it('decodes an explicit database port', () => {
+            const configWithPort = {
+                ...config,
+                database: { ...config.database, port: 5433 },
+            }
+            const decoded = ChessterConfigDecoder.decodeJSON(
+                JSON.stringify(configWithPort)
+            )
+            assert.equal(decoded.database.port, 5433)
+        })
+
         it('decodes explicit watcher config', () => {
             const configWithWatcher = {
                 ...config,
