@@ -81,6 +81,10 @@ postgres. The stack pins an explicit image version, which `release` updates;
 redeploying the stack picks it up. The bot uses Slack socket mode, so it
 exposes no ports.
 
+The Portainer stack is created from this repo (`main`, `compose.yml`) with its
+webhook enabled; the webhook URL is stored as the `PORTAINER_WEBHOOK_URL`
+repo secret, so stable releases redeploy automatically.
+
 ## Useful Commands
 
 Run these before submitting a PR:
