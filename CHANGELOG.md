@@ -4,6 +4,12 @@ Rendered by [git-cliff](https://git-cliff.org) from the conventional commits
 behind each tag. `release` rewrites this file in full on every release, so an
 edit made here is lost — edit the commit messages instead.
 
+## v1.2.3 — 2026-10-08
+
+### Fixes
+
+- report which Slack credential is rejected at startup ([#435](https://github.com/Lichess4545/Chesster/pull/435)) ([e659acb](https://github.com/Lichess4545/Chesster/commit/e659acbd40ccaa0aa4f76e5f7c4f7e5ba58939a4))
+
 ## v1.2.2 — 2026-10-07
 
 ### Fixes
