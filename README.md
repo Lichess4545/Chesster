@@ -94,6 +94,9 @@ The stack pins an explicit image version, which `release` updates;
 redeploying the stack picks it up. The bot uses Slack socket mode, so it
 exposes no ports.
 
+The stack also runs [Dozzle](https://dozzle.dev) for the stack's logs, served
+by traefik at `https://chesster.lichess.app/logs` behind authentik.
+
 The Portainer stack is created from this repo (`main`, `compose.yml`) with its
 webhook enabled; the webhook URL is stored as the `PORTAINER_WEBHOOK_URL`
 repo secret, so stable releases redeploy automatically.

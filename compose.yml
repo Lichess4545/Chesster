@@ -23,6 +23,41 @@ services:
       - chesster_forward_signing_secret
       - chesster_forward_bot_token
 
+  dozzle:
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    environment:
+      - DOZZLE_BASE=/logs
+      - DOZZLE_FILTER=label=com.docker.stack.namespace=${STACK_NAME:-4545-chesster}
+      - DOZZLE_NO_ANALYTICS=true
+      - DOZZLE_DISABLE_SETUP_WIZARD=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - default
+      - frontend
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=frontend
+      - traefik.http.services.chesster-dozzle.loadbalancer.server.port=8080
+      - traefik.http.routers.chesster-dozzle.rule=Host(`chesster.lichess.app`) && PathPrefix(`/logs`)
+      - traefik.http.routers.chesster-dozzle.entrypoints=websecure
+      - traefik.http.routers.chesster-dozzle.tls=true
+      - traefik.http.routers.chesster-dozzle.tls.certresolver=myresolver
+      - traefik.http.routers.chesster-dozzle.middlewares=authentik@file
+      - traefik.http.routers.chesster-dozzle.priority=100
+      - traefik.http.routers.chesster-dozzle.service=chesster-dozzle
+      - traefik.http.routers.chesster-outpost.rule=Host(`chesster.lichess.app`) && PathPrefix(`/outpost.goauthentik.io`)
+      - traefik.http.routers.chesster-outpost.entrypoints=websecure
+      - traefik.http.routers.chesster-outpost.tls=true
+      - traefik.http.routers.chesster-outpost.tls.certresolver=myresolver
+      - traefik.http.routers.chesster-outpost.priority=200
+      - traefik.http.routers.chesster-outpost.service=authentik-server@file
+
+networks:
+  frontend:
+    external: true
+
 secrets:
   chesster_database_url:
     external: true
