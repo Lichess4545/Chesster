@@ -32,5 +32,12 @@
     pass_filenames = false;
   };
 
+  git-hooks.hooks.nixpkgs-pin = {
+    enable = true;
+    entry = "ci/nixpkgs-pin.sh";
+    files = "^(flake|devenv)\\.lock$";
+    pass_filenames = false;
+  };
+
   scripts.release.exec = ''cd "$DEVENV_ROOT" && exec nix run "$DEVENV_ROOT#release" -- "$@"'';
 }
