@@ -278,6 +278,9 @@ export function parseGamelink(messageText: string): GameLinkResult {
         // if previously token was a lichess url
         // this token should be the gamelinkID
         if (foundBaseURL) {
+            if (token === 'game') {
+                return false
+            }
             gamelinkID = token.replace('>', '')
             // some tokens will have a > if its the last token
             // return true to stop iterating
@@ -570,7 +573,7 @@ export async function updateGamelink(
         white: details.players.white.user,
         black: details.players.black.user,
         result: details.result,
-        game_link: `https://lichess.org/${details.id}`,
+        game_link: `https://lichess.org/game/${details.id}`,
     }
 
     // get the result in the correct format

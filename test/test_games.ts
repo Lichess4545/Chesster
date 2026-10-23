@@ -126,6 +126,18 @@ describe('games', function () {
                 '<en.lichess.org/ClhKGw8s|en.lichess.org/ClhKGw8s>',
                 'ClhKGw8s'
             )
+            testParseGamelink(
+                'https://lichess.org/game/H5YNnlR5RqMN',
+                'H5YNnlR5RqMN'
+            )
+            testParseGamelink(
+                'https://lichess.org/game/H5YNnlR5/black',
+                'H5YNnlR5'
+            )
+            testParseGamelink(
+                '<https://lichess.org/game/ClhKGw8s|lichess.org/game/ClhKGw8s>',
+                'ClhKGw8s'
+            )
             testParseGamelink('there is no link here', undefined)
         })
     })

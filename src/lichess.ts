@@ -440,7 +440,7 @@ export const BaseGameDetailsDecoder: Decoder<GameDetails> = object(
         // lastMoveAt,
         players,
         status,
-        game_link: `https://lichess.org/${id}`,
+        game_link: `https://lichess.org/game/${id}`,
         result: gameResult(status),
     })
 )
