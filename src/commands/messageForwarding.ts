@@ -5,6 +5,75 @@ import * as league from '../league'
 import { SlackBot, CommandMessage } from '../slack'
 import { isDefined } from '../utils'
 
+const slackChannelIDRegex = /^[cg][a-z0-9]{8,}$/
+const slackUserIDRegex = /^[uw][a-z0-9]{8,}$/
+
+type ForwardingTarget =
+    | { kind: 'user'; id: string }
+    | { kind: 'channel'; id: string }
+
+function isChannelName(target: string) {
+    return _.startsWith(target, '#')
+}
+
+function isAdminSlackMention(target: string) {
+    return _.startsWith(target, '<@') && _.endsWith(target, '>')
+}
+
+function withoutAtSign(target: string) {
+    return _.startsWith(target, '@') ? target.slice(1) : target
+}
+
+function resolveAdminSlackMention(
+    chesster: SlackBot,
+    adminSlack: SlackBot,
+    mention: string
+): ForwardingTarget | undefined {
+    const adminUserID = mention.slice(2, -1)
+    const name = adminSlack.users.getByNameOrID(adminUserID)?.name
+    if (!isDefined(name)) return undefined
+    return resolveCachedUser(chesster, name)
+}
+
+function resolveCachedUser(
+    chesster: SlackBot,
+    nameOrId: string
+): ForwardingTarget | undefined {
+    const user = chesster.users.getByNameOrID(nameOrId)
+    return user ? { kind: 'user', id: user.id } : undefined
+}
+
+function resolveRawChannelID(nameOrId: string): ForwardingTarget | undefined {
+    return slackChannelIDRegex.test(nameOrId)
+        ? { kind: 'channel', id: _.toUpper(nameOrId) }
+        : undefined
+}
+
+function resolveRawUserID(nameOrId: string): ForwardingTarget | undefined {
+    return slackUserIDRegex.test(nameOrId)
+        ? { kind: 'user', id: _.toUpper(nameOrId) }
+        : undefined
+}
+
+function resolveTarget(
+    chesster: SlackBot,
+    adminSlack: SlackBot,
+    target: string
+): ForwardingTarget | undefined {
+    if (isChannelName(target)) {
+        return { kind: 'channel', id: target }
+    }
+    if (isAdminSlackMention(target)) {
+        return resolveAdminSlackMention(chesster, adminSlack, target)
+    }
+    const nameOrId = withoutAtSign(target)
+    return (
+        resolveCachedUser(chesster, nameOrId) ??
+        resolveRawChannelID(nameOrId) ??
+        resolveRawUserID(nameOrId)
+    )
+}
+
 export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
     return async (bot: SlackBot, message: CommandMessage) => {
         if (
@@ -25,33 +94,21 @@ export function forwardMessage(chesster: SlackBot, adminSlack: SlackBot) {
             const messageToSend = message.attachments[0].text
             const channels: string[] = []
             const users: string[] = []
+            const unresolved: string[] = []
             _(targets.value)
                 .split('+')
                 .compact()
                 .forEach((t) => {
-                    if (_.startsWith(t, '@')) {
-                        const user = chesster.users.getByNameOrID(t.substr(1))
-                        if (user) users.push(user.id)
-                    } else if (_.startsWith(t, '#')) {
-                        channels.push(t)
-                    } else if (_.startsWith(t, 'g') || _.startsWith(t, 'c')) {
-                        channels.push(_.toUpper(t))
-                    } else if (_.startsWith(t, 'u')) {
-                        users.push(_.toUpper(t))
-                    } else if (_.startsWith(t, '<@') && _.endsWith(t, '>')) {
-                        const name = adminSlack.users.getByNameOrID(
-                            t.substr(2, t.length - 3)
-                        )?.name
-                        if (!isDefined(name)) return
-
-                        const user = chesster.users.getId(name)
-                        if (!isDefined(user)) return
-                        users.push(user)
-                    } else {
-                        const user = chesster.users.getId(t)
-                        if (user) users.push(user)
-                    }
+                    const target = resolveTarget(chesster, adminSlack, t)
+                    if (target?.kind === 'user') users.push(target.id)
+                    else if (target?.kind === 'channel') channels.push(target.id)
+                    else unresolved.push(t)
                 })
+            if (unresolved.length > 0) {
+                winston.warn(
+                    `[FORWARDING] Unable to resolve targets ${unresolved.join(', ')} from: ${message.text}`
+                )
+            }
 
             const promises: Promise<void>[] = []
             if (users.length > 0) {

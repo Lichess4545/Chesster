@@ -241,11 +241,14 @@ export type MiddlewareFn = (
 ) => CommandMessage
 
 // export type ChessterCallbackFn = (bot: SlackBot, message: CommandMessage) => void
-export type CommandCallbackFn = (bot: SlackBot, message: CommandMessage) => void
+export type CommandCallbackFn = (
+    bot: SlackBot,
+    message: CommandMessage
+) => unknown
 export type LeagueCommandCallbackFn = (
     bot: SlackBot,
     message: LeagueCommandMessage
-) => void
+) => unknown
 
 export interface CommandEventOptions {
     type: 'command'
@@ -295,7 +298,7 @@ export function isMemberJoinedChannelEvent(
 ): event is MemberJoinedChannel {
     return event.type === 'member_joined_channel'
 }
-export type SlackOnCallbackFn = (bot: SlackBot, event: OnEvent) => void
+export type SlackOnCallbackFn = (bot: SlackBot, event: OnEvent) => unknown
 export interface OnOptions {
     event: OnEventType
     callback: SlackOnCallbackFn
@@ -304,6 +307,7 @@ export interface OnOptions {
 const SECONDS = 1000 // ms
 
 const slackIDRegex = (module.exports.slackIDRegex = /<@([^\s]+)>/)
+const slackUserIDRegex = /^[UW][A-Z0-9]{8,}$/i
 
 class StopControllerError extends Error {
     constructor(error: string) {
@@ -991,20 +995,39 @@ ${usernames.join(', ')}`
         }
     }
 
+    resolveSlackUserID(nameOrId: string): SlackUserID | undefined {
+        const cachedUser = this.getSlackUserFromNameOrID(nameOrId)
+        if (cachedUser) return cachedUser.id
+        if (slackUserIDRegex.test(nameOrId)) return nameOrId.toUpperCase()
+        return undefined
+    }
+
     async startPrivateConversation(
-        nameOrId: string[]
+        nameOrIds: string[]
     ): Promise<SlackConversation> {
-        const targetUsers = nameOrId
-            .map((u) => this.getSlackUserFromNameOrID(u))
+        const userIDs = nameOrIds
+            .map((u) => this.resolveSlackUserID(u))
             .filter(isDefined)
-            .map((u) => u.id)
-            .join(',')
-        if (_.isNil(targetUsers)) {
-            throw new Error('Unable to find user')
-        } else {
+        const unresolved = nameOrIds.filter(
+            (u) => !isDefined(this.resolveSlackUserID(u))
+        )
+
+        if (unresolved.length > 0) {
+            this.log.warn(`Unable to resolve Slack users: ${unresolved.join(', ')}`)
+        }
+        if (userIDs.length === 0) {
+            throw new Error(`No Slack users resolved from: ${nameOrIds.join(', ')}`)
+        }
+
+        try {
             return (await this.web.conversations.open({
-                users: targetUsers,
+                users: userIDs.join(','),
             })) as SlackConversation
+        } catch (error) {
+            this.log.error(
+                `conversations.open failed for ${userIDs.join(', ')}: ${formatError(error)}`
+            )
+            throw error
         }
     }
 
@@ -1125,7 +1148,7 @@ ${usernames.join(', ')}`
                     }
 
                     // Execute the command callback - THIS IS THE CRUCIAL PART
-                    listener.callback(this, { member, ...message })
+                    await listener.callback(this, { member, ...message })
 
                     // Log after execution
                     this.log.info('Command executed successfully')
@@ -1149,7 +1172,7 @@ ${usernames.join(', ')}`
                         }
 
                         // Execute command
-                        listener.callback(this, leagueCommandMessage)
+                        await listener.callback(this, leagueCommandMessage)
 
                         this.log.info('League command executed successfully')
                     } else {
@@ -1387,7 +1410,13 @@ ${usernames.join(', ')}`
     on(options: OnOptions) {
         if (options.event === 'member_joined_channel') {
             this.app.event('member_joined_channel', async ({ event }) => {
-                options.callback(this, event)
+                try {
+                    await options.callback(this, event)
+                } catch (error) {
+                    this.log.error(
+                        `member_joined_channel failed for ${event.user} in ${event.channel}: ${formatError(error)}`
+                    )
+                }
             })
         }
     }
