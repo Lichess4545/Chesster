@@ -19,6 +19,7 @@ import * as scheduling from './commands/scheduling'
 import * as subscription from './commands/subscription'
 import * as presence from './commands/presence'
 import * as version from './commands/version'
+import * as uptime from './commands/uptime'
 import * as lichess from './lichess'
 
 /* static entry point */
@@ -204,6 +205,7 @@ function prepareCommandsMessage() {
         '    [ nomination (4545) ]          ! get a nomination link for up to 3 games.\n' +
         '    [ source ]                     ! github repo for Chesster \n' +
         '    [ version ]                    ! running version and release notes\n' +
+        '    [ uptime ]                     ! how long I have been running\n' +
         "    [ subscription help ]          ! help for chesster's subscription system\n" +
         '    [ link ]                       ! link your slack and lichess accounts\n' +
         '```\n'
@@ -272,6 +274,13 @@ chesster.hears({
     patterns: [/^version$/i],
     messageTypes: ['direct_message', 'direct_mention'],
     callback: version.versionCommand,
+})
+
+chesster.hears({
+    type: 'command',
+    patterns: [/^uptime$/i],
+    messageTypes: ['direct_message', 'direct_mention'],
+    callback: uptime.uptimeCommand,
 })
 
 // Scheduling
