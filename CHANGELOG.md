@@ -4,6 +4,18 @@ Rendered by [git-cliff](https://git-cliff.org) from the conventional commits
 behind each tag. `release` rewrites this file in full on every release, so an
 edit made here is lost — edit the commit messages instead.
 
+## v1.4.0 — 2026-10-23
+
+### Features
+
+- add dozzle for log viewing ([73c4c01](https://github.com/Lichess4545/Chesster/commit/73c4c01feac1a723dac2c68d987abd535a7967cd))
+- better observability, unified node versions ([#439](https://github.com/Lichess4545/Chesster/pull/439)) ([f6e7a2a](https://github.com/Lichess4545/Chesster/commit/f6e7a2aa102432cb4d9677a62b4789cf047576aa))
+
+### Fixes
+
+- stop not_enough_users crashes when opening DMs ([#437](https://github.com/Lichess4545/Chesster/pull/437)) ([1d00eb1](https://github.com/Lichess4545/Chesster/commit/1d00eb1509880a6daaf27f195f7461b4f91339a6))
+- support lichess /game/<id> game links ([#438](https://github.com/Lichess4545/Chesster/pull/438)) ([55c8046](https://github.com/Lichess4545/Chesster/commit/55c8046fe2427d789de1bc7c49e6ed8cc55aa4ba))
+
 ## v1.3.0 — 2026-10-08
 
 ### Features
