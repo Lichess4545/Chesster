@@ -2,6 +2,7 @@
 // Entry point for Chesster
 // Bot commands are defined here with implementations in various modules.
 // -----------------------------------------------------------------------------
+import os from 'os'
 import winston from 'winston'
 import * as slack from './slack'
 import Watcher from './watcher'
@@ -21,6 +22,7 @@ import * as presence from './commands/presence'
 import * as version from './commands/version'
 import * as uptime from './commands/uptime'
 import * as lichess from './lichess'
+import { Signals, slackTransport } from './signals'
 
 /* static entry point */
 
@@ -370,13 +372,65 @@ chesster.hears({
     callback: presence.ambientPresence,
 })
 
+const SHUTDOWN_GRACE_MS = 5000
+
+const signals = new Signals(
+    slackTransport(chesster),
+    chesster.config.signals.channel
+)
+
+function shutdownOn(signal: NodeJS.Signals) {
+    process.once(signal, () => {
+        winston.info(`Received ${signal}, shutting down`)
+        setTimeout(() => process.exit(0), SHUTDOWN_GRACE_MS).unref()
+        signals
+            .shutdown(
+                `:octagonal_sign: Shutting down (${signal}) after ${uptime.formatDuration(process.uptime())}`
+            )
+            .finally(() => process.exit(0))
+    })
+}
+
+function signalSlackStartup(bot: slack.SlackBot) {
+    return bot.start().then(() => {
+        const database = bot.connectToModels
+            ? bot.databaseConnected
+                ? ', database connected'
+                : ', :warning: database unavailable'
+            : ''
+        signals.emit(
+            `:electric_plug: Connected to Slack (${bot.slackName})${database}`
+        )
+        return bot.firstSync.then(() =>
+            signals.emit(
+                `:busts_in_silhouette: Synced Slack (${bot.slackName}): ${Object.keys(bot.users.byId).length} users, ${Object.keys(bot.channels.byId).length} channels`
+            )
+        )
+    })
+}
+
 async function main() {
     await slack.verifyCredentialsOrExit([chesster, adminSlack])
 
-    chesster.start()
-    adminSlack.start()
+    signals.start(
+        `:rocket: Chesster v${version.version} starting on \`${os.hostname()}\``
+    )
+    shutdownOn('SIGTERM')
+    shutdownOn('SIGINT')
 
-    const watcher = new Watcher(chesster, getAllLeagues(chesster))
+    signalSlackStartup(chesster)
+    signalSlackStartup(adminSlack)
+
+    const watcher = new Watcher(chesster, getAllLeagues(chesster), {
+        connected: (id, usernameCount) =>
+            signals.emit(
+                `:chess_pawn: Lichess game stream ${id} connected, watching ${usernameCount} players`
+            ),
+        disconnected: (id, reconnectSeconds) =>
+            signals.emit(
+                `:warning: Lichess game stream ${id} dropped, reconnecting in ${reconnectSeconds}s`
+            ),
+    })
     watcher.watch()
 
     lichess.startQueue()

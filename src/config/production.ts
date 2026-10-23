@@ -10,6 +10,9 @@ export const production: ChessterConfig = {
         level: 'debug',
         handleExceptions: true,
     },
+    signals: {
+        channel: '#dev-website-and-bot',
+    },
     links: {
         source: 'https://github.com/Lichess4545/Chesster',
     },

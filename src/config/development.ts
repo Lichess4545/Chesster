@@ -26,6 +26,9 @@ export const development: ChessterConfig = {
         channel: '#modster-logging',
         handleExceptions: false,
     },
+    signals: {
+        channel: '#modster-logging',
+    },
     welcome: {
         channel: 'dev-testing-lonewolf',
     },

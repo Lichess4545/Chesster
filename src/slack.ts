@@ -694,6 +694,8 @@ export class SlackBot {
     public controller?: SlackBotSelf
     private team?: SlackTeam
     private refreshCount = 0
+    public databaseConnected = false
+    public firstSync: Promise<void> = Promise.resolve()
     private listeners: SlackRTMEventListenerOptions[] = []
     private app: App
 
@@ -757,6 +759,7 @@ export class SlackBot {
                 )
 
                 await models.connect(this.env.DATABASE_URL)
+                this.databaseConnected = true
                 winston.info('Database connected successfully')
             } catch (error) {
                 this.log.error(
@@ -800,7 +803,7 @@ export class SlackBot {
         // used to be every 2 minutes but we started to hit rate limits.
         // would be nice if this was push model, not poll but oh well.
         // NOTE: This is intentionally not awaited now, assuming that we want to startup more quickly
-        this.refresh(600 * SECONDS)
+        this.firstSync = this.refresh(600 * SECONDS)
 
         if (this.logToThisSlack) {
             // setup logging
@@ -954,24 +957,22 @@ export class SlackBot {
         }
         return player
     }
-    async refresh(delay: number) {
-        return criticalPath(
-            new Promise<void>((resolve) => {
-                this.refreshCount++
-                this.log.info(`doing refresh ${this.refreshCount}`)
+    async refresh(delay: number): Promise<void> {
+        this.refreshCount++
+        this.log.info(`doing refresh ${this.refreshCount}`)
 
-                this.updatesUsers()
-                this.updateChannels()
-                if (this.refreshLeagues) {
-                    this.log.info('Refreshing Leagues')
-                    league.getAllLeagues(this).map((l) => l.refresh())
-                    setTimeout(() => {
-                        this.refresh(delay)
-                    }, delay)
-                }
-                resolve()
-            })
-        )
+        const synced = Promise.all([
+            this.updatesUsers(),
+            this.updateChannels(),
+        ])
+        if (this.refreshLeagues) {
+            this.log.info('Refreshing Leagues')
+            league.getAllLeagues(this).map((l) => l.refresh())
+            setTimeout(() => {
+                this.refresh(delay)
+            }, delay)
+        }
+        await criticalPath(synced)
     }
 
     async hasSingleUser(message: CommandMessage) {

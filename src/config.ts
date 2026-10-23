@@ -87,6 +87,10 @@ export interface Winston {
     handleExceptions: boolean
 }
 
+export interface Signals {
+    channel: string
+}
+
 export interface Links {
     source: string
 }
@@ -116,6 +120,7 @@ export interface ChessterConfig {
     storage: string
     watcherBaseURL: string
     winston: Winston
+    signals: Signals
     links: Links
     leagues: Record<string, League>
     channelMap: ChannelMap
