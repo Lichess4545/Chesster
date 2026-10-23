@@ -3,7 +3,7 @@
 {
   languages.javascript = {
     enable = true;
-    package = pkgs.nodejs_24;
+    package = import ./nix/nodejs.nix pkgs;
     yarn.enable = true;
   };
 
