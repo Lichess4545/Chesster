@@ -23,6 +23,11 @@ import { isDefined } from './utils'
 const WATCHER_MAX_USERNAMES = 900
 const STARTED = 20
 
+export interface WatcherListener {
+    connected(id: number, usernameCount: number): void
+    disconnected(id: number, reconnectSeconds: number): void
+}
+
 type ConnectionState =
     | 'disconnected'
     | 'connecting'
@@ -51,7 +56,8 @@ class WatcherRequest {
         public bot: SlackBot,
         public usernames: string[],
         public leagues: League[],
-        public id: number
+        public id: number,
+        private listener: WatcherListener
     ) {
         this.log = new LogWithPrefix(`WatcherRequest: ${this.id}`)
         this.watcherConfig = bot.config.watcher
@@ -114,6 +120,7 @@ class WatcherRequest {
         }
         this.setState('backing_off')
         this.log.info(`Reconnecting in ${this.backoffSeconds}s`)
+        this.listener.disconnected(this.id, this.backoffSeconds)
         this.reconnectTimer = setTimeout(() => {
             this.reconnectTimer = undefined
             this.watch()
@@ -178,6 +185,7 @@ class WatcherRequest {
 
                 this.setState('connected')
                 this.connectedAt = Date.now()
+                this.listener.connected(this.id, this.usernames.length)
                 this.resetInactivityTimer()
                 this.startHealthLogging()
 
@@ -483,7 +491,8 @@ export default class Watcher {
 
     constructor(
         public bot: SlackBot,
-        public leagues: League[]
+        public leagues: League[],
+        private listener: WatcherListener
     ) {
         this.watcherRequests = []
         this.log.info('Starting watcher')
@@ -547,7 +556,8 @@ export default class Watcher {
                     this.bot,
                     watcherUsernames,
                     this.leagues,
-                    Math.floor(this.refreshesCount / this.leagues.length)
+                    Math.floor(this.refreshesCount / this.leagues.length),
+                    this.listener
                 )
                 req.watch()
                 this.watcherRequests.push(req)

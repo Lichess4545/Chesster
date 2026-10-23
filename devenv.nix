@@ -3,7 +3,7 @@
 {
   languages.javascript = {
     enable = true;
-    package = pkgs.nodejs_24;
+    package = import ./nix/nodejs.nix pkgs;
     yarn.enable = true;
   };
 
@@ -29,6 +29,13 @@
     enable = true;
     entry = "ci/yarn-deps-hash.sh";
     files = "^yarn\\.lock$";
+    pass_filenames = false;
+  };
+
+  git-hooks.hooks.nixpkgs-pin = {
+    enable = true;
+    entry = "ci/nixpkgs-pin.sh";
+    files = "^(flake|devenv)\\.lock$";
     pass_filenames = false;
   };
 

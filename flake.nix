@@ -2,7 +2,7 @@
   description = "Chesster, the Lichess4545 Slack bot, as a container image";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     flake-utils.url = "github:numtide/flake-utils";
     dull-nix.url = "github:dull-ca/nix";
   };
@@ -14,7 +14,7 @@
           inherit system;
           overlays = [ dull-nix.overlays.default ];
         };
-        nodejs = pkgs.nodejs_22;
+        nodejs = import ./nix/nodejs.nix pkgs;
 
         chesster = pkgs.stdenv.mkDerivation {
           pname = "chesster";

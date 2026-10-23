@@ -1,5 +1,3 @@
-# https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-
 name: Build
 
 on:
@@ -13,23 +11,26 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
+            - uses: cachix/install-nix-action@v31
 
-            - uses: actions/setup-node@v2
-              with:
-                  node-version: '22'
+            - name: Install devenv
+              run: nix profile install nixpkgs#devenv
+
+            - name: Check nixpkgs pins match
+              run: ci/nixpkgs-pin.sh
 
             - name: Install packages
-              run: yarn install
+              run: devenv shell -- yarn install
 
             - name: Build project
-              run: yarn build
+              run: devenv shell -- yarn build
 
             - name: Run TSLint
-              run: yarn lint
+              run: devenv shell -- yarn lint
 
             - name: Run tests
-              run: yarn test
+              run: devenv shell -- yarn test
 
     nix:
         runs-on: ubuntu-latest
