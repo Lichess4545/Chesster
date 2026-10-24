@@ -18,7 +18,8 @@ import * as config from './config'
 import { League, Pairing, ResultsEnum } from './league'
 import { LogWithPrefix } from './logging'
 import { SlackBot } from './slack'
-import { isDefined } from './utils'
+import { withUserAgent } from './http'
+import { isDefined, formatError } from './utils'
 
 const WATCHER_MAX_USERNAMES = 900
 const STARTED = 20
@@ -150,14 +151,16 @@ class WatcherRequest {
         )
         const options = url.parse(this.bot.config.watcherBaseURL)
         let hasResponse = false
-        this.req = _https.request({
-            method: 'POST',
-            headers: {
-                'Content-Length': Buffer.byteLength(body),
-                Authorization: `Bearer ${this.bot.env.CHESSTER_LICHESS_TOKEN}`,
-            },
-            ...options,
-        })
+        this.req = _https.request(
+            withUserAgent({
+                method: 'POST',
+                headers: {
+                    'Content-Length': Buffer.byteLength(body),
+                    Authorization: `Bearer ${this.bot.env.CHESSTER_LICHESS_TOKEN}`,
+                },
+                ...options,
+            })
+        )
         this.req
             .on('response', (res) => {
                 hasResponse = true
@@ -297,7 +300,7 @@ class WatcherRequest {
     // -------------------------------------------------------------------------
     async processGameDetails(details: lichess.GameDetails) {
         this.log.info(
-            `[PROCESS] Processing game ${details.id}: ${details.players.white.user} vs ${details.players.black.user}`
+            `[PROCESS] Processing game ${details.id}: ${details.players.white.user.id} vs ${details.players.black.user.id}`
         )
         fp.each(async (league) => {
             // 1. perfect match any time, try to update.
@@ -405,14 +408,12 @@ class WatcherRequest {
                             }
                         } catch (error) {
                             this.log.error(
-                                `Error updating game: ${JSON.stringify(error)}`
+                                `Error updating game: ${formatError(error)}`
                             )
                         }
                     } catch (error) {
                         this.log.error(
-                            `Error fetching game details: ${JSON.stringify(
-                                error
-                            )}`
+                            `Error fetching game details: ${formatError(error)}`
                         )
                     }
                 }
