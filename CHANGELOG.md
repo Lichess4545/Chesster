@@ -4,6 +4,12 @@ Rendered by [git-cliff](https://git-cliff.org) from the conventional commits
 behind each tag. `release` rewrites this file in full on every release, so an
 edit made here is lost — edit the commit messages instead.
 
+## v1.4.1 — 2026-10-24
+
+### Fixes
+
+- Send User-Agent and better logging ([#440](https://github.com/Lichess4545/Chesster/pull/440)) ([a2a7f95](https://github.com/Lichess4545/Chesster/commit/a2a7f95774bd9be5718cb71a07e6037c8c2e151f))
+
 ## v1.4.0 — 2026-10-23
 
 ### Features
