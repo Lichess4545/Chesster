@@ -2,7 +2,6 @@
 // Entry point for Chesster
 // Bot commands are defined here with implementations in various modules.
 // -----------------------------------------------------------------------------
-import os from 'os'
 import winston from 'winston'
 import * as slack from './slack'
 import Watcher from './watcher'
@@ -413,7 +412,7 @@ async function main() {
     await slack.verifyCredentialsOrExit([chesster, adminSlack])
 
     signals.start(
-        `:rocket: Chesster v${version.version} starting on \`${os.hostname()}\``
+        `:rocket: ${version.formatVersionReply(version.version, chesster.config.links.source)}`
     )
     shutdownOn('SIGTERM')
     shutdownOn('SIGINT')
