@@ -4,6 +4,12 @@ Rendered by [git-cliff](https://git-cliff.org) from the conventional commits
 behind each tag. `release` rewrites this file in full on every release, so an
 edit made here is lost — edit the commit messages instead.
 
+## v1.5.1 — 2026-10-24
+
+### Fixes
+
+- don't crash when posting to a missing Slack channel ([#442](https://github.com/Lichess4545/Chesster/pull/442)) ([deea3df](https://github.com/Lichess4545/Chesster/commit/deea3df6435bb31144ac8cc9995fc86f67a9e5a8))
+
 ## v1.5.0 — 2026-10-24
 
 ### Features
