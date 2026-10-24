@@ -8,7 +8,7 @@ import winston from 'winston'
 import Transport from 'winston-transport'
 import { MESSAGE } from 'triple-beam'
 import logform from 'logform'
-import { hasKey } from './utils'
+import { formatError, hasKey } from './utils'
 import { SlackBot } from './slack'
 
 interface MessageParams {
@@ -60,11 +60,17 @@ export default class Slack extends Transport {
             iconEmoji = EmojiLookup[this.level]
         }
 
-        this.bot.say({
-            text: `${iconEmoji} [${this.level}] ${info[MESSAGE]}`,
-            icon_emoji: iconEmoji,
-            ...this.messageParams,
-        })
+        this.bot
+            .postMessage({
+                text: `${iconEmoji} [${this.level}] ${info[MESSAGE]}`,
+                icon_emoji: iconEmoji,
+                ...this.messageParams,
+            })
+            .catch((error) => {
+                process.stderr.write(
+                    `Slack log transport failed for channel ${this.channel}: ${formatError(error)}\n`
+                )
+            })
 
         next()
     }

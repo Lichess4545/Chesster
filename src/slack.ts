@@ -1040,6 +1040,17 @@ ${usernames.join(', ')}`
         })
     }
     async say(options: ChatPostMessageArguments) {
+        try {
+            return await this.postMessage(options)
+        } catch (error) {
+            this.log.error(
+                `chat.postMessage failed for channel ${options.channel}: ${formatError(error)}`
+            )
+            return undefined
+        }
+    }
+
+    async postMessage(options: ChatPostMessageArguments) {
         // Replace user links in the form <@user> with <@U12345|user>
         if (options.text) {
             options.text = options.text.replace(

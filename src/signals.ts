@@ -24,7 +24,7 @@ export function slackTransport(bot: SlackBot): SignalTransport {
                 text,
                 thread_ts: threadTs,
             })
-            if (response.ok && response.channel && response.ts) {
+            if (response?.ok && response.channel && response.ts) {
                 return { channel: response.channel, ts: response.ts }
             }
             return undefined
