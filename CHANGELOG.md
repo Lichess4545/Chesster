@@ -4,6 +4,12 @@ Rendered by [git-cliff](https://git-cliff.org) from the conventional commits
 behind each tag. `release` rewrites this file in full on every release, so an
 edit made here is lost — edit the commit messages instead.
 
+## v1.5.0 — 2026-10-24
+
+### Features
+
+- link the release notes from the startup message ([#441](https://github.com/Lichess4545/Chesster/pull/441)) ([65df1a6](https://github.com/Lichess4545/Chesster/commit/65df1a67718b20a6a12d3050ec97e4591249fd05))
+
 ## v1.4.1 — 2026-10-24
 
 ### Fixes
