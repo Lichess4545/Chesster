@@ -18,6 +18,7 @@ import * as config from './config'
 import { League, Pairing, ResultsEnum } from './league'
 import { LogWithPrefix } from './logging'
 import { SlackBot } from './slack'
+import { withUserAgent } from './http'
 import { isDefined } from './utils'
 
 const WATCHER_MAX_USERNAMES = 900
@@ -150,14 +151,16 @@ class WatcherRequest {
         )
         const options = url.parse(this.bot.config.watcherBaseURL)
         let hasResponse = false
-        this.req = _https.request({
-            method: 'POST',
-            headers: {
-                'Content-Length': Buffer.byteLength(body),
-                Authorization: `Bearer ${this.bot.env.CHESSTER_LICHESS_TOKEN}`,
-            },
-            ...options,
-        })
+        this.req = _https.request(
+            withUserAgent({
+                method: 'POST',
+                headers: {
+                    'Content-Length': Buffer.byteLength(body),
+                    Authorization: `Bearer ${this.bot.env.CHESSTER_LICHESS_TOKEN}`,
+                },
+                ...options,
+            })
+        )
         this.req
             .on('response', (res) => {
                 hasResponse = true

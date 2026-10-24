@@ -7,6 +7,22 @@ import url from 'url'
 import querystring from 'querystring'
 import winston from 'winston'
 import _ from 'lodash'
+import { version } from './commands/version'
+
+export function userAgent(chessterVersion: string): string {
+    return `Chesster/${chessterVersion} (+https://github.com/Lichess4545/Chesster)`
+}
+
+export const USER_AGENT = userAgent(version)
+
+export function withUserAgent<T extends _http.RequestOptions>(
+    options: T
+): T & { headers: _http.OutgoingHttpHeaders } {
+    return {
+        ...options,
+        headers: { ...options.headers, 'User-Agent': USER_AGENT },
+    }
+}
 
 export interface Response {
     response: _http.IncomingMessage
@@ -31,12 +47,11 @@ export interface JSONResponse extends Response {
 export function fetchURL(
     optionsOrString: RequestOptions | string
 ): Promise<Response> {
-    let options: RequestOptions
-    if (isString(optionsOrString)) {
-        options = requestFromString(optionsOrString)
-    } else {
-        options = optionsOrString
-    }
+    const options = withUserAgent(
+        isString(optionsOrString)
+            ? requestFromString(optionsOrString)
+            : optionsOrString
+    )
 
     return new Promise((resolve, reject) => {
         let http: typeof _http | typeof _https = _http
