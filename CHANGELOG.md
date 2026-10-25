@@ -4,6 +4,12 @@ Rendered by [git-cliff](https://git-cliff.org) from the conventional commits
 behind each tag. `release` rewrites this file in full on every release, so an
 edit made here is lost — edit the commit messages instead.
 
+## v1.5.2 — 2026-10-25
+
+### Fixes
+
+- don't crash on messages that match multiple leagues ([#443](https://github.com/Lichess4545/Chesster/pull/443)) ([13f9fad](https://github.com/Lichess4545/Chesster/commit/13f9fad51b9aefea589ceca719e5de3bf9ae10e0))
+
 ## v1.5.1 — 2026-10-24
 
 ### Fixes
