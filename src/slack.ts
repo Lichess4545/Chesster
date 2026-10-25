@@ -1137,7 +1137,13 @@ ${usernames.join(', ')}`
                 } for ID: ${message.user}`
             )
         }
-        const _league = getLeague(this, message, false)
+        let _league: league.League | undefined
+        try {
+            _league = getLeague(this, message, false)
+        } catch (error) {
+            if (!(error instanceof StopControllerError)) throw error
+            this.log.info(`Unable to determine league: ${error.message}`)
+        }
         if (!_league || !member) {
             allowedTypes = ['command']
         }
