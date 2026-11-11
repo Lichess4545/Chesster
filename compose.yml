@@ -2,6 +2,10 @@ services:
   app:
     image: ghcr.io/lichess4545/chesster:1.5.2
     restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: any
+        max_attempts: 3
     environment:
       DATABASE_URL_FILE: /run/secrets/chesster_database_url
       CHESSTER_HELTOUR_TOKEN_FILE: /run/secrets/chesster_heltour_token
