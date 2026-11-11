@@ -7,6 +7,7 @@ import {
     WebClient,
     WebAPICallResult,
     ChatPostMessageArguments,
+    ErrorCode,
 } from '@slack/web-api'
 import _, { update } from 'lodash'
 import * as winston from 'winston'
@@ -335,15 +336,31 @@ export function appendPlayerRegex(command: string, optional: boolean) {
     return new RegExp(playerRegex, 'i')
 }
 
+// Slack's `fatal_error` is a transient failure on Slack's side (the call
+// may succeed if retried). It must not take the bot down.
+export function isSlackFatalError(error: unknown): boolean {
+    const e = error as
+        | { code?: unknown; data?: { error?: unknown } }
+        | null
+        | undefined
+    return (
+        e?.code === ErrorCode.PlatformError && e?.data?.error === 'fatal_error'
+    )
+}
+
 /*
    updates the user list
    updates the channel lists
    then repeats in new thread
 
-   if it encounters an error it will exit the process with exit code 1
+   if it encounters an error it will exit the process with exit code 1,
+   except for a transient Slack `fatal_error`, which the caller handles
 */
 function criticalPath<T>(promise: Promise<T>) {
-    exceptionLogger(promise).catch(() => {
+    exceptionLogger(promise).catch((error) => {
+        if (isSlackFatalError(error)) {
+            return
+        }
         winston.error(
             'An exception was caught in a critical code-path. I am going down.'
         )
@@ -972,7 +989,18 @@ export class SlackBot {
                 this.refresh(delay)
             }, delay)
         }
-        await criticalPath(synced)
+        try {
+            await criticalPath(synced)
+        } catch (error) {
+            if (!isSlackFatalError(error)) {
+                throw error
+            }
+            // Keep the users/channels from the last successful sync; the
+            // already-scheduled next refresh will retry.
+            this.log.warn(
+                'Slack returned fatal_error during refresh, keeping previous users/channels and retrying on the next refresh'
+            )
+        }
     }
 
     async hasSingleUser(message: CommandMessage) {
